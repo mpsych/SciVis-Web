@@ -1,0 +1,142 @@
+                                                                                                         Bioinformatics, 32(4), 2016, 602–604
+                                                                                                           doi: 10.1093/bioinformatics/btv605
+                                                                                         Advance Access Publication Date: 29 October 2015
+                                                                                                                       Applications Note
+
+
+
+
+Sequence analysis
+
+Protael: protein data visualization library for
+the web
+
+
+
+
+                                                                                                                                                                     Downloaded from https://academic.oup.com/bioinformatics/article-abstract/32/4/602/1743824 by guest on 06 June 2020
+Mayya Sedova1,2, Lukasz Jaroszewski1,2 and Adam Godzik1,2 *
+1
+ Bioinformatics and Systems Biology Program, Sanford Burnham Prebys Medical Discovery Institute, La Jolla, CA
+92307, USA and 2Center for Structural Genomics of Infectious Diseases (CSGID), Chicago, IL 60611, USA
+*To whom correspondence should be addressed.
+Associate Editor: John Hancock
+Received on July 13, 2015; revised on September 30, 2015; accepted on October 15, 2015
+
+
+Abstract
+Summary: Protael is a JavaScript library for creating interactive visualizations of biological
+sequences and various associated data. It allows users to generate high-quality vector graphics
+(SVG) and integrate it into web pages.
+Availability and implementation: Protael distribution, documentation and examples are freely
+available at http://protael.org; source code is hosted at https://github.com/sanshu/protaeljs.
+Contact: adam@godziklab.org
+
+
+
+1 Introduction
+Predictive methods of bioinformatics address the gap between the                         web. The library is written in JavaScript and uses Cascading Style
+explosive growth of sequence data and experimental characteriza-                         Sheets (CSS) to define styles of the graphics elements. The visualiza-
+tion of biomolecules. The number and accuracy of prediction meth-                        tion content is fully controlled by a single JSON object. Protael is
+ods are increasing but the individual algorithms are often                               compatible with all modern browsers on desktop and mobile systems,
+implemented as separate programs and webservers. From a user                             and does not require any additional plugin installation. Protael visual-
+point of view this creates a need for ‘shopping around’ and then                         ization is currently focused on proteins but it can also be used and
+often manual integration of the results into a comprehensive bio-                        customized for nucleic acids. Generated SVG visualization allows un-
+informatics characterization of a protein. At the same time, servers,                    restricted scaling and provides vector images. Protael is used to visual-
+which automatically combine results of different prediction algo-                        ize protein data in Cancer3D (Porta-Pardo et al., 2015), XtalPred
+rithms, require graphical tools to integrate different types of protein-                 (Jahandideh et al., 2014), PDBFlex (http://pdbflex.org/) webservers
+related data and predictions into a single visualization. While there                    and to display alignments of nucleotide sequences in bNAber
+are many excellent biological sequence visualization tools, most of                      (Eroshkin et al., 2014).
+them are tightly coupled with the specific data sources and websites
+and cannot be easily reused by other resource. At the time of writing
+we are aware of several reusable visualization libraries for the web,                    2 Implementation
+including pViz (Mukhyala et al., 2014), RSCB Protein Feature                             Protael is a reusable library, which produces interactive and custom-
+Viewer (http://andreasprlic.github.io/proteinfeatureview/), BioJS/                       izable SVG graphics completely on the client machine. Basic usage
+FeatureViewer (Garcia et al., 2014) and Mason (Jaschob et al.,                           requires little knowledge of HTML and JavaScript, and is as simple
+2015) for feature annotations and SnipViz (Jaschob et al., 2014) and                     as including links to Protael script and dependencies, and writing
+JSAV (Martin, 2014) for multiple sequence alignment.                                     couple of lines of code. For more complex applications Protael pro-
+    To enable fully customizable visualization of protein sequence fea-                  vides numerous ways of customization and adding new features.
+tures, predictions, annotations, various posttranslational modifica-                         Protael uses open source libraries for generating visualization
+tions and alignments with known structures (including their local                        and controls, including SnapSVG (http://snapsvg.io/), JQuery
+structural features) we developed Protael—a reusable and extendable                      (http://jquery.com) and JQueryUI (http://jqueryui.com). The Protael
+library to display heterogeneous linear protein-related data on the                      starter project is available on the Protael website and is set up in a
+
+
+C The Author 2015. Published by Oxford University Press. All rights reserved. For Permissions, please e-mail: journals.permissions@oup.com
+V                                                                                                                                                            602
+Protael                                                                                                                                                        603
+
+
+way that provides auto-loading of the required versions of libraries                 2.3 Sequence features and annotations
+from the content delivery networks.                                                  The area below the main sequence contains feature and annota-
+    All input for Protael is included in a JSON object, which con-                   tion tracks (ftracks), if the appropriate data is provided in the
+tains information about the sequence and annotations to be dis-                      JSON object. Each track can be styled separately. It is possible to
+played and can be provided via AJAX request to a server or loaded                    override styling for individual feature by providing data in JSON
+from a file. Documentation about JSON configuration is available                     object or via JavaScript call. Depending on the ‘allowOverlap’
+at http://protael.org/docs/.                                                         parameter value in JSON object, overlapped features will be
+    Protael interface contains a control bar that provides functions                 drawn either on top of the each other or on different sub-levels to
+such as zoom, export of selected sequence regions, exporting publi-                  avoid visual overlapping. Examples of feature tracks include anno-
+cation quality vector images, applying different residue-based color-                tated domains (represented as rectangles). Protael also allows dis-
+ing schemes, etc. (see Fig. 1) Flexible data format allows users to                  tinct coloring and labeling of sequence regions, showing
+provide arbitrary number of additional object properties, which are                  posttranslational modifications, cleavage sites and residue substi-
+
+
+
+
+                                                                                                                                                                       Downloaded from https://academic.oup.com/bioinformatics/article-abstract/32/4/602/1743824 by guest on 06 June 2020
+converted to HTML5 data-* attributes and could be later used for                     tutions (Fig 1B).
+custom styling and actions.
+                                                                                     2.4 Quantitative data
+2.1 Protael visualization                                                            The features tracks area is followed by the quantitative data tracks
+Protael is capable of displaying multiple data types, such as sequence               (qtracks) area. Almost any kind of quantitative data, both discrete
+annotations, substitutions, posttranslational modifications, cleavage                and continuous, could be displayed here. Examples of such data in-
+sites, disulfide bridges, various types of quantitative data and align-              clude probability graphs from predictions of secondary structure
+ments with known structures. Sequence features, annotations, quan-                   types, predicted structural disorder probability, evolutionary conser-
+titative data and aligned sequences can occupy multiple data tracks.                 vation indices, predicted surface accessibility, etc. Quantitative data
+Users can specify scale for quantitative data and assign tooltips and                can currently be presented as five different chart types: line, area,
+external URLs (links) to displayed elements.                                         spline, spline-area and column chart. Several coloring options are
+                                                                                     available including solid color and gradient fills.
+2.2 Main sequence
+Main sequence area shows the sequence itself and some of its fea-                    2.5 Multiple sequence alignment
+tures such as predicted transmembrane helices, signal peptides, low                  The last (bottom) visualization level is used to display sequences
+complexity regions, posttranslational modifications and disulfide                    aligned with the main sequence. Developer can choose between two
+bridges. This area has fixed topmost position and cannot be moved                    display options for alignments—either as lines (useful for creating
+(other visualization tracks could be dragged vertically to form a                    more compact view of up to 100 sequences) or as strings represent-
+more compact chart).                                                                 ing residue type in one-letter code (practical for up to 30 sequences).
+
+
+
+
+Fig. 1. Protael interface and examples of visualizations: (A) menu elements, visualization of predictions of local structural features, sequence features and align-
+ments with known structures, (B) visualization of post-translational modifications, sequence regions, substitutions and cleavage sites (engineered HIV immuno-
+gen is used as an example)
+604                                                                                                                                  M.Sedova et al.
+
+
+The coloring of aligned sequences, as well as the main sequence, is        Garcia,L. et al. (2014) FeatureViewer, a BioJS component for visualization of
+also controlled via JSON object. For example one can color aligned           position-based annotations in protein sequences. F1000Research. 3, 47.
+sequences according to the predicted or observed secondary struc-          Jahandideh,S. et al. (2014) Improving the chances of successful protein struc-
+                                                                             ture determination with a random forest classifier. Acta Crystallogr. D Biol
+ture type, or highlight only specific residues (for instance mutation
+                                                                             Crystallogr. 70, 627–635.
+or binding sites).
+                                                                           Jaschob,D. et al. (2014) SnipViz: a compact and lightweight web site widget
+                                                                             for display and dissemination of multiple versions of gene and protein se-
+                                                                             quences. BMC Res. Notes, 7, 468.
+Funding                                                                    Jaschob,D. et al. (2015) Mason: a JavaScript web site widget for visualizing
+The development of Protael is funded by funded in part by the NIAID-NIH      and comparing annotated features in nucleotide or protein sequences. BMC
+contract HHSN272201200026C (CSGID).                                          Res. Notes. 8, 70.
+                                                                           Martin,A.C. (2014) Viewing multiple sequence alignments with the JavaScript
+Conflict of Interest: none declared.
+                                                                             Sequence Alignment Viewer (JSAV). F1000Research, 3, 249.
+
+
+
+
+                                                                                                                                                            Downloaded from https://academic.oup.com/bioinformatics/article-abstract/32/4/602/1743824 by guest on 06 June 2020
+                                                                           Mukhyala,K. and Masselot,A. (2014) Visualization of protein sequence
+                                                                             features using JavaScript and SVG with pViz.js. Bioinformatics, 30,
+References                                                                   3408–3409.
+Eroshkin,A.M. et al. (2014) bNAber: database of broadly neutralizing HIV   Porta-Pardo,E. et al. (2015) Cancer3D: understanding cancer mutations
+  antibodies. Nucleic Acids Res., 42, D1133–D1139.                           through protein structures. Nucleic Acids Res., 43, D968–D973.
+

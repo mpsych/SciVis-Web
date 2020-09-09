@@ -1,0 +1,702 @@
+                         Design and Implementation of Web-Based
+                             Hierarchy Visualization Services
+
+                            Willy Scheibel, Judith Hartmann, and Jürgen Döllner
+              Hasso Plattner Institute // Faculty of Digital Engineering // University of Potsdam, Germany
+                                     willy.scheibel@hpi.de, juergen.doellner@hpi.de
+
+
+
+
+Keywords:     Service-Based, Web-Based Visualization, Hierarchy Visualization, Treemap Visualization, REST API
+
+Abstract:     There is a rapidly growing, cross-domain demand for interactive, high-quality visualization techniques as
+              components of web-based applications and systems. In this context, a key question is how visualization
+              services can be designed, implemented, and operated based on Software-as-a-Service as software delivery
+              model. In this paper, we present concepts and design of a SaaS framework and API of visualization techniques
+              for tree-structured data, called H I V I S ER. Using representational state transfer (REST), the API supports
+              different data formats, data manipulations, visualization techniques, and output formats. In particular, the API
+              defines base resource types for all components required to create an image or a virtual scene of a hierarchy
+              visualization. We provide a treemap visualization service as prototypical implementation for which subtypes
+              of the proposed API resources have been created. The approach generally serves as a blue-print for fully
+              web-based, high-end visualization services running on thin clients in a standard browser environment.
+
+
+
+1    INTRODUCTION                                                tions, weaknesses, and restrictions of heavy, data-
+                                                                 rich applications (Mwalongo et al., 2016). Further,
+Web-based applications and systems demand for in-                SaaS facilitates continuous deployment as client users
+teractive, high-quality visualization across all do-             are not concerned with installing new software ver-
+mains, in particular in the fields of big data analyt-           sions. The SaaS approach can be applied to the
+ics. The rapidly growing demand results from the key             management and provisioning of hierarchy visualiza-
+advantages of visualization services, e.g., data can be          tions: The server-side implementation manages tree-
+kept on the server side and a dedicated server hard-             structured data and its visualization, while the client-
+ware environment can be assumed for the implemen-                side implementation provides interactive access based
+tation of high-end rendering techniques (Wood et al.,            on service requests. The key component represents
+2008). A dominant category represents hierarchical               the API used for hierarchy visualization services as
+visualization as tree-structured data is omnipresent             it controls the communication between visualization
+in almost all application domains, e.g., demograph-              services and client applications. In addition, the API
+ics (Jern et al., 2009), business intelligence (Roberts          should be customizable (e.g., in terms of functional
+and Laramee, 2018), health (Chazard et al., 2006),               aspects such as layouts, stylization, etc.) as most ap-
+and software development (Vernier et al., 2018).                 plications want to customize visualization techniques
+Within the past three decades, over 300 hierarchy vi-            to their specific requirements.
+sualization techniques and variations have been pro-                 This paper presents concepts and design of a hi-
+posed (Schulz, 2011).                                            erarchy visualization service based on a REST API,
+    In recent years, the delivery model Software-as-             called H I V I S ER. The API is primarily focused on
+a-Service (SaaS) became prevalent for most busi-                 a three-tier architecture as proposed by Wood et al.:
+ness applications. Roughly speaking, it is based on              Client Applications, Web Services, and Visualiza-
+a well-designed separation between back-ends and                 tion Components (Wood et al., 2008). H I V I S ER is
+front-ends, which supports centralized data manage-              a resource-based Web API, i.e., all operations are
+ment, supports high degree of data privacy and pro-              mapped to creating, modifying or deleting resources.
+tection (Koller et al., 2004), and allows for service            Using the concept of visualization pipelines (Haber
+provisioning with reduced bandwidth requirements.                and McNabb, 1990), H I V I S ER defines 16 base re-
+Thereby, SaaS can overcome many typical limita-                  source types, representing required concepts, results,
+and intermediaries. These resource types provide the        mixture of those dimensionalities as mixed-projection
+required flexibility for the API. To match the capabil-     treemaps (Limberger et al., 2017).
+ities of a specific visualization service, base resource         Treemaps represent a prominent family of implicit
+types are specialized by means of subtypes. The             hierarchy visualization techniques using a space-
+route definitions of H I V I S ER are based on the base     filling approach (Johnson and Shneiderman, 1991).
+resource types while specifics are integrated within        They compute recursively divided areas that include
+request and response bodies. Further, H I V I S ER re-      the nested nodes of a given hierarchy. Rectangular
+quires a route providing its OpenAPI specification –        treemaps include Slice and Dice (Johnson and Shnei-
+the machine readable documentation of all routes and        derman, 1991), Strip (Bederson et al., 2002), Squar-
+expected request bodies.                                    ified (Bruls et al., 2000), Hilbert and Moore (Tak
+    The remainder of this paper is structured as fol-       and Cockburn, 2013), and Hybrid Treemap Lay-
+lows: Section 2 discusses related work. Section 3           outing (Hahn and Döllner, 2017), where the lat-
+describes the H I V I S ER API and the underlying re-       ter one combines several different treemap layout
+quirement analysis. Section 4 exemplifies the usage         algorithms within a single treemap. Some lay-
+of the API for a treemap visualization service. Sec-        out algorithms also use non-rectangular shapes like
+tion 5 gives conclusions and outlines future work.          Voronoi Treemaps (Balzer and Deussen, 2005) and
+                                                            GosperMaps (Auber et al., 2013).
+
+2    RELATED WORK                                           Visualization in the Web. The development of
+                                                            approaches to display visualizations – either as a
+Three domains are relevant for a SaaS-based approach        static images or a dynamic interactive application
+to hierarchy visualization: hierarchy visualization         – has been influenced by web browser technolo-
+techniques, web-based visualization approaches and          gies (Mwalongo et al., 2016). Browsers can dis-
+technologies, and Web APIs.                                 play visualizations using built-in methods (e.g., the
+                                                            img tag (Berners-Lee and Connolly, 1995), Scal-
+                                                            able Vector Graphics (SVG) (Ferraiolo et al., 2003))
+Hierarchy Visualization Techniques. A variety
+                                                            or using external plugins (Java applets or the Flash
+of different hierarchy visualization techniques have
+                                                            player). Further, the HTML5 specification introduced
+been created, which can be distinguished be-
+                                                            the canvas element in 20141 . This canvas can dis-
+tween implicit and explicit hierarchy visualization
+                                                            play hardware-accelerated 2D or 3D visualizations
+techniques (Schulz and Schumann, 2006). Ex-
+                                                            using the Web Graphics Library (WebGL)2 . Simil-
+plicit hierarchy visualization techniques visualize
+                                                            iar to SVG for 2D content, there are approaches to
+the parent-child relations through explicit links be-
+                                                            describe 3D content called Declarative 3D. To date,
+tween the nodes as Tree Diagrams (Chomsky, 1965),
+                                                            declarative 3D approaches like X3DOM (Behr et al.,
+Cone Trees (Robertson et al., 1991), or Botani-
+                                                            2009) and XML3D (Sons et al., 2010) have no native
+cal Trees (Kleiberg et al., 2001). In contrast, im-
+                                                            support by any browser. A typical workaround are
+plicit hierarchy visualization techniques indicate the
+                                                            polyfill layers (Sons et al., 2010).
+relations by the arrangements of the nodes. The
+                                                                Besides the aforementioned techniques, there are
+most prevalent implicit visualization techniques are
+                                                            two different approaches to display visualizations in
+Icicle Plots (Kruskal and Landwehr, 1983) and
+                                                            the Web: The imperative approach usually requires
+Treemaps (Johnson and Shneiderman, 1991). Most
+                                                            a programmer to program the resulting visualiza-
+other implicit techniques are related to one, if not
+                                                            tion, while the declarative approach creates a visu-
+both of them (Schulz et al., 2011). Some hierarchy
+                                                            alization by means of parameter configuration in-
+visualization techniques also mix the concept of im-
+                                                            stead of programming. Examples include impera-
+plicit and explicit visualization of hierarchies, result-
+                                                            tive WebGL (Limberger et al., 2013) and declara-
+ing in hybrid visualization techniques like Exploded
+                                                            tive 3D (Mesnage and Lanza, 2005; Limberger et al.,
+Treemaps (Luboschik and Schumann, 2007) or Infor-
+                                                            2016b), respectively. Improving on the plain tech-
+mation Slices (Andrews and Heidegger, 1998). Other
+                                                            niques, visualization toolkits support developers by
+classifications are based on dimensionality (e.g., 2D,
+                                                            providing abstraction on data manipulation, visual-
+2.5D, and 3D) or alignment of the nodes (Schulz,
+                                                            ization techniques, navigation, and interaction. Ex-
+2011). The Web API of a visualization service,
+                                                            amples hereof are Prefuse (Heer et al., 2005), its suc-
+however, should not be limited to a specific dimen-
+sionality or the concrete layout of displayed compo-            1 https://www.w3.org/TR/html5/semantics-
+nents as these are all implementation details encapsu-      scripting.html#the-canvas-element
+lated by the service. Some visualizations even use a            2 https://www.khronos.org/registry/webgl/specs/latest/2.0/
+cessor Flare3 as well as Protovis (Bostock and Heer,                                  Client     Server
+                                                                            Client                                       Visualization
+2009) and its successor D3 (Bostock et al., 2011).                        Applications                                      Service
+
+
+
+
+                                                                                                   Web-API
+Providing a full server-client setup, the Shiny4 pack-             uses               uses                    provides
+age for the R statistics and visualization environment
+allows for rapid prototyping of visualizations as a ser-
+                                                            Product                                          extends
+vice. Examples for declarative approaches are visual-      Consumer                                                      implements
+ization grammars like Vega Lite (Satyanarayan et al.,                      develops              designs
+2017) and ATOM (Park et al., 2018). Specific to hi-
+erarchy visualization is the HiVE notation (Slingsby
+et al., 2009). Ready-to-use services as TreeMappa5
+                                                                          API User             API Designer              Visualization
+allows to create images of treemaps from CSV data.                                                                         Designer
+Other declarative approaches are charting libraries
+                                                           Figure 1: There are four groups of stakeholders that inter-
+like the SVG-based Google Visualization API6 , the         act with a hierarchy visualization service. It is shaped by
+canvas-based Chart.js library7 , or the D3-based c38 .     the API designer and the visualization designer. The API
+Web APIs can also be used as a declarative approach        user develops client applications that use a hierarchy visu-
+to visualize data. In the domain of web-based 3D geo-      alization service to manage tree-structured data or display
+data portrayal, the OGC 3D Portayal Service (Hage-         depictions of the data. These client applications are used by
+dorn et al., 2017) specifies a standardized Web API        the product consumer.
+that supports the delivery of 3D scene data and server-
+side scene rendering. These service-based process-         2007) or XML-RPC9 , while others use JSON, e.g.,
+ing and provisioning techniques are used for image-        JSON-RPC10 or define their own notation to en-
+abstraction (Richter et al., 2018) and point clouds as     code calls, like gRPC11 or GraphQL12 . Latter Web
+well (Discher et al., 2019).                               APIs use the architectural style of the Representa-
+                                                           tional State Transfer (REST) for distributed hyperme-
+Web APIs. An Application Programming Interface             dia systems (Fielding, 2000). A RESTful service is
+is a specification of possible interactions with a soft-   defined by the following six constraints: Client-server
+ware component. It contains interfaces by means of         Architecture, Layered System, Stateless, Cacheabil-
+classes, objects, functions, parameters together with      ity, Code on Demand, and Uniform Interface. In
+their semantics and expected behavior, which allows        order to obtain a uniform interface, Fielding further
+programmers to access specific features or data of an-     defined four architectural constraints for the uniform
+other application, operating system, or service. An        interface: Identification of Resources, Manipulation
+API that is accessed using the Hypertext Transfer Pro-     through Representations, Self-descriptive Messages,
+tocol (HTTP) is called a Web API.                          and Hypermedia as the Engine of Application State.
+    Stylos and Myers describe three stakeholders that      Web APIs that conform to these constrains are called
+interact with an API directly or indirectly: the API de-   RESTful APIs.
+signer, the API user and the product consumer (Stylos          An API is usually specified using interface de-
+and Myers, 2007). They imply that an API is created        scription languages (IDL), which describe interfaces
+to provide an interface for an existing implementa-        using programming-language-agnostic syntax and se-
+tion. Therefore, no stakeholder is included, that im-      mantics. As such, the Web Service Description Lan-
+plements a system, which uses an existing API Design       guage (WSDL) is an XML-based IDL that is com-
+as an interface. For this purpose, we add the visual-      monly used to specify SOAP server interfaces. (Chin-
+ization designer stakeholder (Figure 1).                   nici et al., 2007). In constrast, the RESTful equiv-
+    Approaches for Web APIs can be classified as           alent to WSDL is the Web Application Description
+either action-based or resource-based. Former Web          Language (WADL) (Hadley, 2006). A more recent
+APIs use an RPC-based protocol to trigger an ac-           RESTful API description language is OpenAPI 13 , for-
+tion on the server (Nelson, 1981). Some of these           merly known as Swagger Specification. Its tooling14
+protocols encode calls with XML, e.g., the service-        supports additional languages for client libraries and
+oriented architecture protocol (SOAP) (Hadley et al.,      IDE integration.
+   3 http://flare.prefuse.org/                                 9 http://xmlrpc.scripting.com/spec.html
+   4 https://shiny.rstudio.com/                               10 https://www.jsonrpc.org/specification
+   5 http://www.treemappa.com/                                11 https://grpc.io/
+   6 https://developers.google.com/chart/                     12 http://facebook.github.io/graphql/
+   7 https://www.chartjs.org/                                 13 https://www.openapis.org/
+   8 https://c3js.org/                                        14 http://openapi.tools/
+Figure 2: Examples of hierarchy visualization techniques that are covered by the concepts of H I V I S ER. From top to bottom
+and left to right: 2.5D Icicle Plot, Sunburst View, 2.5D treemap, Voronoi treemap, treemap landscape, radial layout depiction,
+and a treemap using sketchiness as visual variable.
+
+
+    Different models have been created to evaluate                and the output format of visualizations. Depending
+an API based on varying criteria. Stylos and Myers                on use case and capabilities of the client application,
+evaluate the quality of an API based on its usabil-               different output formats or intermediate results must
+ity and power (Stylos and Myers, 2007). Contrarily,               be accessible by the client. For example, some client
+the Richardson Maturity Model (RMM) evaluates the                 applications implement their own rendering of a hier-
+maturity of a Web API based on its adherence to the               archy visualization to enable interactive exploration,
+principles of REST (Webber et al., 2010).                         while others display static images of visualizations.
+                                                                  The API should support both and further use cases,
+                                                                  mostly occurring as extensions to phases of the visu-
+                                                                  alization pipeline. As such, a variety of visual vari-
+3     H I V I S ER API                                            ables is desirable (Limberger et al., 2016a). Espe-
+                                                                  cially a fine-grained control over the management of
+We propose an approach for a Web API for the man-                 data allows for sophisticated handling of time-varying
+agement and provisioning of hierarchy visualizations              data (Tu and Shen, 2008; Scheibel et al., 2018), data
+(Figure 2), named Hierarchy Visualization Service –               provided from different sources, hierarchies with dif-
+H I V I S ER. The API supports access and control to              ferent characteristics (Caudwell, 2010), and the con-
+all parts of a hierarchy visualization system: the im-            figuration of the visual mapping of subtrees (Slingsby
+port and manipulation of data, mapping the data to                et al., 2008; Schulz et al., 2013).
+a visualization, and providing the visualization to a
+client via web requests (Figure 3). The route defini-
+tions are based on resource types that are derived from           Domain-agnostic Features. From an API design
+use cases in hierarchy visualization. These routes                viewpoint – and disregarding the domain of hierarchy
+are meant to be general extensions points for specific            visualizations –, H I V I S ER must support the follow-
+hierarchy visualization services by specialization of             ing general requirements for efficient usage:
+requests and responses, rather than adding new re-                Adaptability and Extensibility It must be possible
+sources or routes to the API.                                       to adapt a hierarchy visualization service API
+                                                                    to the capabilities of the visualization service.
+3.1    API Requirements                                             This adaptation is characterized by extending con-
+                                                                    cepts of the abstract hierarchy visualization ser-
+The capabilities of the client depend on the use case.              vice – instead of adding new ones – so all adapted
+Some use cases require a rich client implementation,                H I V I S ER APIs keep a consistent structure.
+e.g., one that enables interactive exploration in the vi-         Documentation of General Specification A hierar-
+sualization. Other use cases only require a rendered                 chy visualization service API must be specified
+image or a model of the visualization. The client may                unambiguously. A client application programmer
+provide the visualized data and configurations about                 who uses a specific hierarchy visualization service
+data manipulations, the visual mapping of the data                   via Web API must know how to use and adapt it.
+                                                                                           Transformation
+
+
+                                                                                                             Model
+                   Data                      Derived Data                   Visualization
+    Data                          Data                                                                       Image
+ Provisioning                  Preparation                      Mapping
+                                                                                            Rendering
+   Control        Provide        Control         Provide         Control        Provide   Control Control Provide Provide
+                                             Hierarchy Visualization Service
+Figure 3: The required features of a hierarchy visualization service are derived from an adapted visualization pipeline (Haber
+and McNabb, 1990). Depending on the use case the execution of particular phases of the pipeline is distributed on server and
+client. Clients require control over these phases and must be able to access final and intermediary results.
+
+
+Documentation of Adapted Specification Further,                       the client application. The API enables the man-
+   an API user should be able to discover all routes                  agement of the transformation process within the
+   and understand input parameters and their mean-                    visualization service.
+   ing without looking at external documentation.
+                                                                  Request Management Configurations The config-
+   A hierarchy visualization service must specify a
+                                                                     urations for the transitional steps, which are per-
+   way to include comprehensive documentation as
+                                                                     sisted within the visualization stack, need to be
+   part of the web service.
+                                                                     made accessible to the client applications until a
+                                                                     request to delete them is received by the visual-
+Core Features. Based on the model of a visualiza-                    ization stack.
+tion pipeline as service, the API has to provide the
+following functionalities:                                        Requesting Data and Derived Data A client appli-
+                                                                     cation may need access to the data or the derived
+Data Provisioning A hierarchy visualization ser-                     data for their own implementations of a visualiza-
+   vice, and thus, its API, must include a way to pro-               tion technique. A hierarchy visualization service
+   vide data for a client application.                               must provide a way to request data and derived
+Data Transformation The visualization service                        data from the visualization stack.
+   transforms the source data suited for visualiza-
+                                                                  Request Images and Models The hierarchy visual-
+   tions (e.g., normalization, thresholding, general
+                                                                     ization service must enable the web application to
+   transformations). A client application must be
+                                                                     request rendered images and models of a visual-
+   able to manage data transformations through the
+                                                                     ization from the visualization stack.
+   API.
+Visualization Mapping Visualization mapping de-
+   scribes the process of mapping characteristics of              Non-functional Requirements. In contrast to pro-
+   the derived data to visual characteristics – a virtual         visioning of actual features, an efficient API should be
+   scene. This includes the selection of a visualiza-             further constrained in how the features are provided.
+   tion technique available within the visualization              One such requirement is the reusability by means of
+   service. A hierarchy visualization service must                re-usage of information and previously submitted or
+   include an interface for visual mapping, including             computed results on a visualization service. This fa-
+   layout and visual variables (Carpendale, 2003).                cilitates the creation of visualizations with the same
+                                                                  options for different data as the options do not have
+Manage Rendering Process The transformation of                    to be recreated. Further, reusability of information
+  a virtual scene to an image is called rendering.                allows to use already processed information, instead
+  The API must enable the management of the ren-                  of processing the same information twice. To ensure
+  dering process within the visualization service.                an efficient process, the amount of requests and the
+  This includes the ability to trigger the rendering              request response time should be as minimal as pos-
+  process and to provide options that influence the               sible. As a RESTful API, H I V I S ER should fulfill
+  rendering process, like image dimensions or addi-               all requirements to qualify as a Level 3 service in
+  tional effects.                                                 the Richardson Maturity Model (Webber et al., 2010).
+Manage Model Process Virtual scenes may also be                   These requirements are: using a different URL for ev-
+  transformed into models, e.g., in declarative 3D                ery different resource, using at least two HTTP meth-
+  formats like XML3D and X3DOM. These mod-                        ods semantically correct, and using hypermedia in the
+  els can be archived or directly displayed within                response representation of resources.
+                                   VisualizationImage         VisualizationModel
+                                                                                           cially Attribute types and meta information are sub-
+                                ImageOptions                            ModelOptions       ject for specialization. Per Dataset, the list of Nodes
+    DataSource                   Dataset                    Visualization
+                                                                                           is accessible, including their parent-child relationship
+                                                                                           that represents the tree-structure that is used for lay-
+                         Node                                                              outing and hierarchical attribute processing. Mea-
+      Attribute                   Buﬀer                  BuﬀerViewOptions
+                                                                                           sured data per Dataset is organized in Buffers that
+                                                                                           are associated with Attributes, where values are ac-
+                                BuﬀerView               BuﬀerTransformations               cessible per attribute and node.
+
+         TopologyAttribute                 Layout                   VisualizationOptions
+
+         NumericAttribute             VisualVariable                                       Derived Data. Additional, derived Attribute re-
+         NominalAttribute                  Labeling                                        sources can be created by transformation of attribute
+Figure 4: The base resource types of H I V I S ER are derived                              values using BufferTransformations. This is the
+from the standard visualization pipeline, providing access                                 approach to support data preprocessing and prepa-
+and control to all parts of a hierarchy visualization system:                              ration. The derived Attributes are organized as
+the import and manipulation of data, mapping the data to a                                 BufferViews, a subtype of Buffers, whose options
+visualization, and providing the visualization to a client.                                contain a list of BufferTransformations specifying
+                                                                                           the actual transformations of the attribute values. Spe-
+3.2       Resource Types                                                                   cific transformation operations, e.g., normalization,
+                                                                                           combination, or filtering, are subject to specific visu-
+The design of H I V I S ER includes the definition of 16                                   alization services. For subsequent mapping to layout
+base resource types, which represent the resources                                         or further visual variables, source attributes and de-
+required to create an image or a model of a hierar-                                        rived attributes are used polymorphous.
+chical visualization of data (Figure 4). From dataset
+provisioning to image synthesis and model creation,
+                                                                                           Visualization. The resource type Visualization
+all sources, intermediaries, and results are creatable,
+                                                                                           represents the combination of a selected Dataset,
+configurable, and requestable. The main categories
+                                                                                           a Layout configuration and further Attributes
+of resources are source data, derived data, visualiza-
+                                                                                           that are mapped to additional visual variables.
+tion, images, and 3D models. Through assignment
+                                                                                           The mappings are configurable through the
+to a resource of a defined type, information becomes
+                                                                                           VisualizationOptions. The use of Labeling
+identifiable and therefore reusable. The high amount
+                                                                                           enhances the visualization by additional display of
+of resource types enables the reusability of data and
+                                                                                           data that is mapped as text. These resource types are
+intermediate results on a high level of granularity.
+                                                                                           the main target for specialization by visualization ser-
+Although resource types are specified by H I V I S ER,
+                                                                                           vices, as the supported layout algorithms, additional
+most attributes are target to specification for visu-
+                                                                                           visual variable mapping and further visualization
+alization services, as they are highly visualization-
+                                                                                           techniques are the main components of a visualiza-
+technique-specific.
+                                                                                           tion service, while being highly use-case dependent.
+                                                                                           The benefit of H I V I S ER is not a restriction on
+Source Data. Data is provided to a visualization                                           specific features but providing guidelines on concepts
+service by creating resources of type DataSource,                                          used in hierarchy visualization.
+which includes the origin of data. A single snap-
+shot is identified through a Dataset. Thereby, a
+DataSource encapsulates a tree-structured dataset in-                                      Images and Models. Final results of the API are
+cluding its evolution. The API does not limit the pos-                                     static images and three-dimensional models. The re-
+sible types for data provisioning. Typical uses in-                                        source type VisualizationImage is used to man-
+clude user upload of single files (e.g., CSV files or                                      age rendered images from a specific Visualization
+Excel sheets) or the configuration of an online data                                       resource.    Image-related configuration is passed
+source and a periodical data extraction through user-                                      through ImageOptions. Typical parameters include
+configured scripts. An Attribute is an identifier for                                      the position of the virtual viewpoint, dimensions
+data mapping later in the pipeline, including meta in-                                     of the image as well as the file type. Selection
+formation about their characteristics, e.g., their type                                    of multiple renderers and their parameterization are
+and value ranges. Prevalent types are the topology                                         subject to the ImageOptions, too. In a similar
+of a dataset to derive a layout and numeric, ordinal,                                      way, VisualizationModels are configured by using
+or nominal data for visual variable mapping. Espe-                                         ModelOptions resources.
+                                                                                                                                         DELETE
+                                                                                                                                 PATCH
+                                                                                                                    POST
+                                                                                                              GET
+
+
+                                                                                                                           PUT
+ Resource Type                   Route
+ (Root)                          /                                                                            3
+ DataSource                      /dataSources                                                                 3     3      3     3       3
+ Dataset                         /dataSources/:dataSourceId/datasets                                          3
+ Node                            /dataSources/:dataSourceId/datasets/:datasetName/nodes                       3
+ Buffer                          /dataSources/:dataSourceId/datasets/:datasetName/buffers                     3
+ BufferViewOptions               /bufferViewOptions                                                           3     3      3     3       3
+ BufferTransformation            /bufferTransformations                                                       3     3      3     3       3
+ Attribute                       /attributes                                                                  3
+ VisualizationOptions            /visualizationOptions                                                        3     3      3     3       3
+ VisualVariable                  /visualVariables                                                             3     3      3     3       3
+ Layout                          /layouts                                                                     3     3      3     3       3
+ Labeling                        /labelings                                                                   3     3      3     3       3
+ Visualization                   /visualizations                                                              3     3      3     3       3
+ ImageOptions                    /imageOptions                                                                3     3      3     3       3
+ ModelOptions                    /modelOptions                                                                3     3      3     3       3
+ VisualizationImages             /images                                                                      3     3      3     3       3
+ VisualizationModel              /models                                                                      3     3      3     3       3
+ (OpenAPI Specification)         /openAPI                                                                     3
+
+Table 1: H I V I S ER defines routes based on its base resource types. Subtypes are addressable through their base resource types.
+Therefore, no additional route definitions are added in an adaption of H I V I S ER. Resource types that are created without use
+of the API do not have any modifying operations available.
+
+ Operation Collection (/:type)                                           Resource (/:type/:id)
+     GET Retrieve response representation of all resources of Retrieve response representation of resource
+         collection
+    POST Creates a new collection resource                    –
+     PUT Replace entire collection                            –
+   PATCH –                                                    Updates properties of a resource
+  DELETE Deletes all resources of collection                  Deletes resource
+Table 2: The implication of a HTTP method depends on the request targeting a single resource or a collection of resources.
+By H I V I S ER, POST and PUT are not defined on single resources and PATCH is not defined on collections of resources.
+
+
+3.3    Routes and Operations                                        through their base type route. For a full level 3 REST-
+                                                                    ful API, multiple HTTP methods has to be used se-
+The route definitions of H I V I S ER are based on the              mantically correct. H I V I S ER uses the methods GET,
+base resource types. Specific operations executed                   POST, PUT, PATCH, and DELETE according to their
+within the visualization service are determined based               common semantics (Table 2). For compatability with
+on the route and the HTTP methods (Table 2). The                    transmission formats as JSON – a format with no in-
+base resource types enable the provisioning of data to              herent way of determining an object type –, the gen-
+the visualization service, manipulating the data and                eral property type on a resource is used to determine
+accessing the derived data, mapping characteristics                 the subtype association. To fulfill the documentation
+of the data to visual attributes of a hierarchy visual-             requirements, H I V I S ER requires the provisioning of
+ization, and rendering an image or creating a model                 a complete OpenAPI specification through a route of
+of the visualization. H I V I S ER defines routes based             the API. This enables a client application to automat-
+on the base resource types, therefore a visualization               ically adapt to different visualization services using
+designer does not need to extend a visualization ser-               H I V I S ER API as interface, e.g., by adapting their
+vices’ API with additional route definitions. The de-               graphical user interface. For the sake of simplicity,
+fined subtypes influence only the request and response              this route is specified to be /openAPI.
+contents and formats.
+                                                                    API Adaptions. H I V I S ER is designed to support
+Mapping of Resources to Routes. The base re-                        various hierarchy visualization techniques and imple-
+source types are available as routes (Table 1), al-                 mentations. Therefore, the API designer should be
+though subtypes are excluded as they are addressable                able to adapt the API to the capabilities of the visu-
+alization service – at best, without structural changes         Rendering and Provisioning. The treemap images
+to the API. This is accomplished as the API designer            are rendered using progressive rendering (Limberger
+does not need to create new base resource type related          and Döllner, 2016), allowing for both basic 2D depic-
+to the creation of an image or a model of a visualiza-          tions of treemaps and sophisticated graphical effects
+tion. Instead, the base resource types have to be ex-           for virtual 3D environments (Figure 5). In addition to
+tended, i.e., subtypes have to be created. Typically,           images, the service provides three-dimensional mod-
+this adaption is done continuously within the devel-            els for client-side embedding and rendering. For use
+opment of the visualization service.                            within rich clients, the treemap service provides ex-
+                                                                tracted and derived data by means of tree-structured
+                                                                data, attribute values, and layouts as data buffers.
+4     TREEMAPS AS A SERVICE
+                                                                Client. The thin client is a Web page to man-
+To demonstrate H I V I S ER, we show the treemap visu-          age tree-structured data and configure treemap vi-
+alization service https://hiviser.treemap.de. The ser-          sualizations. It embeds rendered images and three-
+vice provides data management for tree-structured               dimensional models, whereby models are rendered
+data as well as configuration and provisioning of               using polyfill layers (Figure 6).
+treemap-based data visualization. It is accessible via
+H I V I S ER API for custom clients and a prototypical
+Web frontend. To access the service via H I V I S ER,
+the API has to be specialized by means of sub-types              1   { "visualization": {
+                                                                 2      "name": "Tierpark2014",
+towards the capabilities of the service.                         3      "dataSource": "tierpark",
+                                                                 4      "dataset": [ "Tierbestand2014" ],
+                                                                 5      "options": {
+4.1     Service and Client Features                              6        "name": "2.5D Population Count Map",
+                                                                 7        "type": "2.5d-treemap",
+                                                                 8        "layout": {
+The service provides all concepts and routes as pro-             9          "weight": {
+posed by H I V I S ER (example request in Listing 1).           10            "name": "count-normalized",
+                                                                11            "source": "count",
+Regarding source data, an end user can create own               12            "transformations": [
+datasets via DataSources and upload data as CSV.                13              {
+                                                                14                "type": "normalization",
+In addition to the visualization-specific parts, the            15                "min": 0,
+treemap service uses user management to isolate dif-            16                "max": "source"
+                                                                17              }
+ferent users and their datasets from each other15 . The         18            ]
+implementation specifics of the service are as follows:         19          },
+                                                                20          "algorithm": "Strip",
+                                                                21          "parentPadding": 0.01,
+                                                                22          "siblingMargin": 0.03
+Data and Preprocessing. The first column of the                 23        },
+CSV file is expected to be the node identifier with             24        "labeling": {
+                                                                25          "labels": "names"
+slashes as delimiters to encode the parent path of              26        },
+nodes (e.g., a file path). The parts of the node identi-        27        "visualVariables": {
+                                                                28          "color": {
+fier are used as a nominal attribute for node labeling          29            "attribute": ...,
+(for both inner and leaf nodes). The other columns of           30            "parentGradient": "white",
+                                                                31            "leafGradient": "colorbrewer-3-OrRd"
+the CSV are used as further numeric attributes that are         32          },
+registered within the service and exposed via the API.          33          "height": {
+Derived data is provided by means of attribute value            34            "attribute": ...
+                                                                35          }
+normalization and simple transformations.                       36        }
+                                                                37      }
+                                                                38   },
+                                                                39   "options": {
+Layouting and Mapping. The service provides                     40      "width": 1920,
+rectangular treemap layouting algorithms, node off-             41      "height": 1080,
+sets for hierarchical structure depiction, and the fur-         42      "eye": [ 0.0, 1.2, 0.8 ],
+                                                                43      "center": [ 0.0, 0.0, 0.0 ],
+ther visual variables color and height – allowing the           44      "up": [ 0.0, 1.0, 0.0 ]
+creation of 2.5D treemaps. Labeling is supported                45   } }
+through use of OpenLL (Limberger et al., 2018).                 Listing 1: Example request JSON for a treemap image
+                                                                at the route /images. Repetitive sub-objects are omitted
+    15 Asprototypical service, it provides functionality, but   for brevity.
+neither safety nor security.
+Figure 5: A rendered image as provided by the treemap service. The depicted dataset is a manually measured software system
+by means of software metrics of the Open Source project ElasticSearch. The weight of a node is derived from the Lines-of-
+Code of a source code file, the height is mapped from the percentage of code within deep nesting (NL) and the cyclomatic
+complexity is mapped to color using a sequential scheme.
+
+
+
+
+Figure 6: The detail page of the thin client displays in interactive visualization (left) and already created images and models
+(right). The configuration for all depictions is derived from the request of Listing 1. Please note that the interactive client does
+not use the same color scheme as the service.
+4.2   Adaptations of H I V I S ER                         TreemapOptions restrict the subtype of a Layout
+                                                          referenced in the layout property to TreemapLayout.
+To expose all capabilities of the treemap service, the    The map for the value of the visual variables
+H I V I S ER API is specialized. During the adaptation    properties contains the keys color and height,
+process, subtypes of the following base resource types    which are limited to refer to ColorVariable and
+had to be defined.                                        HeightVariable, respectively. For labeling, no spe-
+                                                          cialized subtype is defined. Therefore, labeling refers
+DataSource. Regarding the data management, the            to the base resource type Labeling, containing only
+standard concepts suffice. However, the service au-       a mapping of the labels to a NominalAttribute.
+tomatically process newly uploaded data and parses
+the nodes, attributes, and all values for subsequent      Visualization. A new subtype of Visualization
+provisioning via the API. As additional properties, a     named Treemap is added. It restricts the options to
+human-readable identifier to identify a dataset for se-   TreemapOptions and restricts the amount of refer-
+lection in a user interface is supported. The Dataset     enced Datasets to exactly one as this service can
+is subtyped to allow for a measurement timestamp and      only visualize one Dataset at a time.
+a human-readable identifier, too.
+                                                          VisualizationImage and ImageOptions. Images
+BufferTransformations. The         standard      type     of a treemap are created in a three-dimensional
+for transformation has to be subtyped to sup-             space, therefore the position of the virtual camera
+port specialized parameters for different types of        and the view direction are important. A subtype
+BufferTransformations. For example, the nor-              of ImageOptions for is added to the adaption of
+malization of data is configured by user-specified or     H I V I S ER, named 3DImageOptions. It adds the ad-
+data-derived minimum and maximum values.                  ditional properties for eye, center and up vectors to
+                                                          adjust the virtual camera. For the actual image of
+Layout and Layout Buffer. The treemap service             a treemap the subtype TreemapImage of Image is
+allows for the creation of 2D and 2.5D rectangular        added. It restricts Visualization to Treemap and
+treemaps with additional color mapping. This has to       options to 3DImageOptions. In addition to provision-
+be reflected in a subtype of the Layout that is ex-       ing of the visualizations’ rendering as color image,
+tended by a property to map a numeric attribute to        technical depiction as id buffers and normal buffers
+the ground area weight and the property to specify a      by means of false-color images can be requested, too.
+treemap layout algorithm. Additional properties are
+a numeric attribute for the sorting of the nodes, as
+well as padding and margin between the nodes for
+nested depiction. In order to provide the intermediate
+                                                          5    CONCLUSIONS
+layout as response, a subtype of an Attribute, the
+RectangularTreemapLayoutAttribute, is added.              This paper presents concepts, implementation, and
+The associated geometry data to a layout for a specific   use cases for the H I V I S ER API, providing a blue-
+dataset is contained in the subtype of Buffer named       print of a Web API for hierarchy visualization. The
+RectangularTreemapLayoutBuffer.                           API covers the communication between client ap-
+                                                          plications and hierarchy visualization services for
+                                                          tree-structured data. Thereby, H I V I S ER defines
+VisualVariables. The provided treemap has two             base resource types derived from standard visu-
+additional visual variables to which attributes are       alization pipelines and shared aspects of hierar-
+mapped: color and height. To represent these visual       chy visualization techniques. As an example of
+variables two subtypes of VisualVariable have to          its applicability, the open hierarchy visualization
+be created: ColorVariable and HeightVariable.             service https://hiviser.treemap.de is accessible via
+ColorVariable adds additional properties to select a      H I V I S ER API to provide treemap visualization as a
+color schemes for both non-leaf nodes and leaf nodes.     service. The service can be used with own clients or
+HeightVariable introduces a global scaling factor.        the accompanying thin client.
+                                                              H I V I S ER facilitates the adjustment of client ap-
+VisualizationOptions. The TreemapOptions as               plications to visualization services, by making it
+subtype of VisualizationOptions represent a spe-          faster, cheaper and less error-prone. A route exposing
+cific map theme.     Thereby, they add a name             its OpenAPI specification, i.e., the machine-readable
+property, providing a human-readable identifier.          specification of all routes, parameters, and request
+and response definitions, further improves the adjust-        Carpendale, M. S. T. (2003). Considering visual variables
+ment processes. Additionally, it enables for fine-                  as a basis for information visualization. Technical re-
+grained communication, data management and pri-                     port, University of Calgary, Canada. Nr. 2001-693-14.
+vacy aspects. Although the API is designed to be ac-          Caudwell, A. H. (2010). Gource: Visualizing software ver-
+cessible by client applications, the use of H I V I S ER            sion control history. In Proc. ACM OOPSLA, pages
+                                                                    73–74.
+within a microservice architecture is possible, too.
+    Future work could include combinations of visu-           Chazard, E., Puech, P., Gregoire, M., and Beuscart, R.
+                                                                    (2006). Using Treemaps to represent medical data.
+alizations (Scheibel et al., 2016), superimposed rela-              IOS Studies in Health Technology and Informatics,
+tions (Holten, 2006) as well as more complex dataset                124:522–527.
+formats where the topology is part of the parameter-          Chinnici, R., Moreau, J.-J., Ryman, A., and Weer-
+ization (Slingsby et al., 2009). Further, it could be               awarana, S. (2007). Web Services Description Lan-
+evaluated if the scope of H I V I S ER can be extended              guage (WSDL) Version 2.0 Part 1: Core Language.
+towards non-tree-structured data.                                   http://www.w3.org/TR/2007/REC-wsdl20-20070626.
+                                                              Chomsky, N. (1965). Aspects of the Theory of Syntax. The
+                                                                    MIT Press.
+                                                              Discher, S., Richter, R., Trapp, M., and Döllner, J. (2019).
+ACKNOWLEDGEMENTS                                                    Service-Oriented Mapping, chapter Service-Oriented
+                                                                    Processing and Analysis of Massive Point Clouds in
+We want to thank the anonymous reviewers for their                  Geoinformation Management, pages 43–61. Springer
+valuable comments and suggestions to improve this                   International Publishing.
+paper. This work was partially funded by the German           Ferraiolo, J., Jackson, D., and Fujisawa, J. (2003). Scal-
+Federal Ministry of Education and Research (BMBF,                   able Vector Graphics (SVG) 1.1 Specification. Tech-
+KMUi) within the project “BIMAP” (www.bimap-                        nical report, W3C. http://www.w3.org/TR/2003/REC-
+project.de) and the German Federal Ministry for Eco-                SVG11-20030114/.
+nomic Affairs and Energy (BMWi, ZIM) within the
+project “ScaSoMaps”.                                          Fielding, R. T. (2000). REST: Architectural Styles and
+                                                                    the Design of Network-based Software Architectures.
+                                                                    PhD thesis, University of California, Irvine.
+                                                              Haber, R. B. and McNabb, D. A. (1990). Visualization Id-
+REFERENCES                                                          ioms: A Conceptual Model for Scientific Visualization
+                                                                    Systems. IEEE Computer Society Press.
+Andrews, K. and Heidegger, H. (1998). Information slices:     Hadley, M., Gudgin, M., Karmarkar, A., Mendelsohn,
+     Visualising and exploring large hierarchies using cas-         N., Nielsen, H. F., Lafon, Y., and Moreau, J.-
+     cading, semi-circular discs. In Proc. IEEE InfoVis,            J. (2007). SOAP version 1.2 part 1: Messag-
+     pages 9–12.                                                    ing framework (second edition). Technical report,
+Auber, D., Huet, C., Lambert, A., Renoust, B., Sallaberry,          W3C.         http://www.w3.org/TR/2007/REC-soap12-
+     A., and Saulnier, A. (2013). Gospermap: Using a                part1-20070427/.
+     gosper curve for laying out hierarchical data. IEEE      Hadley, M. J. (2006). Web application description language
+     TVCG, 19(11):1820–1832.                                        (WADL). Technical report, Sun Microsystems Inc.
+Balzer, M. and Deussen, O. (2005). Voronoi treemaps. In       Hagedorn, B., Coors, V., and Thum, S. (2017).
+     Proc. IEEE InfoVis, pages 49–56.                               OGC 3D portrayal service standard.                Tech-
+Bederson, B. B., Shneiderman, B., and Wattenberg, M.                nical report,        Open Geospatial Consortium.
+     (2002). Ordered and quantum treemaps: Making ef-               http://docs.opengeospatial.org/is/15-001r4/15-
+     fective use of 2d space to display hierarchies. ACM            001r4.html.
+     ToG, 21(4):833–854.                                      Hahn, S. and Döllner, J. (2017). Hybrid-Treemap layouting.
+Behr, J., Eschler, P., Jung, Y., and Zöllner, M. (2009).           In Proc. EG EuroVis, pages 79–83.
+     X3DOM - A DOM-based HTML5/ X3D Integration               Heer, J., Card, S. K., and Landay, J. A. (2005). Prefuse:
+     Model. In Proc. ACM Web3D, pages 127–135.                      A toolkit for interactive information visualization. In
+Berners-Lee, T. and Connolly, D. (1995). Hypertext markup           Proc. ACM CHI, pages 421–430.
+     language – 2.0. Technical Report 1866, RFC Editor.       Holten, D. (2006). Hierarchical edge bundles: Visualiza-
+     https://rfc-editor.org/rfc/rfc1866.txt.                        tion of adjacency relations in hierarchical data. IEEE
+Bostock, M. and Heer, J. (2009). Protovis: A graphical              TVCG, 12(5):741–748.
+     toolkit for visualization. IEEE TVCG, 15(6):1121–        Jern, M., Rogstadius, J., and Åström, T. (2009). Treemaps
+     1128.                                                          and choropleth maps applied to regional hierarchical
+Bostock, M., Ogievetsky, V., and Heer, J. (2011). D3 data-          statistical data. In Proc. IEEE iV, pages 403–410.
+     driven documents. IEEE TVCG, 17(12):2301–2309.           Johnson, B. and Shneiderman, B. (1991). Tree-maps: A
+Bruls, M., Huizing, K., and van Wijk, J. (2000). Squarified         space-filling approach to the visualization of hierar-
+     Treemaps. In Proc. EG Data Visualization, pages 33–            chical information structures. In Proc. IEEE Visual-
+     42.                                                            ization, pages 284–291.
+Kleiberg, E., van de Wetering, H., and van Wijk, J. J.          Scheibel, W., Weyand, C., and Döllner, J. (2018). EvoCells
+     (2001). Botanical visualization of huge hierarchies.            – a treemap layout algorithm for evolving tree data. In
+     In Proc. IEEE InfoVis, pages 87–94.                             Proc. ScitePress IVAPP, pages 273–280.
+Koller, D., Turitzin, M., Levoy, M., Tarini, M., Croccia, G.,   Schulz, H.-J. (2011). Treevis.net: A tree visualization ref-
+     Cignoni, P., and Scopigno, R. (2004). Protected inter-          erence. IEEE CG&A, 31(6):11–15.
+     active 3d graphics via remote rendering. ACM ToG,          Schulz, H.-J., Akbar, Z., and Maurer, F. (2013). A genera-
+     23(3):695–703.                                                  tive layout approach for rooted tree drawings. In Proc.
+Kruskal, J. B. and Landwehr, J. M. (1983). Icicle plots: Bet-        IEEE PacificVIS, pages 225–232.
+     ter displays for hierarchical clustering. The American     Schulz, H.-J., Hadlak, S., and Schumann, H. (2011). The
+     Statistician, 37(2):162–168.                                    design space of implicit hierarchy visualization: A
+Limberger, D. and Döllner, J. (2016). Real-time rendering           survey. IEEE TVCG, 17(4):393–411.
+     of high-quality effects using multi-frame sampling. In     Schulz, H.-J. and Schumann, H. (2006). Visualizing graphs
+     ACM SIGGRAPH Posters, page 79. ACM.                             – a generalized view. In Proc. IEEE iV, pages 166–
+Limberger, D., Fiedler, C., Hahn, S., Trapp, M., and                 173.
+     Döllner, J. (2016a). Evaluation of sketchiness as a       Slingsby, A., Dykes, J., and Wood, J. (2008). Using
+     visual variable for 2.5d treemaps. In Proc. IEEE iV,            treemaps for variable selection in spatio-temporal vi-
+     pages 183–189.                                                  sualisation. Palgrave IVS, 7(3):210–224.
+Limberger, D., Gropler, A., Buschmann, S., Döllner, J., and    Slingsby, A., Dykes, J., and Wood, J. (2009). Configur-
+     Wasty, B. (2018). OpenLL: an API for dynamic 2d                 ing hierarchical layouts to address research questions.
+     and 3d labeling. In Proc. IEEE iV, pages 175–181.               IEEE TVCG, 15(6):977–984.
+Limberger, D., Scheibel, W., Lemme, S., and Döllner, J.        Sons, K., Klein, F., Rubinstein, D., Byelozyorov, S., and
+     (2016b). Dynamic 2.5d treemaps using declarative 3d             Slusallek, P. (2010). Xml3d: Interactive 3d graphics
+     on the web. In Proc. ACM Web3D, pages 33–36.                    for the web. In Proc. ACM Web3D, pages 175–184.
+Limberger, D., Scheibel, W., Trapp, M., and Döllner, J.
+                                                                Stylos, J. and Myers, B. (2007). Mapping the space of api
+     (2017). Mixed-projection treemaps: A novel perspec-
+                                                                     design decisions. In Proc. IEEE VL/HCC, pages 50–
+     tive on treemaps. In Proc. IEEE iV, pages 164–169.
+                                                                     60.
+Limberger, D., Wasty, B., Trümper, J., and Döllner, J.
+                                                                Tak, S. and Cockburn, A. (2013). Enhanced spatial sta-
+     (2013). Interactive software maps for web-based
+                                                                     bility with hilbert and moore treemaps. IEEE TVCG,
+     source code analysis. In Proc. ACM Web3D, pages
+                                                                     19(1):141–148.
+     91–98.
+Luboschik, M. and Schumann, H. (2007). Explode to ex-           Tu, Y. and Shen, H. (2008). Visualizing changes of hierar-
+     plain – illustrative information visualization. In Proc.        chical data using treemaps. IEEE TVCG, 13(6):1286–
+     IEEE iV, pages 301–307.                                         1293.
+Mesnage, C. and Lanza, M. (2005). White coats: Web-             Vernier, E. F., Telea, A. C., and Comba, J. (2018). Quanti-
+     visualization of evolving software in 3d. In Proc.              tative comparison of dynamic treemaps for software
+     IEEE VISSOFT, pages 1–6.                                        evolution visualization. In Proc. IEEE VISSOFT,
+                                                                     pages 96–106.
+Mwalongo, F., Krone, M., Reina, G., and Ertl, T. (2016).
+     State-of-the-art report in web-based visualization. EG     Webber, J., Parastatidis, S., and Robinson, I. (2010). REST
+     CGF, 35(3):553–575.                                             in Practice: Hypermedia and Systems Architecture.
+                                                                     O’Reilly Media, 1st edition.
+Nelson, B. J. (1981). Remote Procedure Call. PhD thesis,
+     Carnegie Mellon University.                                Wood, J., Brodlie, K., Seo, J., Duke, D., and Walton, J.
+                                                                     (2008). A web services architecture for visualization.
+Park, D., Drucker, S. M., Fernandez, R., and Niklas, E.
+                                                                     In Proc. IEEE eScience, pages 1–7.
+     (2018). ATOM: A grammar for unit visualizations.
+     IEEE TVCG, 24(12):3032–3043.
+Richter, M., Söchting, M., Semmo, A., Döllner, J., and
+     Trapp, M. (2018). Service-based Processing and Pro-
+     visioning of Image-Abstraction Techniques. In Proc.
+     WCSG, pages 79–106.
+Roberts, R. C. and Laramee, R. S. (2018). Visualising busi-
+     ness data: A survey. MDPI Information, 9(11):285;1–
+     54.
+Robertson, G. G., Mackinlay, J. D., and Card, S. K. (1991).
+     Cone trees: Animated 3d visualizations of hierarchi-
+     cal information. In Proc. ACM CHI, pages 189–194.
+Satyanarayan, A., Moritz, D., Wongsuphasawat, K., and
+     Heer, J. (2017). Vega-Lite: A grammar of interactive
+     graphics. IEEE TVCG, 23(1):341–350.
+Scheibel, W., Trapp, M., and Döllner, J. (2016). Interactive
+     revision exploration using small multiples of software
+     maps. In Proc. ScitePress IVAPP, pages 131–138.
+

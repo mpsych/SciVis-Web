@@ -1,0 +1,367 @@
+Workshop on Molecular Graphics and Visual Analysis of Molecular Data (2018)
+J. Byška, M. Krone, and B. Sommer (Editors)
+
+
+
+
+        Mol*: Towards a common library and tools for web molecular
+                               graphics
+
+                                              D. Sehnal1,2,4 , A. S. Rose3 , J. Koča1,2 , S. K. Burley3,5 and S. Velankar4
+              1 CEITEC  - Central European Institute of Technology, Masaryk University Brno, Kamenice 5, 625 00 Brno-Bohunice, Czech Republic
+                        2 National
+                                Centre for Biomolecular Research, Faculty of Science, Kamenice 5, 625 00 Brno-Bohunice, Czech Republic
+                  3 RCSB Protein Data Bank, San Diego Supercomputer Center, University of California, San Diego, La Jolla, CA 92093, USA
+               4 Protein Data Bank in Europe (PDBe), European Molecular Biology Laboratory, European Bioinformatics Institute (EMBL-EBI),
+
+                                             Wellcome Genome Campus, Hinxton, Cambridgeshire, CB10 1SD, UK
+          5 RCSB Protein Data Bank, Institute for Quantitative Biomedicine, Rutgers, The State University of New Jersey, Piscataway, NJ 08854, USA
+
+
+
+
+         Abstract
+         Advances in experimental techniques are providing access to structures of ever more complex and larger macromolecular
+         systems. Web-browser based visualization and analysis of macromolecular structures and associated data represents a crucial
+         step in gaining knowledge from these data. A common library and a set of tools for working with such macromolecular data
+         sets would streamline this step. We present a project called Mol* (/’mol-star/) whose goal is to provide a common library and
+         a set of tools for macromolecular data visualization and analysis. The project includes modules for data storage, in-memory
+         representation, query language, UI state management, and visualization; and tools for efficient data access.
+         CCS Concepts
+         •Computing methodologies → Rendering; Graphics systems and interfaces; •Applied computing → Bioinformatics;
+
+
+
+
+1. Introduction                                                                        (most notably JavaScript, HTML, and WebGL) and their surround-
+Experimental methods to determine three-dimensional (3D) struc-                        ing ecosystem (including NPM, Node.js, TypeScript, GitHub) offer
+tures of biomolecules are being continuously improved and pro-                         good support for the development of modular libraries/components.
+duce molecular complexes from models of different resolutions                          Taken together, the web provides a unique opportunity to develop
+that span multiple scales and can be dynamic over the course                           a common library and a set of tools for accessing, analyzing, and
+of an experiment. By combining data from complementary ex-                             visualizing macromolecular data.
+perimental techniques (e.g., X-ray, NMR, 3DEM, SAS, chemi-                                Here we introduce Mol* (/’mol-star/ ), an open source project
+cal crosslinking) or integrative/hybrid methods (I/HM), 3D struc-                      supported/maintained by RCSB Protein Data Bank (PDB) [Ber00]
+tural models of large macromolecular systems can be determined                         and Protein Data Bank in Europe (PDBe) [MAA∗ 18] with the goal
+[BKM∗ 17, SBS∗ 15]. Such models include large macromolecular                           of developing a common library and tools for web-based molecular
+machines, dynamic assemblies, or genome architecture. Access, vi-                      graphics and analyses. The project includes modules for data stor-
+sualization and analysis of these structures is a central part of struc-               age, in-memory representation, a query language, UI state manage-
+tural biology and structural bioinformatics. However, as macro-                        ment, visualization, and tools for efficient data access. In develop-
+molecular data sets grow ever more complex and larger, it becomes                      ing Mol* as a collection of interoperable modules, we are creating
+challenging to create software tools to access, visualize and manip-                   an ecosystem that will support community contributions at all lev-
+ulate them. The web platform, both mobile and desktop, is becom-                       els of the framework. Building on a common library can help con-
+ing an increasingly popular and important tool for performing these                    tributors focus on innovative visualization and algorithms. It can
+tasks.                                                                                 offer visualization researchers and algorithm developers a means
+   Embracing recent advances in web browser technology provides                        to make their research more widely available and used in practice.
+the means for creating scalable molecular graphics and analysis                        Furthermore, collaborative development can also help with antici-
+tools with near-instant access to any available data. Web-based                        pating and keeping up with developments in structural biology and
+tools are platform-independent and require little or no local soft-                    related fields by pooling/sharing resources.
+ware installation, which makes them available to virtually every-                         The purpose of Mol* is to enable web-based molecular visual-
+one in both the scientific and non-scientific community, reaching                      ization and analyses by providing a common library for quickly
+an audience larger than ever before. Moreover, these technologies                      and efficiently building tools and services for the structural biol-
+
+ c 2018 The Author(s)
+Eurographics Proceedings c 2018 The Eurographics Association.
+
+
+
+
+DOI: 10.2312/molva.20181103
+30                            D. Sehnal & A. S. Rose / Mol*: Towards a common library and tools for web molecular graphics
+
+ogy/bioinformatics community. Examples include showing experi-                    PyMol, VMD, or Jmol into MolQL to enable backwards com-
+mental/validation related data for macromolecular models; display-                patibility. The language runtime can be implemented in various
+ing various annotations for macromolecular models providing bio-                  programming languages, as MolQL only defines what queries
+logical context, including SCOP, PFAM, UniProt; the creation of                   should be available and what the results should look like. More
+visually interesting, engaging and interactive educational material;              information about MolQL, its initial specification and reference
+or visualizing results from structural bioinformatics or computer                 implementation are available at github.com/MolQL.
+aided drug design algorithms.
+                                                                               Common state description The state description of the viewer is
+   The project builds on the code and knowledge the authors gained
+                                                                                 abstracted into a DSL as well. The advantage of this approach
+from developing web-based molecular viewers, analysis tools and
+                                                                                 is that the state description could be more easily parsed by other
+compressed file formats, including the LiteMol Suite [SDV∗ 17],
+                                                                                 software (including desktop applications). This language could
+the NGL Viewer [RH15, RBV∗ 16], PatternQuery [SPS∗ 15], and
+                                                                                 also have the potential to evolve into a standard for describing
+MMTF [BRP∗ 17, VBR∗ 17]. Mol* is developed as an open source
+                                                                                 visualizations in publications. As with MolQL, we hope that the
+project and hosted on GitHub (github.com/mol-star).
+                                                                                 language will be implemented in other programming languages.
+                                                                                 We want to investigate the possibility of interpreting PyMOL,
+2. Mol* Overview                                                                 Jmol, VMD, etc. scripts to describe application state.
+
+Successful web applications require the right tradeoff between net-            Data access tools Modern experimental and computation methods
+work bandwidth/latency and client-side computations. This need is                produce large amounts of data and it is often not feasible to trans-
+especially relevant to molecular visualizations and analyses as be-              fer all this data at the same time due to bandwidth/memory con-
+ing data heavy and/or computation heavy. Mwalongo et al. describe                straints. To overcome these limitations we want to implement
+four criteria to classify web-based visualization tools [MKRE16].                possible solutions, including sending subsets of the data, down-
+These are:                                                                       sampled data, introducing new/better compression methods.
+•    Infrastructure (web service, grid-based, cloud-based, local).
+                                                                               Ability to share code between client and server Some analyses
+•    Data transfer (full, progressive, simplified).
+                                                                                 can be run directly in the web browser and utilize the compu-
+•    Rendering techniques (volume, raycasting, triangle mesh).
+                                                                                 tational power of the user’s computer. More demanding compu-
+•    Optimization targets (latency, bandwidth, rendering).
+                                                                                 tations can be executed on the server.
+  The goal of Mol* is to provide a framework that spans the server
+and the client so that computations can be performed using the                 Modularity Different libraries/modules/tools of Mol* should be
+same library on the server and the client depending on the opti-                usable separately. This ensures that Mol* could be partially inte-
+mization target.                                                                grated into existing projects.
+
+                                                                               High performance A high emphasis will be put on the perfor-
+2.1. Core Concepts                                                               mance of individual modules.
+The core philosophy of Mol* is to provide means for high degree
+of interoperability with existing and future solutions. This is mainly
+achieved by: 1) supporting existing file formats (and extending on             2.2. Project Structure
+them where appropriate or required, e.g., mmCIF and BinaryCIF),
+                                                                               The project structure is separated into three main parts: 1) core
+and, 2) instead of creating a scripting language that would operate
+                                                                               modules, 2) data access tools, and 3) application modules; all are
+only within the Mol* ecosystem (similar to PyMOL or Jmol ap-
+                                                                               described below.
+proach), defining a set of open domain specific languages (DSL)
+which Mol* only provides a reference implementation for. The ba-
+sic concepts that expand on this idea are outlined below.                      2.2.1. Core Modules
+Common data/exchange formats A small set of data for-                          The core modules of Mol* provide basic data structures and algo-
+  mats/layouts is used for all data exchange within Mol*. The                  rithms that more complex applications can build upon.
+  BinaryCIF data format is utilized heavily. BinaryCIF is a bi-
+  nary encoding of the text based mmCIF that maintains the ver-                Mol-data A set of common data structures for representing and ac-
+  satility and data layout of PDBx/mmCIF [WF09], while pro-                     cessing generic collections, tables, graphs and basic algorithms
+  viding the compression ratios of MMTF [BRP∗ 17]. The ini-                     that use them.
+  tial specification of the BinaryCIF data format is available at
+  github.com/dsehnal/BinaryCIF.                                                Mol-io The parser and writer module for common molecular
+                                                                                file/data formats. It additionally provides schemas (i.e. data lay-
+Common query language To provide a common description of a                      out descriptions) and helper methods to consume data from web-
+  wide range of structural queries the query language is abstracted             services (provided for example in JSON or CSV format). It also
+  into a domain specific language (DSL) called MolQL. It is pos-                includes extensive support for the CIF and BinaryCIF formats.
+  sible to transpile selection expressions used by programs such
+
+                                                                                                                                             c 2018 The Author(s)
+                                                                                                      Eurographics Proceedings c 2018 The Eurographics Association.
+                                    D. Sehnal & A. S. Rose / Mol*: Towards a common library and tools for web molecular graphics                     31
+
+Mol-math A collection of useful math and geometry related meth-
+ ods and algorithms, including basic linear algebra methods and
+ more advanced algorithms like Delaunay triangulation.
+
+Mol-model Data structures for representing molecular data, in-
+ cluding atomic models, multi-scale I/HM models and volumet-
+ ric data. It also includes efficient representations for trajectories,
+ crystallographic and biological assemblies, and symmetries.
+
+Mol-geometry Functionality to generate geometry for various vi-
+ sual representations of molecular data. Both LiteMol Viewer
+ (litemol.org) and NGL Viewer (nglviewer.org) already support
+ the creation and rendering of many representations including
+ molecular surfaces (see Figure 1). Support for serialization of                     Figure 2: MolQL Explorer window showing all pairs of ALA
+ the data using CIF/BinaryCIF.                                                       and LYS residues that are between 2 and 5 angstroms apart.
+                                                                                     The corresponding MolQL expression is (sel.atom.dist-
+MolQL An implementation of the MolQL language specification.                         cluster :matrix [[0 5] [2 0]] :selections
+ It includes transpilers with the ability to compile and execute                     [ (sel.atom.res (= atom.resname LYS))
+ selection expressions supported by PyMOL, VMD, or Jmol. An                          (sel.atom.res (= atom.resname ALA))]).                See
+ example of the expressiveness of MolQL can be found in Figure                       molql.org for more examples.
+ 2 which shows all clusters of alanine and lysine residues.
+
+
+                                                                                        github.com/arose/mdsrv provides a basic implementation of this
+                                                                                        [TGGHR17]), and the ability to specify the shape/contents of the
+                                                                                        response using a GraphQL-like language [Fac18]. The Coordi-
+                                                                                        nateServer available at github.com/dsehnal/CoordinateServer is
+                                                                                        a partial implementation of this concept [SDV∗ 17] (see Figure
+                                                                                        3).
+
+Figure 1: Various molecular representations available in the NGL                     VolumeServer The VolumeServer provides access to volumetric
+Viewer. From left to right: Tube and rope representations of a trimer                  data including density maps (for instance, from X-ray crystal-
+of transmembrane helices; glowing particle effect around the chro-                     lography or cryo-electron microscopy experiments), spatial dis-
+mophore in a green fluorescent protein (PDB entry 1GFL); elec-                         tribution data, output from electrostatic calculations, and high
+trostatic potential mapped on a molecular surface of rhodopsin                         resolution light microscopy data. It works by utilizing adaptive
+(PDB entry 3PQR); HyperBalls [CVT∗ 11] representation of an                            downsampling (similar to how Google Earth works). The Den-
+adrenaline molecule; two volume slices of the X-ray electron den-                      sityServer available at github.com/dsehnal/DensityServer is an
+sity of a rhodopsin structure (PDB entry 3PQR).                                        implementation of this concept and provides access to density
+                                                                                       maps from X-ray crystallography and cryo-electron microscopy
+                                                                                       experiments (see Figure 3).
+2.2.2. Data Access Tools
+                                                                                     AnnotationServer The AnnotationServer provides common data
+The philosophy of Mol* data access tools is that they can inte-
+                                                                                       layout (derived from the mmCIF schema when possible) for var-
+grate/take advantage of the existing infrastructure where appro-
+                                                                                       ious annotations that are relatable/mappable to molecular struc-
+priate (e.g. “use ‘text based’ search to determine which structures
+                                                                                       tures. It allows to aggregate multiple annotations and includes
+to perform structural queries on using the ModelServer”). The re-
+                                                                                       3rd party annotations and an API for user-generated annotations.
+sponse format of choice for the tools is JSON or CIF for smaller
+                                                                                       The server also allows to query annotations using MolQL, for
+payloads and BinaryCIF for larger datasets.
+                                                                                       example, “provide annotations relevant only for the specified
+ModelServer The ModelServer provides access to molecular 1D,                           atomic set”, or “give me all atomic sets with the given anno-
+ 2D, and 3D (sub-)structure models of molecules. Sub-structures                        tation”.
+ are described by the MolQL language. It has the ability to in-
+ clude additional data to mmCIF “on the fly”, e.g. integrate pri-                    GeometryServer The GeometryServer allows streaming geome-
+ mary PDB archival data from Chemical Component Dictionary                             try related data by providing an interface for the Mol-geometry
+ (CCD, [WSF∗ 15]), Protonation Variants Companion Dictio-                              library.
+ nary (PVCD, [WSF∗ 15]) and Biologically Interesting molecule
+ Reference Dictionary (BIRD, [Ban18]). The server will in-                           ToolServer The ToolServer provides an API for unified access to
+ clude the support for trajectory data (i.e., the ability to di-                       various tools that provide data for web-based visualization. Pos-
+ rectly access a specified range/sampling of snapshots; MDsrv at                       sible applications are, for example, controlling modeling soft-
+
+ c 2018 The Author(s)
+Eurographics Proceedings c 2018 The Eurographics Association.
+32                          D. Sehnal & A. S. Rose / Mol*: Towards a common library and tools for web molecular graphics
+
+     ware from a web-based viewer and stream the results on the fly          it does not include a low-level library to build these components
+     or enabling access to different macromolecular/chemical simu-           from.
+     lation tools from a unified web-based user interface.
+                                                                                The scientific and visualization communities in general are turn-
+                                                                             ing towards the web platform to enable on-demand interactive rep-
+                                                                             resentations of the data. For example, the CesiumJS open source
+                                                                             project offers a geospatial 3D mapping platform for creating virtual
+                                                                             globes and visualizing visualizing dynamic data (cesiumjs.org). Al-
+                                                                             ternatively, the Galaxy is an open source, web-based platform for
+                                                                             data intensive biomedical research [ABvdB∗ 16] (usegalaxy.org). It
+                                                                             includes web-based visualization components that offer access to
+                                                                             genomic data and analyses.
+
+                                                                             4. Conclusion and Outlook
+                                                                             We introduced Mol* and provided a high-level description of its
+                                                                             modules. The initial prototype of Mol* and the working prototype
+                                                                             of MolQL (available online for testing, molql.org) show the feasi-
+Figure 3: Zika virus assembly and Cryo-EM data. Shows the
+                                                                             bility of creating and working with such a highly modular library.
+Zika virus (PDB id 5IRE; assembly 1), including the under-
+                                                                             Moreover, the BinaryCIF format and two data delivery services,
+lying Cryo-EM data (EMD-8116) in LiteMol Viewer using the
+                                                                             the CoordinateServer and the DensityServer (as components of the
+CoordinateServer and DensityServer. The data required for the
+                                                                             LiteMol Suite available at litemol.org; see Figure 3), are already
+transfer using the data delivery services is 1.03MB vs. 1620MB
+                                                                             in production use at PDBe (pdbe.org). The DensityServer and Bi-
+when downloading the raw data. Interactive version available at
+                                                                             naryCIF is also supported in Jmol [Han10]. Likewise, the MMTF
+v.litemol.org/?example=zika-cryo-em.
+                                                                             format and the NGL Viewer are in production use at RCSB PDB
+                                                                             (rcsb.org).
+
+2.2.3. Application Modules                                                      By providing the means for mapping various data sources (for
+                                                                             example RESTful services provided by wwPDB members) Mol*
+The user interface (UI) and user experience (UX) are an integral             leverages/integrates existing scientific data and makes it easier to
+part of any web application. The goal of the Mol* project is not to          visualize and analyze molecular structures in the context of existing
+solve UI/UX for all web-based applications dealing with molecular            annotations.
+data. However, to help with designing good UI/UX several modules
+                                                                                To create a stable foundation for long term success, Mol* builds
+are provided:
+                                                                             on proven technologies including mmCIF for an expressive molec-
+Mol-task A module for abstracting computation trees which are                ular data model [WF09], TypeScript for the development of large
+ built from tasks an application wants to perform. It includes               (web) applications [Mic18], WebGL for hardware accelerated 3D
+ built-in progress tracking and cancellation support which are es-           rendering [Khr18] and the standards of the open web platform in
+ sential for building responsive applications and providing a user           general [Wor18].
+ friendly experience.
+                                                                             5. Availability
+Mol-state A module for managing the state of an application over
+ time as a graph. It includes native support for state saving and the        Mol* is available under the MIT license, a permissive Open Source
+ ability to export the state as a set of DSL expressions. This will          license, to facilitate code sharing and collaboration. The code is
+ help backwards compatibility and interoperability with other                available on GitHub at github.com/mol-star.
+ tools, including desktop software.
+                                                                             6. Acknowledgments
+Mol-gl A lightweight WebGL wrapper.
+                                                                             This project was supported in part by the RCSB PDB which is
+Mol-viewer A reference viewer that also serves as a showcase                 jointly funded by the NSF, the NIH, and the US DOE (NSF DBI-
+ Mol* functionality.                                                         1338415; PI: SK Burley). This research has been financially sup-
+                                                                             ported by the ELIXIR-EXCELERATE project, grant agreement no.
+                                                                             676559; ELIXIR CZ research infrastructure project (MEYS grant
+3. Related Work                                                              no. LM2015047); European Regional Development Fund-Project
+                                                                             ELIXIR-CZ (no. CZ.02.1.01/0.0/0.0/16_013/0001777); Wellcome
+Comprehensive libraries to handle biological data exist in many
+                                                                             Trust (104948) and EMBL-EBI funding to PDBe.
+languages, including projects like BioPython [CAC∗ 09], BioJava
+[PYB∗ 12], and BioPerl [Sta02], but no such library is available for
+the web platform (i.e., written in JavaScript). The BioJS [GGS∗ 13]          References
+project provides an infrastructure, guidelines, and tools for creating       [ABvdB∗ 16] A FGAN E., BAKER D., VAN DEN B EEK M., B LANKEN -
+reusable web component for representing biological data, however,              BERG D., B OUVIER D., Č ECH M., C HILTON J., C LEMENTS D.,
+
+
+
+                                                                                                                                           c 2018 The Author(s)
+                                                                                                    Eurographics Proceedings c 2018 The Eurographics Association.
+                                    D. Sehnal & A. S. Rose / Mol*: Towards a common library and tools for web molecular graphics                              33
+
+   C ORAOR N., E BERHARD C., G RÜNING B., G UERLER A., H ILLMAN -                    [PYB∗ 12] P RLIC A., YATES A., B LIVEN S. E., ROSE P. W., JACOB -
+   JACKSON J., VON K USTER G., R ASCHE E., S ORANZO N., T URAGA                        SEN J., T ROSHIN P. V., C HAPMAN M., G AO J., KOH C. H., F OISY S.,
+   N., TAYLOR J., N EKRUTENKO A., G OECKS J.: The Galaxy platform                      H OLLAND R., R IMSA G., H EUER M. L., B RANDSTATTER -M ULLER
+   for accessible, reproducible and collaborative biomedical analyses: 2016            H., B OURNE P. E., W ILLIS S.: BioJava: an open-source framework for
+   update. Nucleic Acids Research 44, W1 (jul 2016), W3–W10. URL:                      bioinformatics in 2012. Bioinformatics 28, 20 (oct 2012), 2693–2695.
+   https://academic.oup.com/nar/article-lookup/                                        URL:        https://academic.oup.com/bioinformatics/
+   doi/10.1093/nar/gkw343, doi:10.1093/nar/gkw343. 4                                   article-lookup/doi/10.1093/bioinformatics/
+[Ban18] BANK W. P. D.: The biologically interesting molecule reference                 bts494, doi:10.1093/bioinformatics/bts494. 4
+  dictionary (bird), 2018. URL: https://www.wwpdb.org/data/                          [RBV∗ 16] ROSE A. S., B RADLEY A. R., VALASATAVA Y., D UARTE
+  bird. 3                                                                              J. M., P RLI Ć A., ROSE P. W.: Web-based molecular graphics for
+[Ber00] B ERMAN H. M.: The Protein Data Bank. Nucleic Acids Re-                        large complexes. In Proceedings of the 21st International Conference
+  search 28, 1 (jan 2000), 235–242. doi:10.1093/nar/28.1.235.                          on Web3D Technology - Web3D ’16 (New York, New York, USA, 2016),
+  1                                                                                    ACM Press, pp. 185–186. doi:10.1145/2945292.2945324. 2
+
+[BKM∗ 17] B URLEY S. K., K URISU G., M ARKLEY J. L., NAKA -                          [RH15] ROSE A. S., H ILDEBRAND P. W.: NGL Viewer: a web appli-
+  MURA H., V ELANKAR S., B ERMAN H. M., S ALI A., S CHWEDE T.,
+                                                                                       cation for molecular visualization. Nucleic Acids Research 43, W1 (jul
+  T REWHELLA J.: PDB-Dev: a Prototype System for Depositing Integra-                   2015), W576–W579. doi:10.1093/nar/gkv402. 2
+  tive/Hybrid Structural Models. Structure 25, 9 (sep 2017), 1317–1318.              [SBS∗ 15] S ALI A., B ERMAN H. M., S CHWEDE T., T REWHELLA J.,
+  doi:10.1016/j.str.2017.08.001. 1                                                     K LEYWEGT G., B URLEY S. K., M ARKLEY J., NAKAMURA H.,
+[BRP∗ 17] B RADLEY A. R., ROSE A. S., PAVELKA A., VALASATAVA                           A DAMS P., B ONVIN A. M., C HIU W., P ERARO M. D., D I M AIO F.,
+  Y., D UARTE J. M., P RLI Ć A., ROSE P. W.: MMTF-An efficient file                   F ERRIN T. E., G RÜNEWALD K., G UTMANAS A., H ENDERSON R.,
+  format for the transmission, visualization, and analysis of macromolecu-             H UMMER G., I WASAKI K., J OHNSON G., L AWSON C. L., M EILER
+  lar structures. PLOS Computational Biology 13, 6 (jun 2017), e1005575.               J., M ARTI -R ENOM M. A., M ONTELIONE G. T., N ILGES M., N USSI -
+                                                                                       NOV R., PATWARDHAN A., R APPSILBER J., R EAD R. J., S AIBIL H.,
+  doi:10.1371/journal.pcbi.1005575. 2
+                                                                                       S CHRÖDER G. F., S CHWIETERS C. D., S EIDEL C. A., S VERGUN D.,
+[CAC∗ 09] C OCK P. J. A., A NTAO T., C HANG J. T., C HAPMAN                            T OPF M., U LRICH E. L., V ELANKAR S., W ESTBROOK J. D.: Out-
+  B. A., C OX C. J., DALKE A., F RIEDBERG I., H AMELRYCK T.,                           come of the First wwPDB Hybrid/Integrative Methods Task Force Work-
+  K AUFF F., W ILCZYNSKI B., DE H OON M. J. L.: Biopython:                             shop. Structure 23, 7 (2015), 1156–1167. doi:10.1016/j.str.
+  freely available Python tools for computational molecular biology                    2015.05.013. 1
+  and bioinformatics. Bioinformatics 25, 11 (jun 2009), 1422–1423.
+  URL:        https://academic.oup.com/bioinformatics/                               [SDV∗ 17] S EHNAL D., D ESHPANDE M., VA ŘEKOVÁ R. S., M IR S.,
+  article-lookup/doi/10.1093/bioinformatics/                                           B ERKA K., M IDLIK A., P RAVDA L., V ELANKAR S., KO ČA J.: Lite-
+  btp163, doi:10.1093/bioinformatics/btp163. 4                                         Mol suite: interactive web-based visualization of large-scale macro-
+                                                                                       molecular structure data. Nature Methods 14, 12 (nov 2017), 1121–1122.
+[CVT∗ 11] C HAVENT M., VANEL A., T EK A., L EVY B., ROBERT S.,                         doi:10.1038/nmeth.4499. 2, 3
+  R AFFIN B., BAADEN M.: GPU-accelerated atom and dynamic bond
+  visualization using hyperballs: A unified algorithm for balls, sticks, and         [SPS∗ 15] S EHNAL D., P RAVDA L., S VOBODOVÁ VA ŘEKOVÁ R.,
+  hyperboloids. Journal of Computational Chemistry 32, 13 (oct 2011),                   I ONESCU C.-M., KO ČA J.: PatternQuery: web application for fast
+  2924–2935. doi:10.1002/jcc.21861. 3                                                  detection of biomacromolecular structural patterns in the entire Pro-
+                                                                                       tein Data Bank. Nucleic Acids Research 43, W1 (2015), W383–W388.
+[Fac18] FACEBOOK: Graphql - a query language for your api, 2018.                       doi:10.1093/nar/gkv561. 2
+   URL: https://graphql.org/. 3
+                                                                                     [Sta02] S TAJICH J. E.:   The Bioperl Toolkit: Perl Modules for
+[GGS∗ 13] G OMEZ J., G ARCIA L. J., S ALAZAR G. A., V ILLAVECES                         the Life Sciences. Genome Research 12, 10 (oct 2002), 1611–
+  J., G ORE S., G ARCIA A., M ARTIN M. J., L AUNAY G., A LCANTARA                       1618. URL: http://www.genome.org/cgi/doi/10.1101/
+  R., D EL -T ORO N., D UMOUSSEAU M., O RCHARD S., V ELANKAR                            gr.361602, doi:10.1101/gr.361602. 4
+  S., H ERMJAKOB H., Z ONG C., P ING P., C ORPAS M., J IMENEZ
+  R. C.: BioJS: an open source JavaScript framework for biological                   [TGGHR17] T IEMANN J. K. S., G UIXÀ -G ONZÁLEZ R., H ILDEBRAND
+  data visualization.  Bioinformatics 29, 8 (apr 2013), 1103–1104.                     P. W., ROSE A. S.: MDsrv: viewing and sharing molecular dynamics
+  URL:        https://academic.oup.com/bioinformatics/                                 simulations on the web. Nature Methods 14, 12 (nov 2017), 1123–1124.
+  article-lookup/doi/10.1093/bioinformatics/                                           doi:10.1038/nmeth.4497. 3
+  btt100, doi:10.1093/bioinformatics/btt100. 4                                       [VBR∗ 17] VALASATAVA Y., B RADLEY A. R., ROSE A. S., D UARTE
+[Han10] H ANSON R. M.: Jmol - a paradigm shift in crystallographic vi-                 J. M., P RLI Ć A., ROSE P. W.: Towards an efficient compression of
+  sualization. Journal of Applied Crystallography 43, 5 (oct 2010), 1250–              3D coordinates of macromolecular structures. Plos One 12, 3 (2017),
+  1260. doi:10.1107/S0021889810030256. 4                                               e0174846. doi:10.1371/journal.pone.0174846. 2
+
+[Khr18] K HRONOS G ROUP: Webgl - opengl es for the web, 2018. URL:                   [WF09] W ESTBROOK J., F ITZGERALD P.: The PDB format, mmCIF
+  https://www.khronos.org/webgl/. 4                                                    formats, and other data formats. In Structural Bioinformatics, 2 ed. 2009,
+                                                                                       ch. 10, pp. 271–291. doi:10.1002/0471721204.ch8. 2, 4
+[MAA∗ 18] M IR S., A LHROUB Y., A NYANGO S., A RMSTRONG D. R.,
+  B ERRISFORD J. M., C LARK A. R., C ONROY M. J., DANA J. M.,                        [Wor18] W ORLD W IDE W EB C ONSORTIUM: Standards that define
+  D ESHPANDE M., G UPTA D., G UTMANAS A., H ASLAM P., M AK L.,                         an open web platform, 2018. URL: https://www.w3.org/
+  M UKHOPADHYAY A., NADZIRIN N., PAYSAN -L AFOSSE T., S EHNAL                          standards. 4
+  D., S EN S., S MART O. S., VARADI M., K LEYWEGT G. J., V ELANKAR                   [WSF∗ 15] W ESTBROOK J. D., S HAO C., F ENG Z., Z HURAVLEVA M.,
+  S.: PDBe: towards reusable data delivery infrastructure at protein data              V ELANKAR S., YOUNG J.: The chemical component dictionary: com-
+  bank in Europe. Nucleic Acids Research 46, D1 (jan 2018), D486–D492.                 plete descriptions of constituent molecules in experimentally determined
+  doi:10.1093/nar/gkx1070. 1                                                           3D macromolecules in the Protein Data Bank. Bioinformatics 31, 8 (apr
+[Mic18] M ICROSOFT: Typescript - javascript that scales, 2018. URL:                    2015), 1274–1278. doi:10.1093/bioinformatics/btu789. 3
+  https://www.typescriptlang.org/. 4
+[MKRE16] M WALONGO F., K RONE M., R EINA G., E RTL T.: State-of-
+  the-Art Report in Web-based Visualization. Computer Graphics Forum
+  35, 3 (jun 2016), 553–575. doi:10.1111/cgf.12929. 2
+
+ c 2018 The Author(s)
+Eurographics Proceedings c 2018 The Eurographics Association.
+

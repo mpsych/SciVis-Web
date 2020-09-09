@@ -1,0 +1,326 @@
+                         9th IEEE International Symposium on Applied Computational Intelligence and Informatics • May 15-17, 2014 • Timişoara, Romania
+
+
+
+
+            Browser-based medical visualization system
+                                    Ioan Virag*, Lăcrămioara Stoicu-Tivadar*, Elena Amăricăi**
+              *   Politehnica University of Timişoara/Automation and Computer Science Faculty, Timişoara, Romania
+     ** “Victor     Babes” University of Medicine and Pharmacy Timisoara/ Rehabilitation Department, Timisoara, Romania
+                                                        *ioanvirag@gmail.com
+                                                *lacramioara.stoicu-tivadar@aut.upt.ro
+                                                       **ama.elena@gmail.com
+
+
+
+
+   Abstract - The paper describes a medical visualization                           Fig. 1 presents a general view of the relations between
+   system suitable for both diagnosis and training in medical                    the building blocks of the application.
+   practice. The work is using open source frameworks and
+   libraries    such     as    WebRTC       (Web      Real-Time
+   Communication), JSARToolKit (JavaScript Augmented
+   Reality Toolkit), Three.js and NanoDICOM. The system
+   builds a 3D model from the slices of a patient’s DICOM
+   imagistic investigation files, superimposes the model on the
+   body area of interest using Augmented Reality and sends
+   the camera images remotely. The main advantage consists in
+   real-time viewing of imagistic patient information by
+   assisting physicians or medical students. Virtually attaching
+   the 3D model to a specific area of the body allows the model
+   to rotate and move in the same time with the patient. The
+   proposed application does not depend on any operating
+   system and runs inside a browser window without any
+   closed source plug-in, allowing it to be accessed on any
+   computer or mobile device that has a suitable browser.
+
+
+                        I.    INTRODUCTION
+      The main goal of the project is to enable physicians to
+   share DICOM (Digital Imaging and Communications in                            Figure 1. A general view of the interaction of the involved technologies
+   Medicine) files retrieved using MRI (Magnetic Resonance                                            used for building the system
+   Imaging), CT (Computed Tomography) scans or other
+   medical imaging techniques and combine the anatomical                            In October 2010, Theo Armour described in his article
+   data with the image of the real patients.                                     named “The Brain of Richard App” [6] a solution that
+      Doctors will be able to interact remotely with other                       uses Three.js in order to display the converted slices of a
+   colleagues or their students in real-time during the patient                  MRI scan and recombine those in a 3D model viewable
+   diagnosis, increasing the accuracy of their results and                       inside a web browser. The actual conversion from
+   facilitating the understanding of more complex problems                       DICOM to PNG is done in a desktop environment using
+   that may arise in the process.                                                Irfanview and XnView. The app doesn’t use Augmented
+                                                                                 Reality to combine the resulting 3D model with the actual
+      Similar systems are described in references [1], [2] and
+                                                                                 image of the patient, neither offers a way to view the data
+   [3] but none of them are entirely web-based. Our
+                                                                                 associated with the DICOM files.
+   application allows the system to run on any computer
+   eliminating the need to have a specific proprietary                              NanoDICOM has been used by Thomas Rager in July
+   operating system pre-installed or any other browser plug-                     2011 to build the WEB-DICOMVIEWER [7], a proof of
+   in. This will solve the issues such as dedicated languages,                   concept that DICOM files can be parsed with PHP. The
+   plug-in requirements for interpretation, portability across                   application does not allow us to upload files, instead of
+   browsers, devices and operating systems, and advanced                         that it uses its own files which can be open from the user
+   rendering support as described in [4].                                        interface.
+      The open source libraries and frameworks selected as                          Many other free desktop applications allow us to view
+   solution allow further development of the system and easy                     DICOM files. The most successful are 3D Slicer and ITK-
+   addition of other input and output devices such as optical                    SNAP.
+   head-mounted, volumetric or holographic displays for                             Augmented reality is modern technology involving
+   visualization. Adding gesture tracking devices for the                        digitally enhanced view of the real world. Using cameras
+   easier interaction with the displayed 3D models is easily                     and sensors it adds layers of digital information expressed
+   done only increasing the response time as in [5].                             as video, photo, or sound material on top of objects from
+                                                                                 the immediate real world.
+
+
+
+978-1-4799-4694-5/14/$31.00 ©2014 IEEE                                    – 355 –
+
+  Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on June 22,2020 at 21:46:54 UTC from IEEE Xplore. Restrictions apply.
+I. Virag et al. • Browser-based Medical Visualization System
+
+
+
+       Augmented Reality applications already made their way                       - Media capabilities with the purpose to establish what
+    in the medical world. One of the most promising                              codecs and resolutions can be handled by the caller’s
+    applications is written by Mark Shippen and it is called                     browser and the browser it wants to communicate with, as
+    DoctorMole. The app is available as a free for Android                       explained by Sam Dutton from Google in his article [11].
+    and it can detect suspicious moles using the standard
+    ABCDE approach in order to determine risk for malignant                      B. JSARToolKit (JavaScript Augmented Reality Toolkit)
+    lesions as described in [8].
+       Augmented Reality was also successfully used in                              JSARToolKit is a JavaScript library written for
+    “recovery and monitoring of surgical workflow,                               Augmented Reality applications. It was indirectly derived
+    integrating preoperative and intraoperative anatomic and                     from C ARToolKit, a video tracking library written in C,
+    functional data, improving visual perception in a mixed                      calculating the distance from the camera to a physical
+    environment, and developing new user interaction                             marker in real time, allowing us to draw a 3D model on
+    paradigms for taking full advantage of the virtual data,                     top of it.
+    while overlaid onto the real scene” as in [9].                                  JSARToolKit uses the HTML5 <canvas> element for
+       The European Space Agency presented in 2012 a new                         drawing the detected markers. In order to have images on
+    Augmented Reality unit called CAMDASS (Computer                              this canvas we need to draw each frame of the video
+    Assisted Medical Diagnosis and Surgery System).                              stream on it with the use of drawImage() function and
+    CAMDASS is a wearable augmented reality prototype                            loop trough the frames of the video with
+    that “can provide just-in-time medical expertise to                          requestAnimationFrame().
+    astronauts. All they need to do is put on a head-mounted
+    display for 3D guidance in diagnosing problems or even                       C. Three.js
+    performing surgery” as described in [10]. The article also
+    states that the prototype was developed for the Agency by                       Three.js is a JavaScript API that allows the rendering
+    a consortium led by Space Applications Services NV in                        and the animation of 3D models inside a browser window.
+    Belgium with support from the Technical University of                        It allows developers to easily build a scene with different
+    Munich and the DKFZ German Cancer Research Centre                            camera types, lights, textures, materials and shaders,
+    and they intend to test it first in remote locations such as                 rendered with various renderers such as Canvas, SVG or
+    the Concordia Antarctic base and after that in space.                        WebGL (accessing the functionalities of the user’s graphic
+                                                                                 card).
+                   II.   FRAMEWORKS AND LIBRARIES                                D. NanoDICOM
+
+    A. WebRTC (Web Real-Time Communication)                                         NanoDICOM is an open source server-side DICOM
+                                                                                 parser written in PHP that allows the reading of attached
+       WebRTC is an open source framework that allows                            data and visualization of the images inside a web browser.
+    Real-Time Communication between the browsers (or                             It has been successfully used to build online DICOM
+    peers) without the use of any other plugins. The                             viewers and its role in the current project is to retrieve the
+    framework is drafted on the API level by the W3C (World                      raw data from the images and based on the application we
+    Wide Web Consortium) and on the protocol level by the                        contribute on will transform those images into PNG
+    IETF (Internet Engineering Task Force).                                      format, needed for Three.js to reconstruct the 3D model
+       Currently WebRTC is implemented by Google, Mozilla                        based on the uploaded slices. It will also provide the base
+    and Opera in their browsers and it consists of three APIs                    for an integrated online DICOM viewer used by
+    accessible using JavaScript:                                                 physicians to see details in different slices or to colorize
+                                                                                 different areas of the slices before the 3D reconstruction in
+       - MediaStream (also known as getUserMedia),
+                                                                                 order to emphasize areas of interest as in [12].
+           which allows the browser to get access to the
+           camera and microphone in order to capture media
+           streams.                                                                       III. THE SYSTEM UNDER DEVELOPMENT
+       - RTCPeerConnection, allowing two different users                            The proposed system will use the patients DICOM
+           to communicate streaming data (audio or video)                        images retrieved following an actual CT or MRI scan
+           directly from peer to peer.                                           obtained as slices.
+       - RTCDataChannel, facilitating the exchange of any                           The images will be uploaded to the server where the
+           kind of data (not only audio or video) between the                    slices will be transformed into PNG images in order to
+           connected peers.                                                      make them editable by the online image editor. This
+                                                                                 conversion is necessary because, for now, Three.js can
+       WebRTC uses a mechanism to send control messages
+                                                                                 handle only PNG, JPG and GIF from the known raster
+    and to coordinate the communication between the peers.
+                                                                                 image formats.
+    This process known as signaling (is not a part of
+    RTCPeerConnection API) and it is used to exchange the                           Raster graphics are the most common type of image
+    following information between peers:                                         files. The files are formed by a set of pixels where each
+                                                                                 pixel represents an individual color within the image. Web
+       - Session control messages in order to start or close
+                                                                                 graphics and digital photos are stored as raster graphics,
+    communication and to report eventual errors.
+                                                                                 either compressed or not (bmp, png, jpg, tif, gif).
+       - Network configuration to communicate the computers
+    IP addresses and ports used for communication.
+
+
+
+
+                                                                          – 356 –
+
+  Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on June 22,2020 at 21:46:54 UTC from IEEE Xplore. Restrictions apply.
+                       9th IEEE International Symposium on Applied Computational Intelligence and Informatics • May 15-17, 2014 • Timişoara, Romania
+
+
+
+    The JSARToolKit library needs raster objects in order                         The reconstructed 3D model will be virtually attached
+ to detect and identify the individual markers that appear                     to a detected marker with the aid of JSARToolKit that
+ inside the images retrieved from the web camera.                              would use the feed of a web camera provided by the
+    The marker type that JSARToolKit uses is also called                       MediaStream API of WebRTC.
+ ID marker because each marker has a specific number
+ (ID) associated with it. This association allows us to have
+ multiple markers tracked in the same time in the real-time
+ video feed and gives us the possibility to attach different
+ 3D models to each one of them.
+    The markers are very similar to QR codes. The major
+ difference is that we don’t need to track QR codes across
+ multiple frames. We interpret their pattern once in order to
+ obtain usually a string of text.
+     The markers are also used as a point of reference in
+ order to establish the 3D model’s position and orientation
+ in the visualized scene. This allows us to rotate or scale
+ the 3D model associated with a specific marker attached
+ to a real object when it changes its position.
+    The ID markers usually have a black, square contour
+ that helps us in identifying the marker inside the tracked                       Figure 3. PNG images applied as 2D textures to different planes in
+ scene. The marker we use is presented in Fig. 2 and a                                       order to reconstruct a 3D model of an organ
+ specific pattern inside this square that may vary.
+                                                                                  A real marker will be attached to the patient’s skin with
+                                                                               the aid of a double-sided tape. This will allow the model
+                                                                               to move in the same time with the image of the patient or
+                                                                               to rotate when the subject changes his position as we
+                                                                               describe in Fig. 4.
+                                                                                  Since the size of the displayed image depends on the
+                                                                               size of the viewed marker the application will provide a
+                                                                               control mechanism to adjust the dimensions of the
+                                                                               augmented 3D model or to bring closer the virtual camera
+                                                                               used in Three.js in order to see the details of the mapped
+                                                                               slices.
+
+
+
+
+                      Figure 2. Example of a marker
+
+    After editing the images with a built-in online
+ JavaScript and PHP image editor, the set will be sent back
+ to the application that runs in the browser and
+ reconstructed in a 3D model using Three.js.                                       Figure 4. The virtual 3D model of the patient will rotate in the same
+    In order to accomplish this task we chose a solution that                                            time as the real arm.
+ uses the THREE.PlaneGeometry() function. This allows
+ us to apply each PNG image as a 2D texture to a                                  The mixed image can be afterwards transmitted to a
+ PlaneGeometry object and reconstruct a 3D model of the                        remote browser with WebRTC where another physician
+ patient’s organ from those planes as we describe                              could give a second opinion regarding the subject’s
+ synthetically in Fig.3. with an example we currently work                     condition, making difficult cases accessible to remote
+ on.                                                                           specialists and increase the success rate of the future
+    Since we can manipulate the opacity of the slices in                       interventions where applicable. The easy manner in which
+ Three.js the result will be a transparent 3D model,                           a professional may access the application recommends it
+ superimposed on the real image of the patient’s organ in                      for medical staff.
+ the camera feed. We could also highlight each slice of the                       It will be possible also to write annotations related to
+ reconstructed model by altering its opacity or displaying                     each slice for future reference and display them next to the
+ that slice separately in another part of the user interface.                  resulting video image.
+
+
+
+
+                                                                        – 357 –
+
+Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on June 22,2020 at 21:46:54 UTC from IEEE Xplore. Restrictions apply.
+I. Virag et al. • Browser-based Medical Visualization System
+
+
+
+      The system will be also suitable to teach students                         modalities to ensure that the patient involved in the
+    remotely by showing them real patients conditions and                        recovery process will maximally benefit from the variety
+    problems. This would provide a valuable experience and a                     of new imaging technologies that are becoming available
+    highly effective medical training mechanism.                                 [14].
+      The steps to be followed in the development of the                            The proposed system aims to identify the patient’s
+    system are presented in Fig. 5.                                              affected limb or joint disorders based on imaging
+                                                                                 scanning. The addressed disorders include bones,
+                                                                                 muscular structures of upper and lower limb, and intra-
+                                                                                 articular lesions of knee, ankle, elbow or wrist joints
+                                                                                 (injuries of the ligaments or tendons, meniscal tears).
+                                                                                    The imaging scanning is correlated to real-time
+                                                                                 patient’s functioning of the affected structure. This is
+                                                                                 important as the rehabilitation specialist can detect the
+                                                                                 sites of lesions and can make an accurate assessment of
+                                                                                 patient’s capacity to perform certain tasks related to
+                                                                                 affected structures.
+                                                                                    The system is non-invasive and easily manageable by
+                                                                                 the doctor. It offers a great amount of information about a
+                                                                                 patient’s medical status and about neuromotor capacities
+                                                                                 of the involved limb, and thus of the overall functionality.
+
+                                                                                        V.     CONCLUSIONS AND FUTURE DEVELOPMENT
+
+
+                                                                                    The system brings into medical practice a novel
+                                                                                 approach since the application will be able to run inside a
+                                                                                 browser window, without the need to install any plug-in or
+         Figure 5. The steps to obtain and stream the combined images
+                                                                                 to have limitations imposed by the operating system.
+                                                                                 These aspects are very important if we take into account
+                         IV.    MEDICAL BENEFITS
+                                                                                 that the targeted user groups (doctors, medical students,
+                                                                                 medical staff) do not need to have prior training in
+                                                                                 computer science or engineering.
+       The system we work on will be used as clinical                               Although the system will be capable to run on classic
+    supporting tool in rehabilitation medicine.                                  computer architecture, it will be easy to include other
+       The proposed system is intended firstly for medical                       input and output devices such as optical head-mounted
+    students to train and have a better relation between reality                 displays, motion tracking devices or holographic displays
+    and symptoms. The image obtained from slices will be                         with the purpose of better image visualization and
+    modeled 3D and superimposed on the real knee as soon as                      manipulation.
+    possible after the imagistic process. The solution is easy to                   The system is under development in cooperation with
+    use and economical from the costs point of view. Now-a-                      the medical staff from Rehabilitation Department at
+    days students are keen in using modern visual tools so                       ”Victor Babes” University of Medicine and Pharmacy
+    making available a user friendly instrument to train is                      Timisoara, Romania.
+    coming to cover a real need.
+       After future developments the system will be ready to                                                 REFERENCES
+    be a useful tool for a second opinion in diagnosis and
+    further work may drive to a tool for better recovery
+                                                                                 [1]   E. J. M. Monteiro, C. Costa, and J. L. Oliveira, ”A DICOM
+    including feedback from patients. The system we work on                            Viewer based on Web Technology,” IEEE 15th International
+    will be used as clinical supporting tool in rehabilitation                         Conference on e-Health Networking, Applications and Services
+    medicine.                                                                          (Healthcom), 2013, pp. 167-171.
+       In nowadays medicine rehabilitation engineering and                       [2]   L.C. Ebert, G. Hatch, M.J. Thali, and S. Ross, ”Invisible touch—
+    assistive technology depend on understanding the                                   Control of a DICOM viewer with finger gestures using the Kinect
+                                                                                       depth camera”, Journal of Forensic Radiology and Imaging, vol.
+    confluence of two factors describing an individual’s                               1, issue 1, 2013, pp. 10-14
+    functionality. This confluence is of medical restoration                     [3]   K. R. Saikaew et al., ”CT Image Management and Communication
+    and patient’s participation. Whether we are referring to                           Services,” Service Research and Innovation Institute Global
+    stroke, spinal cord injuries, upper and lower extremities                          Conference (SRII 12), 2012, pp. 660-666.
+    soft-tissue injuries, trauma disorders, osteoarthritis,                      [4]   J. Congote et al., ”Volume Ray Casting in WebGL,” Computer
+    inflammatory arthritis, or cognitive impairment,                                   Graphics, N. Mukai, ed., InTech, 2012, pp. 157-178.
+    rehabilitation needs to address the International                            [5]   F. Steinicke, G. Bruder, K. Hinrichs, T. Ropinski, and M. Lopes,
+    Classification of Functioning, Disability and Health [13].                         “3D User Interfaces for Collaborative Work,” Human Computer
+                                                                                       Interaction, I. Pavlidis, ed., InTech, 2008, pp. 279-294.
+       MRI, CT, and ultrasound imaging have an expanding
+                                                                                 [6]   T. Armour, “The Brain of Richard App,” 16 Oct. 2012;
+    role in the diagnosis and follow-up of pathology of the                            http://www.jaanga.com/2012/10/the-brain-of-richard-app.html.
+    musculoskeletal, neuromuscular, and central nervous                          [7]   T.        Rager,       “Web-DicomViewer,”            Jul.   2011;
+    systems. The rehabilitation specialist should keep abreast                         http://ragersweb.de/coding/php/web_dicomviewer.html.
+    of the current and future applications of these imaging
+
+
+
+                                                                          – 358 –
+
+  Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on June 22,2020 at 21:46:54 UTC from IEEE Xplore. Restrictions apply.
+                       9th IEEE International Symposium on Applied Computational Intelligence and Informatics • May 15-17, 2014 • Timişoara, Romania
+
+
+
+ [8]  T. Lewis, “Medical app uses augmented reality and camera phone           [11] S. Dutton, “Getting Started with WebRTC,” HTML5 Rocks, 23
+      to      detect      skin       cancer,”      10      May    2012;             Jul. 2012; http://www.html5rocks.com/en/tutorials/webrtc/basics/.
+      http://www.imedicalapps.com/2012/05/medical-app-augmented-               [12] A. A. Shah, M. Gandhi, and K. M. Shah, “Medical Image
+      reality-camera-skin-cancer/.                                                  Colorization using Optimization Technique,” International
+ [9] N. Navab, J. Traub, T. Sielhorst, M. Feuerstein, and C. Bichlmeier             Journal of Scientific and Research Publications (IJSRP), vol. 3,
+      “Action- and Workflow-Driven Augmented Reality for Computer-                  issue 3, Mar. 2013, pp. 796-800.
+      Aided Medical Procedures,” IEEE Computer Graphics and                    [13] R. A. Cooper, H. Ohnabe, and D. A. Hobson, An Introduction to
+      Applications, vol. 27, no. 5, Sept./Oct., 2007, pp. 10-14.                    Rehabilitation Engineering, Taylor & Francis, 2007, pp. 1-18.
+ [10] The European Space Agency website, ESA, “Augmented reality               [14] C.D. Schneck, G. Goldberg, M.C. Munin, and A. Chu, “Physical
+      promises astronauts instant medical knowhow,” 6 Feb. 2012;                    Medicine and Rehabilitation: principles and practice,“ Imaging
+      http://www.esa.int/Our_Activities/Technology/Augmented_reality                Techniques Relative to Rehabilitation, J. A. DeLisa, B. M. Gans,
+      _promises_astronauts_instant_medical_knowhow.                                 and N. E. Walsh, eds., Lippincott Williams & Wilkins, 2005,
+                                                                                    p.179-228.
+
+
+
+
+                                                                        – 359 –
+
+Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on June 22,2020 at 21:46:54 UTC from IEEE Xplore. Restrictions apply.
+

@@ -1,0 +1,668 @@
+                                                                                                                                         TECHNOLOGY REPORT
+                                                                                                                                          published: 27 March 2017
+                                                                                                                                     doi: 10.3389/fninf.2017.00022
+
+
+
+
+                                            The Open Anatomy Browser:
+                                            A Collaborative Web-Based Viewer
+                                            for Interoperable Anatomy Atlases
+                                            Michael Halle 1 *, Valentin Demeusy 1,2 and Ron Kikinis 1,3
+                                            1
+                                             Surgical Planning Laboratory, Department of Radiology, Brigham and Women’s Hospital, Harvard Medical School, Boston,
+                                            MA, USA, 2 Mathematics - Computing and Information Technology, Ecole Centrale Lyon, Lyon, France, 3 Fraunhofer MEVIS,
+                                            Bremen, Germany
+
+
+                                             The Open Anatomy Browser (OABrowser) is an open source, web-based,
+                                             zero-installation anatomy atlas viewer based on current web browser technologies
+                                             and evolving anatomy atlas interoperability standards. OABrowser displays three-
+                                             dimensional anatomical models, image cross-sections of labeled structures and source
+                                             radiological imaging, and a text-based hierarchy of structures. The viewer includes
+                                             novel collaborative tools: users can save bookmarks of atlas views for later access
+                                             and exchange those bookmarks with other users, and dynamic shared views allow
+                                             groups of users can participate in a collaborative interactive atlas viewing session. We
+                                             have published several anatomy atlases (an MRI-derived brain atlas and atlases of other
+                                             parts of the anatomy) to demonstrate OABrowser’s functionality. The atlas source data,
+                                             processing tools, and the source for OABrowser are freely available through GitHub and
+                                             are distributed under a liberal open source license.
+                                             Keywords: anatomy atlases, visualization, WebGL, open-source software, open data, format standardization,
+                                             collaborative software
+
+                          Edited by:
+                Richard A. Baldock,         INTRODUCTION
+         MRC Human Genetics Unit,
+         University of Edinburgh, UK        Anatomy atlases are a visual representations of medical knowledge, and as such are useful to a
+                       Reviewed by:         wide range of users, including physicians, medical students, researchers and the general public.
+                Seth Walter Rufffins,       Many different anatomy atlases exist, both in print and digital forms. Each has their strengths,
+  Broad CIRM Center of University of        driven by their underlying medical expertise, the type and quality of presentation they offer
+           Southern California, USA
+                                            (e.g., two-dimensional drawings, three-dimensional renditions, or detailed anatomical data), and
+                          Chris Armit,
+         University of Edinburgh, UK
+                                            their target audience. The neuroscience research community relies heavily on atlas data as a
+                                            reference for ongoing research studies. The community has implemented organizational tools such
+                 *Correspondence:
+                       Michael Halle
+                                            as the Neuroscience Information Framework (NIF) and the Neuroimaging Informatics Tools and
+            mhalle@bwh.harvard.edu          Resources Clearinghouse (NITRC) to provide catalogs of atlases, atlas tools and ontologies for
+                                            organizing and processing neuroanatomical information.
+      Received: 23 December 2016               Our focus is on improving the dissemination, presentation and collaborative potential of the
+         Accepted: 08 March 2017            visual information contained in anatomy atlases for practical use by a wide audience. There are
+        Published: 27 March 2017            dozens of examples of existing visual anatomy browsers. Many of these viewing tools are closely
+                             Citation:      coupled to a particular atlas data set or research effort (for example, the Allen Brain Map and
+    Halle M, Demeusy V and Kikinis R        BrainExplorer; Sunkin et al., 2013). Close coupling assures that viewing tools work well with a
+ (2017) The Open Anatomy Browser:
+                                            particular atlas. However, it also limits the resources available to, say, create a new viewer designed
+  A Collaborative Web-Based Viewer
+   for Interoperable Anatomy Atlases.       to address the needs of a different audience. Ideally, atlases and atlas viewers (and other atlas
+            Front. Neuroinform. 11:22.      processing tools) could be decoupled from each other so that high quality tools could be used
+        doi: 10.3389/fninf.2017.00022       interoperably with different atlases. This goal of interoperability has been expressed clearly in the
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                              1                                             March 2017 | Volume 11 | Article 22
+Halle et al.                                                                                                                                   The Open Anatomy Browser
+
+
+
+
+  FIGURE 1 | Open Anatomy Browser (OABrower) showing different structures of the SPL brain atlas (A,B). The interface consists of a cross-sectional
+  display panel on the left, a 3D structure view in the middle, and a text-based hierarchical structure view on the right. An information bar on the bottom displays the
+  currently selected structure and its ancestors.
+
+
+
+
+work of the International Neuroinformatics Coordinating                                  HAWG, we have contributed our experience with internal data
+Facility’s (INCF) Digital Atlasing effort (Hawrylycz et al., 2011).                      formats in 3D Slicer (Pieper et al., 2004), our open source
+    The Scalable Brain Atlas (Bakker et al., 2015), a software                           medical image informatics and visualization platform, towards
+platform developed as part of the INCF, attempts to address this                         the standard development process.
+atlas interoperability problem by providing a set of standardized                            While the HAWG standardization efforts have their genesis
+data and tools for ‘‘all publicly available brain atlases that                           in neuroscience, a flexible atlas interchange format has clear
+are of sufficient interest to the (neuroscience) community’’.                            utility for the broader atlas community as well. Many other
+The Scalable Brain Atlas consists of processed versions of                               medical specialties have ongoing atlas efforts throughout the
+approximately 20 human and animal brain atlases, web services                            human anatomy as well as in a variety of other organisms.
+that allow uniform access to atlas information, and a web-based                          In addition, commercial entities and some research groups
+viewer for displaying two-dimensional cross-sections and three-                          offer more general ‘‘whole body’’ atlases that target broad
+dimensional rendered views of the atlases. The Scalable Brain                            audiences including medical education and public outreach. An
+Atlas source code is open source distributed under the GNU                               example of open and less specialized anatomy atlas development
+Public License (GPL)1 .                                                                  is BodyParts3D (Mitsuhashi et al., 2009). BodyParts3D is
+    The Scalable Brain Atlas is organized as a centralized                               an ongoing open-source and open-data project to build 3D
+model: atlases are imported into the framework, converted into                           structural segments of a whole-body human male based on a
+a common form, and made available collectively through a                                 2 mm MRI scan of a volunteer. Medical concepts from the
+monolithic web portal, including 2D and 3D atlas viewing tools.                          Foundational Model of Anatomy (FMA; Rosse and Mejino, 2003)
+While a centralized development model can produce consistent,                            ontology were used to define anatomical segments, which were
+well-organized results, it places the burden of conversion,                              then modeled by illustrators. The resulting models and systems
+distribution and display on a single entity.                                             are available to view online and for download for alternative
+    Recently, members of research teams from several anatomy                             purposes such as 3D printing.
+atlas development groups comprising the Human Atlas Working                                  Our work with digital interactive anatomy atlases dates
+Group (HAWG) met to develop an interoperability and exchange                             more than 20 years (Shenton et al., 1995). We have produced
+data format for anatomy atlases under the umbrella of INCF                               several anatomy atlases consisting of source radiology images,
+(HAWG, Human Atlasing Working Group, 2016)2 . Such a                                     segmented voxel maps labeling different anatomical structures,
+format would allow atlases to share viewing tools, data editors                          polygonal models of those structures, all arranged in a
+and other atlas creation software, reducing duplication of                               hierarchical organization. Examples of these atlases include an
+effort. A common file data format encourages a decentralized                             MRI-derived neuroanatomic atlas3 as well as knee4 , abdominal5
+community of atlas development, in contrast to the Scalable                              and head and neck6 atlases based on CT imaging. Until recently,
+Brain Atlas’s centralized model. This decentralized development                          however, these atlases have been developed in a closed process
+model would also allow ‘‘best of breed’’ or specialized tools                            by a small number of people, with only the resulting data made
+to become widely used across many atlas projects, building                               available.
+community and simplifying user training. As members of
+                                                                                         3 http://www.spl.harvard.edu/publications/item/view/2037
+                                                                                         4 http://www.spl.harvard.edu/publications/item/view/1953
+1 https://www.gnu.org/licenses/licenses.en.html                                          5 http://www.spl.harvard.edu/publications/item/view/1918
+2 https://github.com/INCF/HAWG-examples                                                  6 http://www.spl.harvard.edu/publications/item/view/2271
+
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                                  2                                                 March 2017 | Volume 11 | Article 22
+Halle et al.                                                                                                                 The Open Anatomy Browser
+
+
+
+
+    Separate from the atlases themselves, we have also developed            work with three-dimensional anatomy atlases with volumetric
+atlas viewing tools. Because our atlases are based on tomographic           imaging, geometric models and text metadata. The user interface
+data, the viewers have the ability to display image slices and three-       consists of a cross-sectional slice panel on the left, a three-
+dimensional views of anatomic structures. These tools include               dimensional structure panel in the middle, and a text-based
+one of the earliest web-based visual anatomy applications using             structure hierarchy on the right. The 3D display window shows
+Java (Golland et al., 1998) In recent years, we have primarily              geometric models of anatomic structures along with textured
+used 3D Slicer to author and view atlases, which prevents                   cross-sections of volumetric data, which are also displayed in the
+us from reaching all but the most dedicated members of the                  slice panel. An information bar lying along the bottom of the
+public.                                                                     interface is used to display information about selected structures.
+    The Open Anatomy Browser (OABrowser for short)                          Screenshots of OABrowser viewing the SPL/NAC brain atlas is
+described in this article is a web-browser based anatomy                    shown in Figure 1.
+atlas viewer originally designed as a test bed for evaluating                   The rest of this section describes the underlying software
+ongoing draft versions of the HAWG data format, and as a                    architecture of OABrowser.
+vehicle for exploring interoperability between atlases. We have
+adopted and extended the work of HAWG (specifically, the                    Software Technology Stack
+discussions and drafts from the January 2016 HAWG meeting                   OABrowser is implemented in the ES2015 dialect of JavaScript.
+in Boston) to produce a practical anatomy viewer application.               It uses the Google-created Angular web framework8 and
+Our technology approach is similar to BrainBrowser (Sherif                  the AngularUI9 interface toolkit to manage the sub-
+et al., 2015), but with HAWG’s data format as a foundation for              windows, menus and application state. WebGL is used to
+interoperability. Compared to BrainBrowser, we have chosen                  display three-dimensional models of anatomy. WebGL is
+to tailor OABrowser more as a standalone application suitable               implemented on all major desktop and mobile platforms
+for use by a wide audience. OABrowser also includes novel                   and web browsers, providing accelerated three-dimensional
+collaborative features such as globally-shared bookmarks and                graphics and imaging capabilities to a large audience. HTML
+dynamic shared views.                                                       canvases are used for image display in the cross-sectional slice
+    The OABrowser is part of our effort to open our atlas                   panel.
+development pipeline and encourage community participation                     The higher-level JavaScript graphics library THREE.js10
+and code reuse. OABrowser and our larger atlas efforts are                  abstracts low-level WebGL graphics calls. THREE.js includes
+funded through the Neuroimage Analysis Center (NAC), an                     loaders for common image and geometry file formats. We
+NIH-sponsored biomedical resource center. Our anatomy atlases               have extended THREE.js’s existing loaders to include better
+are used by various NAC internal research efforts and also serve            support for VTK files11 and the NRRD image file format12 .
+as a way to disseminate the results of the Center’s biomedical              These changes have been contributed back to THREE.js for
+research. While NAC is focused specifically on neuroimaging,                that library’s community to use. THREE.js also provides
+our broader biomedical research has produced atlases of the head            mechanisms for selecting the three-dimensional structures under
+and neck, abdomen and knee.                                                 the user’s pointer, which OABrowser uses to select and provide
+    With NAC’s charter of dissemination, and based on our                   information about anatomical structures.
+success in developing free and open source medical software
+(Pieper et al., 2006; Kapur et al., 2012), we have chosen a
+development philosophy emphasizing freely available tools and               Atlas and Application State
+an open development process for creating shared anatomy atlases             The OABrowser architecture makes a clear distinction between
+and atlas software. Our code, data and tools are licensed under             atlas data and application state. Atlas data consists of image and
+the 3D Slicer open source license7 , which allows for liberal use,          geometry data that describes anatomical structures, annotation
+reuse, and redistribution for any purpose, including commercial             information that labels anatomical parts in a human readable
+applications. Furthermore, OABrowser is designed to be as                   way, and styles that depict how the structures should be
+accessible as possible to a broad community, including the                  displayed. Atlas data is stored in a standardized form to be
+general public.                                                             described later in this article.
+    In order to test OABrowser, we have converted several of our                Application state describes which structures are selected,
+imaging-derived anatomy atlases to draft HAWG data format                   which slices are being displayed, the viewer’s point of view
+and made the resulting atlases available for viewing. We have also          looking at the atlas, and any local modifications to appearance
+done initial work to convert third party atlases for viewing using          made by the user. Application state also includes a link to the
+the atlas browser.                                                          atlas being viewed.
+                                                                                Application state is the core, centralized data structure in
+                                                                            OABrowser. Application state can be stored and restored (for
+METHODS
+                                                                            8 https://angularjs.org/
+The OABrowser application is implemented as a single-page                   9 https://angular-ui.github.io/
+web application using current web standards. It is designed to              10 https://threejs.org/
+                                                                            11 http://www.vtk.org/VTK/img/file-formats.pdf
+7 https://github.com/Slicer/Slicer/blob/master/License.txt                  12 http://teem.sourceforge.net/nrrd/descformat.html
+
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                     3                                            March 2017 | Volume 11 | Article 22
+Halle et al.                                                                                                        The Open Anatomy Browser
+
+
+
+
+undo and redo), saved for later viewing (bookmarks), sent               have added features to the HAWG format to permit multiple
+to another person or group (bookmark sharing), or shared                representations of atlas structures to be described (e.g., label
+dynamically (dynamic shared views). The application state data          maps and three-dimensional geometry), support for different file
+structure is indexed by unique identifier (known as a UUID13 )          image and geometry file formats, and other pragmatic changes
+and saved either in application memory or a persistent database.        to build a working atlas tool. We have also changed some
+Given a UUID, OABrowser can look up its state information and           terminology for clarity, all while retaining basic concepts of
+restore itself to the given configuration.                              the data format. Thus, our description of the format should
+    For undo and redo, OABrowser using an in-memory internal            be viewed as a proposal for a future draft release based
+stack to store application state. Every user interaction with the       on practical deployment experience. A block diagram of our
+browser pushes a state object onto the stack. When the user             variant of the HAWG format and our extensions are shown in
+clicks the browser’s back and forward buttons, for example,             Figure 2.
+OABrowser restores the respective state object and updates the
+user interface accordingly.                                             JSON and JSON-LD
+    OABrowser can also save application state to a centralized,         HAWG files are written in a dialect of JSON (JSON, 2016) called
+world-readable networked database with a UUID key. Whenever             JASON-LD (JSON-LD Specifications, 2016), which standardizes
+the state of the user interface changes, the application state          metadata and linked data conventions. Information about
+data object is saved away and a new one is created with a               elements of the atlas is written as JSON-LD nodes, which are
+new UUID. This UUID is included in the browser’s URL                    represented as JSON arrays. Attributes of nodes begin with a
+string, which is updated as the user manipulates the atlas. At          lower case letter by convention. Nodes in the HAWG data format
+any one moment, then, the OABrowser URL contains enough                 have IDs that are unique within the file. Nodes can refer to
+information to load the application and recover sufficient              other nodes using this ID. By convention, we have chosen to
+application state to restore a viewing session. This URL is             use IDs of the form ‘‘#idname’’ to mirror the common fragment
+effectively a bookmark that allows the entire browser’s state to        identifier syntax of URIs. Indeed, JSON-LD encourages the use
+be restored.                                                            of URIs to identify resources, and this naming scheme allows
+    OABrowser uses Firebase, a Google database and application          us to uniquely reference nodes in external HAWG files. Nodes
+framework, to implement shared application state. Firebase              also have a type, capitalized by convention, that corresponds to a
+provides scalable real-time database services to web-browser            unique expanded URI-based type name in order to avoid name
+based applications. It implements social logins from service            clashes and in the future allow access to nodes defined in multiple
+providers such as Facebook, Google, GitHub and Twitter to               files.
+allow users to write and edit their own bookmarks while                     The canonical form of a HAWG file is a JSON-LD compliant
+allowing anyone to read them. While Firebase is a closed-               file where nodes are arrays in a JSON list, with references to
+source, commercial product, we are not fully dependent on               node IDs connecting them together as needed. This canonical
+it. Open source alternatives such as RethinkDB/Horizon14 or             form is simple to parse, but it may not be simple to author.
+deepstream.io15 could be adapted to provide the same type of            JSON-LD provides a variety of other forms, such as a nested
+services as Firebase if needed.                                         hierarchy of nodes, and a well-defined mechanism to convert
+    In addition to traditional database services, Firebase              these forms into the canonical form. Furthermore, it is not strictly
+broadcasts changes to entries in the database to interested             necessary to use a JSON-LD parser to parse the file format. A
+web clients as they occur. Clients can use this information             simple JSON parser with ad hoc rules for interpreting the data
+to update their internal application state. This feature                can also be used. At this time, OABrowser uses just such an ad hoc
+allows multiple OABrowsers running across the network to                parser.
+synchronize, mirroring the appearance of the user interface for
+all users and allowing collaborative viewing and interaction.           Structures and Groups
+Firebase is part of the Google Cloud infrastructure, which              Anatomic parts are represented using Structures, with compound
+assures sufficient capacity to support dynamic shared views             structures being represented as Groups. Structures point to other
+between individuals, small teams, or in teacher-classroom               nodes that describe their spatial representation, their on-screen
+settings.                                                               appearance, and their ontological label or other annotation.
+                                                                        These elements are external to the structure itself to allow reuse
+Data Format                                                             of different parts of the atlas and to implement a separation
+The atlas data itself is stored as files and web resources that         of concerns for atlas authoring. For instance, new annotations
+can be distributed from any web server. The data consists               can be added to the atlas or new colors or rendering styles can
+of relatively large image and geometry data, more compact               be assigned separately from the designation of segment data or
+label map data, and lightweight metadata stored in a file               geometry.
+format based on HAWG working drafts and extensions. We
+                                                                        Header
+13 https://www.ietf.org/rfc/rfc4122.txt                                 Every atlas has a header (type Header) that provides information
+14 https://rethinkdb.com/                                               about the atlas itself and contains pointers to other atlas nodes. A
+15 https://deepstream.io/                                               Header node includes a ‘‘structureRoot’’ attribute that is a Group
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                 4                                        March 2017 | Volume 11 | Article 22
+Halle et al.                                                                                                                     The Open Anatomy Browser
+
+
+
+
+  FIGURE 2 | A block diagram of the node structure of the data format used by OABrowser. This format is based on early draft standards created by the
+  Human Atlas Working Group (HAWG) to promote atlas interoperability and exchange. We have changed and extended the HAWG proposals as needed to create a
+  working viewer application.
+
+
+
+
+representing the root of the atlas hierarchy. Alternatively, the                 with each Segment node representing the Structure in a
+‘‘structureRoot’’ attribute can have a JSON list value that includes             different way (say, both as a label map and as a polygonal
+more than one Group, in which case each Group in the list is                     model). Segments can be marked with a boolean attribute
+considered to be a independent root. This feature allows multiple                ‘‘authoritative’’ as true if it should be considered an authoritative
+hierarchies of structures, possibly overlapping, to be described in              spatial representation, while non-authoritative segments can be
+a single file.                                                                   included for visual display where exact spatial boundaries might
+                                                                                 not be necessary.
+Segments                                                                             In our atlases, the LabelMapSegment is authoritative to
+The spatial or spatio-temporal representation of a structure                     allow for slice overlays and interactive picking on slices,
+is represented as a Segment. Segments currently have two                         while non-authoritative GeometrySegments are used for
+main subtypes: LabelMapSegment and GeometrySegment. A                            polygonal models of anatomy and structure picking in 3D.
+LabelMapSegment contains a volumetric description of the                         This mechanism is an example of the kind of practical
+segment, while a GeometrySegment uses a polygonal model.                         development that emerges only through actual application
+A single Structure can have more than one Segment type,                          prototyping.
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                          5                                           March 2017 | Volume 11 | Article 22
+Halle et al.                                                                                                        The Open Anatomy Browser
+
+
+
+
+DataSource                                                              applied to a structure, in which all annotations are considered
+The HAWG data format abstracts out the details of data access           valid alternative descriptions.
+from the nodes that use the data. Data access is isolated
+in the DataSource node, which holds primary responsibility              Style
+for describing data access through file names, URLs, or                 Style nodes (formerly RenderOptions nodes in HAWG drafts)
+database queries. DataSource nodes, like all HAWG nodes,                describe how a structure should be rendered visually. For
+can be specialized by listing multiple types (For instance, a           example, vascular structures might be rendered red or blue,
+DataSource node that knows about remote files could be of type          or various parts of the brain might be rendered in arbitrary
+(‘‘DataSource’’ ‘‘HTTPDataSource’’). The use of types consisting        but consistent colors. Multiple structures might share a single
+of JSON lists is part of the JSON-LD standard and allows readers        color if, say, the atlas renders by tissue or cell type. Style nodes
+to function without implicit type information stored in a type          provide the mechanism to perform these tasks by separating
+hierarchy. Even naïve readers can distinguish DataSources from          structure appearance from the structure itself, much in the
+other node types, and more sophisticated ones can act differently       same way cascading style sheets (CSS) separate style of web
+on nodes that have more specialized subtypes.                           page elements from HTML document description. The content
+    It is anticipated that one DataSource might provide data to         of Style nodes is currently very basic, including only color,
+multiple Segments (if, say, a single file contains multiple image       transparency and visibility. We anticipate future, more complex
+segments, in which case the key for selecting the correct segment       subtypes of styles to take advantage of graphics features such
+is stored in the Segment itself and passed on to the DataSource).       as GPU-based shaders. We can also see a role for styles to
+                                                                        describe the visual appearance of screen- or print-rendered
+Image                                                                   annotation.
+An Image node is similar in function to a Segment node
+but represents image data such as source CT or MRI scans.               Attribution, Provenance and Rights
+An Image node can be subtyped based on particular Image                 We also propose, but do not implement, several additional node
+types, for instance (‘‘Image’’ ‘‘NRRDImage’’). Segment and              types. The first set of nodes provide a mechanism to credit the
+Image nodes contain a reference to a DataSource node that               authors and processes that have contributed to the creation of
+they use to actually retrieve the data. Segment and Image               a node as well the conditions by which that node may be used.
+nodes have provide enough parameter information to the                  Attribution nodes associate human creators with nodes or groups
+DataSource to, for example, identify subsets or sub-dimensions          of nodes. Provenance nodes identify the sources of information
+of data.                                                                from which a node was derived. And the Rights node provides
+    A key property of the HAWG data format is its emphasis              information on usage or copyright information of nodes in an
+on representing metadata and incorporating external data such           atlas. These node types provide fine-grained attribution and
+as images and geometry through reference. HAWG does not                 prescription of atlas content in a way that provides both credit
+reinvent representations of concepts as coordinate systems or           and accountability for individual elements of much scientific and
+data representations, but instead references external files and         creative works.
+data sources in already-established formats. This characteristic
+allows a tool such as OABrowser to be developed with a core             CoordinateFrame and Transform
+set of supported data formats, with others added on as needed           Finally, we have proposed, but have not implemented, a simple
+without any change in the underlying HAWG atlas description.            mechanism to deal with simultaneous display of multiple atlases
+OABrowser currently supports image and segmentation volumes             in different coordinate frames. During the HAWG discussions,
+in the NRRD file format and geometry descriptions stored in             an explicit decision was made to first address the description
+VTK, STL and Wavefront OBJ/MTL formats. We have chosen                  of a single atlas in a single coordinate frame to side step
+these formats because of their simplicity, their compatibility          the issue of coordinate systems and handling. Coordinate
+with our existing tools, and the availability of converters             systems are often specialized, domain-specific, or complicated.
+from other formats to them. We plan to support NIFTI                    Duplicating existing coordinate frame description mechanisms
+and DICOM formats natively for images and segmentation                  or prematurely dictating one description scheme over another
+objects in the future through a plugin architecture similar to          risks complexity and loss of generality.
+BrainBrowser.                                                               Our mechanism is based on the observation that geometry
+                                                                        and image file formats already have coordinate system
+Annotation                                                              descriptions that any DataSource, Segment, or Image designed
+Annotation nodes encapsulate human- or machine-readable                 for them already understands. We propose a CoordinateFrame
+annotation data describing structures. The simplest Annotation          node that merely points to a DataSource and provides enough
+node, and the one currently implemented, includes a title and           information to specify a coordinate system described in that
+text description of a structure. Future Annotation subtypes             DataSource. Every node in the same coordinate system can point
+may include references to controlled naming standards or                to a single CoordinateFrame. Another node type, a Transform
+links to ontologies. For example, structural information from           node, as yet unspecified, describes the relationship between
+the FMA ontology could be included in a (‘‘Annotation’’                 different CoordinateFrames and allows transformation between
+‘‘FMAAnnotation’’) type node. Multiple annotations can be               them. The (potentially composite) transformation between
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                 6                                        March 2017 | Volume 11 | Article 22
+Halle et al.                                                                                                           The Open Anatomy Browser
+
+
+
+
+different CoordinateFrames can be discovered by inspecting the             implementing collaborative features made possible through the
+references between transforms and frames.                                  use of contemporary web technologies. We explain our results
+    We look forward to further community discussion about the              by first explaining the basic features of OABrowser, followed by
+details of these proposed nodes.                                           our experience with HAWG-based atlas creation, and concluding
+                                                                           with a look at performance and current deployment issues.
+Revision Control and Data Store
+While not strictly part of the OABrowser application, the                  Features
+workflow we use for managing software development, creating                Inside OABrowser, anatomical structures can be inspected as
+atlases and distributing atlas data is an important element                2D cross sections (in the slice panel or in the 3D view), as 3D
+that underlies the AOBrower user experience. In our current                models, or as entries in the structural hierarchy view. When
+atlas development workflow, we use the git distributed revision            a structure is selected, its name is displayed in the bottom
+control system16 and the GitHub collaborative code and data                status window, along with a ‘‘breadcrumb’’ list of parent and
+repository17 for both collaborative editing and distribution. The          ancestor structures all the way up to the root of the atlas. Each
+atlas viewer software is stored in a public GitHub repository.             ancestor name is a hyperlink that selects the respective containing
+Master copies of the data for all of our atlases also reside               structure.
+on GitHub, where they are accessible to all. Through GitHub,                   A user can manipulate the slices and 3D views in OABrowser
+users and other developers can offer modifications and file                by panning, zooming and selecting structures. Structures appear
+bug reports that can be used to improve OABrowser and our                  in similar colors in the 3D view and in color overlays in the
+atlases.                                                                   slices. Individual structures and trees of substructures can be
+    For testing and modification, a developer can check out the            turned on and off. Optional crosshairs indicate the location of
+latest ‘‘master’’ version (or any previous revision) of OABrowser          cross-sectional slices in each view. The window and level of
+or an atlas into a local repository on his or her computer. The            the volumetric data can be changed to improve image contrast.
+atlas browser can view local data during development. Once                 Ranges of voxel values can be rendered transparent to improve
+changes and edits have been made, the developer commits in                 model visibility.
+the local version to the master atlas repository. Clones of the
+GitHub atlas repositories can be copied to any standard web                Bookmarks
+server as needed. We are actively testing deployment release               Recall that OABrowser bookmarks are URL-indexed, globally-
+versions of the atlas using distributed content networks such as           readable descriptions of atlas and application state. To store
+Google Cloud infrastructure.                                               personal bookmarks, an atlas user can log in to the atlas
+    We currently use 3D Slicer as the primary authoring tool for           infrastructure using social logins such as Google, Facebook,
+our atlases. A python-based converter script extracts relevant             Twitter, or GitHub. Once logged in, the user can save a bookmark
+atlas data and visual styles from Slicer’s internal file format            to a Firebase-backed central store. The user can return to the
+MRML and writes it out in the HAWG-derived format. The                     same view of the atlas by accessing a bookmark list in the
+script is stored as part of the atlas viewer’s source repository. We       browser application or by pasting the bookmark’s URL into a
+also have converter scripts to create HAWG files from simple               web browser (Figure 3). The user who creates a bookmark can
+TSV (tab-separated value) text tables.                                     also delete it.
+                                                                              Because bookmarks from all atlas users are stored centrally
+Licensing                                                                  on the network, bookmarks can be exchanged among users
+The OABrowser software and sample atlases are licensed under               (assuming that the atlas data is network-accessible). Any user
+the 3D Slicer License, which is based on the popular two-clause            can load any bookmark (though only the bookmark creator can
+BSD license and includes some additional terms related to                  delete the bookmark) provided they have the bookmark URL.
+appropriate use in medical contexts. In particular, the Slicer             All atlas and bookmark state is immutable, so a bookmark itself
+License does not place any requirements on users or developers             cannot be edited (though a bookmark can be used as a basis
+to release the source code of incorporating applications, in               for a newer bookmark. Bookmark URLs can be exchanged like
+contrast to other licenses such as the GPL. We have found these            any other page link (e.g., sent by email or embedded in a web
+licensing terms simplify collaboration with and dissemination to           page). Alternatively, bookmarks can be sent to authenticated
+a wide range of academic and corporate institutions.                       users inside OABrowser by using a simple message system built
+                                                                           into the application.
+                                                                              Bookmarks contain links to the source atlas as well as the
+RESULTS
+                                                                           viewer’s state. If a bookmark refers to a different atlas (or
+OABrowser’s original purpose was to validate the HAWG atlas                a different version of the same atlas) than the one that is
+data format and make our existing anatomy atlases available to             currently loaded into the viewer, OABrowser will ask the user for
+the public through an ordinary web browser. We have been able              permission to load the new atlas.
+to accomplish these goals and further gain new experience by
+                                                                           Dynamic Shared Views
+16 https://git-scm.com/                                                    While bookmarks are a useful tool for storing user history
+17 https://github.com/                                                     and exchanging views of anatomy, OABrowser offers a more
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                    7                                        March 2017 | Volume 11 | Article 22
+Halle et al.                                                                                                                  The Open Anatomy Browser
+
+
+
+
+  FIGURE 3 | Bookmarks. OABrowser’s bookmark panel shows saved scene bookmarks. Bookmarks can be shared with other users. A user’s bookmarks may refer
+  to any atlas. If the bookmarked atlas is not currently being viewed, OABrowser will offer to load it.
+
+
+
+
+interactive mode for interactive collaborative atlas viewing                   Slicer’s status as a capable but much heavier weight image
+between multiple users: shared dynamic views. A shared dynamic                 analysis package in our environment. OABrowser requires no
+view is like a shared synchronized bookmark whose content can                  user training for installation and no infrastructure for download,
+change when users interact with the atlas using the browser. All               making it suitable for casual use or classroom environments.
+application state is synchronized between users, and the pointer               It provides free access to a handful of locally-developed digital
+location of the last user to change the model is also displayed on             atlases for use in anatomy education and data inspection.
+each remote browser (Figure 4).                                                Figure 5 shows screenshots of the atlases outside of the brain.
+   This feature can be used to share views between two                         Open access is available for both the application source code and
+remote collaborators or a teacher and an entire classroom                      the atlas data.
+of students. Dynamic shared views can be exchanged using                           Though our anatomy atlases are converted from 3D Slicer’s
+the application’s messaging system or URLs. In the current                     internal data format to HAWG, the new format is simple enough
+implementation, any user sharing a view can manipulate the                     that other source atlases can be converted to it using relatively
+shared view, which can become confusing with multiple users. In                simple scripting or text editing. In addition to our 3D Slicer
+the future, we plan to investigate other collaborative interaction             converter script, we also provide a python script that can produce
+models, such as baton passing or explicit teacher-student                      an atlas from a text spreadsheet that includes structure names,
+mode.                                                                          label values and geometry file names. This approach is perhaps
+                                                                               the simplest method of atlas creation. To test interoperability
+OABrowser in Use                                                               with atlases from other sources, we have converted one of the
+Even as it serves a primary role as a data format test bed,                    Mindboggle project’s labeled brain data sets (Klein and Tourville,
+OABrowser has been well-received by our user community. It                     2012) to an atlas (Figure 6). Bill Lorensen assisted with the
+functions as a lightweight atlas viewer and complements 3D                     conversion of MindBoggle datasets to VTK as part of his Open
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                        8                                           March 2017 | Volume 11 | Article 22
+Halle et al.                                                                                                                            The Open Anatomy Browser
+
+
+
+
+  FIGURE 4 | Dynamic view sharing allows users to view a common, synchronized user interface. This figure shows OABrowser running in three different
+  web browsers (Safari, Firefox and Chrome) sharing the same atlas view. In this example, the three browsers are running on the same computer, but dynamic views
+  synchronize across any Internet-connected web browsers.
+
+
+
+
+  FIGURE 5 | Other anatomy atlases. In addition to the SPL/neuroimage analysis center (NAC) Brain Atlas, we have converted three other atlases for use with
+  OABrowser, featuring CT-derived atlases of the head and neck (A), the knee (B) and the abdomen (C).
+
+
+
+
+Atlas project18 . The MindBoggle atlas generally displays well                       Performance
+in OABrowser, although the initial release of this atlas has                         Interactive performance is an important requirement of any
+misregistration between slices and 3D models. Full compatibility                     end-user tool. Our current implementation provides adequate
+and correct display of community atlases is a high priority for our                  performance on a variety of computer platforms. For example,
+ongoing work.                                                                        when displaying the SPL/NAC Brain Atlas (which contains
+                                                                                     100 of structures and is represented by polygonal models with
+18 https://github.com/lorensen/OpenAtlas                                             approximately 500K polygons), the anatomy browser can render
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                              9                                              March 2017 | Volume 11 | Article 22
+Halle et al.                                                                                                                              The Open Anatomy Browser
+
+
+
+
+  FIGURE 6 | Converting existing atlases. OABrowser is designed as a test bed for interoperability between atlases. Here, we show a screenshot of the viewer
+  displaying a version of a segmented brain from the MindBoggle project. We thank Bill Lorensen for his VTK versions of the models. 3D Slicer was used to convert
+  NIFTI files to NRRD.
+
+
+
+
+image at 60 frames per second on common desktop and laptop                             us to make changes to early HAWG draft ideas to produce a
+computers, and maintain 20 fps on lower-end computers such                             working, useful atlas browsing tool. Our success in developing
+as Chromebooks and Apple iPad Air 2. As such, we believe that                          OABrowser suggests several different directions for future
+rendering performance of the current application is sufficient for                     enhancement of the software and its companion atlases and other
+many uses and users.                                                                   tools.
+   Loading atlas datasets across the network inevitably produces
+delays before interaction is possible. OABrowser uses standard                         Implementation Improvements
+web browser caching mechanisms to save local copies of the                             The current implementation of OABrowser reflects its history
+anatomy atlas data and the viewer application code itself.                             as a development test bed and concept demonstration tool. We
+Reloading atlases thus does not typically require the re-transfer                      anticipate several near-term improvements in its implementation
+of large data sets. In cases where Internet connectivity may be                        to make it both more useful and more maintainable.
+limited or non-existent, OABrowser’s architecture lends itself to                         At the heart of our future plans for OABrowser is
+re-packaging as a standalone application that includes multiple                        modularization. Several components of OABrowser functionality
+anatomy atlas data sets.                                                               are independent, capable of being used in other applications
+                                                                                       and swapped for new implementations. These components
+DISCUSSION AND FUTURE WORK                                                             include the HAWG parser, the WebGL rendering engine,
+                                                                                       the image format readers, the bulk data store and cache,
+In this article we have presented OABrower, an experimental                            the user interface and application core, and the collaborative
+anatomy atlas viewer based on developing standards for atlas                           synchronization mechanism. Modularizing these elements of
+interoperability. The implementation of OABrowser has allowed                          OABrowser would greatly simplify the community development
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                               10                                              March 2017 | Volume 11 | Article 22
+Halle et al.                                                                                                           The Open Anatomy Browser
+
+
+
+
+of the software and encourage new applications with similar                helpful. If collaborative viewing proved particularly valuable,
+features.                                                                  integrating video technologies such as WebRTC20 would allow
+    In particular, the user interface has not been optimized to            face-to-face interaction.
+work well on mobile platforms: although it runs well enough to
+demonstrate its promise on phones and tablets, components of
+                                                                           Interoperable Tools
+the UI are too difficult to access by touch. We intend to both
+                                                                           OABrowser and the sample anatomy atlases we have developed
+improve the web version of OABrowser using a ‘‘mobile first’’
+                                                                           are early elements of an interoperable ecosystem of atlas tools
+approach as well as investigate packaging it as a native mobile
+                                                                           and data. By developing an anatomy atlas framework that
+application using a framework such as Electron19 .
+                                                                           encourages collaboration and reuse at a variety of levels, we aim
+    Modularity will also assist in maintaining compatibility with
+                                                                           to create the largest possible community of developers and users
+new versions of the HAWG draft format. Although OABrowser
+                                                                           focused on these important repositories of medical knowledge.
+has demonstrated the utility of HAWG’s concepts, we anticipate
+                                                                           Interoperability enables some experts to specialize in interactive
+significant and even incompatible changes before final consensus
+                                                                           viewing tools such as AOBrowser. Other teams can focus on
+is reached. A modular HAWG parser shared by several
+                                                                           atlas editors. Still others can create better annotation tools,
+implementations would be extremely useful for encouraging
+                                                                           or reconcile atlases with biomedical ontologies, or composite
+further developments.
+                                                                           multiple atlases into larger virtual ones, or public new data. In
+    Finally, along with changes to the HAWG format comes the
+                                                                           an interoperable environment, these research and development
+need for better and up-to-date conversion tools to help import
+                                                                           efforts can work together with less duplication of effort and
+data into HAWG from other atlas file formats (and when possible
+                                                                           more innovation in specific areas. The result is better atlases,
+export data back). OABrowser’s tools are currently rudimentary
+                                                                           with better tools, for new uses and users as well as for existing
+and designed for a limited number of data formats. To become
+                                                                           applications.
+a true interoperable data format, the eventual HAWG standard
+                                                                               The OABrowser viewer is one example of an interactive
+should be consistent, reliable and accessible to the entire anatomy
+                                                                           client for atlas data represented in HAWG format, but other
+atlas community, including physicians and others who are not
+                                                                           types of clients are similarly enabled by standardization. For
+computer scientists.
+                                                                           example, anatomy atlases can be tested for errors and verified
+                                                                           for data consistency by non-interactive testing clients. Other
+Editing and Collaboration                                                  non-interactive clients could, for instance, provide spatial queries
+OABrowser is primarily a browsing tool, with very limited                  against multiple atlases in an atlas library. Once again, such
+authoring ability in the form of bookmarks. The current                    tools could enhance many atlases without requiring direct
+bookmark functionality could be extended with new tools                    participation by the atlas creators themselves.
+such as region annotation, color selection and text markup.                    Finally, interoperability suggests a possible alternative,
+More advanced editors would allow voxel-by-voxel or geometric              decentralized implementation for a resource such as the Scalable
+editing of anatomical segments. Edits to atlases should be                 Brain Atlas. Rather than collecting, converting, curating and
+transparently committed to version-controlled atlas repositories           hosting multiple third-party atlases and building a centralized
+so that it fits seamlessly into the existing atlas development             infrastructure for access and display, a community-driven
+process.                                                                   research group could instead collect references to interoperable
+   OABrowser’s web architecture further suggests tighter                   atlases and tools (much like NITRC does today). Practical
+integration with other browser-based technologies and                      interoperability could be enforced with a test suite of datasets and
+interaction techniques for new applications. For example, a                software tools.
+future version of the viewer could include anatomical tours
+consisting of lists of bookmarks and accompanying text, audio,
+or video descriptions by a physician or anatomist. Unlike a                Atlases as Shared Knowledge
+traditional slideshow, the view of the anatomy would remain live           A future environment with high quality interoperable atlas
+so that a student could stop at any time and explore a particular          publishing and viewing tools, combined with practical
+anatomic view further. Changes from view to view could animate             mechanisms for storing, versioning and exchanging atlas
+smoothly to provide visual continuity.                                     data, is one where a rich variety of medical knowledge and
+   Dynamic shared views represent another opportunity for                  experience can be shared. The common current view of anatomy
+future enhancement. OABrowser’s current model of view sharing              atlases as complete, authoritative and unchanging tomes of
+gives all users equal ability to alter the scene. Following a              information is similar to how encyclopedias were viewed before
+change, the last user to make a change controls the shared                 Wikipedia. Wikipedia has shown that the easier it is to access,
+pointer. This model of interaction is not suitable for large               publish and share knowledge, the richer and more complete our
+groups such as classrooms. Better collaborative paradigms such             understanding of the world can be. Anatomical and encyclopedic
+as explicit passing of control could be developed, potentially             knowledge are both subject to interpretation, disagreement and
+using lessons learned from teleconferencing applications. Better           revision. Decentralized and streamlined atlas publishing opens
+visual feedback about participants and leaders would also be               new opportunities for the exchange of specialized medical
+
+19 https://electron.atom.io/                                               20 https://webrtc.org/
+
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                   11                                        March 2017 | Volume 11 | Article 22
+Halle et al.                                                                                                                                     The Open Anatomy Browser
+
+
+
+
+knowledge and the reuse of information for new medical                                     FUNDING
+applications.
+                                                                                           OABrowser is funded as part of the Atlas Core of the Neuroimage
+DATA SHARING AND SOFTWARE                                                                  Analysis Center, NIH/National Institute of Biomedical
+AVAILABILITY                                                                               Imaging and Bioengineering (NIBIB) Grant 4P41EB015902;
+                                                                                           NIH/NIBIB Image Guided Therapy Center (NCIGT)
+OABrowser-based anatomy atlases are available at                                           5P41EB015898; and NIH/National Cancer Institute (NCI)
+https://www.openanatomy.org/. The source code for OABrowser                                Quantitative Image Informatics for Cancer Research (QIICR)
+is available on GitHub at https://github.com/mhalle/oabrowser/.                            4U24CA180918.
+The SPL brain atlas is available at https://github.com/mhalle/spl-
+brain-atlas. OABrowser and the SPL atlases are available under                             ACKNOWLEDGMENTS
+terms of the open-source 3D Slicer license: https://github.com/
+Slicer/Slicer/blob/master/License.txt                                                      The authors wish to thank Marianna Jakab for her expert
+                                                                                           management of the SPL atlases. We would also like to thank the
+AUTHOR CONTRIBUTIONS                                                                       contributors who helped author our anatomy atlases, including
+                                                                                           Florin Talos and the Psychiatry Neuroimaging Laboratory
+MH designed the architecture of OABrowser and currently                                    at BWH. Thanks to David Kennedy for introducing us to
+maintains the code base. VD implemented OABrowser and                                      the Human Atlas Working Group. Bill Lorensen has been a
+contributed to its design. RK provided medical and anatomical                              supportive and knowledgeable advocate for open atlases for
+expertise, conducted testing and used OABrowser for medical                                many years, and assisted us with testing and the conversion of
+education.                                                                                 the MindBoggle atlas.
+
+
+REFERENCES                                                                                 Pieper, S., Lorensen, B., Schroeder, W., and Kikinis, R. (2006). ‘‘The NA-MIC
+                                                                                              Kit: ITK, VTK, pipelines, grids and 3D slicer as an open platform for the
+Bakker, R., Tiesinga, P., and Kötter, R. (2015). The scalable brain atlas: instant            medical image computing community’’ in 3rd IEEE International Symposium
+   web-based access to public brain atlases and related content. Neuroinformatics             on Biomedical Imaging: Nano to Macro, 2006. (Arlington, VA), 698–701.
+   13, 353–366. doi: 10.1007/s12021-014-9258-x                                                doi: 10.1109/ISBI.2006.1625012
+Golland, P., Kikinis, R., Umans, C., Halle, M., Shenton, M. E., and                        Rosse, C., and Mejino, J. L. V. Jr. (2003). A reference ontology for biomedical
+   Richolt, J. A. (1998). ‘‘AnatomyBrowser: a framework for integration                       informatics: the foundational model of anatomy. J. Biomed. Inform. 36,
+   of medical information,’’ in Medical Image Computing and Computer-                         478–500. doi: 10.1016/j.jbi.2003.11.007
+   Assisted Intervention—MICCAI’98. Lecture Notes in Computer Science,                     Shenton, M. E., Kikinis, R., McCarley, W., Saiviroonporn, P., Hokama, H. H.,
+   eds W. M. Wells, A. Colchester and S. Delp (Berlin, Heidelberg: Springer),                 Robatino, A., et al. (1995). ‘‘Harvard brain atlas: a teaching and visualization
+   720–731.                                                                                   tool’’ in Proceedings 1995 Biomedical Visualization, (Atlanta, GA), 10–17.
+HAWG, Human Atlasing Working Group. (2016). Standardizing neuroimaging                        doi: 10.1109/BIOVIS.1995.528700
+   atlas formats. Front. Neuroinform. Conference Abstract: Neuroinformatics 2016           Sherif, T., Kassis, N., Rousseau, M.-É., Adalat, R., and Evans, A. C.
+   doi: 10.3389/conf.fninf.2016.20.00080                                                      (2015). BrainBrowser: distributed, web-based neurological data
+Hawrylycz, M., Baldock, R. A., Burger, A., Hashikawa, T., Johnson, G. A.,                     visualization. Front. Neuroinform. 8:89. doi: 10.3389/fninf.2014.
+   Martone, M., et al. (2011). Digital atlasing and standardization in the mouse              00089
+   brain. PLoS Comput. Biol. 7:e1001065. doi: 10.1371/journal.pcbi.1001065                 Sunkin, S. M., Ng, L., Lau, C., Dolbeare, T., Gilbert, T. L., Thompson, C. L.,
+JSON. (2016). Available online at: http://www.json.org/ [Accessed December 9,                 et al. (2013). Allen brain atlas: an integrated spatio-temporal portal for
+   2016].                                                                                     exploring the central nervous system. Nucleic Acids Res. 41, D996–D1008.
+JSON-LD Specifications. (2016). Available online at: http://json-ld.org/spec/                 doi: 10.1093/nar/gks1042
+   latest/ [Accessed December 9, 2016].
+Kapur, T., Pieper, S., Whitaker, R., Aylward, S., Jakab, M., Schroeder, W.,                Conflict of Interest Statement: The authors declare that the research was
+   et al. (2012). The National alliance for medical image computing, a roadmap             conducted in the absence of any commercial or financial relationships that could
+   initiative to build a free and open source software infrastructure for                  be construed as a potential conflict of interest.
+   translational research in medical image analysis. J. Am. Med. Inform. Assoc. 19,
+   176–180. doi: 10.1136/amiajnl-2011-000493                                               The reviewer CA and handling Editor declared their shared affiliation, and the
+Klein, A., and Tourville, J. (2012). 101 Labeled brain images and a consistent             handling Editor states that the process nevertheless met the standards of a fair and
+   human cortical labeling protocol. Front. Neurosci. 6:171. doi: 10.3389/fnins.           objective review.
+   2012.00171
+Mitsuhashi, N., Fujieda, K., Tamura, T., Kawamoto, S., Takagi, T., and Okubo, K.           Copyright © 2017 Halle, Demeusy and Kikinis. This is an open-access article
+   (2009). BodyParts3D: 3D structure database for anatomical concepts. Nucleic             distributed under the terms of the Creative Commons Attribution License (CC
+   Acids Res. 37, D782–D785. doi: 10.1093/nar/gkn613                                       BY). The use, distribution and reproduction in other forums is permitted, provided
+Pieper, S., Halle, M., and Kikinis, R. (2004). ‘‘3D Slicer’’ in 2004 2nd                   the original author(s) or licensor are credited and that the original publication
+   IEEE International Symposium on Biomedical Imaging: Nano to Macro                       in this journal is cited, in accordance with accepted academic practice. No
+   (IEEE Cat No. 04EX821), (Arlington, VA), 632–635. doi: 10.1109/ISBI.2004.               use, distribution or reproduction is permitted which does not comply with these
+   1398617                                                                                 terms.
+
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                                   12                                                 March 2017 | Volume 11 | Article 22
+

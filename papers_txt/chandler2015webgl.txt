@@ -1,0 +1,364 @@
+  Eurographics Conference on Visualization (EuroVis) (2015)                                                                      Short Papers
+  E. Bertini, J. Kennedy and E. Puppo (Editors)
+
+
+
+
+    WebGL-Enabled Remote Visualization of Smoothed Particle
+                Hydrodynamics Simulations
+
+                                          Jennifer Chandler1 , Harald Obermaier1 , and Kenneth I. Joy1
+
+                                                         1 University   of California, Davis
+
+
+
+
+           Abstract
+           Large-scale simulations are often performed on machines without the necessary graphics hardware for visualiza-
+           tion. Transferring full resolution data to a suitable machine for visualization is impractical and undesirable. We
+           investigate solutions to the remote visualization problem for large-scale Smoothed Particle Hydrodynamics (SPH)
+           simulations. Previous remote visualization strategies for SPH perform rendering on the server side and send ren-
+           dered images to the client viewer. These approaches suffer from delays due to network latency in sending entire
+           images every frame and adversely affect interactive visual data analysis. WebGL enables hardware acceleration
+           for rendering in the browser. We combine WebGL volume rendering rendering with data compression and intel-
+           ligent streaming to provide a fast and flexible remote visualization solution for SPH simulations, which enables
+           easier access to simulations for analysis and sharing of data.
+           Categories and Subject Descriptors (according to ACM CCS): I.3.2 [Computer Graphics]: Graphics Systems—
+           Remote systems
+
+
+
+
+  1. Introduction                                                              and fill it in with more detail as data becomes available. We
+                                                                               use an octree as an efficient multi-resolution representation
+  Smoothed Particle Hydrodynamics (SPH) is a fluid sim-                        for SPH data so we can stream in low resolution versions for
+  ulation method that performs computations on a mov-                          rendering while higher resolution versions are loading.
+  ing set of particles carrying physical properties of the
+  fluid [GM77]. SPH simulations are often created on remote                       The proposed remote visualization system makes it easier
+  high-performance machines that may not have hardware for                     to share results and is also suitable for in-situ visualization
+  interactive rendering, necessitating remote visualization. A                 since data can be viewed remotely while the simulation is
+  system that streams data from a server and renders it on the                 running. Our contributions are as follows:
+  client is desirable to avoid indiscriminately downloading full               • A compact streaming system for SPH visualization.
+  resolution data. Users should be able to view simulations                    • A WebGL-based multi-resolution SPH volume renderer.
+  from many computers without specific client software.                        Our work adapts many existing SPH visualization tech-
+                                                                               niques for a remote visualization system using WebGL.
+     Using WebGL for client-side rendering of SPH simula-
+  tions meets these requirements. WebGL, based on OpenGL                       2. Related Work
+  ES, allows web browsers to directly use the graphics card                    Visualization of SPH simulations commonly takes the fol-
+  without plugins or extensions [Mar11]. WebGL is widely                       lowing approaches: volume rendering of physical proper-
+  supported, making it suitable for use in a variety of portable               ties, rendering isosurfaces of fluid boundaries or physical
+  remote visualization techniques such as in medical visualiza-                variables of interest, and rendering column density, the in-
+  tion [BMSP12], [JKD∗ 12], [ML12b], [MJ12] and geospatial                     tegral of the density through the view direction. Goswami et
+  data visualization [XYL12], [PID12], [Slo11].                                al. [GSSP10], Linsen et al. [LMD∗ 11], and Price [Pri07] im-
+                                                                               plement a variety of these techniques for SPH visualization.
+     Client-side rendering of remote data suffers from de-
+  lays in data retrieval due to network latency. Lavoué et                        Very little work has been done in the area of SPH remote
+  al. [LCD13] address this concern for 3D meshes with a pro-                   visualization. Feng et al. [FCDM∗ 11] implement a web in-
+  gressive compression scheme to load a low resolution mesh                    terface to view pre-computed snapshots of SPH data. Cui
+
+   c The Eurographics Association 2015.
+
+
+
+
+DOI: 10.2312/eurovisshort.20151116
+2     J. Chandler, H. Obermaier, & K. I. Joy / WebGL-Enabled Remote Visualization of Smoothed Particle Hydrodynamics Simulations
+
+et al. [CMP13] use animated depth images to render a fi-              use the smoothing length as the cell size of the lowest level
+nite element analysis scene on the client from a variety of           of the octree. According to Reichl et al. this level of resolu-
+nearby view points and extend their approach to render SPH            tion can capture the fine details of the data. We compute the
+particles as spheres. Soumagne et al. [SBC10] do in-situ vi-          contribution of the particles to the cell centers using the SPH
+sualization of SPH simulations using a ParaView plugin that           kernel weighting function (Equation 1) and store the gradi-
+reads the streamed data from distributed shared memory.               ents using the derivative of the kernel function. We compute
+                                                                      the values for cells in higher levels by averaging the values
+   SPH volume rendering techniques generally take two
+                                                                      of their children. Figure 1 illustrates this process.
+forms: splatting particles onto the image plane or into slices,
+and converting to a grid representation by evaluating the                            level n-1
+SPH kernel in each cell. Fraedrich et al. [FAW10] do the for-                                             >=                     <
+                                                                                     level n                                 e
+mer, using the geometry shader to splat particles into slices                                       nc
+                                                                                                      e                    nc
+                                                                                              ria                       ria
+                                                                                           va                         va
+of a 3D texture. In other work, Fraedrich et al. [FSW09] use
+an adaptive octree approach to stream large SPH data from             Figure 1: We insert particles at level n by evaluating the
+disk. They combine nearby particles in coarser levels of the          SPH kernel for the desired scalar. The parent stores the av-
+tree. We use an approach similar to Reichl et al. [RTW13]             erage of its children. If the variance of the children is less
+who create an octree by evaluating the SPH kernel for each            than ε, we delete them and make the parent a leaf (gray).
+grid cell at the highest resolution and averaging child cells
+up the tree. They render the octree using CUDA. For the                  During the averaging we also perform data compaction.
+WebGL volume rendering, we use a texture representation of            If the variance of the children’s values and the magnitude
+the octree. Benson and Davis [BD02] first developed octree            of their gradients is less than a user-supplied threshold, we
+textures. Lefebvre et al. [LHN05] and Kniss et al. [KLS∗ 05]          delete the children and make the parent a leaf. It is possible
+adapt octree textures for texturing 3D models on the GPU.             to rely only on variance; however, we found that in largely
+Boada et al. [BNS01] use an octree to reduce texture mem-             uniform regions with sharp transitions this can cause discon-
+ory for rendering volume data. Campoalegre et al. [CNB13]             tinuities when rendering because neighboring nodes of the
+create a gradient octree for streaming based on predefined            octree may differ by more than one level, causing interpola-
+transfer functions. Our approach is adapted from Gobbetti et          tion problems. Using the gradient magnitude as an additional
+al. [GMG08] who use an octree for ray casting volume data             threshold preserves continuity by disallowing compaction if
+too large to fit in memory. Movania et al. [ML12a], Noguera           the values change rapidly in neighboring nodes.
+and Jiménez [NJ12], and Congote et al. [CSK∗ 11] provide                 We store the octree in breadth first order with one file for
+algorithms for ray casting [Lev88] in WebGL using a tiled             each level. Each node has the scalar value and a flag that is
+2D texture of the 3D uniform grid data.                               zero for a leaf or contains the offset of the node’s block of
+                                                                      children in the array for their level. The level 0 file contains
+3. Background
+                                                                      the root node and header information for the octree, includ-
+SPH is a particle-based fluid simulation technique. Because           ing the bounding box size and number of levels.
+of the dynamic nature of the particle set, it is easy to include
+moving obstacles or free boundaries in the flow field. Each           5. Client-Side Viewing
+particle carries data such as density and velocity as well as a       We use WebGL to provide interactive volume rendering for
+smoothing length h ∈ R representing the particle’s radius of          remote SPH data. WebGL has some limitations: 3D textures
+influence, which can vary per particle. Near incompressible           are not supported and integer texture samplers are not avail-
+fluid simulations commonly use a single smoothing length.             able in shaders. We adapt our algorithms accordingly.
+   To reconstruct values at arbitrary locations in the flow              To load a time step, we send an asynchronous XML HTTP
+field, SPH uses a kernel function to weight the contribution          request for level 0 of the octree. Once the first request fin-
+of each particle based on the distance krk from the sample            ishes, we request the next level and so on until we load the
+location to the particle. Only particles within one smoothing         entire tree. We store an array for each octree level. Since we
+length h are used for reconstruction. We use the same kernel          already stored the child offsets in preprocessing, we don’t
+function used in the simulation [MCG03]:                              need to update the parent nodes when we read in a new level.
+                       (h − krk)3
+                    
+                15                      if 0 ≤ krk ≤ h                Changing time steps before all data has loaded cancels pend-
+    W (r, h) = 6                                           (1)
+               πh      0                if krk > h                    ing requests for level files and starts loading the new time
+The value at a sample location of an arbitrary quantity is the        step. We do loading and processing in a separate thread with
+weighted sum of the quantity’s value per particle.                    Web Workers [Hic12] to avoid stalling the UI. Communica-
+                                                                      tion with the worker occurs via message passing (Figure 2).
+4. Server-Side Preprocessing
+                                                                         After loading each level we compute links to each node’s
+In preprocessing we construct an octree for each time step            neighbors in all 6 directions, 3 links to sibling nodes and 3
+using a process similar to that of Reichl et al. [RTW13]. We          to nodes not contained within the parent (Figure 3). Linking
+
+                                                                                                               c The Eurographics Association 2015.
+       J. Chandler, H. Obermaier, & K. I. Joy / WebGL-Enabled Remote Visualization of Smoothed Particle Hydrodynamics Simulations    3
+        Main Thread   data set                         Worker Thread
+                      selection           file requests data
+             UI                                         processing
+                                  message                                       octree leaf                          2D layout
+                                  handler                   javascript
+                                                            octree
+          canvas
+                        texture            TypedArray texture                                 +
+                      shader params                     generation                                ghost cell layer
+                                               sizes
+                                                                              grid data
+Figure 2: We use Web Workers for loading and processing in
+the background to avoid disrupting the UI. Since JavaScript              Figure 4: Each leaf stores a grid composed of the child
+is single-threaded, without Web Workers, any processing will             values plus a layer of ghost cells with neighbor values. To
+freeze the rendering. The threads run independently and                  evaluate a sample (black point) we interpolate the cells with
+communicate by sending messages through a handler.                       white dots. The hardware interpolates in x and y. We sample
+                                                                         the two z slices and manually interpolate the values.
+only uses the current level of the octree and its parent level.
+                                                                         it loads because we make the size of the uniform grid equal
+We assume neighbor links for the parent level were already
+                                                                         to the size of the currently loaded level of the octree.
+computed. A neighbor link is always at the same or a higher
+level than the node. To compute a link pointing outside the                 Comparison: Rendering the uniform grid is simpler than
+parent, we find the parent’s neighbor link in that direction.            rendering the octree texture since it does not have multiple
+If it is a leaf we use it as the neighbor otherwise we use the           dependent texture lookups and does not have to compute
+appropriate child of the parent’s neighbor.                              neighbor links to form leaf grids. The direct octree rendering
+                                                                         has the advantage of being able to scale well with larger data
+                                                                         sets since it does not need to allocate texture space for the
+                                                                         entire grid, especially if high resolution levels are sparse.
+
+
+
+
+Figure 3: Neighbor links for the teal node. We can easily
+find sibling links. For a link in a different parent, we first
+find the parent’s neighbor in that direction (gray arrows).
+If it has children we link to the appropriate child (left link),
+otherwise we link to the parent’s neighbor (bottom link).
+   We present two methods for volume rendering: direct oc-
+tree rendering and conversion to a uniform grid. Both meth-
+ods use 8 bits per pixel textures.
+   Octree Texture Layout: We write the octree to a 2D texture
+with one texture for storing the nodes and a second for stor-
+ing leaf data. For larger octrees we use multiple leaf textures.
+                                                                         Figure 5: Top: Sphere collision data time steps 80 and 300.
+Using separate textures allows us to linearly interpolate in
+                                                                         Middle: Sphere drop data set time steps 70 and 120. Bottom:
+the data texture and use nearest neighbor in the node tex-
+                                                                         Mixing simulation time steps 5 and 50.
+ture. Like Gobbetti et al. [GMG08] we store a grid in each
+leaf instead of a single value to use hardware interpolation
+                                                                         6. Results
+(Figure 4). In the node texture, the alpha channel indicates
+leaf status. The RGB channels store an address: for internal             We evaluate our remote viewer with three data sets (Fig-
+nodes the texel containing the first of the node’s children,             ure 5). The mixing simulation (161 time steps, 2,097,152
+and for leaf nodes, the location of the leaf grid. Since our             particles, 106,496 KB / time step) models a blender with two
+file representation of the octree contains a single value in             corotating blades located side-by-side in a box. The sphere
+the leaves, we construct a grid by converting parent nodes               collision (312 time steps, 1,048,576 particles, 53,248 KB
+of leaves into leaf nodes and using the child values in the              / time step) models a gravity-free collision of two spher-
+grid. For each grid we also store ghost cells, computed using            ical fluid elements. The droplet impact (193 time steps,
+neighbor links to avoid backtracking, so that we can interpo-            2,097,152 particles, 106,496 KB / time step) models the im-
+late samples without additional lookups.                                 pact of a pair of highly viscous fluid droplets onto a planar
+                                                                         surface. We use the velocity magnitude for rendering.
+   Uniform Grid Texture Layout: An alternative to the previ-
+ous method is to write the octree to a uniform grid texture in              We tested our application in Chrome and Firefox with an
+a tiled 2D format by doing a depth first traversal and writ-             Nvidia Quadro 6000 graphics card. We use Trickle [Eri05]
+ing into the texture when we reach a leaf. Each slice has the            to simulate slower connections. Table 1 shows data trans-
+same number of cells in the x and y direction as the finest              fer times and file sizes for selected time steps. With these
+resolution level of the octree. We can still display the data as         transfer rates, we can view the data almost immediately up
+
+c The Eurographics Association 2015.
+4            J. Chandler, H. Obermaier, & K. I. Joy / WebGL-Enabled Remote Visualization of Smoothed Particle Hydrodynamics Simulations
+
+time step       5                  200               305                 5             50            190           5             45              135
+  level 0       20ms (48B)         25ms (48B)        355ms (48B)         9ms (48B)     8ms (48B)     8ms (48B)     801ms (48B)   21ms (48B)      1.15s (48B)
+  level 1       6ms (160B)         5ms (160B)        9ms (160B)          6ms (160B)    6ms (160B)    5ms (160B)    6ms (160B)    5ms (160B)      6ms (160B)
+  level 2       6ms (1.3KB)        6ms (1.3KB)       7ms (1.3KB)         6ms (1.3KB)   5ms (1.3KB)   6ms (1.3KB)   7ms (1.3KB)   6ms (1.3KB)     6ms (1.3KB)
+  level 3       10ms (10KB)        16ms (10KB)       365ms (10KB)        10ms (10KB)   8ms (8.8KB)   9ms (10KB)    16ms (10KB)   8ms (10KB)      8ms (10KB)
+  level 4       56ms               31ms              38ms                30ms          25ms          26ms          419ms         45ms            474ms
+                (70KB)             (61.1KB)          (59.4KB)            (65KB)        (57.5KB)      (63.1KB)      (80KB)        (80KB)          (80KB)
+    level 5     2.14s              476ms             812ms               598ms         416ms         578ms         1.92s         1.14s           1.2s
+                (447KB)            (327KB)           (310KB)             (416KB)       (339KB)       (391KB)       (541KB)       (618KB)         (606KB)
+    level 6     5.27s              4.09s             3.98s               4.72s         3.36s         4.51s         6.51s         7.17s           7.39s
+                (3.0MB)            (2.4MB)           (1.8MB)             (2.8MB)       (2.1MB)       (2.6MB)       (3.5MB)       (4.2MB)         (4.3MB)
+    level 7     38.79s             27.93s            18.42s              34.61s        24.23s        26.97s        35.38s        47.53s          46.94s
+                (22.1MB)           (16MB)            (10.5MB)            (19.8MB)      (13.8MB)      (15.4MB)      (20.1MB)      (27.1MB)        (26.7MB)
+    level 8     –                  –                 1.8min              3min          2.9min        2.2min        –             –               –
+                                                     (61.9MB)            (102MB)       (98.4MB)      (77MB)
+Table 1: Data transfer times for selected time steps of the sphere collision, sphere drop, and blender data sets respectively. We
+cap the download and upload speeds to approximately 5Mbps to simulate a slower connection.
+
+to level 5, which enables initial interactive viewing and anal-
+ysis. Octrees for the data sets have different heights due to
+different levels of compactness. Level sizes of a data set also
+vary across time steps due to changes in particle distribution.
+   We measure the average frames per second (fps) across
+uniformly spaced time steps at level 7 for each simulation.
+Generally the fps for the uniform grid is higher than the di-
+rect octree method. For the collision simulation the uniform                             Figure 7: Sphere collision time step 250: The first image has
+grid runs at 52.8fps, and the octree runs at 37.9fps. For the                            a maximum level of 5, and the second image has full resolu-
+drop simulation the uniform grid runs at 60fps, and the oc-                              tion (level 7). Even at lower resolution the general shape is
+tree runs at 46.8fps. For the mixing simulation the uniform                              still apparent which gives the user an impression of the time
+grid runs at 60fps, and the octree runs at 29.5fps.                                      step quickly before the full resolution data has loaded.
+                      WĞƌĐĞŶƚĂŐĞŽĨEŽĚĞƐĨƚĞƌŽŵƉĂĐƚŝŽŶ                               7. Conclusion
+      
+                                                                                       We have presented a remote rendering system for SPH sim-
+     
+      
+     
+                                                                                       ulations. Our method constructs octrees from the SPH data
+       
+                                                                                        on the server-side. On the client-side we use WebGL for
+        
+        
+                                                                                         volume rendering. Our implementation allows the user to
+                                                                         
+                                  
+                                                    
+                                                                               view lower resolution representations of the data while the
+                                             
+                ! "#$%&'(       )*( "+,-.- /(%%0(        )*( "+,-.- 1.(+
+                                                                                         higher resolution levels load. Our experiments show that the
+                                                                                         emerging WebGL technology is a prime candidate for re-
+Figure 6: This chart shows the percentage of nodes remain-                               mote visualization of large SPH data sets. However, limita-
+ing in the octree after the compaction step. The more uniform                            tions present in the WebGL standard as well as bandwidth
+the data set, the more nodes can be compacted.                                           considerations may require careful adaptation of standard
+   The raw SPH data exceeds the size of the largest octree                               rendering and data representation techniques. In future work
+level. The mixing simulation with its large uniform region                               we plan to consider performance on mobile systems and ad-
+especially benefits from the data compaction. Here, the total                            ditional methods for data compaction. We would also like to
+file size of all octree levels combined is only around a quar-                           explore view-dependent methods for data loading.
+ter of the size of the original SPH data. Figure 6 shows the
+percentage of nodes remaining after compaction. The level                                8. Acknowledgments
+of compaction roughly corresponds to the uniformity of the                               This work was supported in part by the National Science
+scalar values in the data. In the drop data set the complexity                           Foundation under contracts IIS 0916289 and IIS 1018097,
+increases after the impact, decreasing the compaction.                                   and NSF GRFP grant DGE-1148897, and the Office of Ad-
+   In Figure 7, we show images generated after loading dif-                              vanced Scientific Computing Research, Office of Science,
+ferent levels of the octree. Even with fewer levels loaded,                              of the U.S. Department of Energy under Contract No. DE-
+the overall shape of the data is still clear. This is helpful for                        SC0007443 through the Scientific Discovery through Ad-
+quickly exploring data because the user doesn’t need to wait                             vanced Computing (SciDAC) programs Scalable Data Man-
+for all levels to load before going to a different time step.                            agement, Analysis and Visualization Center (SDAV).
+
+                                                                                                                            c The Eurographics Association 2015.
+       J. Chandler, H. Obermaier, & K. I. Joy / WebGL-Enabled Remote Visualization of Smoothed Particle Hydrodynamics Simulations       5
+
+References                                                              [KLS∗ 05] K NISS J., L EFOHN A., S TRZODKA R., S ENGUPTA
+                                                                          S., OWENS J. D.: Octree textures on graphics hardware. In
+[BD02] B ENSON D., DAVIS J.: Octree textures. In SIGGRAPH
+                                                                          ACM SIGGRAPH 2005 Sketches (2005), p. 16. 2
+  ’02 Proceedings of the 29th Annual Conference on Computer
+  Graphics and Interactive Techniques (2002), pp. 785–790. 2            [LCD13] L AVOUÉ G., C HEVALIER L., D UPONT F.: Streaming
+                                                                          compressed 3d data on the web using JavaScript and WebGL.
+[BMSP12] B IRR S., M ÖNCH J., S OMMERFELD D., P REIM                      In Proceedings of the 18th International Conference on 3D Web
+  B.: A novel real-time Web3D surgical teaching tool based on             Technology (2013), pp. 19–27. 1
+  WebGL. In Bildverarbeitung für die Medizin 2012. Springer,
+  Mar. 2012, pp. 404–409. 1                                             [Lev88] L EVOY M.: Display of surfaces from volume data. Com-
+                                                                           puter Graphics and Applications, IEEE 8, 3 (May 1988), 29–37.
+[BNS01] B OADA I., NAVAZO I., S COPIGNO R.: Multiresolu-                   2
+  tion volume visualization with a texture-based octree. The Visual
+  Computer 17, 3 (2001), 185–197. 2                                     [LHN05] L EFEBVRE S., H ORNUS S., N EYRET F.: Chapter 37:
+                                                                          Octree textures on the GPU. In GPU Gems 2, Pharr M., (Ed.).
+[CMP13] C UI J., M A Z., P OPESCU V.: Animated depth im-                  Addison-Wesley Professional, Mar. 2005. 2
+  ages for interactive remote visualization of time-varying datasets.
+  IEEE Transactions on Visualization and Computer Graphics 20,          [LMD∗ 11] L INSEN L., M OLCHANOV V., D OBREV P., ROSS -
+  11 (Nov. 2013), 1474–1489. 2                                            WOG S., ROSENTHAL P., L ONG T. V.: SmoothViz: Visualiza-
+                                                                          tion of smoothed particles hydrodynamics data. In Hydrodynam-
+[CNB13] C AMPOALEGRE L., NAVAZO I., B RUNET P.: Gradi-                    ics - Optimizing Methods and Tools (Oct. 2011), Schulz H. E.,
+  ent octrees: A new scheme for remote interactive exploration of         Simoñes A. L. A., Lobosco R. J., (Eds.), pp. 3–26. 1
+  volume models. In 2013 International Conference on Computer-
+  Aided Design and Computer Graphics (CAD/Graphics) (Nov.               [Mar11] M ARRIN C.: WebGL specification. Khronos WebGL
+  2013), pp. 306–313. 2                                                   Working Group (2011). 1
+[CSK∗ 11] C ONGOTE J., S EGURA A., K ABONGO L., M ORENO                 [MCG03] M ÜLLER M., C HARYPAR D., G ROSS M.: Particle-
+  A., P OSADA J., RUIZ O.: Interactive visualization of volumetric        based fluid simulation for interactive applications. In Proceed-
+  data with WebGL in real-time. In Proceedings of the 16th Inter-         ings of the 2003 ACM SIGGRAPH/Eurographics Symposium on
+  national Conference on 3D Web Technology (2011), pp. 137–146.           Computer Animation (2003), Eurographics Association, pp. 154–
+  2                                                                       159. 2
+[Eri05] E RIKSEN M. A.: Trickle: A userland bandwidth shaper            [MJ12] M ARION C., J OMIER J.: Real-time collaborative scien-
+   for unix-like systems. In USENIX Annual Technical Conference,          tific WebGL visualization with WebSocket. In Proceedings of
+   FREENIX Track (2005), pp. 61–70. 3                                     the 17th International Conference on 3D Web Technology (2012),
+                                                                          ACM, pp. 47–50. 1
+[FAW10] F RAEDRICH R., AUER S., W ESTERMANN R.: Effi-
+   cient high-quality volume rendering of SPH data. IEEE Transac-       [ML12a] M OVANIA M. M., L IN F.: High-performance volume
+   tions on Visualization and Computer Graphics 16, 6 (Nov./Dec.          rendering on the ubiquitous WebGL platform. In IEEE 14th
+   2010), 1533–1540. 2                                                    International Conference on High Performance Computing and
+                                                                          Communication & IEEE 9th International Conference on Em-
+[FCDM∗ 11] F ENG Y., C ROFT R. A., D I M ATTEO T., K HANDAI               bedded Software and Systems (June 2012), pp. 381–388. 2
+  N., S ARGENT R., N OURBAKHSH I., D ILLE P., BARTLEY C.,
+  S PRINGEL V., JANA A., ET AL .: Terapixel imaging of cosmo-           [ML12b] M OVANIA M. M., L IN F.: Mobile visualization of
+  logical simulations. The Astrophysical Journal Supplement Se-           biomedical volume datasets. Journal of Internet Technology and
+  ries 197, 2 (2011), 18:1–18:8. 1                                        Secured Transactions (JITST) 1, 2 (Mar./June 2012), 52–60. 1
+
+[FSW09] F RAEDRICH R., S CHNEIDER J., W ESTERMANN R.:                   [NJ12] N OGUERA J., J IMÉNEZ J.: Visualization of very large
+  Exploring the millennium run-scalable rendering of large-scale          3d volumes on mobile devices and WebGL. In 20th WSCG in-
+  cosmological datasets. IEEE Transactions on Visualization and           ternational conference on computer graphics, visualization and
+  Computer Graphics 15, 6 (Nov./Dec. 2009), 1251–1258. 2                  computer vision (2012), pp. 105–112. 2
+
+[GM77] G INGOLD R. A., M ONAGHAN J. J.: Smoothed parti-                 [PID12] P RIETO I., I ZKARA J. L., D ELGADO F.: From point
+  cle hydrodynamics: theory and application to non-spherical stars.        cloud to Web 3D through CityGML. In 2012 18th International
+  Monthly Notices of the Royal Astronomical Society 181, 3 (1977),         Conference on Virtual Systems and Multimedia (VSMM) (Sept.
+  375–389. 1                                                               2012), pp. 405–412. 1
+                                                                        [Pri07] P RICE D. J.: SPLASH: An interactive visualization tool
+[GMG08] G OBBETTI E., M ARTON F., G UITIÁN J. A. I.: A
+                                                                           for smoothed particle hydrodynamics simulations. Publications
+  single-pass GPU ray casting framework for interactive out-of-
+                                                                           of the Astronomical Society of Australia 24, 3 (2007), 159–173.
+  core rendering of massive volumetric datasets. The Visual Com-
+                                                                           1
+  puter 24, 7-9 (July 2008), 797–806. 2, 3
+                                                                        [RTW13] R EICHL F., T REIB M., W ESTERMANN R.: Visualiza-
+[GSSP10] G OSWAMI P., S CHLEGEL P., S OLENTHALER B.,
+                                                                          tion of big SPH simulations via compressed octree grids. In IEEE
+  PAJAROLA R.:        Interactive SPH simulation and render-
+                                                                          International Conference on Big Data (2013), pp. 71–78. 2
+  ing on the GPU.          In Proceedings of the 2010 ACM
+  SIGGRAPH/Eurographics Symposium on Computer Animation                 [SBC10] S OUMAGNE J., B IDDISCOMBE J., C LARKE J.: In-situ
+  (2010), Eurographics Association, pp. 55–64. 1                          visualization and analysis of SPH data using a ParaView plugin
+                                                                          and a distributed shared memory interface. In 5th International
+[Hic12] H ICKSON I.: Web Workers. W3C Candidate Recommen-
+                                                                          SPHERIC Workshop (2010), pp. 186–193. 2
+  dation, May 2012. http://www.w3.org/TR/workers/.
+  2                                                                     [Slo11] S LOUP P.: WebGL Earth. Bachelor’s thesis, Faculty of
+                                                                           Informatics, Masaryk University, 2011. 1
+[JKD∗ 12] JACINTO H., K ÉCHICHIAN R., D ESVIGNES M.,
+   P ROST R., VALETTE S.: A web interface for 3d visualization          [XYL12] X UE L., YANGMING Q., L EI L.: Visualization of ge-
+   and interactive segmentation of medical images. In Proceed-            omagnetic environment based on WebGL. In 2012 Fifth Inter-
+   ings of the 17th International Conference on 3D Web Technology         national Symposium on Computational Intelligence and Design
+   (2012), pp. 51–58. 1                                                   (Oct. 2012), vol. 2, IEEE, pp. 274–277. 1
+
+c The Eurographics Association 2015.
+

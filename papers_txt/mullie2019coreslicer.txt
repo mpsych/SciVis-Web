@@ -1,0 +1,779 @@
+Mullie and Afilalo BMC Medical Imaging            (2019) 19:15
+https://doi.org/10.1186/s12880-019-0316-6
+
+
+
+
+ SOFTWARE                                                                                                                                        Open Access
+
+CoreSlicer: a web toolkit for analytic
+morphomics
+Louis Mullie1,2 and Jonathan Afilalo1,2,3*
+
+
+  Abstract
+  Background: Analytic morphomics, or more simply, “morphomics,” refers to the measurement of specific
+  biomarkers of body composition from medical imaging, most commonly computed tomography (CT) images. An
+  emerging body of literature supports the use of morphomic markers measured on single-slice CT images for risk
+  prediction in a range of clinical populations. However, uptake by healthcare providers been limited due to the lack
+  of clinician-friendly software to facilitate measurements. The objectives of this study were to describe the interface
+  and functionality of CoreSlicer- a free and open-source web-based interface aiming to facilitate measurement of
+  analytic morphomics by clinicians - and to validate muscle and fat measurements performed in CoreSlicer against
+  reference software.
+  Results: Measurements of muscle and fat obtained in CoreSlicer show high agreement with established reference
+  software. CoreSlicer features a full set of DICOM viewing tools and extensible plugin interface to facilitate rapid
+  prototyping and validation of new morphomic markers by researchers. We present published studies illustrating the
+  use of CoreSlicer by clinicians with no prior knowledge of medical image segmentation techniques and no formal
+  training in radiology, where CoreSlicer was successfully used to predict operative risk in three distinct populations
+  of cardiovascular patients.
+  Conclusions: CoreSlicer enables extraction of morphomic markers from CT images by non-technically skilled
+  clinicians. Measurements were reproducible and accurate in relation to reference software.
+  Keywords: Analytic morphomics, Morphometric analysis, Body composition analysis, Planimetric measurements,
+  Medical image segmentation, Computed tomography, Obesity, Sarcopenia
+
+
+Background                                                                            supports the use of morphomic markers measured on
+Syndromes characterized by pathological alterations of                                single-slice CT images for risk prediction in a range of
+body composition, such as sarcopenia, cachexia and                                    clinical populations (Table 1). The analytic morphomics
+obesity, are increasingly prevalent and portend an in-                                group at the University of Michigan has had a pioneer-
+creased risk of adverse health outcomes. Accordingly,                                 ing influence in the field and has undertaken a major
+there is a growing interest, both at the clinical and aca-                            standardization effort with the publication of reference
+demic levels, in using body composition analysis to iden-                             values derived from a large population of patients [5].
+tify vulnerable patients who would benefit from targeted                              Despite promising results, adoption by healthcare pro-
+evaluation and treatment [1]. Analytic morphomics, or                                 viders has been limited due to the lack of clinician-
+more simply, “morphomics,” refers to the measurement                                  friendly software to facilitate measurements.
+of specific biomarkers of body composition from med-                                     Figure 1 displays a typical workflow for determination
+ical imaging, most commonly computed tomography                                       of morphomic markers; which begins by opening a study
+(CT) images [2–4]. An emerging body of literature                                     in DICOM format, selecting a validated reference ana-
+                                                                                      tomical level on a reconstructed view (e.g. the level of
+* Correspondence: jonathan.afilalo@mcgill.ca                                          the 4th lumbar vertebra on a sagittal view), visualizing
+1
+ Department of Medicine, McGill University, 3755 Cote Ste Catherine Rd,               the corresponding axial image, and finally performing
+E-222, Montreal, QC H3T 1E2, Canada                                                   measurements using a combination of automatic and
+2
+ Division of Cardiology, McGill University, Montreal, QC, Canada
+Full list of author information is available at the end of the article                manual segmentation tools. Markers that can be
+
+                                        © The Author(s). 2019 Open Access This article is distributed under the terms of the Creative Commons Attribution 4.0
+                                        International License (http://creativecommons.org/licenses/by/4.0/), which permits unrestricted use, distribution, and
+                                        reproduction in any medium, provided you give appropriate credit to the original author(s) and the source, provide a link to
+                                        the Creative Commons license, and indicate if changes were made. The Creative Commons Public Domain Dedication waiver
+                                        (http://creativecommons.org/publicdomain/zero/1.0/) applies to the data made available in this article, unless otherwise stated.
+Mullie and Afilalo BMC Medical Imaging                   (2019) 19:15                                                                                        Page 2 of 14
+
+
+
+
+Table 1 Selected single-slice morphomic markers derived from                          Table 1 Selected single-slice morphomic markers derived from
+muscle and adipose tissue area measurements on thoracic and                           muscle and adipose tissue area measurements on thoracic and
+abdominal CT scans                                                                    abdominal CT scans (Continued)
+Category Marker name and definition           Segmentation algorithms      ID         Category Marker name and definition          Segmentation algorithms       ID
+Muscle       Psoas muscle area:               Shape model [48, 49]         PMA                     plus intramuscular fat, in
+(lumbar)     combined area of the right                                                            mm2 [93].
+− 29 to      and left psoas muscles, in
++ 150        mm2 [25–47].                                                                          Total abdominal fat             –                             TAA_HU
+HU [24]                                                                                            attenuation: mean
+             Psoas muscle attenuation:        –                            PMA_HU                  attenuation value within the
+             mean attenuation value                                                                abdominal fat, in HU (ND).
+             within the psoas muscles, in
+             HU [31, 46, 50–55].                                                      Fat          Epicardial fat area: fat        Random forest [101, 102],     EFA
+                                                                                      (thoracic)   located between the heart       geodesic active contours
+             Lumbar dorsal muscle area:       Atlas-based [60],            LDMA       − 190 to     and the pericardium, in         [103], fuzzy C-means [104],
+             combined area muscle             thresholding-based [61],                − 30 HU      mm2 [94–100].                   other [105]
+             contained within the region      fuzzy C-means [62, 63]
+             posterior to the spine and                                                            Epicardial fat attenuation:     –                             EFA_HU
+             ribs, no more lateral than                                                            mean attenuation value
+             the lateral-most edges of                                                             within the epicardial fat, in
+             the erector spinae muscles                                                            HU [106]
+             (includes latissimus dorsi,
+             quadratus lumborum, and
+             erector spinae muscles), in                                              extracted using this workflow include tissue areas
+             mm2 [56–59].
+                                                                                      (muscle, fat, solid organs, bone), as well as attenuation
+             Lumbar dorsal muscle             –                            LDMA_HU    values in Hounsfield units (HU), which provide an index
+             attenuation: mean
+             attenuation value within the                                             of tissue composition or “quality.” Key advantages over
+             dorsal muscles, in HU [63,                                               other methods of body composition assessment include
+             64].
+                                                                                      the wide availability of existing CT datasets, the ability
+             Total lumbar muscle area:        FEM-based [67, 68]           TLMA
+             combined area of the psoas,                                              to perform measurements retrospectively, and the ability
+             rectus abdominis,                                                        to accurately assess tissue quantity, quality and distribu-
+             pyramidalis, transversus
+             abdominis, internal and                                                  tion with high reproducibility and minimal assumptions.
+             external oblique, plus the                                                  Table 1 displays selected examples of morphomic
+             dorsal muscle area, in mm2
+             [31, 56, 64–66]                                                          markers of muscle and adipose tissue derived from
+             Total lumbar muscle              –                            TLMA_HU    single-slice measurements on abdominal or thoracic CT
+             attenuation: mean                                                        scans, with accompanying references to clinical valid-
+             attenuation value within the
+             lumbar muscles, in HU [69].                                              ation studies. The wide range of applications illustrates
+Muscle       Total thoracic muscle area:      FEM-based [74]               TTLMA
+                                                                                      the versatility of the proposed workflow. Automated seg-
+(thoracic)   combined area of the                                                     mentation algorithms are referenced when available.
+− 129 to     pectoralis, intercostal and
++ 150        paraspinal muscles, in mm2
+                                                                                         Given the increasing availability of clinically indicated
+HU           [70–73].                                                                 CT imaging studies [6] and the mounting recognition of
+             Total thoracic muscle            –                            TTLMA_HU   morphomics as a prognostically relevant method of body
+             attenuation: mean                                                        composition assessment, it is highly desirable to facilitate
+             attenuation value within the
+             lumbar muscles, in HU (ND).                                              measurements for researchers and clinicians. However,
+Fat          Visceral fat area: total area of Fuzzy C-means [80], fuzzy    VFA        developing software for the morphomics community
+(lumbar)     intraperitoneal fat, in mm2      affinity [81], thresholding             poses unique development challenges because the field
+−190 to      [31, 54, 55, 75–79].             [82], separation mask [83],
+− 30 HU                                       polar projection ([84], edge            exists at the confluence of multiple scientific disciplines,
+                                              linking [85], other [86]                including medical image analysis (MIA), body compos-
+             Visceral fat attenuation:        –                            VFA_HU     ition research, clinical medicine, and epidemiology. We
+             mean attenuation value
+             within the visceral fat, in HU                                           have identified four key challenges and corresponding
+             [51, 53, 87–93].                                                         design requirements for software to bring morphomics
+             Subcutaneous fat area: total     FEM-based [68], separation   SFA        “to the bedside” and to a larger community of re-
+             area of fat tissue between       mask [93], other [93]
+             the skin and abdominal/
+                                                                                      searchers (Table 2). In this section, we review existing
+             back wall, in mm2 [31, 51,                                               MIA software in light of these design constraints and
+             54, 55].
+                                                                                      identify pertinent limitations of established approaches.
+             Subcutaneous fat                 –                            SFA_HU        A first key challenge is to bridge the gap in technical
+             attenuation: mean
+             attenuation value within the                                             knowledge between body composition researchers, who
+             subcutaneous fat, in HU [53,                                             develop and validate morphomic markers, and health-
+             87–91].
+                                                                                      care providers who can utilize these markers to enhance
+             Total abdominal fat area:        –                            TAA
+             combined area of visceral                                                their evaluation and treatment of patients. The ability
+             and subcutaneous fat tissue,                                             quickly review and edit results is crucial in the clinical
+Mullie and Afilalo BMC Medical Imaging          (2019) 19:15                                                                                Page 3 of 14
+
+
+
+
+  Fig. 1 Typical workflow for measurement of analytic morphomics
+
+
+setting, where expert validation of computer-generated                         institutions. Of the major currently existing tools,
+data is considered standard of care. Thus, for morpho-                         Slice-O-matic, Materialize [12] and Segment [13] only
+mics data to translate into improved decision-making, a                        offer Windows support, while Osirix only supports
+streamlined, “clinician-friendly” interface for reviewing                      Mac environments [14]. 3DSlicer [15], ImageJ [15]
+results is essential.                                                          and ITKSnap [16] are notable free options with good
+   Current MIA software packages have adopted the                              cross-platform compatibility. Although extremely power-
+“toolbox” approach of user interface organization. This                        ful, their interfaces have not been adapted to facilitate
+approach is flexible, yet results in a high level of inter-                    measurements by non-clinicians with little technical
+face complexity due to the multiplicity of controls and                        knowledge in image analysis.
+menus. For example, the main user control interface in-                           Most current MIA software packages (e.g. ImageJ, Seg-
+cludes 27 visible clickable control elements in Nora [7],                      ment, Osirix, 3DSlicer) are distributed via desktop apps that
+28 in ImageJ [8], and 32 in slice-O-Matic [9]. By con-                         are installed on end-user machines, and these require con-
+trast, the “wizard” approach is an organizational pattern                      tinuous updating to ensure forward-compatibility. Yet, clini-
+that presents essential controls in step-by-step fashion,                      cians may be performing measurements on work machines
+which facilitates the execution of unfamiliar tasks. The                       where MIA software has not been installed, and, in many
+wizard or “workflow-oriented” approach is most useful                          cases, institutional restrictions prevent end-users from in-
+for “a non-expert user [who] needs to perform an infre-                        stalling such software in the clinical environment. Over the
+quent complex task consisting of several subtasks, where                       last decade, browser applications, or “web apps,” have
+decisions need to be made in each subtask.” [10] While                         emerged as a more sustainable means of achieving robust
+the workflow-oriented pattern may be a valuable ap-                            cross-platform independence; these can be used instantly on
+proach for clinician-facing MIA software, only one of                          any machine connected to the Internet, without prior instal-
+the major packages evaluated has adopted this approach                         lation. Nora is an example of an MIA software with an em-
+as a primary user interface organization pattern, and this                     phasis on brain imaging that is written entirely as a browser
+software did not support workflows for measurement of                          application [7]. Nora provides many advanced analysis fea-
+analytic morphomics [11].                                                      tures; limitations of this project are the lack of a plugin
+   A second key challenge is cross-platform compatibil-                        architecture, moderate to high interface complexity, and lack
+ity, which is crucial to address owing to the heterogen-                       of a formal open-source development process.
+eity in computing environments deployed by teams of                               A third challenge is to facilitate prototyping, validation
+researchers and clinicians working across different                            and adoption of algorithms to segment scans and
+
+Table 2 Design objectives for translational morphomics software
+Design objective                              Rationale
+Clinician-friendly, goal-directed interface   Clinicians may not have the time and technical know-how required to use professional medical image
+                                              analysis software.
+Cross-platform support, minimal or no         Researchers and clinicians collaborating on morphomics projects across institutions are likely to work in
+install required                              different computer system environments. Clinicians may be performing measurements on work machines
+                                              where MIA software has not been installed.
+Extensibility via cloud-enabled plugins       A flexible plugin interface enables application of the software to a wider variety of use cases, and cloud
+                                              abilities facilitate the processing of large datasets.
+Free license and open source codebase         An open-source codebase and reuse-friendly license contributes to project sustainability by allowing
+                                              contributions from other researchers.
+Mullie and Afilalo BMC Medical Imaging      (2019) 19:15                                                                     Page 4 of 14
+
+
+
+
+measure morphomic markers. Notably, at the time of                     allowing developers to contribute their own updates
+writing, none of the segmentation algorithms presented                 and plugins. Given that the adoption of commercial
+in Table 1 had been released as a plugin compatible with               MIA software imposes a financial limit on wider-scale
+freely available MIA software. While some MIA software                 collaboration, it is in the multidisciplinary spirit of the
+have support for language-specific plugins (e.g. Java for              morphomics community to involve all stakeholders in
+ImageJ, Objective C for Osirix, Matlab for Segment,                    building free, open-source alternatives that are equit-
+Python and C++ for 3DSlicer), the lack of cross-talk be-               ably available to a global audience of clinicians irre-
+tween these languages hinders the development of a ro-                 spective of cost.
+bust plugin ecosystem. A modern method of providing                      As summarized in Table 3, a review of existing MIA
+extensibility via “plugins” is the use of HTTP applica-                software identified that none satisfactorily addressed all
+tion programming interfaces (APIs), which enable the                   of the key design constraints that we have proposed to
+developer to write plugins in any language capable of                  guide development of translational morphomics soft-
+running a simple web server. As an added benefit,                      ware. While many are comprehensive and powerful
+computational resources in the cloud can be leveraged                  tools, none of the currently available software tools pro-
+with the same interface and ease of use as local plugins.              vides a simple, clinician-friendly pipeline to facilitate
+The neuroimaging community has already adopted                         morphomic analysis. To address this unmet need, we
+cloud-based tools such as MRIcloud [17], CBRAIN [18]                   introduce the first web-based interface optimized for
+and VolBrain [19] to facilitate collaboration and sharing              measurement of morphomics, called CoreSlicer, which is
+of computational resources across geographically dis-                  publicly available free of charge at https://www.coresli-
+persed research groups. Given the large-scale nature of                cer.com. Users can extend the software with their own
+the data sets used in morphomics, the community                        plugins running on their own machine or on cloud ser-
+would benefit from a platform that enables rapid proto-                vices through HTTP endpoints. The source code to the
+typing and deployment of morphomics algorithms in                      interface is available on GitHub, and allows users to run
+the cloud.                                                             the application on their local machines. In this paper, we
+  Finally, a free licensing model and an open-source                   discuss the structure and functionality of CoreSlicer, val-
+development process was chosen as a design goal to fa-                 idate its results against reference software, and discuss
+cilitate greater adoption of the software amongst re-                  published studies illustrating its relevance for clinicians
+searchers, and to promote project sustainability by                    and researchers.
+
+Table 3 Selected major medical image analysis tools potentially suitable for morphomic analysis, features and limitations
+Project name and URL                           Workflow-   Web           Platform          Plugin        Web       Free        Open
+                                               oriented    interface     independent       interface     plugins   license     source
+Slice-o-matic                                  N           N             N (Windows-only) N              N         N           N
+http://www.tomovision.com/products/
+sliceomatic.html
+ImageJ                                         N           N             Y (Java app)      Java only     N         Y           Y
+https://imagej.nih.gov/ij/
+Materialize                                    N           N             N(Windows-only)   N             N         N           N
+http://www.materialise.com/en/medical/
+software/mimics
+Segment                                        N           N             N (Windows-only) Matlab only    N         Y           Y
+https://github.com/Cardiac-MR-Group-Lund/
+segment-open/
+MIA                                            Y           N             N (POSIX-only)    C++ only      N         Y           Y
+http://mia.sourceforge.net/
+ITKSnap                                        N           N             Y (binaries)      C++ only      N         Y           Y
+http://www.itksnap.org/pmwiki/pmwiki.php
+3DSlicer                                       N           N             Y (binaries)      Python C++    N         Y           Y
+https://www.slicer.org/
+Osirix                                         N           N             N (Mac only)      Objective C   N         Y           Y
+http://www.osirix-viewer.com/                                                              only
+Nora                                           N           Y             Y                 N             N         Y           N
+http://www.nora-imaging.com/
+CoreSlicer                                     Y           Y             Y                 Any           Y         Y           Y
+https://www.coreslicer.com                                                                 language
+Mullie and Afilalo BMC Medical Imaging   (2019) 19:15                                                           Page 5 of 14
+
+
+
+
+Implementation                                                  thickness. A minimum processor speed of 1.0 GHz is rec-
+Specifications of CoreSlicer                                    ommended to support interface drawing functions.
+CoreSlicer is a browser-based application and is written
+entirely in Javascript, conformant to the ECMAScript 5          Program structure
+specification. A public running instance of CoreSlicer is       CoreSlicer is divided into 4 main modules (Fig. 2). As is
+provided free of use at www.coreslicer.com. This public         common for web applications, a “model-view-controller”
+running instance showcases elemental plugins for segmen-        architecture is employed to enforce separation of con-
+tation of abdominal structures (Additional files 1 and 2).      cerns between different application modules [20]. The
+Users may also download a standalone version of CoreSli-        “Uploader” controlled provides functionality for loading
+cer free of charge at https://github.com/louismullie/coresli-   DICOM files from disk. The “Series” controlled handles
+cer. The standalone version of CoreSlicer is released under     selection of a series of interest within a DICOM file and
+the MIT license.                                                decompression of the DICOM file, if necessary. The
+                                                                “Level” controlled provides functionality to select a level
+                                                                of interest on a sagittal reconstruction. The “Regions”
+Testing requirements                                            controller provides functionality for displaying DICOM
+CoreSlicer is developed for and was tested on Google            images and creating and editing regions of interest
+Chrome, versions 65.0 and above. The Google Chrome              (ROIs).
+platform was selected due to its widespread adoption and
+stability across multiple operating systems. Other              Graphical user interface
+browsers are not currently supported. Tests were con-           The CoreSlicer interface is organized into 4 main win-
+ducted on a machine with a 2 GHz intel Core i5 processor        dows (Fig. 3). From the “Uploader” window (Fig. 3a),
+and 8 GB of rapid-access memory (RAM). A minimum 1              users can load one or more DICOM file(s) by dragging
+GB of RAM is recommended to load full-body CT scans             and dropping or via the operating system’s native file se-
+at 2.5 mm slice thickness, or 2 GB RAM at 1 mm slice            lect input. From the “Series” window, users can select a
+
+
+
+
+ Fig. 2 Program structure overview
+Mullie and Afilalo BMC Medical Imaging      (2019) 19:15                                                                          Page 6 of 14
+
+
+
+
+series of interest among those contained in the DICOM                    HTTP webhook that is triggered when a user initiates
+archive. From the “Level” window (Fig. 3b), users can se-                the draw action assigned to the corresponding ROI. In
+lect a level of interest on a sagittal reconstruction image              response, a POST request is sent to the assigned end-
+of the previously selected series. From the “Region” win-                point containing the anonymized DICOM image binary
+dow (Fig. 3c), users can define one or more ROIs, and                    data and additional slice information encoded as a mul-
+assign a custom HTTP endpoint that provides automatic                    tipart FormData object (request MIME type multipart/
+segmentation functionality for the relevant ROI. Users                   form-data). User endpoints return a binary segmentation
+can draw and edit an ROI using the threshold brush and                   mask in PNG format (response MIME type image/png),
+eraser tools. Results are exported to a ZIP archive con-                 where all non-zero pixels are assigned a value of 1.
+taining the segmentation masks as well as area and                       Further information is available from the user manual,
+Hounsfield unit measurements in comma-separated                          which can be found on Github (https://github.com/
+value (CSV) format.                                                      louismullie/coreslicer).
+
+Extensibility via plugins                                                Local deployment
+CoreSlicer can be extended via user-supplied webhooks                    Deployment on a local server can be performed with
+that provide segmentation functionality over an HTTP                     minimal technical knowledge using Node.js, an open
+interface. CoreSlicer’s plugin API structure is illustrated              source programming runtime that is supported by all
+in Fig. 4.                                                               major operating systems including Windows, Mac OS
+  From the “Regions” window, when creating a new cus-                    and UNIX. Local deployments can be updated to the
+tom region, CoreSlicer allows users to assign a custom                   latest public version of CoreSlicer’s code via a single
+
+
+
+
+ Fig. 3 Graphical user interface overview. Panel a shows the “Uploader” window, where DICOM archives can be imported. Panel b shows the
+ “Level” window, using which an anatomical level can be selected. Panel c shows the “Region” window, using which regions of interest can
+ be segmented
+Mullie and Afilalo BMC Medical Imaging      (2019) 19:15                                                                           Page 7 of 14
+
+
+
+
+ Fig. 4 Plugin architecture overview. Panel a shows an example of a plugin served on a local endpoint. Panel b shows an example of a plugin
+ served on a remote endpoint
+
+
+command, using the Git version management system. A                         In addition to performance limitations with regards to
+detailed guide on how to install a local deployment and                   manipulation of large files, browser environments have
+retrieve updates is available at https://github.com/louis-                limited native abilities for complex numerical operations.
+mullie/coreslicer.                                                        To provide fast multiplanar reconstruction (MPR) for
+                                                                          CoreSlicer, we implemented an MPR algorithm using
+                                                                          WebGL, an HTML5 standard that allows for accelerated
+Implementation challenges                                                 manipulation of 3-dimensional data on the graphics pro-
+Although highly flexible and granular, the DICOM                          cessing unit (GPU). To store DICOM images in memory
+standard is complex to manipulate because it supports                     and manipulate them, CoreSlicer leverages TypedArray
+multiple numerical representation, data sorting and                       objects, which provide a fast mechanism for accessing
+compression formats. Cornerstone.js, an open-source                       raw binary data in Javascript, and which can be easily
+DICOM utility library, was used to parse DICOM attri-                     transferred to the GPU using WebGL. The combination
+butes and render DICOM images. A custom algorithm                         of these strategies allows CoreSlicer to efficiently reslice
+was implemented to reorder slices based on their pos-                     full-body CT scans, with minimal computational time,
+ition in space as determined from DICOM attributes.                       on the order of < 500 ms.
+Jpx.js, an open-source JPX decompression implementa-                        To enable smooth drawing operations for manual
+tion forked from Mozilla’s PDF.js project, was used to                    labeling of DICOM images, CoreSlicer leverages Canvas
+provide support for decompression of DICOM archives.                      API, which enables hardware-accelerated rendering of
+   While browser-based applications are highly advanta-                   two-dimensional graphics in the browser. A system
+geous for cross-platform compatibility, they represent a                  of stacked Canvas objects is used to represent mul-
+“resource-costly” environment in which large file                         tiple overlying layers in transparency. Tegaki.js, an
+manipulation are memory-expensive operations. The                         open-source HTML drawing library, is employed as
+embarrassingly parallel nature of DICOM slice decom-                      a foundation for CoreSlicer’s customized DICOM
+pression enabled the use of concurrency to increase pro-                  drawing tools.
+cessing speed by distributing data to a pool of 8
+WebWorker processes running simultaneously. To fur-                       Security and privacy
+ther optimize performance, CoreSlicer adheres to the                      Ensuring the security and privacy of user data is a key
+“lazy loading” design pattern, deferring the initialization               implementation challenge in any web environment. The
+of memory-costly data structures until the point at                       core application functionality of CoreSlicer is imple-
+which the data is needed for user interface rendering.                    mented entirely on the client machine and does not
+Mullie and Afilalo BMC Medical Imaging         (2019) 19:15                                                              Page 8 of 14
+
+
+
+
+require any transmission of data. This includes loading                   subcutaneous fat area (SFA). These were chosen among
+DICOM files, decompressing image files if needed, per-                    markers illustrated in Table 1 based on the robustness
+forming multiplanar reconstruction, as well as manually                   of the supporting clinical evidence. A representative
+drawing and editing measurements. The use of optional                     labeled image is illustrated in Fig. 5. Hounsfield unit
+segmentation plugins requires transmission of informa-                    ranges were − 190 to − 30 for adipose tissue (VFA and
+tion over the Internet. This information is protected in                  SFA), and − 29 to 150 for skeletal muscle (TLMA and
+transit using RSA encryption with 4096-bit keys, via the                  PMA) [9].
+Secure Sockets Layer (SSL) protocol. In addition,
+through its plugin interface, CoreSlicer allows users to                  Statistical analyses
+securely transmit data directly from their machine to                     For comparisons between sets of measurements, mean
+user-controlled processing endpoints, without any infor-                  difference, 95% level of agreement (LOA), and Spear-
+mation transiting via CoreSlicer’s servers. Users who de-                 man’s correlation coefficient were calculated. Results are
+sire enhanced privacy can run the CoreSlicer interface                    presented using Bland-Altman plots (Additional file 3).
+on their local machines. CoreSlicer automatically strips                  Additionally, for the main outcome of interest, which
+DICOM files of identifying information prior to any                       compared measurements in CoreSlicer with measure-
+form of external transmission in order to prevent                         ments in slice-O-matic, the intraclass correlation coeffi-
+disclosure of protected health information.                               cient was calculated, and power analysis was performed.
+                                                                          Assuming a hypothesized ICC of 0.99, and a null ICC
+Validation methods                                                        value of 0.90, a sample of 50 subjects (2 measurements per
+Measurements from CoreSlicer were validated against                       subject) has 100% power to detect a difference between
+slice-O-matic, a commercial cadaver-validated reference                   the two measurement methods at a 5% type 1 error rate.
+software. Cross-sectional area measurements (Fig. 4)                      All statistical analyses were performed with the STATA
+were performed by two trained observers (LM and JA),                      software package (version 14.0, College Station, Texas).
+respectively designated observer A and observer B. Ob-
+server A performed measurements of VFA, SFA, TLMA                         Results
+and PMA in triplicate, once using the slice-O-matic soft-                 A total of 50 CT scans were drawn and analyzed from a
+ware package (version 5.0), and twice using the manual                    cohort of older adults undergoing a routine pre-
+drawing tools in the CoreSlicer web interface (version                    operative CT scans during assessment for a heart valve
+1.0). Repeated measurements were performed at least 1                     procedure. The population comprised 24 women and 26
+week apart to limit observer bias. In a subset of 20 scans,               men, with a mean age of 80 years (range 64 to 96 years).
+observers A and B each obtained measurements of VFA,                      The mean BMI was 26.2 (range 20.5 to 44.5). Descriptive
+SFA, TLMA and PMA using CoreSlicer. All measure-                          statistics of the study population are presented in
+ments were performed on axial series at the superior as-                  Table 4.
+pect of L4, immediately below the vertebral endplate.                       Mean cross-sectional areas were 202.6 ± 82.5 cm2 for
+   ROIs were defined as: psoas muscle area (PMA), total                   VFA, 214.2 ± 105.8 cm2 for SFA, 119.05 ± 26.5 cm2 for
+lumbar muscle area (TLMA), visceral fat area (VFA) and                    TLMA, and 19.77 ± 5.6 cm2 for PMA. In Fig. 6, a
+
+
+
+
+ Fig. 5 Illustration of muscle and fat segmentation at L4 in CoreSlicer
+Mullie and Afilalo BMC Medical Imaging       (2019) 19:15                                                                            Page 9 of 14
+
+
+
+
+Table 4 Descriptive statistics of the study population                    − 0.2 cm2 (− 6.0 to 5.8 cm2) for VFA, − 1.1 cm2 (− 8.0 to
+Variable        Males (N = 26)               Females (N = 24)             5.8 cm2) for SFA, 0.4 cm2 (− 1.7 to 2.4 cm2) for TLMA,
+Age (y)         81.4 ± 7.6 (64–96)           79.8 ± 7 (67–92)             and 0.6 cm2 (− 5.7 to 7.0 cm2) for PMA. For comparison
+Height (m)      1.7 ± 0.1 (1.6–1.9)          1.6 ± 0.1 (1.5–1.8)
+                                                                          of automated measurements plus manual corrections
+                                                                          between observers A and B, mean differences in
+Weight (kg)     75.7 ± 10.4 (54.5–100)       67.4 ± 15.3 (48.0–99.0)
+                                                                          cross-sectional areas were 1.2 cm2 (− 2.7 to 5.6 cm2) for
+BMI (kg / m2)   26.1 ± 2.8 (20.2–34.2)       26.2 ± 5.8 (21.5–44.5)       VFA, − 0.2 cm2 (− 4.4 to 4.0 cm2 for SFA), − 0.8 cm2 (− 5.2
+                                                                          to 3.7 cm2) for TLMA, and − 0.5 cm2 (− 0.9 to 1.8 cm2)
+           2
+VFA (cm )       252.5 ± 122.7 (114–603.9)    252.5 ± 122.7 (114–603.9)
+SFA (cm2)       198.9 ± 62.9 (113.3–368.3)   208.6 ± 101.9 (89.4–584.6)   for PMA.
+TLMA (cm2)      134.5 ± 22.3 (87.1–173.4)    102.7 ± 20.8 (80.0–155.7)
+
+                                                                          Discussion
+Bland-Altman analysis is presented for comparison of                      In this study, we introduced the CoreSlicer web interface
+cross-sectional area measurement differences between                      and software toolkit for analytic morphomics on CT
+CoreSlicer and Slice-O-Matic. Mean absolute differences                   scan images. CoreSlicer is the first open-source
+in cross-sectional areas were 4.2 cm2 (− 4.7 to 13.1 cm2)                 web-based MIA designed and optimized specifically for
+for VFA, 4.8 cm2 (− 7.7 to 14.7 cm2) for SFA, − 3.8 cm2                   analytic morphomics. Given its implementation as a
+(− 10.1 to − 2.4 cm2) for TLMA, and 0.4 cm2 (− 1.4 to                     browser application, CoreSlicer is portable across all
+2.2 cm2) for PMA. Mean differences in cross-sectional                     major operating systems (Windows, MacOS, Linux and
+areas expressed as relative percentages were 2.1% (− 2.4                  Chrome OS), addressing an important limitation of sev-
+to 6.5%) for VFA, 2.3% (− 3.9 to 7.3%) for SFA, − 3.0%                    eral existing tools and facilitating collaboration between
+(− 7.9 to 1.9%) for TLMA and 2.0% (− 7.0 to 11.0%) for                    researchers working on different platforms. A core set of
+PMA. Intra-class correlation coefficients were 0.998 for                  tools required to manually review and correct segmenta-
+VFA, 0.999 for SFA, 0.984 for TMA, 0.994 for PMA.                         tion results is provided within the interface, and the
+Spearman’s correlation coefficient exceeded 0.99 for all                  workflow is organized in a simple to use, step-by-step
+ROIs, with p values of < 0.001.                                           wizard. The average time required in CoreSlicer for
+  In Figs. 7 and 8, Bland-Altman analyses are shown for                   measurement of psoas muscle area, one of the most
+intra- and inter-observer measurements in CoreSlicer.                     robustly validated morphomic markers, was 22 ± 3 s,
+For repeated manual measurements by observer A,                           supporting the benefit of a streamlined, workflow-
+mean absolute differences in cross-sectional areas were                   oriented interface.
+
+
+
+
+ Fig. 6 Bland-Altman plot of difference in VFA, SFA and TLMA for manual measurements in CoreSlicer vs. Slice-O-Matic by Observer A
+Mullie and Afilalo BMC Medical Imaging      (2019) 19:15                                                                        Page 10 of 14
+
+
+
+
+ Fig. 7 Bland-Altman plot of difference in VFA, SFA and TLMA for repeated manual measurements in CoreSlicer by Observer A
+
+
+
+  Implementation challenges were addressed with state                   using WebGL, and memory optimizations using
+of the art browser application technologies including                   TypedArrays.
+distributed processing of large files using WebWorkers,                   Researchers can use CoreSlicer to rapidly prototype
+hardware-accelerated 2D drawing using the Canvas                        image segmentation tools in the language of their choice
+object, 3D multiplanar reconstruction on the GPU                        using a standardized HTTP interface. Additionally,
+
+
+
+
+ Fig. 8 Bland-Altman plot of difference in VFA, SFA and TLMA for computed-assisted measurements in CoreSlicer by Observers A and B
+Mullie and Afilalo BMC Medical Imaging   (2019) 19:15                                                            Page 11 of 14
+
+
+
+
+CoreSlicer is the first web-based MIA software with             Limitations
+out-of-the-box support for asynchronous plugin execu-           The results of this study must be considered in light of the
+tion, enabling the use of segmentation tools served in          following limitations. First, since CT incurs ionizing
+the cloud at the click of a button. For researchers             radiation and is not appropriate for the sole purpose of body
+seeking to expand, refine, or adapt the capabilities Core-      composition analysis, CoreSlicer is currently limited to the
+Slicer, the source code has been made available via an          analysis of images that have been acquired for clinical
+open source repository.                                         purposes. Protocols are in development to acquire limited
+   We conducted duplicate measurements of well-                 slices with lower radiation. Second, although the CoreSlicer
+validated fat and muscle morphomic markers using                software has been designed to visualize DICOM images
+CoreSlicer and slice-O-matic, and demonstrated good             produced by both CT and MRI scanners, only the former
+agreement between the two methods. The limits of                modality was tested and validated in this initial release of
+agreement were comparable with previously reported              the software. Given the widespread availability of clinically
+values for comparison of the NIH ImageJ and                     indicated CT studies, we believe that this in no way limits
+Slice-O-Matic software packages [8]. The intra- and             the potential large-scale impact of our software. Third,
+inter-observer variability of measurements was also             CoreSlicer is currently capable of performing measurements
+comparable with previously reported results [21], with          on one slice per study and is therefore not amenable to
+the relative differences all being < 3% and unlikely to be      compute volumetric measurements in its current iteration.
+clinically significant. Thus, measurements of VFA, SFA          Importantly, the aims of the CoreSlicer project are not to
+and TLMA in CoreSlicer were reproducible and accur-             provide a comprehensive MIA or image segmentation tool-
+ate in relation to reference software.                          kit, but rather to provide a streamlined workflow for analytic
+   The potential impact of CoreSlicer as a translational tool   morphomics, and to maintain the simplicity to achieve our
+for morphomics has been demonstrated in three studies           translational goal of a clinician-friendly interface. A large
+aiming to validate the prognostic value of PMA in cardiac       number of single- slice morphomic markers have already
+and vascular surgery patients. Our work and that of others      been validated and can be measured using CoreSlicer. Once
+has shown that psoas muscle area (PMA), a surrogate of          careful planning identifies how to optimally integrate
+lean muscle mass and lower extremity strength, correlates       multi-slice functionality while keeping the interface com-
+with clinical frailty scores and is an important risk factor    plexity at a minimum, three-dimensional visualization will
+for morbidity and mortality following invasive procedures       be implemented using existing open-source libraries [23].
+(Table 1). Mamane et al. [32] showed that PMA measured
+using CoreSlicer was predictive of mortality in elderly         Conclusions
+women undergoing TAVR. Drudi et al. [38] similarly              CoreSlicer is a free and open-source web-based interface
+showed that PMA was predictive of mortality in patients         aiming to facilitate measurement of analytic morphomics
+undergoing abdominal aortic aneurysm repair. Zuckerman          on DICOM images by non-technically skilled clinicians.
+et al. [30] used CoreSlicer to show that PMA correlated         CoreSlicer features a full set of DICOM viewing tools and
+with length of stay following major cardiac surgery. Thus,      extensible plugin interface to facilitate rapid prototyping
+measurements of PMA in CoreSlicer were incrementally            and validation of new morphomic markers by researchers.
+predictive of adverse health outcomes in vulnerable pa-         In this study, the CoreSlicer interface and functionality is
+tients undergoing invasive procedures. These measure-           described, and validity of CoreSlicer measurements is estab-
+ments could be obtained by medical trainees with no prior       lished by comparing its results with reference software on a
+medical image analysis training in under 1 min.                 set of 50 abdominal CT scans, demonstrating good repro-
+   These examples illustrate how morphomics can                 ducibility and agreement with reference software. We
+empower healthcare professionals with prognostic infor-         present published studies illustrating the clinical relevance
+mation to tailor treatment strategies and individualize         of morphomic measurements obtained in CoreSlicer in
+care. Patients found to have low muscle mass, often             three distinct populations of cardiovascular patients.
+unrecognized by the de facto “eyeball assessment”, may
+benefit from targeted interventions such as exercise            Availability and requirements
+therapy and nutritional supplementation to build muscle         Project name: CoreSlicer.
+mass and strength and minimize their risk of failed re-           Project home page: www.coreslicer.com
+covery after an illness or surgery [22]. This information,        Operating system(s): platform independent.
+which has been consciously absent from the clinical               Programming language: Javascript.
+arena owing to the inaccessible nature of its measure-            Other requirements: none.
+ment tools, is now readily obtainable within < 1 min at           License: MIT.
+the point of care by healthcare professionals with min-           Restrictions: CoreSlicer is not licensed for clinical or
+imal pre-training.                                              commercial use.
+Mullie and Afilalo BMC Medical Imaging             (2019) 19:15                                                                                  Page 12 of 14
+
+
+
+
+Additional files                                                                Received: 24 April 2018 Accepted: 21 January 2019
+
+ Additional file 1: Algorithm for computer-assisted adipose and muscle
+ tissue segmentation on abdominal CT scan images. Describes the elemental       References
+ segmentation algorithms used to showcase CoreSlicer’s functionality on         1. Friedman J, Lussiez A, Sullivan J, Wang S, Englesbe M. Implications of
+ www.coreslicer.com. (DOCX 100 kb)                                                  sarcopenia in major surgery. Nutr Clin Pract. 2015 Apr;30(2):175–9.
+ Additional file 2: Figure S1. Illustration of muscle and adipose tissue        2. Stidham RW, Waljee AK, Day NM, Bergmans CL, Zahn KM, Higgins PD, et al.
+ boundary detection in pseudo-polar coordinates. (PDF 1579 kb)                      Body fat composition assessment using analytic morphomics predicts
+                                                                                    infectious complications after bowel resection in Crohn's disease. Inflamm
+ Additional file 3: Figure S2. Bland-Altman plot of difference in VFA,
+                                                                                    Bowel Dis. 2015 Jun;21(6):1306–13.
+ SFA and TLMA for manual measurements in CoreSlicer by Observers A
+                                                                                3. Chughtai K, Song Y, Zhang P, Derstine B, Gatza E, Friedman J, et al. Analytic
+ versus automated segmentation. (PDF 836 kb)
+                                                                                    morphomics: a novel CT imaging approach to quantify adipose tissue and
+                                                                                    muscle composition in allogeneic hematopoietic cell transplantation. Bone
+                                                                                    Marrow Transplant. 2016 Mar;51(3):446–50.
+Abbreviations                                                                   4. Singal AG, Zhang P, Waljee AK, Ananthakrishnan L, Parikh ND, Sharma P, et
+BMI: Body mass index; CT: Computed tomography; DICOM: Digital Imaging               al. Body composition features predict overall survival in patients with
+and Communications in Medicine; GPU: Graphics processing unit; MIA                  hepatocellular carcinoma. Clin Transl Gastroenterol. 2016 May 26;7:e172.
+: Medical image analysis; MR: Magnetic resonance; PMA: Psoas muscle area;       5. Morphomics Research Group. Michigan Medicine. http://www.med.umich.
+ROI: Region of interest; SFA: Subcutaneous adipose tissue area; TLMA: Total         edu/surgery/morphomics/index.html. 2018. Accessed 24 Apr 2018.
+skeletal muscle area; VFA: Visceral adipose tissue area                         6. Smith-Bindman R, Miglioretti DL, Johnson E, Lee C, Feigelson HS, Flynn M,
+                                                                                    et al. Use of diagnostic imaging studies and associated radiation exposure
+                                                                                    for patients enrolled in large integrated health care systems, 1996-2010.
+Acknowledgements
+                                                                                    JAMA. 2012;307(22):2400–9.
+We would like to acknowledge Christophe Marois for his help in developing
+                                                                                7. C Anastasopoulos, M Reisert, E Kellner. “Nora Imaging”: A Web-Based
+the CoreSlicer user interface.
+                                                                                    Platform for Medical Imaging. Neuropediatrics. 2017; doi: https://doi.org/10.
+Trademarks: DICOM is a registered trademark of the National Electrical
+                                                                                    1055/s-0037-1602977
+Manufacturers Association for its standards publications relating to digital
+                                                                                8. Schneider CA, Rasband WS, Eliceiri KW. NIH image to ImageJ: 25 years of
+communication of medical information.
+                                                                                    image analysis. Nat Methods. 2012;9(7):671–5.
+                                                                                9. Abate N, Burns D, Peshock RM, Garg A, Grundy SM. Estimation of adipose
+Funding                                                                             tissue mass by magnetic resonance imaging: validation against dissection in
+Jonathan Afilalo is supported by the Fonds de recherche du Québec en                human cadavers. J Lipid Res. 1994;35(8):1490–6.
+Santé, Heart and Stroke Foundation of Canada, and Canadian Institutes of        10. Martijn van W, Hallvard T. Monitor Changes: Interaction Patterns in User
+Health Research.                                                                    Interfaces: 2000; doi: 10.1.1.36.7484.
+                                                                                11. Wollny G, Kellman P, Ledesma-Carbayo MJ, Skinner MM, Hublin JJ, Hierl T.
+                                                                                    MIA - a free and open source software for gray scale medical image
+Availability of data and materials                                                  analysis. Source Code Biol Med. 2013;8(1):20.
+The anonymized datasets used in the current study are available from the        12. Gelaude F, Vander Sloten J, Lauwers B. Accuracy assessment of CT-based
+corresponding author upon reasonable request.                                       outer surface femur meshes. Comput Aided Surg. 2008;13(4):188–99.
+                                                                                13. Heiberg E, Sjögren J, Ugander M, Carlsson M, Engblom H, Arheden H.
+                                                                                    Design and validation of segment--freely available software for
+Authors’ contributions
+                                                                                    cardiovascular image analysis. BMC Med Imaging. 2010;10:1.
+LM designed and programmed the software and wrote major portions of
+                                                                                14. Rosset A, Spadola L, Ratib O. OsiriX: an open-source software for navigating
+the paper. JA oversaw writing the software and wrote and edited portions
+                                                                                    in multidimensional DICOM images. J Digit Imaging. 2004;17(3):205–16.
+the paper. LM and JA collected measurements. Both authors read and
+                                                                                15. Yushkevich PA, Piven J, Hazlett HC, Smith RG, Ho S, Gee JC, et al. User-
+approved the final manuscript.
+                                                                                    guided 3D active contour segmentation of anatomical structures:
+                                                                                    significantly improved efficiency and reliability. NeuroImage. 2006;31(3):
+Ethics approval and consent to participate                                          1116–28.
+The study protocol was approved by the Ethics Review Board of the Jewish        16. Pieper S, Halle M, Kikinis R. 3D Slicer. IEEE International Symposium on
+General Hospital.                                                                   Biomedical Imaging: Nano to Macro 2004; doi: https://doi.org/10.1109/ISBI.
+                                                                                    2004.1398617.
+                                                                                17. Susumu M, Dan W, Can C. MRICloud: delivering high-throughput MRI
+Consent for publication                                                             Neuroinformatics as cloud-based software as a service. Computing in
+Not applicable.                                                                     Science & Engineering. 2016;18(5):21–35.
+                                                                                18. Sherif T, Rioux P, Rousseau ME, Kassis N, Beck N, Adalat R, et al. CBRAIN: a
+                                                                                    web-based, distributed computing platform for collaborative neuroimaging
+Competing interests                                                                 research. Front Neuroinform. 2014;8:54.
+Louis Mullie and Jonathan Afilalo declare that they have no conflicts of        19. Manjón JV, Coupé P. volBrain: An Online MRI Brain Volumetry System. Front
+interest. Louis Mullie and Jonathan Afilalo developed the CoreSlicer software       Neuroinform. 2016;10:30.
+but do not hold any financial incentives or patents related to its use.         20. A Leff, JT Rayfield. Web-application development using the Model/View/
+                                                                                    Controller design pattern Enterprise Distributed Object Computing
+                                                                                    Conference: 2001; doi: https://doi.org/10.1109/EDOC.2001.950428.
+Publisher’s Note                                                                21. Sottier D, Petit JM, Guiu S, Hamza S, Benhamiche H, Hillon P, et al.
+Springer Nature remains neutral with regard to jurisdictional claims in             Quantification of the visceral and subcutaneous fat by computed
+published maps and institutional affiliations.                                      tomography: interobserver correlation of a single slice technique. Diagn
+                                                                                    Interv Imaging. 2013;94(9):879–84.
+Author details                                                                  22. Malafarina V, Uriz-Otano F, Iniesta R, Gil-Guerrero L. Effectiveness of
+1
+ Department of Medicine, McGill University, 3755 Cote Ste Catherine Rd,             nutritional supplementation on muscle mass in treatment of sarcopenia in
+E-222, Montreal, QC H3T 1E2, Canada. 2Division of Cardiology, McGill                old age: a systematic review. J Am Med Dir Assoc. 2013;14(1):10–7.
+University, Montreal, QC, Canada. 3Centre for Clinical Epidemiology, Lady       23. Haehn D, Rannou N, Ahtam B, Grant E, Pienaar R. Neuroimaging in the
+Davis Institute, Jewish General Hospital, McGill University, Montreal, QC,          browser using the X toolkit. Neuroinformatics. 2014. https://doi.org/10.3389/
+Canada.                                                                             conf.fninf.2014.08.00101.
+Mullie and Afilalo BMC Medical Imaging               (2019) 19:15                                                                                        Page 13 of 14
+
+
+
+
+24. Mitsiopoulos N, Baumgartner RN, Heymsfield SB, Lyons W, Gallagher D, Ross        46. Sabel MS, Lee J, Cai S, Englesbe MJ, Holcombe S, Wang S. Sarcopenia as a
+    R. Cadaver validation of skeletal muscle measurement by magnetic                     prognostic factor among patients with stage III melanoma. Ann Surg Oncol.
+    resonance imaging and computerized tomography. J Appl Physiol (1985).                2011;18(13):3579–85.
+    1998 Jul;85(1):115–22.                                                           47. Hawkins RB, Mehaffey JH, Charles EJ, Kern JA, Lim DS, Teman NR, et al.
+25. Zakaria HM, Massie L, Basheer A, Elibe E, Boyce-Fappiano D, Shultz L, et al.         Psoas Muscle Size Predicts Risk-Adjusted Outcomes After Surgical Aortic
+    Application of Morphometrics as a Predictor for Survival in Patients with            Valve Replacement. Ann Thorac Surg. 2018.
+    Prostate Cancer Metastasis to the Spine. World Neurosurg. 2018.                  48. Kamiya N, Zhou X, Chen H, Hara T, Hoshi H, Yokoyama R, et al. Automated
+26. Zakaria HM, Massie L, Basheer A, Boyce-Fappiano D, Elibe E, Schultz L,               recognition of the psoas major muscles on X-ray CT images. Conf Proc IEEE
+    et al. Application of morphometrics as a predictor for survival in female            Eng Med Biol Soc. 2009;2009:3557–60.
+    patients with breast cancer spinal metastasis: a retrospective cohort            49. Kamiya N, Zhou X, Chen H, Muramatsu C, Hara T, Yokoyama R, et al.
+    study. Spine J. 2018.                                                                Automated segmentation of psoas major muscle in X-ray CT images by use
+27. Tsutsumi S, Kawahara T, Teranishi JI, Yao M, Uemura H. A low psoas muscle            of a shape model: preliminary study. Radiol Phys Technol. 2012;5(1):5–14.
+    volume predicts longer hospitalization and cancer recurrence in upper            50. Yamashita M, Kamiya K, Matsunaga A, Kitamura T, Hamazaki N, Matsuzawa
+    urinary tract urothelial carcinoma. Mol Clin Oncol. 2018;8(2):320–2.                 R, et al. Prognostic value of psoas muscle area and density in patients who
+28. Indrakusuma R, Zijlmans JL, Jalalzadeh H, Planken RN, Balm R, Koelemay               undergo cardiovascular surgery. Can J Cardiol. 2017;33(12):1652–9.
+    MJW. Psoas muscle area as a prognostic factor for survival in patients with      51. De Amorim BK, Bos SA, Veld J, Lozano-Calderon SA, Torriani M, Bredella MA.
+    an asymptomatic Infrarenal abdominal aortic aneurysm: a retrospective                Body composition predictors of therapy response in patients with primary
+    cohort study. Eur J Vasc Endovasc Surg. 2018;55(1):83–91.                            extremity soft tissue sarcomas. Acta Radiol. 2018;59(4):478–84.
+29. Garg L, Agrawal S, Pew T, Hanzel GS, Abbas AE, Gallagher MJ, et al. Psoas        52. Locke JE, Carr JJ, Nair S, Terry JG, Reed RD, Smith GD, et al. Abdominal lean
+    muscle area as a predictor of outcomes in Transcatheter aortic valve                 muscle is associated with lower mortality among kidney waitlist candidates.
+    implantation. Am J Cardiol. 2017;119(3):457–60.                                      Clin Transplant. 2017 Mar;31:3.
+30. Zuckerman J, Ades M, Mullie L, Trnkus A, Morin JF, Langlois Y, et al. Psoas      53. Veld J, Vossen JA, De Amorim BK, Halpern EF, Torriani M, Bredella MA. Adipose
+    muscle area and length of stay in older adults undergoing cardiac                    tissue and muscle attenuation as novel biomarkers predicting mortality in
+    operations. Ann Thorac Surg. 2017;103(5):1498–504.                                   patients with extremity sarcomas. Eur Radiol. 2016;26(12):4649–55.
+31. Miller BS, Ignatoski KM, Daignault S, Lindland C, Doherty M, Gauger PG, et       54. Zhang P, Peterson M, Su GL, Wang SC. Visceral adiposity is negatively
+    al. Worsening central sarcopenia and increasing intra-abdominal fat                  associated with bone density and muscle attenuation. Am J Clin Nutr. 2015;
+    correlate with decreased survival in patients with adrenocortical carcinoma.         101(2):337–43.
+    World J Surg. 2012;36(7):1509–16.                                                55. Torriani M, Hadigan C, Jensen ME, Grinspoon S. Psoas muscle attenuation
+32. Mamane S, Mullie L, Piazza N, Martucci G, Morais J, Vigano A, et al. Psoas           measurement with computed tomography indicates intramuscular fat
+    muscle area and all-cause mortality after Transcatheter aortic valve                 accumulation in patients with the HIV-lipodystrophy syndrome. J Appl
+    replacement: the Montreal-Munich study. Can J Cardiol. 2016;32(2):177–82.            Physiol (1985). 2003 Sep;95(3):1005–10.
+33. Peng P, Hyder O, Firoozmand A, Kneuertz P, Schulick RD, Huang D, et al.          56. DiMartini A, Cruz RJ Jr, Dew MA, Myaskovsky L, Goodpaster B, Fox K, et al.
+    Impact of sarcopenia on outcomes following resection of pancreatic                   Muscle mass predicts outcomes following liver transplantation. Liver
+    adenocarcinoma. J Gastrointest Surg. 2012;16(8):1478–86.                             Transpl. 2013;19(11):1172–80.
+34. Krell RW, Kaul DR, Martin AR, Englesbe MJ, Sonnenday CJ, Cai S, et al.           57. Lee CS, Cron DC, Terjimanian MN, Canvasser LD, Mazurek AA, Vonfoerster E,
+    Association between sarcopenia and the risk of serious infection among               et al. Dorsal muscle group area and surgical outcomes in liver
+    adults undergoing liver transplantation. Liver Transpl. 2013;19(12):1396–402.        transplantation. Clin Transpl. 2014;28(10):1092–8.
+35. Smith AB, Deal AM, Yu H, Boyd B, Matthews J, Wallen EM, et al. Sarcopenia        58. Onuma T, Kamishima T, Shimamura T, Kawamura N, Yamashita K, Sutherland
+    as a predictor of complications and survival following radical cystectomy. J         K, et al. Longitudinal CT study of sarcopenia due to hepatic failure after
+    Urol. 2014;191(6):1714–20.                                                           living donor liver transplantation. Quant Imaging Med Surg. 2018;8(1):25–31.
+36. Kuroki LM, Mangano M, Allsworth JE, Menias CO, Massad LS, Powell MA, et          59. Canvasser LD, Mazurek AA, Cron DC, Terjimanian MN, Chang ET, Lee CS, et
+    al. Pre-operative assessment of muscle mass to predict surgical                      al. Paraspinous muscle as a predictor of surgical outcome. J Surg Res. 2014;
+    complications and prognosis in patients with endometrial cancer. Ann Surg            192(1):76–81.
+    Oncol. 2015;22(3):972–9.                                                         60. Yong W, Xu B, Xiuping T, Junfeng Q. Paraspinal muscle segmentation in CT
+37. Wakabayashi H, Matsushima M, Uwano R, Watanabe N, Oritsu H, Shimizu Y.               images using a single atlas. Progress in Informatics and Computing. 2015.
+    Skeletal muscle mass is associated with severe dysphagia in cancer patients.         https://doi.org/10.1109/PIC.2015.7489839.
+    J Cachexia Sarcopenia Muscle. 2015;6(4):351–7.                                   61. Fortin M, Omidyeganeh M, Battié MC, Ahmad O, Rivaz H. Evaluation of an
+38. Drudi LM, Phung K, Ades M, Zuckerman J, Mullie L, Steinmetz OK, et al.               automated thresholding algorithm for the quantification of paraspinal
+    Psoas muscle area predicts all-cause mortality after endovascular and open           muscle composition from MRI images. Biomed Eng Online. 2017;16(1):61.
+    aortic aneurysm repair. Eur J Vasc Endovasc Surg. 2016;52(6):764–9.              62. Wei Y, Tao X, Xu B, Castelein A. Paraspinal muscle segmentation in CT
+39. Peng PD, van Vledder MG, Tsai S, de Jong MC, Makary M, Ng J, et al. Sarcopenia       images using GSM-based fuzzy C-means clustering. Journal of Computer
+    negatively impacts short-term outcomes in patients undergoing hepatic                and Communications. 2014. https://doi.org/10.4236/jcc.2014.29010.
+    resection for colorectal liver metastasis. HPB (Oxford). 2011;13(7):439–46.      63. Battaglia N V, Mahfouz M R, Johnson M. Semi-Automatic segmentation of the
+40. Lee JS, He K, Harbaugh CM, Schaubel DE, Sonnenday CJ, Wang SC, et al.                lumbar muscles and gender specific cross-sectional areas (Abstract). 58th
+    Frailty, core muscle size, and mortality in patients undergoing open                 Annual Meeting of the Orthopaedic. Research Society, San Francisco, CA, 2012.
+    abdominal aortic aneurysm repair. J Vasc Surg. 2011;53(4):912–7.                 64. Otemuyiwa B, Derstine BA, Zhang P, Wong SL, Sabel MS, Redman BG, et al.
+41. Miller AL, Englesbe MJ, Diehl KM, Chan CL, Cron DC, Derstine BA, et al.              Dorsal muscle attenuation may predict failure to respond to Interleukin-2 therapy
+    Preoperative psoas muscle size predicts postoperative delirium in older adults       in metastatic renal cell carcinoma. Acad Radiol. 2017 Sep;24(9):1094–100.
+    undergoing surgery: a pilot cohort study. J Am Geriatr Soc. 2017;65(1):e23–4.    65. Weijs PJ, Looijaard WG, Dekker IM, Stapel SN, Girbes AR, Oudemans-van
+42. Paknikar R, Friedman J, Cron D, Deeb GM, Chetcuti S, Grossman PM, et al.             Straaten HM, et al. Low skeletal muscle area is a risk factor for mortality in
+    Psoas muscle size as a frailty measure for open and transcatheter aortic             mechanically ventilated critically ill patients. Crit Care. 2014;18(2):R12.
+    valve replacement. J Thorac Cardiovasc Surg. 2016;151(3):745–51.                 66. Englesbe MJ, Lee JS, He K, Fan L, Schaubel DE, Sheetz KH, et al. Analytic
+43. Sheetz KH, Zhao L, Holcombe SA, Wang SC, Reddy RM, Lin J, et al.                     morphomics, core muscle size, and surgical outcomes. Ann Surg. 2012 Aug;
+    Decreased core muscle size is associated with worse patient survival                 256(2):255–61.
+    following esophagectomy for cancer. Dis Esophagus. 2013;26(7):716–22.            67. Hyunkwang Lee, Fabian M T,Shahein T, Georg F,Julia M, Florian J F,Synho D.
+44. Underwood PW, Cron DC, Terjimanian MN, Wang SC, Englesbe MJ, Waits                   Artificial Intelligence Quantifies Muscle on Computed Tomography for Body
+    SA. Sarcopenia and failure to rescue following liver transplantation. Clin           Morphometric Analysis. J Digit Imaging. 2017; doi:https://doi.org/10.1007/
+    Transpl. 2015;29(12):1076–80.                                                        s10278-017-9988-z
+45. Caram MV, Bellile EL, Englesbe MJ, Terjimanian M, Wang SC, Griggs JJ, et al.     68. Popuri K, Cobzas D, Esfandiari N, Baracos V, Jägersand M. Body composition
+    Sarcopenia is associated with autologous transplant-related outcomes in              assessment in axial CT images using FEM-based automatic segmentation of
+    patients with lymphoma. Leuk Lymphoma. 2015;56(10):2855–62.                          skeletal muscle. IEEE Trans Med Imaging. 2016;35(2):512–20.
+Mullie and Afilalo BMC Medical Imaging                    (2019) 19:15                                                                                           Page 14 of 14
+
+
+
+
+69. Silva de Paula N, de Aguiar BK, Azevedo Aredes M, Villaça Chaves G.                       92. Rosenquist KJ, Massaro JM, Pedley A, Long MT, Kreger BE, Vasan RS, et al.
+    Sarcopenia and skeletal muscle quality as predictors of postoperative                          Fat quality and incident cardiovascular disease, all-cause mortality, and
+    complication and early mortality in gynecologic Cancer. Int J Gynecol                          cancer mortality. J Clin Endocrinol Metab. 2015;100(1):227–34.
+    Cancer. 2018;28(2):412–20.                                                                93. Alvey NJ, Pedley A, Rosenquist KJ, Massaro JM, O'Donnell CJ, Hoffmann U,
+70. Lee S, Paik HC, Haam SJ, Lee CY, Nam KS, Jung HS, et al. Sarcopenia of                         et al. Association of fat density with subclinical atherosclerosis. J Am Heart
+    thoracic muscle mass is not a risk factor for survival in lung transplant                      Assoc. 2014;3:4.
+    recipients. J Thorac Dis. 2016 Aug;8(8):2011–7.                                           94. Yong HS, Kim EJ, Seo HS, Kang EY, Kim YK, Woo OH, et al. Pericardial fat is
+71. Derstine BA, Holcombe SA, Goulson RL, Ross BE, Wang NC, Sullivan JA, et al.                    more abundant in patients with coronary atherosclerosis and even in the
+    Quantifying sarcopenia reference values using lumbar and thoracic muscle                       non-obese patients: evaluation with cardiac CT angiography. Int J
+    areas in a healthy population. J Nutr Health Aging. 2017;21(10):180–5.                         Cardiovasc Imaging. 2010;26(Suppl 1):53–62.
+72. Miller JA, Harris K, Roche C, Dhillon S, Battoo A, Demmy T, et al.                        95. Jang HC, Lee HK, Lee H, Cha JG, Kim YS, Cho JH. Analyzing correlation
+    Sarcopenia is a predictor of outcomes after lobectomy. J Thorac Dis.                           between epicardial fat area and metabolic syndrome risk factor by using
+    2018 Jan;10(1):432–40.                                                                         low-dose lung CT. Pak J Med Sci. 2015;31(5):1207–12.
+73. Fintelmann FJ, Troschel FM, Mario J, Chretien YR, Knoll SJ, Muniappan A, et               96. Song DK, Hong YS, Lee H, Oh JY, Sung YA, Kim Y. Increased Epicardial
+    al. Thoracic Skeletal Muscle Is Associated With Adverse Outcomes After                         adipose tissue thickness in type 2 diabetes mellitus and obesity. Diabetes
+    Lobectomy for Lung Cancer. Ann Thorac Surg. 2018.                                              Metab J. 2015;39(5):405–13.
+74. Karteek P, Dana C, Martin J, Nina E, Vickie B. Fem-based automatic                        97. Balci A, Celik M, Balci DD, Karazincir S, Yonden Z, Korkmaz I, et al. Patients
+    segmentation of muscle and fat tissues from thoracic CT images. IEEE Trans                     with psoriasis have an increased amount of epicardial fat tissue. Clin Exp
+    Med Imaging. 2016;35(2):512–20.                                                                Dermatol. 2014;39(2):123–8.
+75. Wajchenberg BL. Subcutaneous and visceral adipose tissue: their relation to               98. Dagvasumberel M, Shimabukuro M, Nishiuchi T, Ueno J, Takao S, Fukuda
+    the metabolic syndrome. Endocr Rev. 2000;21(6):697–738.                                        D, et al. Gender disparities in the association between epicardial adipose
+76. Guiu B, Petit JM, Bonnetain F, Ladoire S, Guiu S, Cercueil JP, et al. Visceral fat area        tissue volume and coronary atherosclerosis: a 3-dimensional cardiac
+    is an independent predictive biomarker of outcome after first-line bevacizumab-                computed tomography imaging study in Japanese subjects. Cardiovasc
+    based treatment in metastatic colorectal cancer. Gut. 2010;59(3):341–7.                        Diabetol. 2012;11:106.
+77. Ladoire S, Bonnetain F, Gauthier M, Zanetta S, Petit JM, Guiu S, et al. Visceral          99. Oyama N, Goto D, Ito YM, Ishimori N, Mimura R, Furumoto T, et al. Single-
+    fat area as a new independent predictive factor of survival in patients with                   slice epicardial fat area measurement: do we need to measure the total
+    metastatic renal cell carcinoma treated with antiangiogenic agents.                            epicardial fat volume? Jpn J Radiol. 2011;29(2):104–9.
+    Oncologist. 2011;16(1):71–81.                                                             100. Maimaituxun G, Shimabukuro M, Fukuda D, Yagi S, Hirata Y, Iwase T, et al. Local
+78. Ryo M, Kishida K, Nakamura T, Yoshizumi T, Funahashi T, Shimomura I.                           thickness of Epicardial adipose tissue surrounding the left anterior descending
+    Clinical significance of visceral adiposity assessed by computed                               artery is a simple predictor of coronary artery disease - new prediction model
+    tomography: a Japanese perspective. World J Radiol. 2014;6(7):409–16.                          in combination with Framingham risk score. Circ J. 2018;21.
+79. Cakir H, Heus C, van der Ploeg TJ, Houdijk AP. Visceral obesity determined                101. Norlén A, Alvén J, Molnar D, Enqvist O, Norrlund RR, Brandberg J, et al.
+    by CT scan and outcomes after colorectal surgery; a systematic review and                      Automatic pericardium segmentation and quantification of epicardial fat
+    meta-analysis. Int J Color Dis. 2015;30(7):875–82.                                             from computed tomography angiography, 034003. J Med Imaging
+80. Demerath EW, Ritter KJ, Couch WA, Rogers NL, Moreno GM, Choh A, et al.                         (Bellingham). 2016;3(3).
+    Validity of a new automated software program for visceral adipose tissue                  102. Rodrigues EO, Morais FFC, Morais NA, Coni LS, Neto LV, Conci A. A novel
+    estimation. Int J Obes. 2007 Feb;31(2):285–91.                                                 approach for the automated segmentation and volume quantification of
+81. Amol P, Alok NB, Ioannis AK. Application of computer vision. Appl Comp                         cardiac fats on computed tomography. Comput Methods Prog Biomed.
+    Vis. 2005. https://doi.org/10.1109/ACVMOT.2005.31.                                             2016;123:109–28.
+82. Nemoto M, Yeernuer T, Masutani Y, Nomura Y, Hanaoka S, Miki S, et al.                     103. Coppini G, Favilla R, Marraccini P, Moroni D, Pieri G. Quantification of
+    Development of automatic visceral fat volume calculation software for CT                       Epicardial fat by cardiac CT imaging. Open Med Inform J. 2010;4:126–35.
+    volume data. J Obes. 2014;2014:495084.                                                    104. Vladimir Z, Lidija K, Lazar V, Branislav P, Marko J, Ratko O, Nebojsa M.
+                                                                                                   Semiautomatic Epicardial fat segmentation based on fuzzy c-means
+83. Kim YJ, Lee SH, Kim TY, Park JY, Choi SH, Kim KG. Body fat assessment
+                                                                                                   clustering and geometric ellipse fitting. Journal of Healthcare Engineering.
+    method using CT images with separation mask algorithm. J Digit Imaging.
+                                                                                                   2017. https://doi.org/10.1155/2017/5817970.
+    2013;26(2):155–62.
+                                                                                              105. Bandekar AN, Naghavi M, Kakadiaris IA. Automated pericardial fat
+84. Zhao B, Colville J, Kalaigian J, Curran S, Jiang L, Kijewski P, et al. Automated
+                                                                                                   quantification in CT data. Conf Proc IEEE Eng Med Biol Soc. 2006;1:932–5.
+    quantification of body fat distribution on volumetric computed
+                                                                                              106. Abazida O. H Saqqaab. Epicardial fat quality effect on subclinical
+    tomography. J Comput Assist Tomogr. 2006;30(5):777–83.
+                                                                                                   atherosclerosis. J Saudi Heart Assoc. 2016;28(3):129–220.
+85. Pan-Fu K, Kuo Y-L, Po-Tsun L, Wei-Chen C, Ya-Ling H, Chiun-li C. Fully
+    automatic abdominal fat segmentation system from a low resolution CT
+    image. J Comput. 2015;36(2):65–77.
+86. Lee SJ, Liu J, Yao J, Kanarek A, Summers RM, Pickhardt PJ. Fully automated
+    segmentation and quantification of visceral and subcutaneous fat at
+    abdominal CT: application to a longitudinal adult screening cohort. Br J
+    Radiol. 2018;28:20170968.
+87. Rosenquist KJ, Pedley A, Massaro JM, Therkelsen KE, Murabito JM, Hoffmann
+    U, et al. Visceral and subcutaneous fat quality and cardiometabolic risk.
+    JACC Cardiovasc Imaging. 2013;6(7):762–71.
+88. Shah RV, Allison MA, Lima JA, Abbasi SA, Eisman A, Lai C, et al. Abdominal
+    fat radiodensity, quantity and cardiometabolic risk: the multi-ethnic study of
+    atherosclerosis. Nutr Metab Cardiovasc Dis. 2016;26(2):114–22.
+89. Therkelsen KE, Pedley A, Rosenquist KJ, Hoffmann U, Massaro JM, Murabito
+    JM, et al. Adipose tissue attenuation as a marker of adipose tissue quality:
+    associations with six-year changes in body weight. Obesity (Silver Spring).
+    2016;24(2):499–505.
+90. Yeoh AJ, Pedley A, Rosenquist KJ, Hoffmann U, Fox CS. The association
+    between subcutaneous fat density and the propensity to store fat viscerally.
+    J Clin Endocrinol Metab. 2015;100(8):E1056–64.
+91. Murabito JM, Pedley A, Massaro JM, Vasan RS, Esliger D, Blease SJ, et al.
+    Moderate-to-vigorous physical activity with accelerometry is associated with
+    visceral adipose tissue in adults. J Am Heart Assoc. 2015;4(3):e001379.
+

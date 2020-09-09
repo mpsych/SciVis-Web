@@ -1,0 +1,862 @@
+                                                                 HexaLab.net: an online viewer for hexahedral meshes
+
+                                                              Matteo Bracci1,∗, Marco Tarini2,∗, Nico Pietroni3 , Marco Livesu4 , Paolo Cignoni1
+
+
+
+
+                                         Abstract
+                                         We introduce HexaLab: a WebGL application for real time visualization, exploration and assessment of hexahedral
+                                         meshes. HexaLab can be used by simply opening www.hexalab.net. Our visualization tool targets both users and
+                                         scholars. Practitioners who employ hexmeshes for Finite Element Analysis, can readily check mesh quality and assess
+                                         its usability for simulation. Researchers involved in mesh generation may use HexaLab to perform a detailed analysis of
+                                         the mesh structure, isolating weak points and testing new solutions to improve on the state of the art and generate high
+arXiv:1806.06639v2 [cs.GR] 15 Mar 2019
+
+
+
+
+                                         quality images. To this end, we support a wide variety of visualization and volume inspection tools. Our system offers also
+                                         immediate access to a repository containing all the publicly available meshes produced with the most recent techniques
+                                         for hexmesh generation. We believe HexaLab, providing a common tool for visualizing, assessing and distributing results,
+                                         will push forward the recent strive for replicability in our scientific community.
+                                         Keywords: hexahedral mesh, hex-mesh, 3D visualization, volumetric remeshing, benchmarking, 3D web application
+
+
+                                         1. Introduction
+
+                                            Hex-meshes, i.e. volumetric meshes composed of hexa-
+                                         hedral cells, are one the of most used 3D representations
+                                         for numerical simulation, most notably by Finite Element
+                                         Analysis (FEA). Application domains include structural
+                                         mechanics, heat, electricity transfer problems and simula-
+                                         tion of other physical phenomena. In order to be usable
+                                         in a simulation, a hex-mesh must fulfill a number of re-
+                                         quirements, both hard and soft in nature. In other terms,
+                                         it must have a sufficiently high “quality”.
+                                            The construction of simulation grade hex-meshes for a
+                                         given shape is a long standing, extremely arduous problem,
+                                         which has continuously attracted interest from industry
+                                                                                                         Figure 1: A screen-shot of HexaLab running inside Chrome under
+                                         and fuels a constant (and still ongoing) research effort by     macOS. Model courtesy of [1].
+                                         more than one scientific community (Sec. 2.1). The faced
+                                         tasks are cast, for example, as the automatic and reliable
+                                         construction of a hex-mesh of an object given its surface       1.1. Intended usages
+                                         (hex-meshing); the “clean up” of a given hex-mesh form
+                                         pathological configurations that prevent usability (untan-      Visualization: the main function of HexaLab is to serve
+                                         gling); or the conversion of a tetrahedral mesh into a hex-     as an advanced 3D visualizer for hex-meshes, for the pur-
+                                         mesh (hex-remeshing).                                           pose of providing a visual insight on the inspected mod-
+                                            We introduce HexaLab, an Open-Source software tool           els, and thus, indirectly, on the algorithms that produced
+                                         designed to help researchers and practitioners. HexaLab         them. The visualization of a hex-mesh is complicated by
+                                         is both an advanced hex-meshes visualizer, and a portal         the resolution of the model and, even more so, by the
+                                         to an online database of results produced with existing         presence of non-trivial 3D internal structures. HexaLab
+                                         techniques. It is provided as a Web Application, and can        faces this task by offering a set of interactively controlled
+                                         be used by simply connecting to www.hexalab.net.                tools (cutting planes, etc), a shape-revealing realistic light-
+                                                                                                         ing (drastically improving the readability of images), novel
+                                                                                                         modalities specifically designed to better communicate the
+                                           ∗ Jointfirst author                                           shape of the cells, as well as colormaps and spatial glyphs,
+                                           1 CNR  ISTI, Pisa, Italy
+                                           2 Università degli studi di Milano, Italy                    to reveal the quality, the topological characteristics, and
+                                           3 University of Technology, Sydney, Australia                 so on.
+                                           4 CNR IMATI, Genoa, Italy                                     Assessment: for the same purpose, HexaLab can be used
+                                         Preprint submitted to Journal of LATEX Templates                                                                March 18, 2019
+to assess the quality of the inspected models, by provid-             In 1998 Owen [4] pointed out that hex-meshing tech-
+ing interactive and automated techniques to perform nu-            niques were not robust enough to be able to scale on com-
+merical measurements and plotting histograms for the in-           plex shapes. Two years later, Blaker [5] defined hexmesh
+spected model. A wide array of established measures are            generation as the holy grail of meshing research. In the
+included.                                                          last decade, there has been a constant improvement in hex-
+Presentation: although they are produced in real-time              meshing algorithms, mainly tied to advancements in vol-
+in the context of an interactive application, images pro-          umetric parameterization techniques; yet, more research
+duced by HexaLab have publication-grade quality and are            is clearly needed before fully satisfactory solutions are
+intended to be used for presentation and dissemination,            reached. Here we briefly summarize only a few of the most
+e.g. in scientific publications. The high lighting quality         recent advances, and point the reader to [4] for a survey
+helps to making 3D rendering intelligible even as static           on classical methods developed during 90s. It is our opin-
+(e.g. printed) images. This function relieves researchers          ion that availability of powerful tools to visualize, inspect,
+from the tedious task of implementing ad-hoc visualization         compare and analyze hex-meshes will help promoting fur-
+method for the presentation of their results; also, such vi-       ther advance in the state of the art.
+sualizations are often comparatively less effective, and are          Grid based approaches [6] subdivide the volume using a
+inhomogeneous across works from different authors.                 regular grid. Elements are aligned to the global axes, and
+Comparisons: HexaLab also implements mechanisms to                 external vertices are snapped to the surface to better ap-
+ease comparison between hex-meshes, e.g. between results           proximate the original shape. The most recent advances
+of competing methods over the same input, or, between              in the field regard the ability to project vertices on the
+“before” and “after” datasets of a hex-mesh optimization.          surface while meeting per element quality bounds [7] and
+All visualization settings can be easily shared between vi-        the introduction of templated schemes to turn hierarchi-
+sualization sessions. This applies to sessions being run           cal grids (octrees) into full hex-meshes [8]. The resulting
+at the same time, for interactive side-to-side comparisons,        meshes often expose a complex structure, which can be
+and just as well to sessions executed much later in time.          simplified in post-processing [9][10].
+The visualization settings are also recorded in all produced          Advancing front approaches instead propagate element
+images as metadata, to allow reproducibility of these im-          generation from the boundary toward the interior [11].
+ages, and, thus, direct comparisons with new results in the        While these methods generate high quality elements close
+future. Potentially, comparison is also indirectly fostered,       to the boundary surface, they tend to create badly shaped
+even by results not directly dealing with each other, by           elements or leave empty voids in the interior, where differ-
+their adoption of a shared visualization style.                    ent fronts meet. Alternatively, the front propagation may
+Batch processing: in recent years, the number of results           proceed top to bottom. In [12] the authors propagate the
+typically used to evaluate remeshing algorithms increased.         front following the integral curves of a harmonic function.
+For this reason, HexaLab can be used to read a collection          Front splitting/merging at the saddle points of the guiding
+of models, and produce images and measurements for them            function is also supported.
+in one go.                                                            One recent trend is based on volumetric parameteriza-
+Benchmarking: lastly, but perhaps most crucially, Hex-             tions. The volume is first mapped on a space that ad-
+aLab is also an easily accessible portal to a new online           mits trivial hexmeshing (e.g. via regular sampling); then
+repository of hex-meshes, which is already fairly complete,        the connectivity is generated in parametric space and pro-
+and, we believe, is destined to grow over time with the            jected in object space using the inverse map. Mesh is
+continued usage of the tool. Direct contributions of new           eventually cured [13] to remove imperfections. Common
+datasets from authors of new methods are made simple               parametric spaces are cylinders [14, 15] and orthogonal
+and, in our intentions, encouraged (among other things)            polyhedra (or polycubes [16]). Approaches differ to each
+by the resulting visibility offered by HexaLab to any such         other on how the parametric space and the map are gen-
+works. The original source of any work in the repository           erated. High-quality polycubes should balance map dis-
+is reported to all future users.                                   tortion with corner count [17, 18][19], achieving a good
+                                                                   singularity alignment [2]. As observed in [20], polycubes
+                                                                   can be seen as a special case of field-aligned methods
+2. Background and Related Work                                     [21, 1, 22, 23]; the latter are more general, having inter-
+                                                                   nal singularities to improve the element shapes. In field-
+2.1. Hex-Mesh Generation and Processing                            aligned methods, the mesh is generated by tracing inte-
+   Hex-meshes are often preferred to other polyhedral              ger iso-lines [24] of a volumetric parameterization aligned
+based representations, such as tetrahedral meshes, because         with a frame-field [25, 26]. The structure and quality of
+arguably they offer advantages in terms of numerical ac-           the mesh depend on the singularities and the smoothness
+curacy [3] or, equivalently, simulation speed for the same         of the guiding field, respectively. Unfortunately, not all
+level of accuracy (due to the smaller number of degrees of         the possible field singularities are compatible with hex-
+freedom). Hex-meshes generation, however, is notoriously           meshing, and a number of heuristics have been proposed
+difficult.                                                         to remove incompatible configurations [1, 22, 27]. The ro-
+                                                               2
+Figure 2: Examples of HexaLab filters applied to an hex-mesh to reveal its interior. From left to right: complete, unfiltered model; slicing-
+plane filter; peeling filter (two most external layers of cells removed); quality-thresholding filter (hexas with SJ < 0.96 are shown); and the
+combination of all these filters. “Bunny” model courtesy of [2].
+
+
+bust generation of fields that admit a valid hex-mesh is an               characteristics, such as extreme portability (being based
+open problem. Alternatively, recent field-aligned methods                 on a natively cross-platform technology), immediate avail-
+targeting the construction of hex-dominant meshes [28, 29]                ability to users (due to the absence of an installation
+can bypass this problem.                                                  phase), safety (due to browsers being protected environ-
+                                                                          ments), amenability to online and distributed applications
+2.2. Hex-Mesh Software Tools                                              (due to the inherent client/web-server setup), and easiness
+  Alongside professional and well-established open                        of deployment and maintenance (due to instant updates).
+tools for solid mesh generation and processing, such as                      Traditionally, high-quality real-time 3D rendering of
+Gmsh [30] and ParaView [31], there exists a variety of                    complex scenes has been considered a computationally de-
+smaller tools being developed by researchers operating in                 manding task, requiring GPU support, and therefore ad-
+the field and released to the community [32]. We give here                vanced visualization tools have been limited to desktop
+a non comprehensive list of hex-mesh related software,                    applications. In the last years, the arise of a widely sup-
+considering both libraries and desktop applications.                      ported web-based 3D API, WebGL by Khronos, fueled an
+                                                                          increase of web-based 3D visualization tools.
+   A number of freely available libraries offer data struc-                  Many of these tools target specific domains and are to
+tures [33][34][35] to import/export a hex-mesh and pro-                   use, embedding a small set of advanced specialized func-
+cess it. These tools usually have a dedicated visualization               tionalities that are simple to understand. For example,
+front-end (e.g., Graphite [36] is the visual front-end of Ge-             in the field of molecular visualization, after the first Java-
+oGram [33]), but the functionalities they offer are more                  based approaches, like JMol[38], a number of small special-
+limited if compared to the ones we offer in HexaLab (e.g.,                ized visualization tools have been proposed [39, 40, 41].
+no histograms, no advanced lighting, no advanced inspec-                  Similarly, various web-based applications have been de-
+tion tools for the mesh interior and structure).                          veloped for volume visualizations tasks [42, 43, 44], con-
+   Other software tools focus on mesh synthesis and pro-                  firming the appeal of specialized, lightweight visualization
+cessing, such as Hexotic (which implements [8] and is                     tools.
+distributed by Distene within their MeshGems), Lib-                          General-purpose tools to display collections of 3D mod-
+HexEx [24] (which enables the extraction of a hexmesh                     els have also been one of the most common tasks for
+starting from an integer grid map) or Mesquite [37] (which                web-based visualization applications, such as Sketchfab or
+serves to maximize per element quality). These tools are                  3DHop [45], among many others; we refer the reader to
+orthogonal to us, as they focus on the processing of a hex-               [46] for a discussion of the possibilities and the issues of
+mesh but do not offer any visualization facility whatsoever.              delivering 3D collections on the Web.
+   Summarizing, our positioning is in-between professional
+tools and tools being developed and maintained by pure                    3. Overview
+researchers: we offer high quality visualization and anal-                   HexaLab can be used to visualize and assess the quality
+ysis tools which are better than the ones provided by the                 of hex-meshes either provided by the user in standard for-
+rest of the research community, at the expense of a simpli-               mats or downloaded from its own online integrated library
+fied setup (we run on browser) which is much lighter than                 of reference hex-meshes from recent literature (Sec. 4).
+the one usually required by professional software.                           The visualization and exploration process is based on a
+                                                                          very simple approach: in a trackball-controlled, real-time,
+2.3. 3D Online Visualization                                              high quality 3D rendering of the inspected mesh (Sec. 5)
+  Compared to desktop applications, web-applications are                  the user can interactively apply on it three different kinds
+by design lightweight and have many several desirable                     of exploration tools:
+                                                                      3
+Cell Filtering Tools: (Sec. 6) that allow users to hide             data available, will be done by relying on the well-known
+    portions of the hexahedral mesh so to expose internal           pull-request mechanism made available by the GIT dis-
+    structures which would otherwise be occluded. Crite-            tributed version control system. In this way, we offer to
+    ria to hide cell can involve the use of a clipping plane,       the research community a direct and simple way of propos-
+    distance from mesh boundary, geometric quality, and             ing additions of results to the repository, which will in turn
+    handpicking of specific cells;                                  foster comparisons against further advancements.
+
+Quality Assessment Tools: (Sec. 7) that allow users to
+   visually and numerically assess the geometric quality            5. Hexahedral Mesh Rendering
+   of the hexahedral cells, both individually (via color-
+   coding), and as aggregated measures (through his-                   The core part of HexaLab consists in the visualization
+   tograms and statistics), according to a number of                of the inspected hex-mesh as a solid object with a set of
+   standard quality measure (Sec. 7.1). Inverted (and               cells filtered out (see Sec. 6), so as to reveal the interior
+   concave) cells are treated and highlighted separately;           structure.
+                                                                       Typically, the visualization of a polyhedral volumetric
+Global-structure Visualization Tools: (Sec. 8) that                 mesh MV renders just the boundary MS (a polygonal
+   depict the configuration of irregular elements (espe-            surface), using a flat shading model and with mesh edges
+   cially edges) across the entire mesh under inspection,           overdrawn as line segments (see e.g. [36]). In our case,
+   thus revealing its global topological structure.                 MV is a pure hexahedral mesh, and MS is a pure quad
+                                                                    mesh.
+   HexaLab offers visualization status management                      We observe that this common edge rendering choice has
+(Sec. 9): at any moment, the current status of the inter-           a significant shortcoming: it is impossible to distinguish
+active visualization can be readily captured, stored, and           how many different cells are incident to an edge. Indeed,
+reused across visualization sessions. The status includes           the edges of MS which separate difference cells of MV and
+the setting of every active tool, the trackball-determined          the edges which just separate different faces of the same
+view-direction, any rendering parameters, the selected              cell of MV are depicted in the same way.
+quality measure etc. This achieves reproducibility of any              A brute force approach to overcome this edge ambiguity
+previously obtained image and allows visual comparisons,            problem appears in [29], and consists in drawing, instead
+under the exact same conditions, of different datasets (e.g.        of just the surface, the whole hex-mesh MV with each cell
+for comparing alternative meshings of the same object).             slightly smaller. This approach, that technically exposes
+   While in this work we do not focus on interfaces, we             each face and therefore the local arrangement of cells near
+strive to complete HexaLab with a reasonably intuitive              the boundary, does not scale well in terms of performances,
+Graphic User Interface (GUI). GUI elements will be de-              due to the cubic explosion of primitives to be rendered at
+scribed in the following sections, contextually with the            screen.
+mechanisms they control.                                               In HexaLab we propose three visualization modes to dis-
+                                                                    ambiguate the surfaces representing the volumetric mesh:
+4. Online mesh repository                                           Darkness-coded edges: in the wireframe, we color the
+                                                                       edges with thin, semi-transparent darker lines when
+   HexaLab doubles as an easily accessible, online repos-              they just separate two faces of the same cell. Opac-
+itory of the publicly available hex-meshes produced by                 ity is higher for edges separating different cells, and
+different techniques appeared in recent literature. Cur-               progressively increased for any additional internal el-
+rently, the repository consists of a total of 272 hex-meshes,          ements sharing such edge. In other words, the opac-
+from 15 different papers published in the last 7 years:                ity of each edge on MS is made proportional to the
+[47, 1, 19, 18, 48, 20, 2, 49, 15, 50, 51, 52, 14, 53, 54].            number of (non-hidden) cell elements in MV shar-
+   This collection of hex-meshes is stored, together with              ing the boundary edge. This method is undemanding
+the sources, on the git repository of HexaLab; it is made              in terms of resources, and greatly helps disambiguat-
+available directly by the HexaLab GUI: the user can sim-               ing. On the downsides, it is not self-explicative, as the
+ply invoke the visualization of any stored hex-mesh, by se-            mapping between line opacity and number of elements
+lecting one source, and then one model from that source.               is arbitrary (see Fig. 3, b).
+The requested hex-mesh is then automatically downloaded
+from the repository, and presented to the user. Contextu-           Fissure mode: we separate adjacent cells by a small fis-
+ally, HexaLab fully reports the data source by providing                sure so to reveal the local inner structure of the mesh.
+the bibliographic reference, a link to the DOI, and when                For the sake of rendering speed, fissures are limited
+available, to the PDF and the web page of the referenced                to cells on the boundary of MV and, as explained in
+article.                                                                Sec. 10.3.1, the rest of the mesh will remain occluded.
+   The maintenance and updating of the repository, when                 Specifically, we only separate edges and faces of MV
+new results will appear, or other authors will make their               which share at least one vertex on MS (see Fig. 3, c).
+                                                                4
+                 (a)                                  (b)                                   (c)                            (d)
+
+Figure 3: (a) the traditional rendering of MS to represent MV . (b) darkness-coded mode. (c) crack mode. (d) rounded mode. Bottom row:
+the same modes, for a different selection of darkness/width/radius. Model courtesy of [1].
+
+
+
+                                                                                    hand, this mode is a bit more resource demanding
+                                                                                    (the number of rendering primitives increases by an
+                                                                                    average factor of 12), and it can be argued that this
+                                                                                    adds geometric features (the rounded corners) which
+                                                                                    are non-existing in the input dataset.
+
+                                                                                  Visualization modes are offered to the user as three al-
+                                                                                ternatives, selectable via a combo-box. The three modes
+                                                                                can be further customized by editing one single parame-
+                                                                                ter, which determines respectively: an opacity multiplier
+                                                                                for the Darkness-coded edges mode; the gap size for Fis-
+                                                                                sure mode; and round radius for Rounded mode (Fig. 3,
+                                                                                bottom). Since the meaning of these parameters is similar
+Figure 4: In this natural image of a stone brick structure, the edges
+that separate faces belonging to the same volumetric cell (e.g. in cir-         across all the modes, we avoid cluttering the interface and
+cle A) are immediately recognizable from edges that separate distinct           present the user a single slider to choose the parameter
+volumetric cells (e.g. in circle B), although no line is explicitly added       which is appropriate for the currently selected mode.
+and cells are in full side-to-side contact. This inspires our Rounded
+mode for visualizing hex-meshes, which exploits a similar principle.
+                                                                                5.1. Lighting and Shading
+                                                                                   It has been observed several times [55, 56] that a global
+     While this method helps solving the visual ambiguity                       lighting model is extremely helpful to facilitate a thor-
+     we are addressing, it tends to clutter the screen and                      ough comprehension of the shape of a 3D object. This
+     sometimes it is not readable.                                              is especially true when the depicted shapes are not nec-
+                                                                                essarily familiar to the observer, as it is the case for hex-
+Rounded mode: we observe that there are real world                              meshes under arbitrary filters. The problem is further ex-
+   examples of cell arrangements (see Fig 4) where the                          acerbated for static images (for example, in a scientific
+   structure is immediately recognizable. This inspired                         article) where the observer cannot rely on interactivity
+   us to define an additional visualization technique                           to disambiguate. For this reason, we consider rendering
+   where each cell is rounded around the edge. Tech-                            hex-meshes with only a local direct illumination inade-
+   nically, this leaves a small elongated gap around each                       quate, and we employ a view-independent Ambient Oc-
+   edge of the mesh. Similarly to the above mode, we                            clusion (AO) term [57, 58, 59] that can be pre-computed
+   only render the surface of this gap in the immediate                         and stored at vertices of MS (Fig. 5). The computation of
+   proximity of the surface. More details are found in                          the AO terms happens automatically in background when-
+   Section 10.3. We found this method to produce the                            ever is needed, and takes only a few seconds to complete
+   most readable images (see Fig. 3, d). On the other                           (less than 5s for the most complex model in the database,
+                                                                            5
+Figure 5: The lighting modes offered by HexaLab. From left to right: direct illumination only, global illumination approximated with
+Screen Space Ambient Occlusion (SSAO), and with Object Space Ambient Occlusion (OSAO), which is HexaLab default. Global illumination
+schemas are more demanding, but are more effective at convening the 3D space, especially OSAO. Bottom: the improvement is further
+enhanced when “rounded mode” is used to separate elements. Model courtesy of [1].
+
+
+on a 2012 MacBook Pro). For the sake of interactivity,                Quality Thresholding: any cell with a quality not worse
+in the short time prior completion a screen-space approxi-               than a user-specified “quality” is removed. This is
+mation is used [60, 61, 62] as a temporary fall-back mode.               useful to isolate and highlight the problematic regions,
+This allows users, for example, to interactively sweep the               hiding the good ones;
+slicing plane through the volume while still seeing a com-
+prehensible representation.                                           Manual Selection: any selection obtained with the pre-
+   When the color is not used to map element quality                     vious filters can be manually tweaked by using two op-
+(see Sec. 7), HexaLab defaults a simple yellow–white color               erations: addition and removal of manually selected
+scheme to differentiate faces of MS found on original mesh               elements. These operations are triggered by pointing
+boundary of the mesh (prior to any filtering operation)                  on a quad face f on the boundary of the currently
+from interior faces.                                                     displayed mesh: the “dig” tool hides the non-hidden
+                                                                         cell that shares f ; the “undig” tool reveals the hid-
+                                                                         den cell that shares f (if it exists). In both cases,
+6. Cell filters                                                          the selected cell is uniquely identified by f . Finally,
+  HexaLab provides four ways to filter away elements. Fil-               the “isolate” tool hides all cells except the selected
+ters all work in a consistent way, that is, by flagging certain          one (neighboring cells can then be progressively added
+cells as hidden, and temporarily removing them from the                  with the “undig” tools); this is intended as a way to
+visualization. Filters differ to each other only on the way              help users discerning the structure of intricate config-
+they flag elements, and can be used either alone or through              urations. An example is shown in Fig. 7, where, by
+any combination of them (Fig. 2).                                        undigging a few hidden cells, it is possible to easily
+                                                                         understand the mesh configuration.
+Slicing plane: any cell whose barycenter falls behind a
+     user specified “slicing plane” is filtered out from the
+     view. In other words, the mesh is intersected with a             6.1. Filter regularization
+     half-space bounded by the slicing plane;
+                                                                         The user can elect to automatically polish the selection
+Peeling: any cell with a hop distance from the original               by increasing the regularity of the resulting boundary (i.e.
+    mesh boundary smaller than a user-specified “mini-                the quad mesh) to some extent. We implement this with
+    mal depth” value is filtered away (Fig. 6); the hop               a morphological approach. Specifically, the set of filtered
+    distance is computed using face-to-face adjacency. In             elements is first dilated n times and then eroded n times,
+    other words, a number equal to the “minimal depth”                for a “strength” integer parameters n (ranging between 0
+    of successive peels are removed in succession from the            and 5). An erosion consists in the removal from the filtered
+    original mesh, A peel is defined as the union of the              set of any cell with a vertex on the current boundary, and
+    cell elements with an exposed face (Fig. 6);                      vice versa a dilation consists in the addition. When this
+                                                                  6
+Figure 6: Several layers of peeling reveal hexahedral structure of the dragon follows the overall shape of the dragon. Model courtesy of [18].
+
+
+                                                                          6.3. GUI and customization
+                                                                             The user controls the visibility of the filtered elements
+                                                                          with one slider (labeled “silhouette”). The leftmost po-
+                                                                          sition completely hides filtered elements, whereas sliding
+                                                                          to the right progressively shows the pale silhouette. By
+                                                                          default, the slider is at the rightmost position.
+                                                                             The peeling and quality thresholding are controlled with
+                                                                          a single slider determining the minimal depth and the max-
+                                                                          imal quality respectively. The slicing plane tool requires
+                                                                          the user to identify the desired plane. Providing an intu-
+                                                                          itive interface for the selection of an arbitrary plane is not
+                                                                          straightforward; we bypass this problem by leveraging the
+                                                                          trackball, and simply providing a command (activated by
+Figure 7: Sometimes, revealing (undigging) a few hidden cells pro-
+                                                                          a “set plane” button on the GUI) which uses the current
+duce an image which communicates the structure of the meshing in          view direction as the normal of the slicing plane (option-
+a very intuitive way. Model courtesy of [14].                             ally, shift clicking this button round this vector to the
+                                                                          closest axis-aligned direction). The facing of the plane is
+                                                                          selected so that the cut surface faces toward the user. The
+option is activated, the selection is regularized after every             offset of the plane then is controlled with a slider, analo-
+change of the slicing plane or the peeling tool (the other                gous to the other two filters. To increase simplicity of use,
+filters are unaffected). A regularized selection can help                 the full-scale values of the three sliders are normalized, at
+clarifying the mesh topology by revealing the structure of                both ends, so that the left extreme always means a null fil-
+internal planes (see Fig. 8).                                             ter (all cells are visible), and the right extreme to mean a
+                                                                          complete filter (all cells are hidden). To this end, HexaLab
+                                                                          silently computes, and keeps up-to-date, data for the cur-
+6.2. Displaying filtered elements                                         rent mesh like maximal and minimal extension along the
+                                                                          slicing plane direction, depth of most internal element, and
+                                                                          quality range over all the elements.
+   The elements which are filtered out are (almost entirely)                 A potentially useful operation that the user might want
+omitted from the rendering, in order not to clutter the                   to perform is to invert the current orientation of the slicing
+view and not impact the readability of the currently ex-                  plane, so that the filtered portion of the mesh is reversed,
+posed internal part. Optionally, they can be displayed as                 and the region of interest can be investigated “from the
+a pale silhouette, either uniformly colored or with a very                other side”. This functionality can be accessed with a des-
+light shading, for the purpose of providing a visual hint of              ignated button, but can also be triggered by the set-plane
+the spatial context, in the original mesh, of the currently               button (if, upon activating it, the current view direction
+visible parts (see Fig. 9).                                               is detected to be close to opposite to the current slicing
+                                                                      7
+Figure 8: An example of regularization filter in action, with strengths ranging from 0 (left) to 4 (right): the boundary of the set of the cells
+removed by the slicing plane becomes increasingly clean. Model courtesy of [15].
+
+
+
+
+              Figure 9: Left: no silhouette. Middle: flat silhouette. Right: semitransparent silhouette. Model courtesy of [49].
+
+
+
+                                                                           addition to the filtering mechanism which isolates badly
+                                                                           shaped elements by hiding all elements which are better
+                                                                           than a prescribed threshold measure (see Sec. 6 and Figure
+                                                                           2, right).
+                                                                              We also display a histogram to show the distribution of
+                                                                           the quality values among all the elements (Fig. 10, bot-
+                                                                           tom right). The histogram, which consists of either ver-
+                                                                           tical or horizontal bars (users’ choice), can be saved as
+                                                                           a subimage, it is color-coded using the currently selected
+                                                                           color-map, and doubles as a labelled legend for the current
+                                                                           color-coding on the 3D rendering.
+       Parula                   Jet                 Red-Blue
+                                                                           7.1. Supported quality metrics
+Figure 10: Different color mappings on hex quality (top), and asso-
+ciated histograms (bottom). Model courtesy of [2].                            There is a wide spectrum of different metrics that can
+                                                                           be useful to assess the quality and other characteristics of
+                                                                           a hex-mesh. Many of these metrics refer to the deviance
+plane direction – within a tolerance of 20 degrees – then
+                                                                           from the ideal shape, that is, a perfect cube having planar
+the slicing plane direction is exactly inverted).
+                                                                           faces, orthogonal angles and all edges with equal length.
+                                                                           Broadly speaking, the larger the deviation from the ideal
+7. Cell Quality Visualization                                              shape, the more inaccurate the results produced by a FEA
+                                                                           simulations can be expected. In particular, elements with
+  The quality of individual cells is important in many                     nearly zero volume (i.e., degenerate) or negative volume
+applications, like Finite Element Analysis where a single                  (i.e., inverted ) may introduce a significant error, or even
+badly-shaped element can impair the entire simulation.                     preclude the entire simulation [48]. For a discussion of
+  HexaLab allows users to color hex-cells according to                     these metrics, the reader is referred to the recent interest-
+their quality using one of three color-maps, shown in                      ing study [64].
+Fig. 10, bottom, that have been chosen for their read-                        HexaLab supports all the quality metrics reported in
+ability and wide circulation. The quality coloring works in                Verdict [63], that are the most widely adopted library in
+                                                                       8
+            Metric                      ID          Full      Acceptable       Value for       Φ(q)              Φ−1 (q)
+                                                   range        range          unit cube
+
+            Diagonal                    DIA         [0, 1]      [0.65, 1]          1            q                  q
+                                                                                              q−qmin
+            Distortion                  DIS       (−∞, ∞)       [0.5, 1]           1        qmax −qmin   qmin + q(qmax − qmin )
+
+                                                                                             qmax −q
+            Edge Ratio                  ER         [1, ∞)          —               1         qmax −1      1 + (1 − q)(qmax − 1)
+
+                                                                                              q−qmin
+            Jacobian                    J         (−∞, ∞)        [0, ∞)            1        qmax −qmin   qmin + q(qmax − qmin )
+
+                                                                                             qmax −q
+            Maximum Edge Ratio          MER        [1, ∞)       [1, 1.3]           1         qmax −1      1 + (1 − q)(qmax − 1)
+
+                                                                                             qmax −q
+            Maximum Asp. Frobenius      MAAF       [1, ∞)        [1, 3]            1         qmax −1      1 + (1 − q)(qmax − 1)
+
+                                                                                             qmax −q
+            Mean Asp. Frobenius         MEAF       [1, ∞)        [1, 3]            1         qmax −1      1 + (1 − q)(qmax − 1)
+
+                                                                                             qmax −q
+            Oddy                        ODD        [0, ∞)       [0, 0.5]           0          qmax            (1 − q) qmax
+
+            Relative Size Squared       RSS         [0, 1]      [0.5, 1]           —            q                  q
+
+            Scaled Jacobian             SJ         [−1, 1]      [0.5, 1]           1         max(q, 0)             q
+
+            Shape                       SHA         [0, 1]      [0.3, 1]           1            q                  q
+
+            Shape and Size              SHAS        [0, 1]      [0.2, 1]           —            q                  q
+
+            Shear                       SHE         [0, 1]      [0.3, 1]           1            q                  q
+
+            Shear and Size              SHES        [0, 1]      [0.2, 1]           —            q                  q
+                                                                                             qmax −q
+            Skew                        SKE        [0, ∞)       [0, 0.5]           0          qmax            (1 − q) qmax
+                                                                                                 q
+            Stretch                     STR        [0, ∞)       [0.25, 1]          1           qmax              q qmax
+
+                                                                                             qmax −q
+            Taper                       TAP        [0, ∞)       [0, 0.5]           0          qmax            (1 − q) qmax
+
+                                                                                              q−qmin
+            Volume (signed)             VOL       (−∞, ∞)        [0, ∞)            1        qmax −qmin   qmin + q(qmax − qmin )
+
+
+
+Table 1: List of per-element metrics supported in HexaLab. To offer a consistent color-coded quality visualization, we map each metric in the
+normalized interval [0, 1], where 0 corresponds to the worst quality and 1 to the best quality. The functions we use to move from the native
+range to the normalized range (Φ) and vice-versa (Φ−1 ) are shown in the two rightmost columns of the table. For unbounded metrics, qmax
+and qmin refer to the highest and lowest quality values measured in the mesh. For details on the computation of each metric, the reader is
+referred to [63].
+
+
+the field for the evaluation of finite elements. We report                    Thanks to this normalization, HexaLab will consistently
+them in Table 1.                                                            color the worst elements (for example, as red under “Jet”
+                                                                            color map), will consistently isolate the worst elements
+                                                                            with the quality filter, and will consistently account for
+7.2. Metric normalization
+                                                                            the worst elements in the right (or bottom) end of the his-
+  The supported metrics differ widely in range and be-                      tograms, regardless of the currently selected measure. The
+havior; for example the range is bounded for some mea-                      normalized values, however, are only used internally and
+sure (for example, the Scaled Jacobian) and unbounded                       never directly exposed to the user: HexaLab always uses
+for others (for example, cell volume); optimal value can be                 the original values of the current metric on all histogram
+the lowest or the highest value in the range.                               labels, legends, and GUI elements (e.g. the box containing
+  In spite of this heterogeneity, in order to manage the                    the threshold value of the quality filters). This is well-
+metrics in a consistent yet intuitive way, HexaLab inter-                   defined as all our functions Φi are invertible (technically,
+nally stores per-cell element values in a normalized inter-                 with the exception below).
+val [0, 1], with the convention (where appropriate) that the                   The Scaled Jacobian is one of the most widely adopted
+value 0 always corresponds to the worst quality, and the                    quality measures for hexmeshes, and is the default mea-
+value 1 to the best. To this end, we have designed, for                     sure in HexaLab. For this measure, which is defined in
+each metric i, an ad-hoc function Φi which maps the orig-                   the range [−1, 1], Φi simply clamps negative values to 0.
+inal range of that metric into the normalized interval. For                 We consider this mapping more useful than a linear map-
+metrics with unbounded ranges, Φi is also a function of                     ping from [−1, 1] into [0, 1]. First of all, Φi correctly as-
+the maximum and minimum values found in the current                         signs a very poor quality to cells with a Scaled Jacobian
+mesh (which are updated at load time). All these mapping                    value close to zero. Also, cells with inverted (or degener-
+functions are reported in Table 1.                                          ate) corners, which can be argued to be equally invalid in
+                                                                       9
+Figure 11: The sequence of visualization modes for the irregular structures. In increasing order of amount of information provided: “wire”
+mode (default), i.e. as lines colored as a function of edge arity; “barbed wires” mode, i.e. with adding all edges stemming out from the
+irregular edges; “paper” mode, where incident faces are also partially shown. In modalities variants shown on bottom, HexaLab reveals in
+transparency elements which would otherwise be occluded by currently un-filtered hexas. Model courtesy of [1].
+
+
+hexmeshes, are clustered in one histogram bin (zero); con-                 We offer a series of visualization modalities for irregular
+sequently, the first bin of the histogram counts inverted               elements which range from lightly hinted to most infor-
+(and degenerate) cells, and pushing the quality filter all              mative (but also potentially cluttering and confusing the
+the way to the right hides every cell but inverted (and                 rest of the visualization). In the most informative modal-
+degenerate) ones.                                                       ity, the irregular structure is visible in semi-transparency
+                                                                        through the cell elements, whereas with the lighter modes
+                                                                        it is only exposed in areas where cells are hidden by fil-
+8. Mesh structure Visualization                                         ters. The user selects one modality through a slider having
+                                                                        as many discrete steps as the number of possible choices.
+   In a structured hex-mesh, internal vertices are shared by            The leftmost step disables the irregular-element visualiza-
+eight cells, and internal edges by four cells; boundary edges           tion entirely, while the rightmost step corresponds to the
+(edges lying on the boundary of a mesh) are shared by two               most informative modality.
+cells, and boundary vertices by four. Elements (vertices
+or edges) with a mismatching number of adjacent cells are
+termed irregular. Irregular edges are necessarily organized             9. Status snapshots
+in strips which traverse the mesh from an irregular vertex
+to another (either on the surface or in the interior of the                The current “status” of the application, which includes
+mesh).                                                                  current settings for all visualization tools and camera pa-
+   Similarly to irregular vertices on quad meshing, irregular           rameters, is unambiguously described in textual format,
+elements on hex-meshes characterize how cells are globally              as JSON object. This includes, for example, the orienta-
+organized. For example, a particular class of hex-meshes,               tion and position of the slicing plane, the view direction,
+called generalized polycubes [65], have no internal irreg-              the used colors, and so on. The main intended use is to
+ular edges. Internal irregular elements, often referred to              ease direct comparisons between different hex-meshes (see
+as “meshing singularities”, have been closely investigated              Fig. 12), and it is also the base for a number of additional
+for their direct relationship with the subdivision of hex-              mechanisms:
+meshes into fully structured sub-blocks [66, 9]. In general,
+the number, disposition and connection of irregular edges               Manual status copy-pasting: the user can copy the
+are linked to important properties of the hex-mesh.                        status to and from the system clipboard (via the copy
+   HexaLab offers a variety of visualization modalities to                 and paste keyboard shortcuts), and thus manually
+depict irregular elements. In each variant, different prim-                transfer the visualization settings across simultane-
+itives are used to convey the presence of irregular edges,                 ously open instances of HexaLab (or across consec-
+and (some of them) associated info like their valence. All                 utive visualization sessions, storing them for further
+the modalities are illustrated in Fig. 11.                                 reference);
+                                                                   10
+                                                                          to keep the latency time low when the current filtering
+                                                                          changes and a new quad-mesh boundary of visible elements
+                                                                          needs to be produced. We rely on assumption that the
+                                                                          mesh connectivity is fixed, and that the mesh resolution is
+                                                                          in the range of around 105 cell elements.
+                                                                             We opted to store the hex-mesh MV as a generalized
+                                                                          map. One reason is that homogeneous array sizes simplify
+                                                                          algorithms; also, this makes HexaLab amenable to include
+                                                                          support of non hexahedral polyhedra in future expansions.
+                                                                             Generalized maps are a slightly more general but less
+                                                                          compact version of a combinatorial map; HexaLab uses
+                                                                          its own implementation, although other implementations
+                                                                          are available [68, 69]. They are formalized in [70, 71], and
+                                                                          here we only briefly recap them. The mesh connectivity is
+                                                                          stored as a collection of “darts”, which are a generaliza-
+                                                                          tion of the half-edge structure commonly used for polyg-
+Figure 12: Two alternative meshings for the Rockerarm model (in           onal meshes. A dart represents a topological location on
+this instance, the input and output of the technique [2]) visually
+compared in HexaLab by using with the same status. The status has
+                                                                          the mesh, and consists of a collection of four indices to one
+been copy-pasted across visualization sessions.                           3D, 2D, 1D, and 0D element of the mesh (i.e. a cell, a face,
+                                                                          an edge, and a vertex). Additionally, each dart stores a set
+                                                                          of four indices (called “involutions”) pointing to the dart
+Image reproducibility: the status is automatically at-                    reached if any of its four elements is swapped (invalid in-
+   tached as meta-data to every produced image (via a                     dices are stored at darts at mesh boundaries). Involutions
+   snapshot tool), for future reference. Dragging a snap-                 provide an efficient mean to navigate over the mesh. We
+   shot of a previous session into HexaLab, meta-data                     precompute and store darts immediately after mesh im-
+   will be read and the status of the web application                     port, leveraging standard associative container structures
+   automatically updated so as to reproduce the same                      (such as black-red trees). Finally, we store attributes at
+   visual contained in the image. All the images con-                     mesh elements, such as (x, y, z) positions at vertices, nor-
+   tained in this paper have been produced with this                      mal vectors at faces, and “filtered-status” (a Boolean vari-
+   tool. Exporting images from the original version of                    able) at cells.
+   the manuscript and dragging them into HexaLab will
+   allow readers to see the same images in their browsers;                10.2. Rendering algorithms
+                                                                             The extracted quad-mesh MS is stored as an indexed
+Manual parameter tweaking: as the setup is saved on
+                                                                          triangular mesh, duplicating vertices when we have to rep-
+   a text file, the user can manually edit every parame-
+                                                                          resent normal or color discontinuities along edges. Quads
+   ter. While not intended as the main way to interact
+                                                                          are simply split into triangle pairs along an arbitrary diag-
+   with HexaLab, this allows for full control (e.g. to pin-
+                                                                          onal (although rendering methods which bypass the need
+   point the orientation of the cutting plane, to select
+                                                                          for this arbitrary split have been proposed, [72]).
+   certain cells by numeric ID, to choose colors). Secon-
+                                                                             By default, Ambient Occlusion (AO) is the only illumi-
+   darily, it partially exempts the graphic interface from
+                                                                          nation component used in HexaLab and substitutes direct
+   the need to provide full access to each parameter, al-
+                                                                          illumination entirely. Similarly to [56], AO terms are it-
+   lowing us to simplify it;
+                                                                          eratively computed in object space, by superimposing a
+                                                                          sequence of shadow-maps, one for each probe light direc-
+                                                                          tion: in our case, we accumulate unblocked light, weighted
+10. Implementation                                                        by the Cosine law, directly at vertices of MS ; note that
+                                                                          this potentially produces discontinuity of ambient occlu-
+  The software architecture of HexaLab loosely follows the                sion factors at normal discontinuities, as expected. We
+Model-View-Controller design pattern [67]. Two modules                    use a set of 1024 probe lights directions, which sample
+are integrated in a single web application: a back-end mod-               the unit sphere in an approximately uniform way, and are
+ule that deals with mesh input/output, storage, and ma-                   randomly constructed approximating a blue noise distri-
+nipulation, and a front-end module for the rendering and                  bution. All renderings, including of the shadow-map, and
+the GUI.                                                                  the accumulate light on the per-vertex AO terms, are per-
+                                                                          formed in GPU, leveraging WebGL.
+10.1. Internal hex-mesh representation                                       AO terms are updated in background, accumulating
+  Different representations for polyhedral meshes offer                   contributions from light probes without compromising
+several tradeoffs between navigation efficiency and mem-                  interactivity. After any user-triggered update of MS ,
+ory footprint. Our requirements include the necessity                     buffered AO terms are discarded, and their computation
+                                                                     11
+                                                                            10.3.1. Mesh extraction in Fissure mode
+                                                                               We produce a quad for each cell face sharing at least
+                                                                            one exposed vertex (producing all four MS vertices for
+                                                                            that face, irrespective of the “exposed” status of the cor-
+                                                                            responding MV vertex). Exposed vertices only are then
+                                                                            moved toward the barycenter of the cell, covering a small,
+                                                                            user-selected percentage of the distance. This way, inter-
+                                                                            cell gaps are formed, but only in the proximity of the
+                                                                            boundary of the visible parts of MV ; because the unex-
+                                                                            posed vertices are kept in their original positions, the gaps
+                                                                            close going toward the internal portions of the hex-mesh,
+                                                                            and MS has no element at all in the more internal parts.
+Figure 13: Boundary polygons produced for a hexacell (to be ren-               This introduces an approximation, as in reality every
+dered and lit). Top: topological subdivision and geometrical dis-
+placement. Bottom: examples of the produced polygons for four               side of every cell of MV would be exposed due to all fis-
+different configurations of six, four, three, and one “exposed” ver-        sures forming one connected empty space. The visual ef-
+tices.                                                                      fect of the approximation is, however, extremely small, be-
+                                                                            cause it takes place in regions which are typically both oc-
+                                                                            cluded by more superficial elements and made dark by the
+restarted. We wait that at least six light probes are ac-                   global lighting. The approximation drastically improves
+cumulated in the AO terms before using them in any ren-                     performances.
+dering; before then, we fall back screen-space AO approx-                      Because vertices are moved toward the barycenter of the
+imation [60, 61, 62].                                                       respective cell covering a fixed proportion of the distance,
+                                                                            the schema automatically adapts to varying sizes of the
+                                                                            cells (e.g. narrower gaps are formed around smaller cells).
+10.3. Polygonal mesh extraction
+                                                                            10.3.2. Mesh extraction in Rounded mode
+   After each user filter operation, the hidden cells are re-                  In this mode, we subdivide each side of the processed
+moved, then HexaLab dynamically extracts a polygonal                        cell into 3 × 3 squared sub-faces; this produces four addi-
+surface-mesh MS to be globally lit and rendered from                        tional vertices at each cell face, and two additional vertices
+MV .                                                                        at each cell edge (see Fig. 13). The vertices on the edges
+   In darkness-coded edges mode, MS is simply composed                      and corners of the cell are displaced toward the barycen-
+of the quad faces of MV separating one filtered and one                     ter of the respective edges to produce the actual round-
+unfiltered cell of MV . In fissure and rounded mode, visible                ing (similarly to the previous case, this makes the size of
+cells undergo certain spatial deformations, affecting both                  the roundings to automatically adapt to the local size and
+the polygon connectivity and the geometry of MS , and re-                   shape of the processed cell).
+quiring specialized algorithms to extract it. Specifically, in                 A side face (blue in Fig. 13) is produced only when all
+fissure mode, cells are shrunk, forming gaps around quads                   the four corresponding MV vertices are exposed. A set
+of MV ; in rounded mode, cells edges are rounded, form-                     of three corner faces (red in Fig. 13) is only produced
+ing, as a side effect, small tubular gaps around edges of                   when the corresponding cell vertex is exposed. A set of
+MV .                                                                        two edge faces (green in Fig. 13) is only produced if either
+   For the latter two modes, our mesh extraction algorithm                  or both the vertices on the corresponding cell edge are
+consists of two steps: first we identify the vertices of MV                 exposed; when only one is exposed, then the two faces
+which lie on its boundary (given the current filtering), and                are reduced to triangles, and the unexposed vertex is not
+we label them as exposed ; next, we process any cell with at                displaced and kept to the original vertex position (Fig. 13,
+least one exposed vertex, and we add vertices and polygons                  bottom). In this way, the tubular gaps around edges are
+to MS according to the exposed status of the eight corner                   artificially closed going toward the interior parts, leaving
+vertices of that cell, as detailed in Sec. 10.3.1 and 10.3.2.               MS geometrically watertight.
+   In all modes, MS is always a closed and geometri-                           Similarly to the fissure mode, we willingly introduce an
+cally watertight polygonal mesh. Its vertices are pro-                      approximation to improve rendering performances. The
+duced with positions, base color, and normals (used by                      visual impact of such an approximation is completely or
+the global lighting). In darkness-coded edges and fissure                   almost completely negated both by occlusions and by lack
+mode, we employ flat shading, so each quad of MS in-                        of light reaching the affected parts.
+dexes its own instances of the vertices (producing hard                        A vertex is added to MS only if it belongs to at least
+creases between all neighboring faces). In rounded mode,                    one produced face. The vertices of the side face (blue in
+we employ smooth shading, and polygons of MS belong-                        Fig. 13) are assigned constant normals, making that face
+ing to the same cell index share vertices (so hard creases                  appear visually flat. The normal interpolation is limited
+only appear between cells).                                                 to edges and corner faces (green and red in Fig. 13).
+                                                                       12
+10.4. Supported file formats                                           The tool is immediately available to researchers and
+   HexaLab supports two among the most widely used                   practitioners in the form of an easily accessible 3D web-
+file formats for the exchange of hex-meshes, namely the              application (which is cross-platform, cross-browser, and
+MEDIT format [73] (.mesh filename extension) and the                 cross-vendor, and requires no installation), and as an
+VTK library format [74] (.vtk filename extension). Cur-              Open-Source project. We expect that it can be employed,
+rently, HexaLab importer parses only the hexahedral ele-             in research, as a tool to gain insights on hex-meshes and
+ments expressed in these two formats, ignoring any other             therefore on the algorithms to produce, manipulate, and
+polyhedra (e.g., tetrahedra, pyramids and wedges).                   process them, and also to help the dissemination of engi-
+                                                                     neering and scientific results (by producing high quality
+                                                                     images fit for scientific articles and presentations).
+10.5. Batch processing
+   HexaLab can load a zipped archive containing a collec-            11.1. Current limitations and future work
+tion of hex-meshes, and produces a zipped archive contain-              As mentioned in Sec. 4, one main planned activity con-
+ing one screenshot (and one quality histogram) for each              sists in keeping the repository of State-of-The-Art hex-
+model, all sharing the same settings.                                meshes up-to-date. There are several directions in which
+                                                                     HexaLab can be expanded.
+10.6. Employed Tools                                                 Generalization to polyhedral meshes: currently, Hex-
+                                                                     aLab only supports pure hex-meshes. Other important
+   The back-end, that deals with mesh input/output and
+                                                                     classes of polyhedral meshes include (pure) tetrahedral
+geometric and topologic analysis, is developed in C++ us-
+                                                                     meshes, and hybrid hex-dominant meshes. These classes
+ing Eigen library [75] for the linear algebra computations;
+                                                                     are the focus of recent research works (e.g. [78] and [28]
+for allowing the execution of C++ code on the browser
+                                                                     respectively). Many of the mechanisms employed by Hex-
+client we used Emscripten [76] to “transpile” it in asm.js
+                                                                     aLab are, in principle, extendible to them, including the
+(a low-level subset of JavaScript) that is recognized and
+                                                                     filtering tools, the visualization modes, the internal data
+efficiently executed by modern js engines. The front-end,
+                                                                     structures. Quality measures would have to be adapted,
+shown in Fig. 1, is developed directly in JavaScript, using
+                                                                     and it is not clear how to do so for hex-dominant meshes.
+standard web tools (HTML 5.0, CSS, AJAX, and jQuery)
+                                                                     GUI improvements: in this project, we did not focus
+for the GUI, webGL and Three.js for the rendering and
+                                                                     on GUI design, although preliminary testing with fellow
+the trackball, and Plotly.js [77] for the graph plots. The
+                                                                     researchers indicates that our GUI performs satisfactorily
+code has no other dependencies. We use GitHub as an
+                                                                     for our purposes. A deeper design analysis, including user
+open-source repository for the code and the meshes and,
+                                                                     studies, can be performed in the future to provide Hex-
+thanks to the fact that it is a pure client web application,
+                                                                     aLab with an improved interface. Note that this tool is
+also for the web hosting.
+                                                                     intended for practitioners (modelers, architects, structural
+                                                                     engineers, researchers on fields such as geometric process-
+11. Conclusions                                                      ing and 3D computer graphics) and therefore its GUI tar-
+                                                                     gets expert users.
+   We presented a novel tool for interactive hexahedral              Improved visualization of the global structure: cur-
+mesh visualization and first analysis, which combines a              rently, Hexa-Lab highlights irregular edges, but additional
+number of highly customizable tools to explore different             mechanisms could be used to communicate the global
+features and characteristics of the inspected mesh. It pro-          structure of the inspected hex-mesh. For example, future
+duces readable images which convey both shape, qual-                 versions could compute and use the base complex, or inte-
+ity, and the topological structure of the inspected hex-             grate the advanced visualization methods proposed in [79],
+meshes, including its internal parts, plus simple numeric            which target the visualization of the (potentially intricate)
+measures in form of graphs and data (according to a                  whole structure of a hex-mesh.
+number of widely accepted measures). To this end, also               Dynamic datasets: currently, HexaLab only supports
+HexaLab introduces several new visualization modalities              static meshes. There is a research interest on dynamic
+specifically designed for this purpose, and employs a real-          datasets, which could be for example provided for visu-
+time global illumination model. It also provides direct ac-          alization as different key-frame meshes sharing the same
+cess to a repository of results from several recent State-of-        connectivity but different geometry, to be interpolated.
+the-Art hex-mesh creation and processing solutions, thus             Attributes: HexaLab currently focuses on the shape of
+easing further research by providing an easy way to com-             the mesh only, and its visualization disregards attributes
+pare against them. All data and images produced with                 which are often defined on its elements (such as vertices,
+HexaLab are easily reproducible and can be streamlined,              or cells).
+specifically all the images shown in this paper can be re-           Trackball: HexaLab currently employs a standard
+created by loading into HexaLab the appropriate model                sphere-based trackball to let the user orient the mesh,
+and dragging the png file of each figure over the applica-           but a “generalized trackball” [80] could be employed in
+tion window.                                                         its place.
+                                                                13
+Acknowledgments                                                                      tion, Transactions on Graphics (Proc. SIGGRAPH ASIA 2013)
+                                                                                     32 (6). doi:10.1145/2508363.2508388.
+                                                                              [20]   X. Fang, W. Xu, H. Bao, J. Huang, All-hex meshing us-
+   This work was partially funded by the EU ERC Ad-                                  ing closed-form induced polycube, ACM Trans. Graph. 35 (4)
+vanced Grant CHANGE, agreement No 694515, and by                                     (2016) 124:1–124:9. doi:10.1145/2897824.2925957.
+Italian MIUR, project “DSURF” (PRIN 2015B8TRFM).                              [21]   M. Nieser, U. Reitebuch, K. Polthier, Cubecover– parameteri-
+                                                                                     zation of 3d volumes, Computer Graphics Forum 30 (5) (2011)
+                                                                                     1397–1406. doi:10.1111/j.1467-8659.2011.02014.x.
+                                                                              [22]   T. Jiang, J. Huang, Y. Wang, Y. Tong, H. Bao, Frame field
+References                                                                           singularity correctionfor automatic hexahedralization, IEEE
+                                                                                     Transactions on Visualization and Computer Graphics 20 (8)
+ [1] Y. Li, Y. Liu, W. Xu, W. Wang, B. Guo, All-hex meshing using                    (2014) 1189–1199.
+     singularity-restricted field, ACM Trans. Graph. 31 (6) (2012)            [23]   N. Kowalski, F. Ledoux, P. Frey, Smoothness driven frame field
+     177:1–177:11. doi:10.1145/2366145.2366196.                                      generation for hexahedral meshing, Computer-Aided Design 72
+ [2] G. Cherchi, M. Livesu, R. Scateni, Polycube Simplification for                  (2016) 65–77.
+     Coarse Layouts of Surfaces and Volumes, Computer Graphics                [24]   M. Lyon, D. Bommes, L. Kobbelt, Hexex: robust hexahedral
+     Forumdoi:10.1111/cgf.12959.                                                     mesh extraction, ACM Transactions on Graphics (TOG) 35 (4)
+ [3] E. Wang, T. Nelson, R. Rauch, Back to elements-tetrahedra vs.                   (2016) 123.
+     hexahedra, in: Proceedings of the 2004 International ANSYS               [25]   N. Ray, D. Sokolov, B. Lévy, Practical 3d frame field generation,
+     Conference, ANSYS Pennsylvania, 2004.                                           ACM Transactions on Graphics (TOG) 35 (6) (2016) 233.
+ [4] S. J. Owen, A survey of unstructured mesh generation technol-            [26]   J. Huang, Y. Tong, H. Wei, H. Bao, Boundary aligned smooth
+     ogy., in: IMR, 1998, pp. 239–267.                                               3d cross-frame field, in: ACM transactions on graphics (TOG),
+ [5] T. Blacker, Meeting the challenge for automated conformal                       Vol. 30, ACM, 2011, p. 143.
+     hexahedral meshing, in: 9th international meshing roundtable,            [27]   H. Liu, P. Zhang, E. Chien, J. Solomon, D. Bommes,
+     2000, pp. 11–20.                                                                Singularity-constrained octahedral fields for hexahedral mesh-
+ [6] R. Schneiders, A grid-based algorithm for the generation of hex-                ing, ACM Trans. Graph. 37 (4) (2018) 93:1–93:17. doi:10.
+     ahedral element meshes, Engineering with Computers 12 (3)                       1145/3197517.3201344.
+     (1996) 168–177. doi:10.1007/BF01198732.                                  [28]   X. Gao, W. Jakob, M. Tarini, D. Panozzo, Robust hex-dominant
+ [7] H. Lin, S. Jin, H. Liao, Q. Jian, Quality guaranteed all-hex mesh               mesh generation using field-guided polyhedral agglomeration,
+     generation by a constrained volume iterative fitting algorithm,                 ACM Trans. Graph. 36 (4) (2017) 114:1–114:13. doi:10.1145/
+     Comput. Aided Des. 67 (C) (2015) 107–117. doi:10.1016/j.                        3072959.3073676.
+     cad.2015.05.004.                                                         [29]   D. Sokolov, N. Ray, L. Untereiner, B. Lévy, Hexahedral-
+ [8] L. Maréchal, Advances in Octree-Based All-Hexahedral Mesh                      dominant meshing, ACM Trans. Graph. 35 (5) (2016) 157:1–
+     Generation: Handling Sharp Features, Springer Berlin Hei-                       157:23. doi:10.1145/2930662.
+     delberg, Berlin, Heidelberg, 2009, pp. 65–84. doi:10.1007/               [30]   C. Geuzaine, J.-F. Remacle, Gmsh: A 3-d finite element mesh
+     978-3-642-04319-2_5.                                                            generator with built-in pre-and post-processing facilities, Inter-
+ [9] X. Gao, D. Panozzo, W. Wang, Z. Deng, G. Chen, Robust struc-                    national journal for numerical methods in engineering 79 (11)
+     ture simplification for hex re-meshing, ACM Transactions on                     (2009) 1309–1331.
+     Graphics (TOG) 36 (6) (2017) 185.                                        [31]   U. Ayachit, The paraview guide: a parallel visualization appli-
+[10] X. Gao, Z. Deng, G. Chen, Hexahedral mesh re-                                   cation.
+     parameterization from aligned base-complex, ACM Trans-                   [32]   Y. Zheng, R. W. Lewis, D. T. Gethin, Feview: An interactive
+     actions on Graphics (TOG) 34 (4) (2015) 142.                                    visualization tool for finite elements, finite Elements in Analysis
+[11] M. Kremer, D. Bommes, I. Lim, L. Kobbelt, Advanced Auto-                        and Design 19 (4) (1995) 261–294.
+     matic Hexahedral Mesh Generation from Surface Quad Meshes,               [33]   B. Levy, Geogram, http://alice.loria.fr/software/geogram/.
+     Springer International Publishing, Cham, 2014, pp. 147–164.              [34]   R. A. Computer Graphics Group Aachen, Openvolumemesh: A
+     doi:10.1007/978-3-319-02335-9_9.                                                generic and versatile index-based data structure for polytopal
+[12] X. Gao, T. Martin, S. Deng, E. Cohen, Z. Deng, G. Chen, Struc-                  meshes, http://www.openvolumemesh.org.
+     tured volume decomposition via generalized sweeping, IEEE                [35]   M. Livesu, cinolib: a generic programming header only
+     transactions on visualization and computer graphics 22 (7)                      c++ library for processing polygonal and polyhedral meshes,
+     (2016) 1899–1911.                                                               https://github.com/mlivesu/cinolib/ (2017).
+[13] M. Livesu, A. Sheffer, N. Vining, M. Tarini, Practical hex-              [36]   B. Levy, Graphite, http://alice.loria.fr/software/graphite/.
+     mesh optimization via edge-cone rectification, ACM Transac-              [37]   M. L. Brewer, L. F. Diachin, P. M. Knupp, T. Leurent, D. J.
+     tions on Graphics (Proc. SIGGRAPH 2015) 34 (4). doi:                            Melander, The mesquite mesh quality improvement toolkit., in:
+     10.1145/2766905.                                                                IMR, 2003.
+[14] M. Livesu, M. Attene, G. Patané, M. Spagnuolo, Explicit cylin-          [38]   R. M. Hanson, Jmol–a paradigm shift in crystallographic vi-
+     drical maps for general tubular shapes, Computer-Aided Design                   sualization, Journal of Applied Crystallography 43 (5) (2010)
+     90 (2017) 27 – 36. doi:10.1016/j.cad.2017.05.002.                               1250–1260.
+[15] M. Livesu, A. Muntoni, E. Puppo, R. Scateni, Skeleton-driven             [39]   M. Callieri, R. M. Andrei, M. Di Benedetto, M. Zoppè,
+     adaptive hexahedral meshing of tubular shapes, in: Proceed-                     R. Scopigno, Visualization methods for molecular studies on
+     ings of the 24th Pacific Conference on Computer Graphics and                    the web platform, in: Proceedings of the 15th International
+     Applications, PG ’16, 2016, pp. 237–246.                                        Conference on Web 3D Technology, ACM, 2010, pp. 117–126.
+[16] M. Tarini, K. Hormann, P. Cignoni, C. Montani, Polycube-                 [40]   A. S. Rose, P. W. Hildebrand, Ngl viewer: a web application for
+     maps, in: ACM transactions on graphics (TOG), Vol. 23, ACM,                     molecular visualization, Nucleic acids research 43 (W1) (2015)
+     2004, pp. 853–860.                                                              W576–W579.
+[17] X.-M. Fu, C.-Y. Bai, Y. Liu, Efficient volumetric polycube-map           [41]   H. Li, K.-S. Leung, T. Nakane, M.-H. Wong, iview: an interac-
+     construction, in: Computer Graphics Forum, Vol. 35, Wiley                       tive webgl visualizer for protein-ligand complex, BMC bioinfor-
+     Online Library, 2016, pp. 97–106.                                               matics 15 (1) (2014) 56.
+[18] J. Huang, T. Jiang, Z. Shi, Y. Tong, H. Bao, M. Desbrun,                 [42]   A. Garcıa-Alonso, Volume visualization tools for medical ap-
+     L1-based construction of polycube maps from complex shapes,                     plications in ubiquitous platforms, eHealth 360: International
+     ACM Transactions on Graphics (TOG) 33 (3) (2014) 25.                            Summit on eHealth, Budapest, Hungary, June 14-16, 2016, Re-
+[19] M. Livesu, N. Vining, A. Sheffer, J. Gregson, R. Scateni, Poly-                 vised Selected Papers 181 (2016) 443.
+     cut: Monotone graph-cuts for polycube base-complex construc-
+
+                                                                         14
+[43] J. Congote, A. Segura, L. Kabongo, A. Moreno, J. Posada,                       global illumination in image space, in: Proceedings of the 2009
+     O. Ruiz, Interactive visualization of volumetric data with webgl               Symposium on Interactive 3D Graphics and Games, I3D ’09,
+     in real-time, in: Proceedings of the 16th International Confer-                ACM, New York, NY, USA, 2009, pp. 75–82. doi:10.1145/
+     ence on 3D Web Technology, Web3D ’11, ACM, New York, NY,                       1507149.1507161.
+     USA, 2011, pp. 137–146. doi:10.1145/2010425.2010449.                    [63]   C. Stimpson, C. Ernst, P. Knupp, P. Pébay, D. Thompson, The
+[44] N. F. Polys, A. Wood, P. Shinpaugh, Cross-platform presenta-                   verdict library reference manual, Sandia National Laboratories
+     tion of interactive volumetric imagery.                                        Technical Report 9.
+[45] M. Potenziani, M. Callieri, M. Dellepiane, M. Corsini, F. Pon-          [64]   X. Gao, J. Huang, K. Xu, Z. Pan, Z. Deng, G. Chen, Evaluat-
+     chio, R. Scopigno, 3dhop: 3d heritage online presenter, Com-                   ing hex-mesh quality metrics via correlation analysis, Computer
+     puter & Graphics 52 (2015) 129–141.                                            Graphics Forum (SGP 2017).
+     URL http://vcg.isti.cnr.it/Publications/2015/PCDCPS15                   [65]   B. Li, X. Li, K. Wang, H. Qin, Generalized polycube trivari-
+[46] R. Scopigno, M. Callieri, M. Dellepiane, F. Ponchio, M. Poten-                 ate splines, in: 2010 Shape Modeling International Conference,
+     ziani, Delivering and using 3d models on the web: are we ready?,               2010, pp. 261–265. doi:10.1109/SMI.2010.40.
+     Virtual Archaeology Review 8 (17) (2017) 1–9.                           [66]   C. Armstrong, H. J. Fogg, C. Tierney, T. Robinson, Common
+     URL http://vcg.isti.cnr.it/Publications/2017/SCDPP17                           themes in multi-block structured quad/hex mesh generation 124
+[47] J. Gregson, A. Sheffer, E. Zhang, All-hex mesh generation via                  (2015) 70–82.
+     volumetric polycube deformation, Computer Graphics Forum                [67]   A. Leff, J. T. Rayfield, Web-application development using the
+     30 (5) (2011) 1407–1416.        arXiv:https://onlinelibrary.                   model/view/controller design pattern, in: Proceedings of the
+     wiley.com/doi/pdf/10.1111/j.1467-8659.2011.02015.x,                            5th IEEE International Conference on Enterprise Distributed
+     doi:10.1111/j.1467-8659.2011.02015.x.                                          Object Computing, EDOC ’01, IEEE Computer Society, Wash-
+[48] M. Livesu, A. Sheffer, N. Vining, M. Tarini, Practical hex-mesh                ington, DC, USA, 2001, pp. 118–.
+     optimization via edge-cone rectification, ACM Trans. Graph.                    URL http://dl.acm.org/citation.cfm?id=645344.650161
+     34 (4) (2015) 141:1–141:11. doi:10.1145/2766905.                        [68]   G. Damiand, Combinatorial maps, in: CGAL User and Refer-
+[49] X. M. Fu, C. Y. Bai, Y. Liu, Efficient volumetric polycube map                 ence Manual, 4.10 Edition, CGAL Editorial Board, 2017.
+     construction, Computer Graphics Forum 35 (7) 97–106.                           URL        http://doc.cgal.org/4.10/Manual/packages.html#
+[50] X. Gao, T. Martin, S. Deng, E. Cohen, Z. Deng, G. Chen, Struc-                 PkgCombinatorialMapsSummary
+     tured volume decomposition via generalized sweeping, IEEE               [69]   P. Kraemer, L. Untereiner, T. Jund, S. Thery, D. Cazier, Cgogn:
+     Trans. Vis. Comput. Graph 22 (7) (2016) 1899–1911. doi:                        n-dimensional meshes with combinatorial maps, in: Proceed-
+     10.1109/TVCG.2015.2473835.                                                     ings of the 22nd International Meshing Roundtable, IMR 2013,
+[51] F. Shang, Y. Gan, Y. Guo, Hexahedral mesh generation via                       October 13-16, 2013, Orlando, FL, USA, 2013, pp. 485–503.
+     constrained quadrilateralization, PLOS ONE 12 (5) (2017) 1–                    doi:10.1007/978-3-319-02335-9\_27.
+     27. doi:10.1371/journal.pone.0177603.                                   [70]   P. Lienhardt, Topological models for boundary representation:
+     URL https://doi.org/10.1371/journal.pone.0177603                               A comparison with n-dimensional generalized maps, Comput.
+[52] H. Wu, S. Gao, R. Wang, M. Ding, A global approach to multi-                   Aided Des. 23 (1) (1991) 59–82. doi:10.1016/0010-4485(91)
+     axis swept mesh generation, Procedia Engineering 203 (2017)                    90082-8.
+     414 – 426, 26th International Meshing Roundtable, IMR26, 18-            [71]   P. Lienhardt, N-dimensional generalized combinatorial maps
+     21 September 2017, Barcelona, Spain. doi:10.1016/j.proeng.                     and cellular quasi-manifolds., Int. J. Comput. Geometry Appl.
+     2017.09.817.                                                                   4 (3) (1994) 275–324. doi:10.1142/S0218195994000173.
+[53] H. Wu, S. Gao, R. Wang, J. Chen, Fuzzy clustering based                 [72]   K. Hormann, M. Tarini, A quadrilateral rendering primitive,
+     pseudo-swept volume decomposition for hexahedral meshing,                      in: Proceedings of the ACM SIGGRAPH/EUROGRAPHICS
+     Computer-Aided Design 96 (2018) 42 – 58. doi:10.1016/j.                        conference on Graphics hardware, ACM, 2004, pp. 7–14.
+     cad.2017.10.001.                                                        [73]   P. Frey, MEDIT : An interactive Mesh visualization Software,
+[54] G. Cherchi, P. Alliez, R. Scateni, M. Lyon, D. Bommes, Selec-                  Tech. Rep. RT-0253, INRIA.
+     tive padding for polycube-based hexahedral meshing, Computer            [74]   W. J. Schroeder, B. Lorensen, K. Martin, The visualization
+     Graphics      ForumarXiv:https://onlinelibrary.wiley.com/                      toolkit: an object-oriented approach to 3D graphics, Kitware,
+     doi/pdf/10.1111/cgf.13593, doi:10.1111/cgf.13593.                              2004.
+     URL https://onlinelibrary.wiley.com/doi/abs/10.1111/                    [75]   G.    Guennebaud,       B.   Jacob,     et   al.,   Eigen   v3,
+     cgf.13593                                                                      http://eigen.tuxfamily.org (2010).
+[55] M. S. Langer, H. H. Bülthoff, Perception of shape from shading         [76]   A. Zakai, Emscripten: An llvm-to-javascript compiler, in: Pro-
+     on a cloudy day, JOURNAL OF THE OPTICAL SOCIETY                                ceedings of the ACM International Conference Companion on
+     OF AMERICA A 11 (11) (1999) 467–478.                                           Object Oriented Programming Systems Languages and Appli-
+[56] M. Tarini, P. Cignoni, C. Montani, Ambient occlusion and edge                  cations Companion, OOPSLA ’11, ACM, New York, NY, USA,
+     cueing for enhancing real time molecular visualization, IEEE                   2011, pp. 301–312. doi:10.1145/2048147.2048224.
+     Transactions on Visualization and Computer Graphics 12 (5)              [77]   P. T. Inc., Collaborative data science (2015).
+     (2006) 1237–1244. doi:10.1109/TVCG.2006.115.                                   URL https://plot.ly
+[57] À. Méndez-Feliu, M. Sbert, From obscurances to ambient oc-            [78]   Y. Hu, Q. Zhou, X. Gao, A. Jacobson, D. Zorin, D. Panozzo,
+     clusion: A survey, The Visual Computer 25 (2) (2009) 181–196.                  Tetwild - tetrahedral meshing in the wild, ACM Transactions
+     doi:10.1007/s00371-008-0213-4.                                                 on Graphics (to appear).
+[58] H. Landis, Production-ready global illumination, Siggraph               [79]   K. Xu, G. Chen, Hexahedral mesh structure visualization and
+     course notes 16 (2002) (2002) 11.                                              evaluation, IEEE Transactions on Visualization and Computer
+[59] S. Zhukov, A. Iones, G. Kronin, An ambient light illumination                  Graphics 25 (1) (2019) 1173–1182. doi:10.1109/TVCG.2018.
+     model, in: G. Drettakis, N. Max (Eds.), Rendering Techniques                   2864827.
+     ’98, Springer Vienna, Vienna, 1998, pp. 45–55.                          [80]   L. Malomo, P. Cignoni, R. Scopigno, Generalized trackball for
+[60] L. Bavoil, M. Sainz, R. Dimitrov, Image-space horizon-based                    surfing over surfaces, in: STAG: Smart Tools and Apps for
+     ambient occlusion, in: ACM SIGGRAPH 2008 Talks, SIG-                           Graphics, Eurographics, 2016.
+     GRAPH ’08, ACM, New York, NY, USA, 2008, pp. 22:1–22:1.                        URL http://vcg.isti.cnr.it/Publications/2016/MCS16
+     doi:10.1145/1401032.1401061.
+[61] M. Mittring, Finding next gen: Cryengine 2, in: ACM SIG-
+     GRAPH 2007 Courses, SIGGRAPH ’07, ACM, New York, NY,
+     USA, 2007, pp. 97–121. doi:10.1145/1281500.1281671.
+[62] T. Ritschel, T. Grosch, H.-P. Seidel, Approximating dynamic
+
+                                                                        15
+

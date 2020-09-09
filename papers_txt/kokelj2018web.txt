@@ -1,0 +1,248 @@
+A web-based virtual reality environment for medical
+                   visualization
+                                                    Žiga Kokelj, Ciril Bohak, Matija Marolt
+                                  Faculty of Computer and Information Science, University of Ljubljana,
+                                               Večna pot 113, 1000, Ljubljana, Slovenia.
+                                 Email: zk6063@student.uni-lj.si, {ciril.bohak, matija.marolt}@fri.uni-lj.si
+
+
+   Abstract—In this paper, we present a novel approach to               There are also many commercial products in field of VR in
+integrating virtual reality (VR) into a web-based medical visu-         medicine: Immersive Touch3 , Medical Realities4 , Osso VR5 ,
+alization framework. The framework supports visualization of            Surgical Theater6 .
+volumetric data, such as 3D scalar fields acquired by a CT, MRI
+or PET scanners. To improve users’ perception, understanding               Apart from actual products, there are also many articles
+and manipulation of 3D volumes, we adapted the traditional              researching possibilities of using computer graphics and VR
+2D screen representation with support for visualization of data         in medicine.
+in a VR environment. By providing complete visual immersion,               Virtual reality is becoming very important in medicine. An
+VR can help users to gain better insights and understanding of          article [6] explains current and future use cases in this field.
+the visualized data. Our main goal was to allow users to view
+the medical data in VR and interact with it with hand-held              We have seen a big rise in popularity in recent years due to
+controllers for better immersion and spatial perception.                reductions in the cost of VR headsets and commercialization.
+   In the paper, we present a novel approach to implementation          An article also addresses a history of VR use in medicine.
+of VR for medical imaging, which combines WebGL-based                      In article [7] researchers presented benefits of using three-
+hardware accelerated web visualization with VR. This allows             dimensional ultrasound imaging in the diagnosis of rental-
+users to use the visualization framework with or without a VR
+headset by switching between "standard" and "VR" modes.
+                                                                        onset skeletal dysplasia. Results clearly showed that physicians
+Since visualization runs in a web browser, it is portable, easy         were able to score better in finding skeletal dysplasia when
+to use on different devices and therefore accessible to a broad         using 3D ultrasound, compared to using 2D ultrasound. We
+number of users. The visualization system was tested with real          believe that with VR physicians will be able to get better
+medical scans to assess its performance and usability.                  results compared to viewing 3D ultrasound images on 2D
+                           I. I NTRODUCTION                             displays.
+                                                                           Study about the user acceptance of the web-based distribu-
+   With the development of 3D scanners for medical pur-                 tion of radiology services was made in Western Australia [8].
+poses [1]–[3], physicians are getting large sets of radiologi-          There were many different opinions about the system, but on
+cal data about their patients. The data provides support for            average they were satisfied with the approach.
+physicians with diagnosis, planning surgeries and even during              Many applications and frameworks were developed for
+surgeries. With better visualization, we could make their               visualization of volumetric data. A good example is Exposure
+decisions easier and more confident.                                    renderer [9], which is used for local visualization but lacks
+   Modern scanners usually give us data in form of 3D scalar            support for web and VR.
+fields. This data needs to be processed and displayed in a way             Researchers have also investigated the benefits of immersion
+that can be easily viewed by physicians. Usually, images are            in virtual reality for volume data visualization [10]. They
+rendered on traditional 2D screens, but viewing 3D images               concluded that VR platforms have untapped potential for
+on 2D screens can cause some problems with perception and               exploring visualizations of volumetric data. They pointed out
+display of the details, because these screens lack the depth            that the VR community needs empirical results to validate the
+perception, which is crucial for better spatial perception of           claims of benefits of immersion for VR.
+volumetric data. It is harder to see specific details and it took          An article [11] named "Applications of Virtual Environ-
+longer to put them in the perspective, which is very important          ments in medicine" shows us many possibilities of using VR
+in medical domain.                                                      in medicine. First health care applications of VR started in the
+   There are existing applications, that can display data in 3D         90’s. In past decades there were huge advancements in both
+with pre-installed software and specific headsets [4], [5]. Very        software and hardware, making VR experience more accurate
+good example of a software that uses volume rendering and               and affordable. There is a huge interest in medicine for VR
+virtual reality combined is SpectroVive1 . It was developed at          because it can be used in many situations such as medical
+the University of Basel as part of the MIRACLE project2 .
+                                                                          3 http://www.immersivetouch.com/
+  1 https://www.unibas.ch/en/News-Events/News/Uni-Research/               4 https://www.medicalrealities.com/
+
+Virtual-Reality-in-Medicine.html                                          5 http://ossovr.com/
+  2 http://dbe.unibas.ch/public/dbe/research/FlagshipProject.html         6 http://www.surgicaltheater.net/
+education, surgical simulation and planning, virtual endoscopy,     B. Integration of VR
+neuro-psychological assessment, rehabilitation and many other          Since we want to display data in virtual reality and also
+situations.                                                         make the application available through web browser we de-
+   In contrast to approaches presented above, we present a          cided to use WebVR application programming interface [15].
+novel web-based framework for medical imaging in VR. Our            The WebVR application programming interface provides sup-
+framework uses WebGL 2.0 for hardware accelerated web               port for exposing virtual reality devices (usually a head-
+visualization with support for the VR. This allows users to use     mounted display) to web applications. We used this applica-
+our visualization framework with or without the VR headset.         tion programming interface inside Med3D in a way that is
+It is also not limited to the specific headset and uses the same    displayed in Figure 2.
+code base for all visualization purposes. Best of all, it runs in      1) Using the WebVR application programming interface: In
+modern browsers, even on mobile devices. Currently supported        the first step we query the application programming interface
+browsers and platform are held in an updated list7 .                for available VR devices. In response we get list of references
+   The remainder of the paper is organized as follows: In           to available VR displays. We have to select a display on
+Section II we present the developed system and its properties,      which we want to present the visualization to user. If we
+in Section III we present the evaluation and results of the         successfully obtained at least one VR display we can advertise
+developed system and in Section IV we present the conclusions       VR functionality to the user in form of button for entering VR
+and give pointers for the possible future work.                     mode (see Figure 1 - bottom right of the screen). When the
+                   II. T HE D EVELOPED S YSTEM                      user clicks the button, the application requests presentation on
+                                                                    the selected display. In the next step the application makes a
+   The developed system presents an extension of Med3D
+                                                                    method call VRDisplay.requestAnimationFrame(),
+framework with support for VR through use of WebVR appli-
+                                                                    to run the rendering loop at the correct refresh rate for the
+cation programming interface and integration of volumetric ray
+                                                                    display.
+casting rendering technique for volumetric data visualization.
+                                                                       Inside this loop, method call getFrameData() returns
+A. Med3D                                                            required data needed for rendering the current frame. After-
+   Med3D [12] is an open-source web-based 3D medical data           wards, the displayed scene is draw twice (first with parameters
+visualization framework (see Figure 1) based on NeckVeins           for left eye, second with parameters for right eye). When
+Java framework [13]. It was developed as a platform indepen-        rendering the scene for both eyes is finished the result image
+dent tool for visualization of medical volumetric data. WebGL       has to be submitted to display in the headset. Because WebVR
+2.0 library is used for exploiting the hardware accelerated         application programming interface is responsible for commu-
+graphics rendering in the browsers. The application enables         nication with VR devices (headsets) our framework does not
+remote collaboration between users [14], who can share data,        have to deal with calls for specific headset.
+view data annotations and can also communicate via integrated          2) Additional modifications required in Med3D application:
+chat. The framework runs in all modern browsers and supports        Because we wanted to use existing rendering pipeline, we had
+standard input devices such as mouse and keyboard. On top           to adapt the Med3D framework in order for the application to
+of that the framework also supports the 3D mouse and Leap           work in the desired manner. When the user requires rendering
+Motion for navigation. The application is capable of displaying     in VR, we obtain VR display parameters (e.g. rendering width,
+3D mesh models (in form of .obj files) as well as mesh              height, etc.). In each iteration of render loop we have to render
+representation of 3D volumetric data (such as CT or MRI scans       the scene separately for left and right half of the display.
+in form of .mhd files).                                             Because each rendered image is narrower, we have to set
+                                                                    correct aspect ratio. We also have to compute correct FOV,
+                                                                    far and near plane from projection matrix and pass them
+                                                                    to existing method calls. The application with enabled VR
+                                                                    display is presented in Figure 3.
+                                                                       3) Implementing VR controllers support: For implementa-
+                                                                    tion of controllers we used Gamepad application programming
+                                                                    interface8 . It gives developers a way to access and respond
+                                                                    to signals from controllers. Benefit of using this applica-
+                                                                    tion programming interface is that it works with multiple
+                                                                    controllers. Since it is still only experimental technology it
+                                                                    might have some drawbacks. Currently there is also limited
+                                                                    support in browsers, but it has broader support than WebVR.
+                                                                    We used experimental game-pad extension GamepadPose to
+                                                                    give users better experience in VR mode. The GamepadPose
+                 Figure 1. Med3D visaulization framework.           interface is very useful in our application, since it represents
+  7 https://webvr.rocks/                                              8 https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API
+                                                           1 Get list of available VR devices
+
+
+
+                                                       2 References to available VR devices
+
+
+                                                       5 Request for the selected VR display
+
+                                                                                                               3 VR functionality
+                                                              6 Request animation frame                           advertising
+                           Communication
+                   VR      between WebVR     WebVR                                               Med3D
+                 Headset     API and VR       API           7 Synchronise refresh rate with     Application
+                               Headset                           main rendering loop                          4 switch to VR mode
+
+
+                                                                8 Request frame data
+                                                                                                                                       User
+
+                                                                    9 Frame data
+
+
+
+                                                                10 Submit render view
+
+
+
+
+                                           Figure 2. Diagram of WebVR integration in Med3D framework.
+
+
+
+a pose of WebVR controller. It has many properties including                        vidual system components and their relationship is presented
+orientation, position, acceleration, etc. Firstly we have to check                  in Figure 4.
+if game-pad is connected to the computer. Afterwards, we
+make sure that game-pad is available and we query the game-
+pad object to obtain interaction data. We use controllers for
+the scene navigation.
+
+
+
+
+                                                                                          Figure 4. The system architecture and it’s individual components.
+
+
+             Figure 3. Visualization of data in VR mode.                                               III. E VALUATION AND R ESULTS
+                                                                                       For quantitative evaluation we tested frame rates of ordinary
+C. Integration of volumetric ray casting                                            rendering to the screen and rendering in VR mode. To elimi-
+   Volume ray casting [16] is an image based volume rendering                       nate dependency on specific headset we tested it with special
+technique which allows direct rendering of 3D scalar data                           plug-in9 for Google Chrome that emulates HTC Vive headset.
+without converting it to the mesh object. The implementation                           The application was tested on two computers. First was a
+was developed as GLSL shader used in the standard Med3D                             HP laptop with Intel i7 (2.2 GHz) processor, 8GB RAM and
+framework rendering pipeline. The framework was adapted                             AMD Radeon HD 8750M graphics cars. Average fps (frames
+with support for sending larger 3D scalar data directly to GPU,                     per second) for ordinary rendering on screen is 26.860 frames
+setting the volumetric ray casting parameters and executing                         per second. Average fps for rendering in emulated VR mode
+the rendering on the data in fragment shader as done in de-                         is 46.992 frames per second.
+ferred rendering approach. The implementation also supports                            We tested application with the same model on another
+different ray casting techniques such as: maximum intensity                         computer: Intel i7 (3.6 GHz), 16GB RAM and NVIDIA
+projection, ISO surface rendering and alpha compositing.                            TITAN Xp graphics card. Average result here was for both
+   All other Med3D functionalities were kept, such as scene
+navigation and other user interaction. The scheme of the indi-                         9 https://github.com/spite/WebVR-Extension
+normal and VR mode was approximately 60 fps. Reason for                            [7] D. Krakow, J. Williams, M. Poehl, D. Rimoin, and L. Platt, “Use of
+this is the browser limitation, which is 60 frames per second.                         three-dimensional ultrasound imaging in the diagnosis of prenatal-onset
+                                                                                       skeletal dysplasias,” Ultrasound in obstetrics & gynecology, vol. 21,
+   Frame rate is higher in VR mode for first system, but it is                         no. 5, pp. 467–472, 2003.
+still to slow for high-quality VR experience. The goal of VR                       [8] P. Tually, C. Stavrianou, and J. Walker, “User acceptance of the web-
+is to target 90 frames per second at all times to ensure good                          based distribution of radiology services in regional and remote centres
+                                                                                       of western australia,” Journal of telemedicine and telecare, vol. 11, no.
+user experience of virtual reality. The hard limit of 60 fps is                        2_suppl, pp. 93–95, 2005.
+the downside of rendering graphics in web browsers.                                [9] T. Kroes, F. H. Post, and C. P. Botha, “Exposure render: An interactive
+                                                                                       photo-realistic volume rendering framework,” PloS one, vol. 7, no. 7, p.
+                                                                                       e38586, 2012.
+            IV. C ONCLUSIONS AND F UTURE W ORK                                    [10] B. Laha and D. A. Bowman, “Identifying the benefits of immersion in
+                                                                                       virtual reality for volume data visualization,” in Immersive visualization
+   We developed a web application that allows visualization                            revisited workshop of the IEEE VR conference, 2012, pp. 1–2.
+                                                                                  [11] G. Riva et al., “Applications of virtual environments in medicine,”
+of mesh data and volumetric data in virtual reality. It’s main                         Methods of information in medicine, vol. 42, no. 5, pp. 524–534, 2003.
+purpose is to provide physicians with the better insight in the                   [12] P. Lavrič, C. Bohak, and M. Marolt, “Collaborative view-aligned annota-
+volumetric data obtained from 3D medical scanning (such as                             tions in web-based 3d medical data visualization,” in MIPRO 2017 : 40th
+                                                                                       Jubilee International Convention, May 22-26, 2017, Opatija, Croatia :
+MRI, CT etc.). The main advantage of our such application                              proceedings, 2017, pp. 276–280.
+is its accessibility. While most of the other applications (men-                  [13] C. Bohak, A. Sodja, M. Marolt, U. Mitrović, and F. Pernuš, “Fast
+tioned in the article) require specific software and hardware                          segmentation, conversion and rendering of volumetric data using gpu,”
+                                                                                       in IWSSIP 2014 : proceedings, 2014, pp. 239–242.
+for displaying the data to users in virtual reality the presented                 [14] C. Bohak, P. Lavrič, and M. Marolt, “Remote interaction in web-based
+application runs in the web browser and does not require                               medical visual application,” in Interakcija človek-računalnik v informa-
+any specific software (apart of the browser and software from                          cijski družbi : zbornik 19. mednarodne multikonference Informacijska
+                                                                                       družba - IS 2016, 11. oktober 2016, [Ljubljana, Slovenija] : zvezek
+your VR headset manufacturer). It also gives users freedom                             E : proceedings of the 19th International Multiconference Information
+of choice, because they can use a headset of their choice or                           Society - IS 2016, 11 October 2016, Ljubljana, Slovenia : volume E,
+even use the application without the VR capabilities. Since                            2016, pp. 5–8.
+                                                                                  [15] P. Butcher and P. D. Ritsos, “Building immersive data visualizations for
+this technology is quite new, there are certain limitations and                        the web,” in Proceedings of International Conference on Cyberworlds
+weaknesses. Applications that run in the web browser usually                           (CW17), 2017.
+cannot be as fast and responsive as native applications. There                    [16] M. Levoy, “Display of surfaces from volume data,” IEEE Comput.
+                                                                                       Graph. Appl., vol. 8, no. 3, pp. 29–37, May 1988. [Online]. Available:
+is also limited support for different web browsers as well as                          http://dx.doi.org/10.1109/38.511
+web browser limit of rendering 60 fps. All browsers do not
+support WebVR application programming interface yet and
+some headsets are limited to certain operating systems. With
+the development of the technology and predicted growth in
+the next years these limitations will gradually vanish.
+   In the future we will try to optimize implementation of
+VR functionality to make it faster and more user friendly.
+We believe that VR will play important role in the future
+of medicine and our improved application can be a good
+example. In addition to optimizing currently supported options
+for rendering there are still many techniques that we could
+implement in the future to make our application better and
+more user friendly.
+
+                              R EFERENCES
+ [1] W. A. Kalender, W. Seissler, E. Klotz, and P. Vock, “Spiral volumetric ct
+     with single-breath-hold technique, continuous transport, and continuous
+     scanner rotation.” Radiology, vol. 176, no. 1, pp. 181–183, 1990.
+ [2] C. R. Crawford and K. F. King, “Computed tomography scanning with
+     simultaneous patient translation,” Medical Physics, vol. 17, no. 6, pp.
+     967–982, 1990.
+ [3] P. Armstrong, “Magnetic resonance in medicine: The basic textbook
+     of the european magnetic resonance forum, pa rinck (ed.). blackwell
+     scientific publications, uk (1993),” 1994.
+ [4] P. Dempsey, “The teardown: Htc vive vr headset,” Engineering &
+     Technology, vol. 11, no. 7-8, pp. 80–81, 2016.
+ [5] P. R. Desai, P. N. Desai, K. D. Ajmera, and K. Mehta, “A review paper
+     on oculus rift-a virtual reality headset,” arXiv preprint arXiv:1408.1173,
+     2014.
+ [6] J. H. Flores-Arredondo and C. Assad-Kottner, “Virtual reality: a look
+     into the past to fuel the future,” The Bulletin of the Royal College of
+     Surgeons of England, vol. 97, no. 10, pp. 424–426, 2015.
+

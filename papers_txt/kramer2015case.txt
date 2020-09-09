@@ -1,0 +1,606 @@
+     A case study on 3D geospatial applications in the Web using state-of-the-art
+                               WebGL frameworks
+                                                                Michel Krämer∗ and Ralf Gutbell†
+                                                    Fraunhofer Institute for Computer Graphics Research IGD
+                                                                Technische Universität Darmstadt
+
+
+
+
+                                         Figure 1: 3D web visualisation of the city of Villingen-Schwenningen, Germany
+
+
+Abstract                                                                                             The Internet seems to be a perfect communication medium to make
+                                                                                                     geospatial information available to a broad audience. However,
+We evaluate three Open-Source WebGL frameworks (X3DOM,                                               geospatial data such as 3D city models, digital terrain models, point
+three.js and Cesium) and investigate their use for geospatial ap-                                    clouds, and aerial images are inherently heterogeneous and often-
+plications in the Web. Over the course of one year we carried out                                    times very large [Krämer and Senner 2015]. In addition, geospatial
+five case studies and developed different software prototypes using                                  applications require special data management and interaction tech-
+these frameworks. We focus on geospatial applications since they                                     niques that make it hard to implement them in the Web.
+require unique features that bring the evaluated WebGL frameworks
+to their limits. Geospatial data is typically heterogeneous and very                                 There is work on standardising web service interfaces delivering
+large. Geospatial applications require special data management and                                   3D content and in particular 3D geospatial data. The candidate 3D
+interaction techniques. We describe the criteria that we defined to                                  Portrayal Service Standard [Open Geospatial Consortium 2015] of
+test the WebGL solutions and present our experience from working                                     the Open Geospatial Consortium (OGC) has just been submitted
+with them. We give a qualitative comparison and finish the paper                                     for public review.1 It is the successor of the draft Web3D Service
+with conclusions and an outlook on future research perspectives.                                     Standard W3DS [Open Geospatial Consortium 2010] and describes
+                                                                                                     operations to retrieve and portray 3D geospatial data in the Web.
+                                                                                                     At the same time, there are de-facto standard software frameworks
+CR Categories: I.3.2 [Computer graphics]: Graphics Systems                                           such as OpenLayers2 and Leaflet3 that provide client-side APIs
+(C.2.1, C.2.4, C.3)—Distributed/network graphics I.3.4 [Computer                                     to visualise 2D geospatial data in the browser. However, similar
+graphics]: Graphics Utilities—Application packages;                                                  solutions for client-side 3D rendering of geospatial data are rare
+                                                                                                     and rather new. The recently released OpenLayers version 3, for
+Keywords: WebGL, HTML5, X3D, Geospatial applications, Visu-                                          example, now uses the Cesium framework4 as its back-end.
+alisation frameworks
+                                                                                                     WebGL is the emerging standard for 3D visualisation in the Web. In
+                                                                                                     recent years the Internet community has created a number of Open-
+1     Introduction                                                                                   Source frameworks that offer high-level application programming
+                                                                                                     interfaces (APIs) on top of WebGL. The frameworks differ in their
+Geospatial applications in the Internet and, in particular, web-based                                range of features, their way to define 3D content and their purpose
+3D visualisations of geospatial data become increasingly important.                                  for different applications.
+They can support tourism and cultural heritage applications [Jung
+et al. 2011], support urban planners in presenting their plans to the                                There is no scientific work yet comparing these frameworks and
+public [Dambruch and Krämer 2014] and aid decision makers in                                        indeed there is no empirical evidence that one framework is superior
+policy modelling [Ruppert et al. 2015].                                                              to another for a specific use case or application. In fact, it seems
+                                                                                                     programmers select their favourite tool based on criteria such as size
+    ∗ e-mail:michel.kraemer@igd.fraunhofer.de                                                        of community, completeness of documentation, number of examples,
+    † e-mail:ralf.gutbell@igd.fraunhofer.de                                                          or even the look of the website. However, one can only argue that a
+Permission to make digital or hard copies of all or part of this work for personal or
+                                                                                                     certain tool is fit for purpose if it has been tested under realistic and
+classroom use is granted without fee provided that copies are not made or distributed for            practical conditions.
+profit or commercial advantage and that copies bear this notice and the full citation on the
+first page. Copyrights for components of this work owned by others than ACM must be
+honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on              1 http://s.fhg.de/2SL  (last visited: 10 March 2015)
+servers or to redistribute to lists, requires prior specific permission and/or a fee.                   2 http://openlayers.org/
+Request permissions from Permissions@acm.org.                                                                                     (last visited: 10 March 2015)
+Web3D '15, June 18 - 21, 2015, HERAKLION, Greece                                                        3 http://leafletjs.com/ (last visited: 10 March 2015)
+Copyright is held by the owner/author(s). Publication rights licensed to ACM.                           4 http://cesiumjs.org/ (last visited: 10 March 2015)
+ACM 978-1-4503-3647-5/15/06…$15.00
+DOI: http://dx.doi.org/10.1145/2775292.2775303
+
+
+
+                                                                                               189
+In this paper we present our work from empirically testing different                  three.js and Cesium specifically since they are rather well-known,
+WebGL frameworks for their use for creating 3D geospatial applica-                    have a very large community, and hence are good representatives for
+tions. Over the course of one year we carried out five case studies and               others falling into one of the following categories:
+developed different software prototypes using three Open-Source
+frameworks: X3DOM v1.6 [Behr et al. 2009], three.js r685 and                          Declarative. Frameworks that support a declarative way of defining
+Cesium v1.7. We specifically focus on geospatial applications due                     a 3D scene such as X3DOM which uses the standardised XML-based
+to their unique requirements that bring the evaluated solutions to                    format X3D as declarative scene graph description.
+their limits.                                                                         Imperative low-level. Tools that offer an API that is low-level with
+The remainder of this paper is structured as follows. We start with de-               almost direct access to WebGL. Popular frameworks in this category
+scribing our methodology and the criteria that we defined to compare                  are three.js or Babylon.js11 .
+the different tools. We then present the case studies and prototypes                  Imperative high-level. Libraries that provide a high-level API that
+that we developed and particularly describe our experiences with the                  is targeted to a specific kind of applications such as Cesium which
+WebGL frameworks. After this we make a qualitative comparison                         offers special functionality for geospatial applications.
+based on the specified criteria. We finally draw conclusions and give
+an outlook on future research perspectives.                                           Our use-case driven approach allowed us to empirically evaluate
+                                                                                      the WebGL frameworks for their use for geospatial applications. In
+2     Context and methodology                                                         addition, we defined a number of criteria (i.e. requirements) which
+                                                                                      are in our experience key for these applications. The following list
+In order to evaluate how WebGL frameworks perform under realistic                     summarizes these criteria.
+conditions we carried out five case studies. Within the last year                     Support for spatial reference systems. We checked if the evalu-
+we developed software prototypes based on practical use cases and                     ated frameworks have support for arbitrary spatial reference systems
+requirements. We present the prototypes and our experience with                       and geospatial coordinates or if they only support local coordinate
+the evaluated frameworks in section 3.                                                systems.
+We focused on Open-Source WebGL frameworks and in particular                          Progressive polygon streaming. 3D geospatial data is typically
+on X3DOM, three.js and Cesium. Except Cesium none of these                            very large and consists of millions of polygons. It can take a long
+frameworks targets geospatial applications specifically. However,                     time until the data can be visualized if it has to be transferred com-
+with this work we want to demonstrate that it is possible to develop                  pletely first. Progressively streamed polygons can be visualised as
+this kind of applications without explicit support for geospatial                     soon as they reach the browser.
+reference systems, etc.
+                                                                                      Terrain streaming. The same is true for terrain data which is typ-
+On the other hand, there are commercial and proprietary solutions                     ically even larger than geospatial geometrical data. There are a
+supporting geospatial applications. The following list gives a brief                  number of terrain streaming algorithms with varying performance
+overview over some of them.                                                           and bandwidth usage.
+    • The ESRI CityEngine web viewer6 targets urban planning                          Massive point cloud streaming. Terrestrial mobile laser scanners
+      applications. It allows rapid prototyping of urban environ-                     and airborne laser scanners create many millions of points within
+      ments and visualisation via WebGL. ESRI is the market leader                    a short time. Due to the high point density the environment can
+      of geospatial software and CityEngine is an extension to the                    be rendered with a precision that is often higher than that of other
+      ESRI ArcGIS software installed in many municipalities. The                      geospatial data such as terrain grids or triangular irregular networks
+      web visualisation provides tools for plan sharing and public                    (TINs). Because of the large amount of data, streaming is essential.
+      participation.
+                                                                                      Support for standardised file formats. The WebGL framework
+    • Originally, Unity7 is a 3D game engine that targets desktop                     should support importing of standardised data exchange formats.
+      PCs but also game consoles. The WorldComposer extension8                        There are a number of geospatial formats such as CityGML, PLY, or
+      allows for creating realistic 3D visualisations of geospatial                   LAS but data can oftentimes be converted to a more visualisation-
+      data. Version 5 of the Unity framework supports WebGL and                       centric format like X3D.
+      allows content created with Unity to be transferred to the Web
+      browser.                                                                        Access to OGC services. The Open Geospatial Consortium (OGC)
+                            9                                                         maintains standards for the provisioning of geospatial data through
+    • Google Earth offers an application programming interface                        web services. It is beneficial if the WebGL framework can access
+      (API) to visualise geospatial data (2D and 3D) in the Google                    these interfaces to import the provided data.
+      Earth browser. As of December 2014 the API has been de-
+      clared deprecated by Google and will cease to work in Decem-                    Means to define interaction. Geospatial applications require spe-
+      ber 2015.                                                                       cial interaction techniques ranging from realistic navigation modes
+                                                                                      (e.g. pedestrian, helicopter) to ways how to edit the scene, move and
+To give a complete list of all proprietary tools would be out of                      rotate geometries, or place new objects in the scene.
+scope of this paper. The same is true for Open-Source frameworks.
+Since WebGL is an emerging technology within recent years a large                     Low-level access to WebGL. We check if the framework offers low-
+number of frameworks have been developed.10 We chose X3DOM,                           level access to the WebGL API or if it hides these details completely.
+                                                                                      Working directly with WebGL can make things more complex for
+    5 http://threejs.org/
+                        (last visited: 10 March 2015)                                 application developers. However, they also gain full control over all
+    6 http://www.esri.com/software/cityengine   (last visited: 11 March 2015)         resources.
+    7 http://unity3d.com/ (last visited: 11 March 2015)
+    8 http://www.terraincomposer.com/ (last visited: 11 March 2015)                   Most of these criteria appear in one or more of the use cases in
+    9 https://www.google.com/earth/ (last visited: 11 March 2015)                     section 3 where we will give additional information on why they are
+   10 The Khronos Group maintains a long list of such frameworks:
+
+http://s.fhg.de/eJw (last visited: 11 March 2015)                                       11 http://www.babylonjs.com/   (last visited: 11 March 2015)
+
+
+
+                                                                                190
+important for geospatial applications. In addition, we use the criteria           The 3D visualisation has been implemented using the Open-Source
+in section 4 to qualitatively compare the evaluated tools.                        framework X3DOM v1.6 [Behr et al. 2009]. This framework makes
+                                                                                  use of the standardised data exchange format X3D to allow devel-
+Note that we do not compare the evaluated WebGL frameworks                        opers to specify a 3D scene in a declarative way. X3D defines a
+based on their technical features but on their ability to meet require-           number of nodes that can be used to create indexed face sets, boxes,
+ments that are of major concern for geospatial applications. The                  spheres, and toruses—just to name a few. In addition, it provides
+criteria listed above represent these requirements.                               nodes for dynamics and interactivity—e.g. input sensors and camera
+                                                                                  position interpolators.
+3     Use cases                                                                   For the development of the urbanAPI web portal X3DOM was of
+                                                                                  major help in the following respects:
+In this section we present five case studies that we carried out in order
+to evaluate WebGL frameworks. We start with a description of a                       • We were able to import our 3D data consisting of buildings
+prototype developed in the urbanAPI project, and then describe web-                    models, digital terrain and other geospatial elements using
+based visualisations for the cities Mainz, Villingen-Schwenningen,                     the standardised X3D format. X3D is widely supported by
+and Wiesbaden. We finally present results from developing an                           many software solutions. We needed to convert our original
+application for visualising large landscapes.                                          3D city model stored in the CityGML format to X3D. We used
+                                                                                       the CityServer3D software12 for this purpose. Since X3DOM
+3.1    urbanAPI                                                                        supports X3D natively, we could then add the converted files
+                                                                                       to our scene without additional effort.
+Within the research project “urbanAPI” we developed an interactive                   • X3D allowed us to describe interaction with the scene in a
+web-based application for public participation in urban planning                       declarative way. Creating scene objects that can be moved by
+processes. Our web portal assists urban planners and decision mak-                     mouse is a matter of adding the right nodes and JavaScript
+ers in presenting ideas, plans and decisions to a broad audience. In                   event handlers.
+addition, it allows citizens and other stakeholders to comment the
+given plans and to provide feedback. Figure 2 shows a screenshot of                  • X3DOM supports shadows out of the box. With other frame-
+the urbanAPI portal.                                                                   works this feature often has to be implemented by the applica-
+                                                                                       tion developer using WebGL shaders.
+                                                                                     • Since we were able to define and control the whole scene
+                                                                                       through X3D we did not work with the low-level WebGL API
+                                                                                       directly. This saved us from having to take care of technical
+                                                                                       details. Development was hence faster.
+                                                                                     • The declarative scene graph helped us to structure our scene
+                                                                                       semantically. We defined individual buildings as X3D groups
+                                                                                       and building parts as sub-groups. In addition, X3D allowed us
+                                                                                       to attach metadata to objects—in our case geospatial attributes
+                                                                                       such as construction year, usage type, function, address, or
+                                                                                       owner.
+                                                                                     • The standardised X3D format is suitable for long-term reten-
+                                                                                       tion of information. Urban plans and feedback gathered from
+                                                                                       the public can be stored over many years and restored later for
+                                                                                       legal purposes.
+
+         Figure 2: Screenshot of the urbanAPI web portal                          The urbanAPI project was running from October 2011 to November
+                                                                                  2014. It was funded from the 7th Framework Programme of the
+                                                                                  European Commission, call identifier FP7-ICT-2011-7, under the
+Our solution consists of a 2D map, a 3D visualisation as well as                  grant agreement no: 288577. Details on the implementation of
+other components necessary for public participation such as a forum,              the web portal can be found in our previous work [Dambruch and
+a feedback panel, and a questionnaire component. The web portal                   Krämer 2014].
+is highly configurable and can be adapted to different use cases. It
+offers a number of tools that can be used to interactively work with
+the 3D scene. Users have the following possibilities:                             3.2   Mainz
+
+    • Navigate through the scene with different modes (helicopter,                The urbanAPI project was meant to support urban planners to present
+      pedestrian, etc.)                                                           their plans to stakeholders, and give the public the means to partic-
+                                                                                  ipate in urban planning processes. While it is usually sufficient to
+    • Select viewpoints to navigate to pre-defined locations                      visualise only a small part of the city for this kind of application we
+                                                                                  also wanted to investigate the use of X3DOM for the visualisation
+    • Annotate the 3D scene by placing markers and comments with
+                                                                                  of very large geospatial data. We converted the 3D city model of
+      the mouse
+                                                                                  Mainz, Germany from CityGML to X3D. The dataset covered an
+    • Upload 3D building models and place them in the scene                       area of about 240 km2 and included 147, 048 buildings. The origi-
+                                                                                  nal CityGML dataset had a total size of 5.4 GB (including terrain,
+    • Enable shadows to judge the impact of new constructions on                  textures, and aerial images). Figure 3 on the following page shows a
+      their surroundings                                                          screenshot of the final web visualisation.
+
+    • Change date and time to make realistic simulations                            12 http://www.cityserver3d.de/en   (last visited: 01 April 2015)
+
+
+
+                                                                            191
+                                                                               With the streaming algorithm we managed to keep the amount of
+                                                                               data loaded and displayed at once at a reasonable level. However,
+                                                                               at the time of writing this paper, the current version of X3DOM
+                                                                               does not have any memory management. This means even though
+                                                                               our algorithm removes tiles from the scene graph when they are
+                                                                               not visible anymore, they will not be removed from the browser’s
+                                                                               memory and the graphics card. This causes the memory to fill up
+                                                                               rather quickly and finally makes the browser crash after a couple of
+                                                                               minutes of browsing through the scene.
+                                                                               Memory management could be implemented since X3DOM is Open-
+                                                                               Source. However, the framework introduces a complex layer be-
+                                                                               tween the application code and the WebGL API which is hard to
+                                                                               change without major impact on the rest of the code base. This
+                                                                               makes implementing this feature a hard task.
+          Figure 3: Screenshot of the Mainz visualisation
+                                                                               In addition to the memory management issue, we experienced the
+                                                                               following major drawbacks:
+
+In order to manage visualisation of this large amount of data we had              • We had to convert our data to Binary Geometry Containers and
+to compress and optimise it in various ways:                                        optimize it. In doing so we had to give up the structure of our
+                                                                                    scene graph. In an optimized scene with merged geometries
+   • We had to reduce the resolution of textures (mostly aerial                     it is not possible anymore to identify individual objects. Also
+     images)                                                                        metadata was removed during optimisation which made it
+                                                                                    impossible to display geospatial attributes.
+   • To further save bandwidth we used Binary Geometry Contain-
+                                                                                  • X3DOM does not support arbitrary geospatial coordinate ref-
+     ers [Behr et al. 2012], a data exchange format supported by
+                                                                                    erence systems, and in particular it does not support geospatial
+     X3DOM
+                                                                                    coordinates at all if you convert your scene to Binary Geome-
+   • To reduce the number of HTTP requests we optimised the                         try Containers. We therefore had to move the whole 3D city
+     scene and merged objects with similar materials.                               model to a local coordinate system.
+                                                                               We managed to work around the problem of missing metadata by
+With these optimisations we were able to reduce the total data size            implementing a small web server that delivers attributes for a certain
+to about 1 GB: 170 MB for the building models plus 262 MB for the              geospatial location. We wrote a JavaScript event handler that listens
+terrain and 655 MB for the textures and aerial images. Still, this was         to mouse clicks, calculates the original geospatial location from
+too much to be loaded and displayed at once in the web browser.                the screen coordinates and queries the web server to display the
+                                                                               attributes.
+X3DOM supports incremental streaming out of the box using the
+Binary Geometry Container format [Limper et al. 2013]. In our                  Geospatial coordinates require a very high precision that exceeds
+experience, it usually works well for 3D models with a very large              the limits of single-precision floating-point numbers (32 bits).13
+number of polygons but not for a very large number of objects (in              A typical workaround is to move all objects to a local coordinate
+our case buildings) each having only a couple of polygons (e.g.                system. This reduces the necessary number of bits. Otherwise the
+four walls and a roof). To mitigate this issue we had to split our             scene cannot be rendered correctly which usually becomes visible
+dataset into small rectangular tiles that we could load into memory            through extensive flickering and coordinates ‘jumping’ around while
+on demand and discard when they were not needed anymore. We                    navigating through the scene.
+implemented a simple streaming algorithm that loads tiles depending
+on the current camera position. When the camera is moved in any                Further information on this use case can be found in slides of our
+direction the algorithm checks if more tiles need to be loaded or if           tutorial presentation at the Web3D conference 2014.14
+those that are now out of sight can be removed from the scene graph.
+Figure 4 depicts the process.                                                  3.3   Villingen-Schwenningen
+
+                                                                               The fact that we had to use Binary Geometry Containers and merge
+                                                                               geometries in order to achieve a good performance in the web
+                                          Old camera position                  browser with X3DOM, eliminated the advantages of the scene
+                                                                               graph model. We were not able anymore to identify individual
+                                          New camera position                  objects (without the workaround mentioned earlier). In fact the
+                                                                               optimised X3D file just consisted of a Scene node and a number of
+                                          Empty (no tile loaded)               BinaryGeometry nodes referencing the binary files containing our
+                                          Tiles to load                        geometries, normals, and texture coordinates. In this case declarative
+                                                                               X3D has almost no benefits anymore compared to an imperative
+                                          Tiles in memory                      API.
+                                          Tiles to discard                     The Open-Source framework three.js provides a JavaScript API with
+                                                                               high-level functions to create and manipulate objects in the 3D scene.
+                                                                               In addition, it contains a number of importers for well-known 3D
+                                                                               data exchange formats such as OBJ, COLLADA, or glTF. three.js
+Figure 4: Our streaming algorithm always keeps 9 tiles in memory.
+When the camera is moved it loads additional ones and discards                   13 This   depends on the spatial reference system but is true for most cases.
+those that are out of sight.                                                     14 http://s.fhg.de/4Rb (last visited: 12 March 2015)
+
+
+
+                                                                         192
+Figure 5: Screenshot of the Villingen-Schwenningen visualisation                Figure 6: Screenshot of the Villingen-Schwenningen visualisation
+(by day)                                                                        (during sunset)
+
+
+does not provide an importer for X3D data, but for VRML which is                development of a district with a redesign of a street and an additional
+an older alternate encoding of X3D. Data can be converted between               connection road to a planned new housing area.
+these two formats.
+                                                                                Due to the size of the point cloud (2.4 × 109 coloured points with
+In order to be able to compare the performance of three.js and                  a total size of 14 GB) we were looking for a rendering framework
+X3DOM we implemented a 3D web visualisation using a data                        that was able to visualise very large coloured points clouds. Data
+set similar to the one of Mainz. The 3D city model of Villingen-                should be streamed in order to avoid that the whole data set had to
+Schwenningen, Germany is stored in the CityGML file format and                  be loaded before it could be displayed. In addition, the framework
+has a total size of about 5.9 GB. It covers an area of 250 km2 and              should support standard 3D geometries and data exchange formats
+includes fully textured buildings models, a terrain model and aerial            such as X3D, COLLADA, or OBJ.
+imagery. We used three.js version r68.
+                                                                                Neither X3DOM nor the Cesium framework that we discuss in
+We ported the simple streaming algorithm described in the previous              section 3.5 supports point cloud rendering. The same is true for
+section from X3DOM to three.js. Since the latter provides almost                three.js. However, there is an Open-Source extension called Potree15
+direct access to WebGL we were able to implement memory man-                    which adds high-performance rendering of huge point clouds to
+agement that frees resources when our algorithm removes tiles from              three.js. Potree includes a tool called PotreeConverter16 that is
+the scene.                                                                      able to split a given point cloud into an octree structure to enable
+                                                                                streaming.
+Figure 5 shows the 3D web visualisation of Villingen-Schwenningen.
+We tested different data exchange formats and finally converted the             Potree supports metric geospatial reference systems and PotreeCon-
+original CityGML data set to COLLADA as the respective three.js                 verter is able to handle files stored in these reference systems. How-
+importer was the most up-to-date and stable one. Also we applied                ever, if data sets from different sources should be combined they
+the same optimisation technique as in the Mainz use case to achieve a           have to have the same spatial reference system.
+good performance. We merged objects, reduced the size of textures,
+and created texture atlases. The final data set was 271 MB large                Since Potree is based on three.js it allows for a combined visuali-
+(168 MB for the building geometries, 58 MB for textures, and 45                 sation of point clouds and standard 3D geometries. The resulting
+MB for the terrain).                                                            application can be adapted to different computer systems because
+                                                                                the user is able to, first of all, control how many points are visualised
+The three.js API allows for low-level access to the 3D renderer. We             at the same time, and secondly, select between computational costly
+used this feature to implement a WebGL shader that simulates real-              and a high-performance rendering styles.
+istic sunlight and skylight based on the Preetham Model [Preetham
+et al. 1999]. The result of this effort can be seen in Figure 6.                Figure 7 on the next page shows the resulting visualisation. The
+                                                                                point cloud adds to the realism since the laser scanner registered
+Three.js does not support geospatial coordinates. Just like in the pre-         even the smallest structures and recorded colour information for
+vious section where we implemented the visualisation with X3DOM,                every point.
+we had to move the whole scene to a local coordinate reference sys-
+tem. In addition, due to the optimisations we applied to the scene              Figures 8 and 9 on the following page show the application in use.
+we were not able to identify individual objects anymore. However,               They give a visual impression of the planned street and its impact
+three.js gave us access to the WebGL API and hence we were able                 on the close surroundings.
+to implement our own memory management. This enabled us to vi-
+                                                                                At the time of implementing this use case in December 2014 we
+sualise this very large dataset without causing web browser crashes.
+                                                                                encountered one problem. Potree was still in beta stage and did not
+                                                                                free memory of not visualised points, so that in combination with
+3.4   Wiesbaden                                                                 the other geospatial data the performance became worse the longer
+                                                                                the application was used. However, since Potree is Open-Source we
+In collaboration with urban planners from the city of Wiesbaden,                were able to implement a simple memory management algorithm.
+Germany we created an application combining an urban city model
+with terrain data and a point cloud obtained through terrestrial mo-              15 http://potree.org/   (last visited: 29 March 2015)
+bile laser scanning. The application combines the current state of                16 https://github.com/potree/PotreeConverter     (last visited: 29 March 2015)
+
+
+
+                                                                          193
+Figure 7: A picture of the point cloud combined with a city model at                   Figure 9: The same scene and camera position as in figure 8 but a
+eye level. The detailed point cloud gives the visualisation a natural                  planning of a road is visualized to show the impact on the surround-
+feel.                                                                                  ing.)
+
+
+                                                                                          • Visualise proprietary high-resolution terrain data (1m per raster
+                                                                                            point) and imagery (20cm per pixel).
+                                                                                          • Load and visualise 3D geometries such as buildings.
+                                                                                          • Visualise spatial information stored in ESRI Shapefiles (or
+                                                                                            similar formats) on the terrain.
+                                                                                       High resolution terrain data with an accuracy of more than 1 meter
+                                                                                       per raster point is rather common in geospatial applications. How-
+                                                                                       ever, this kind of data can become very large and visualising it in the
+                                                                                       web is a challenge [Ruzinoor et al. 2012]. Our goal was to render the
+                                                                                       terrain as accurately as possible but keep the performance high. This
+                                                                                       means that we wanted to achieve a high number of frames per sec-
+                                                                                       ond but at the same time keep the loading time low by progressively
+Figure 8: A visualization scene which combines a city model with a
+                                                                                       streaming large terrain data.
+terrestrial laser scan.
+                                                                                       Cesium supports two kinds of terrain formats out of the box: the
+                                                                                       so-called standard height map18 and the quantized-mesh format19 .
+We contributed our code to the project.17 It is planned for inclusion                  The benefit of the latter is that tiles are optimised so that flat areas,
+in the next release of the project v1.2.                                               for example, include less information than rough ones.
+Apart from this, we can sum up that we were able to quickly im-                        As mentioned above we focus on Open-Source software in this
+plement the visualisation of a city model in combination with a                        paper. However, at the time of writing, the commercial software
+point cloud in three.js and Potree. The large community of three.js                    STK Terrain Server20 is the only product supporting the quantized
+has provided many examples in the Internet demonstrating how to                        mesh format. The Open-Source tool Cesium Terrain Builder21 and
+handle different data sources and create complex applications.                         the related Cesium Terrain Server22 do only support the standard
+                                                                                       height map format. In the following we focus on the Open-Source
+3.5   Visualisation of landscapes                                                      tool but also discuss the proprietary STK Terrain Server. Please note
+                                                                                       that we do not include the STK Terrain Server in our final discussion
+Another typical geospatial use case is the visualisation of large areas                and conclusion (see sections 4 and 5) because it is a commercial
+combined with additional information ranging from simple land use                      solution.
+data up to complex simulation results of noise emission for example.
+In the past we implemented these kinds of application as desktop                       Cesium Terrain Builder/Server.         In order to visualise proprietary
+clients but now WebGL makes it possible to do the same in the                          data, the data has to be processed, so it can be handled by the Cesium
+browser. In order to evaluate how it performs we implemented a                         client. Two related Open-Source projects exist for this purpose.
+prototype that encompasses streamed terrain, 3D geometries such                        Cesium Terrain Builder processes data so that it is divided into an
+as buildings and surfaces for forests, as well as abstract information                 octree and stores it in Cesium’s standard height map format. The
+visualised as lines, points or colour-coded areas.                                     Cesium Terrain Server can be used to host the data. The tools do not
+The Open-Source tool Cesium has some features that differentiates                      need more than two commands to prepare or serve the data and are
+it from other WebGL frameworks. It supports geospatial coordinates                     well documented on the project website. Figure 10 on the next page
+out of the box and allows for streaming of terrain and imagery. In                     shows how a high resolution surface model looks in Cesium with the
+addition it enables users to switch between different data sources on                    18 http://s.fhg.de/aLq (last visited: 30 March 2015)
+the fly and change the visualisation dynamically.                                        19 http://s.fhg.de/5U3  (last visited: 30 March 2015)
+                                                                                         20 http://s.fhg.de/tHB (last visited: 31 March 2015)
+Our prototype had to meet the following requirements:
+                                                                                         21 http://s.fhg.de/CPD (31 March 2015)
+  17 https://github.com/potree/potree/pull/132   (last visited: 16 March 2015)           22 http://s.fhg.de/c39 (31 March 2015)
+
+
+
+
+                                                                                 194
+standard height map format. It can be seen that the fine structure of          ing an image pyramid with the Open-Source toolkit GDAL23 . We
+trees, woods in general and buildings are easily distinguishable. The          set up the Open-Source server Geoserver24 to host the data. To
+fine structures close to camera are detailed, but also in the distance         have the best performance between the Geoserver and the Cesium
+enough detail is streamed so the viewer gets a good idea of the                client, the caching option in Geoserver should be turned on and the
+structure of the landscape on the horizon. Cesium and the Cesium               format requested by the client should be the same as one in which
+Terrain Server work together flawlessly.                                       data is stored on the server. Otherwise the performance will drop
+                                                                               significantly due to the necessary conversion step.
+                                                                               In addition to the terrain and imagery we also wanted to visualise 3D
+                                                                               geometries such as building or other objects that add to the landscape.
+                                                                               Cesium supports glTF25 , a transmission format for 3D data currently
+                                                                               available as a draft standard. We integrated a glTF exporter in our
+                                                                               product CityServer3D. The use of glTF data in Cesium worked
+                                                                               flawlessly. It is well documented and explained on the Cesium
+                                                                               website including various examples.
+                                                                               To visualise additional spatial data we used the built-in support for
+                                                                               GeoJSON26 in Cesium. GeoJSON can be used to describe geospatial
+                                                                               features such as points, polygons, or lines. The coordinates of the
+                                                                               files have to be encoded in the WGS 84 reference system. The direct
+                                                                               support for geospatial coordinates makes the conversion to a local
+                                                                               coordinate reference system unnecessary and is a huge benefit over
+                                                                               solutions described in previous sections. One minor flaw at the
+Figure 10: Visualisation based on Cesium with terrain processed                time of writing is that the current release of Cesium 1.7 does not
+by Cesium Terrain Builder. The raw data is a surface model with                allow for aligning polygons or other entities to the terrain height.
+a resolution of 1m. The structure of trees and buildings are easily            Without extruding the entities the shapes are only visible when no
+distinguishable and give a good impression of the landscape.                   terrain height data is used and the ground is represented as a simple
+                                                                               ellipsoid. To overcome this, the elements can be placed at a certain
+                                                                               height by manually retrieving the height information. Figure 12
+                                                                               shows a extruded polygon on top of real terrain data.
+STK Terrain Server       The quantized mesh format is supposed to
+save transfer volume by optimising single tiles. The STK Terrain
+Server is a commercial product that builds upon Windows IIS (In-
+ternet Information Services). The application can be accessed via
+a web interface and allows users to manage the source data files
+as well as the processed and hosted data. Several data sources can
+be combined via a priority system to one hosted data set. The pro-
+cessing is fast and the data is immediately accessible via a standard
+Cesium visualisation. Besides the optimised data stream one benefit
+over the Cesium Terrain Builder is the support for light maps on
+the quantized mesh. Cesium contains a time slider that allows users
+to choose a time of day. The terrain will be rendered accordingly.
+Figure 11 shows the lit quantized mesh during sunset.
+
+
+
+                                                                               Figure 12: Polygon shapes drawn onto real terrain data with height
+                                                                               information. The polygons have to be extruded because no support
+                                                                               for aligning polygons to the terrain exists yet. The polygons are
+                                                                               loaded via the built in GeoJSON loader of Cesium.
+
+                                                                               Cesium is a WebGL rendering framework specifically targeted for
+                                                                               creating geospatial applications. It supports streaming of terrain and
+                                                                               imagery data, geospatial coordinates and formats like GeoJSON and
+                                                                               KML. It can access various geospatial data sources containing 3D
+                                                                               models and shape information. The online examples on the Cesium
+                                                                               website cover many common use cases and make it easy to do the
+                                                                               first steps. One drawback we encountered was the missing feature
+                                                                               of draping shapes onto terrain with height information but other
+Figure 11: Lit quantized mesh with sun setting. The fine structures            visualisation frameworks do not have this feature either. At the time
+of the terrain surface data set are distinguishable and the support of         of writing this paper, there is an open pull request on the GitHub
+lighting gives the visualisation an extra touch of realism.                    page of the Cesium project contributing this feature.27
+                                                                                 23 http://www.gdal.org/   (last visited: 01 April 2015)
+In order to create a complete landscape we combined the terrain data             24 http://geoserver.org/ (last visited: 01 April 2015)
+with geo-referenced imagery such as orthophotos and topographic                  25 https://www.khronos.org/gltf (last visited: 01 April 2015)
+
+maps. Cesium can visualize imagery served by the standardised                    26 http://geojson.org/ (last visited: 01 April 2015)
+
+OGC Web Map Service (WMS). We prepared the imagery by creat-                     27 http://s.fhg.de/xNW (last visited: 12 May 2015)
+
+
+
+
+                                                                         195
+4      Qualitative comparison                                                         to implement advanced interaction with the scene (e.g. picking,
+                                                                                      moving of objects, rotating).
+In this section we compare the evaluated WebGL frameworks quali-
+                                                                                      Amongst the evaluated frameworks three.js is the only one which
+tatively according to the criteria defined in section 2. Table 1 sum-
+                                                                                      acts as a thin layer on top of WebGL and therefore allows for direct
+marises our findings.
+                                                                                      access to WebGL functionality. This may be complex for the applica-
+                                                                                      tion developer, but also helps implement sophisticated features—e.g.
+Table 1: Evaluation of three Open-Source WebGL frameworks with                        the memory management functionality that we developed for the
+respect to their use for geospatial applications                                      point cloud prototype in section 3.4.
+                                           X3DOM         three.js      Cesium
+ Support for spatial reference
+                                                                                      5   Conclusions
+                                                   a               b
+ systems                                     (X)             (X)         X            During the last year we created different geospatial applications
+ Progressive polygon                                                                  and tested three Open-Source frameworks: X3DOM, three.js and
+ streaming                                    Xc                                      Cesium. We conducted five case studies that were specifically se-
+ Terrain streaming                            Xd                        Xe            lected to show advantages and disadvantages of each framework. In
+ Massive point cloud                                                                  addition, we defined qualitative comparison criteria containing typi-
+ streaming                                                   (X)b                     cal geospatial requirements. We evaluated the WebGL frameworks
+ Support for standardised file                                                        according to these criteria.
+ formats                                       X              X          X
+ Access to OGC services                                                  X            Cesium aims directly at geospatial applications. Its development is
+ Means to define interaction                   X              X          X            highly driven by the requirements from the geospatial community.
+                                                                                      The current release 1.7 includes basic support for KML, the main file
+ Low-level access to WebGL                                    X
+                                                                                      format of Google Earth. Full support is planned for the future. This
+    a Limited
+            support in X3D                                                            will make Cesium a valid replacement for the deprecated Google
+    b Supported
+              through the Potree extension                                            Earth API. Compared to other frameworks Cesium is unique as it
+  c Binary Geometry Containers, PopGeometry [Limper et al. 2013], and                 can stream terrain data and imagery. It is also the only Open-Source
+SRC [Limper et al. 2014]                                                              framework with direct support for geospatial coordinates. The many
+  d BHVRefiner node, undocumented                                                     examples on the Cesium website make it easy for developers to learn
+  e Quantized meshes                                                                  the framework and to focus on the implementation of application-
+                                                                                      specific features.
+Since Cesium specifically targets geospatial applications it has the                  Three.js on the other hand has no geo-specific support, but its large
+best tooling support for spatial reference systems, geospatial coordi-                community and the number of available extensions make it a valid
+nates and data. For visualisation data has to be converted to WGS                     solution for the creation of geospatial applications. Since there is
+84. Three.js has no support but can be extended by the Potree library                 no built-in streaming capability for terrain and imagery it can be
+which handles arbitrary geospatial data sets. X3DOM has support                       hard to visualise huge areas in high resolution. However, three.js
+for the geo-related nodes specified in the X3D standard. However,                     offers direct access to WebGL which makes it very flexible and
+X3D defines only a very limited set of spatial reference systems.                     useful in a wide range of applications. The direct access allows
+                                                                                      developers to implement sophisticated features that are not possible
+Streaming of very large data is essential for geospatial applications.                in other frameworks. For example, we were able to develop our own
+X3DOM supports progressive polygon streaming, but in our experi-                      streaming algorithm and memory management rather easily.
+ence it does not meet the requirements of the demonstrated use cases
+(see our discussion in section 3.2). X3DOM has limited support for                    X3DOM uses a declarative scene graph. It is based on the standard-
+terrain streaming using the undocumented BHVRefiner node.28 Since                     ised X3D file format and therefore offers a lot of functionality out
+the framework has no memory management the streaming does not                         of the box. The main advantage of X3DOM is that developers do
+have much benefits for very large data sets that do not fit into mem-                 not have to learn the low-level WebGL API but can describe the 3D
+ory. Cesium has the best terrain streaming support. Three.js is the                   scene on a very high level. Complex geometries or features such
+only framework that supports streaming of massive point clouds, but                   as animations or touch support can oftentimes be realised with just
+only in combination with the Potree extension.                                        one line of X3D code. In addition X3DOM is suitable for applica-
+                                                                                      tions that need long-term storage. X3D is an ISO standard which is
+All frameworks support standardised file formats. We had no prob-                     expected to be supported by many applications for a long time.
+lem importing our data sets directly or converting them to a sup-
+ported format. X3DOM uses an exchange format based on a mature                        To summarise our findings we can state that each framework follows
+ISO standard. This allows for long-term storing of 3D data to create                  a different approach and has different goals and target groups. There
+legal certainty if necessary.                                                         is no solution covering all aspects and all requirements. Each tool
+                                                                                      has advantages and disadvantages and the selection of the right
+Cesium is able to access OGC services, in particular the WMS (Web                     framework highly depends on the use case.
+Map Service). This enables rapid prototyping because external data
+sources can easily be integrated without further data preparation
+efforts.                                                                              6   Outlook
+All frameworks have means to define interaction with the scene and                    The implementation of the use cases from section 3 involved manual
+to implement navigation modes. If the framework did not already                       interaction. With the lessons learned we are currently working on
+offer a certain navigation mode such as a pedestrian mode or a                        automating the processes. We are integrating an exporter in our
+helicopter mode, it was possible for us to implement them ourselves.                  product CityServer3D creating web visualisations with just one
+Also, all frameworks offer APIs that are powerful and mature enough                   click. Because the datasets are often heterogeneous we make use
+                                                                                      of multiple test scenes such as open data sets from Rotterdam and
+    28 http://s.fhg.de/bXg   (last visited: 21 March 2015)                            Berlin but also proprietary data from cities like Fürth and Leipzig.
+
+
+                                                                                196
+Another future project is to integrate time lines and context aware             P REETHAM , A. J., S HIRLEY, P., AND S MITS , B. 1999. A prac-
+operations to target specific applications such as the visualisation of            tical analytic model for daylight. In In Proceedings of 26th
+the historic development of a city or the planning of infrastructure               International Conference on Computer Graphics and Interactive
+objects like power lines with all its related restrictions. In future              Techniques SIGGRAPH 1999, 91–100.
+work we will hence focus more on interaction with the scene instead
+of pure visualisation.                                                          RUPPERT, T., DAMBRUCH , J., K R ÄMER , M., BALKE , T., G A -
+                                                                                  VANELLI , M., B RAGAGLIA , S., C HESANI , F., M ILANO , M.,
+                                                                                  AND KOHLHAMMER , J. 2015. Visual decision support for policy
+Acknowledgements                                                                  making – advancing policy analysis with visualization. In Policy
+                                                                                  practice and digital science: Integrating complex systems, social
+We would like to thank Jens Dambruch for his valuable input to the                simulation and public administration in policy research, C. G.
+section on the urbanAPI project. We would also like to thank AGI                  Reddick, Ed. Springer.
+for giving us the opportunity to test their STK Terrain Server for this
+                                                                                RUZINOOR , C. M., S HARIFF , A. R. M., P RADHAN , B., A HMAD ,
+paper and for their review and corrections. Finally, we would like to
+                                                                                  M. R., AND R AHIM , M. S. M. 2012. A review on 3D terrain
+thank Markus Schütz from the Potree project for his feedback.
+                                                                                  visualization of GIS data: techniques and software. Geo-spatial
+                                                                                  Information Science 15, 2, 105–115.
+References
+B EHR , J., E SCHLER , P., J UNG , Y., AND Z ÖLLNER , M. 2009.
+   X3DOM: a DOM-based HTML5/X3D integration model. In
+   Proceedings of the 14th International Conference on 3D Web
+   Technology.
+B EHR , J., J UNG , Y., F RANKE , T., AND S TURM , T. 2012. Using
+   images and explicit binary container for efficient and incremental
+   delivery of declarative 3D scenes on the web. In Proceedings
+  Web3D 2012, ACM Press, New York, ACM SIGGRAPH and
+   European Association for Computer Graphics (Eurographics) and
+   Web3D Consortium, 17–25.
+DAMBRUCH , J., AND K R ÄMER , M. 2014. Leveraging public
+  participation in urban planning with 3D web technology. In
+ Proceedings Web3D 2014, ACM, New York, ACM SIGGRAPH
+  and European Association for Computer Graphics (Eurographics)
+  and Web3D Consortium, 117–124.
+I ZRAELEVITZ , D. 2003. A Fast Algorithm for Approximate View-
+   shed Computation. Photogrammetric Engineering & Remote
+   Sensing 69, 7, 767–774.
+J UNG , Y., B EHR , J., AND G RAF, H. 2011. X3DOM as carrier of
+   the virtual heritage. In Proceedings of the 4th ISPRS International
+   Workshop 3D-ARCH 2011, The International Archives of the Pho-
+   togrammetry, Remote Sensing and Spatial Information Sciences;
+   XXXVIII-5/W16, International Society for Photogrammetry and
+   Remote Sensing (ISPRS), 8.
+K R ÄMER , M., AND S ENNER , I. 2015. A modular software architec-
+   ture for processing of big geospatial data in the cloud. Computers
+   & Graphics. in print.
+L IMPER , M., J UNG , Y., B EHR , J., S TURM , T., F RANKE , T.,
+   S CHWENK , K., AND K UIJPER , A. 2013. Fast, progressive
+   loading of binary-encoded declarative 3D web content. IEEE
+   Computer Graphics and Applications 33, 5, 26–36.
+L IMPER , M., T H ÖNER , M., B EHR , J., AND F ELLNER , D. W.
+   2014. SRC - a streamable format for generalized web-based
+   3D data transmission. In Proceedings Web3D 2014, ACM, New
+   York, ACM SIGGRAPH and European Association for Computer
+   Graphics (Eurographics) and Web3D Consortium, 35–43.
+O PEN G EOSPATIAL C ONSORTIUM. 2010. Web 3D Service Interface
+   Standard 0.4.0 (OGC 09-104r1). Draft standard. A. Schilling,
+   T. H. Kolbe, A. Zipf, and S. Neubauer, Eds.
+O PEN G EOSPATIAL C ONSORTIUM. 2015. 3D Portrayal Implemen-
+   tation Standard (OGC 15-001). Candidate standard. V. Coors,
+   B. Hagedorn, and S. Thum, Eds.
+
+
+                                                                          197
+

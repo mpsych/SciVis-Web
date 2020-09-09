@@ -1,0 +1,535 @@
+                         Programming Driven 3D Modeling on the Web
+                                                                              Andy Yeh
+                                                                 Queensland University of Technology
+                                                                              Australia
+                                                                          a.yeh@qut.edu.au
+
+
+
+
+                                    Figure 1: 3D fern leaf and X3D code generated online from Logo program.
+
+ABSTRACT                                                                                 DOI: http://dx.doi.org/10.1145/3055624.3075953
+
+This paper introduces an online 3D modeling environment                                  1 INTRODUCTION
+named VRMath2 and discusses its applications. VRMath2 utilises
+a Logo programming language with a set of extended 3D                                    Beginning in 2001, the author was interested in human spatial
+primitives, to create 3D contents (in HTML5 format) in most                              abilities, and started designing a desktop VR application named
+                                                                                                   1
+modern web browsers. The 3D contents are rendered by X3DOM                               VRMath to investigate how different types of spatial ability can
+and VRMath2 can then export and publish the 3D contents in                               be developed as a result of using the designed VR application.
+X3D format onto web pages. VRMath2 is an educational                                     Spatial ability is often linked with higher academic achievement
+application and was originally designed for learning about 3D                            and future success in mathematics, science and engineering
+geometry. After the development in the last four years, its                              related careers (Ivie and Embretson 2010; Pittalis and Christou
+applications have now included science, technology, engineering                          2010), and therefore it is a key area in educational research.
+and mathematics (STEM) education, largely due to its nature of                           Many researchers have tried to classify spatial abilities, and in
+programming driven 3D modeling.                                                          general, three types of spatial abilities have been recognized:
+                                                                                         spatial visualization, spatial orientation and spatial
+CCS CONCEPTS                                                                             relations (Lohman 1988). The computer 3D graphics (i.e.
+                                                                                         desktop VR in VRMath2) has the potential to develop all three
+• Social and professional topics → Computational thinking;
+                                                                                         types of spatial ability. Further from educational point of view,
+Human-centered computing → Interaction paradigms; •
+                                                                                         language is always at the core of learning. In searching for a
+Applied computing → Education;
+                                                                                         language that is natural in computer 3D environment and
+                                                                                         friendly to learners, the Logo turtle graphics was chosen. The
+KEYWORDS                                                                                 Logo turtle graphics has a set of egocentric movements such as
+Logo programming language, X3D, HTML5, STEM education                                    forward, back, left and right, as well as a set of universal
+ACM Reference format:                                                                    movements using coordinate system, such as setx and sety. These
+                                                                                         language or commands are suitable for developing spatial ability,
+Andy Yeh. 2017. Programming Driven 3D Modeling on the Web. In
+Proceedings of Web3D ‘17, Brisbane, QLD, Australia, June 2017, 9 pages.                  in accordance with its developmental sequence (Darken 1996).
+______________________________________________________                                   However, traditional Logo turtle graphics operates on two-
+Permission to make digital or hard copies of all or part of this work for personal or    dimensional graphics. In order to better investigate and develop
+classroom use is granted without fee provided that copies are not made or                3D spatial ability, a set of extended 3D primitives is added into
+distributed for profit or commercial advantage and that copies bear this notice and
+the full citation on the first page. Copyrights for components of this work owned        the VRMath2’s Logo programming language. These will be
+by others than ACM must be honored. Abstracting with credit is permitted. To             further explained in later sections.
+copy otherwise, or republish, to post on servers or to redistribute to lists, requires
+prior specific permission and/or a fee. Request permissions from
+                                                                                             In addition to the above educational points of view,
+Permissions@acm.org.                                                                     affordability, accessibility and sustainability are among the main
+Web3D '17, June 05-07, 2017, Brisbane, QLD, Australia
+© 2017 ACM. ISBN 978-1-4503-4955-0/17/06…$15.00
+DOI: http://dx.doi.org/10.1145/3055624.3075953                                           1
+                                                                                             VRMath was renamed as VRMath2 in 2009. See https://vrmath2.net/about.
+Web3D ’17, June 2017, Brisbane, QLD, Australia                                                                                                          A. Yeh
+
+considerations for designing this 3D modeling environment. As a                            As a functional programming language, 2D regular polygons
+result, the Web has been chosen as the platform, and                                    such as a heptagon can be easily created with the Logo program
+subsequently, advantages and limitations applied to this online                         below.
+modeling environment. VRMath2 is free and easy to access
+                                                                                                 TO polygon :side :length
+online. It incorporates current HTML5 and X3D standards,
+                                                                                                     repeat :side [ forward :length right 360/:side ]
+which are expected to sustain into the future years. Both the
+                              2                               3                                  END
+Logo interpreter (i.e., jslogo ) and the X3D rendered by X3DOM
+                                                                                                 polygon 7 100
+are implemented in JavaScript. This has the advantage of easy
+access online in web browsers. However, the current state of                               Using the egocentric movement, the creation of geometry
+JavaScript has limitations such as multi-threading and                                  does not need to concern about the coordinates. The coordinates
+communication with computer hardware. Nevertheless, the                                 are calculated by the movements and can be collected in Logo
+current implementation of the Logo interpreter is powerful                              program if desired. It is considered that the turtle geometry is
+enough to offer a unique alternative for 3D content creation                            highly relevant to the development of spatial abilities.
+online in modern web browsers.                                                             Logo programming language was created in 1967 and over
+   From educational stance, coding or programming has great                             the last five decades, there have been many implementations and
+value in the process of learning and problem solving. However,                          dialects of this programming language. However, the majority of
+using programming to create 3D contents is not necessarily the                          these implementations are using 2D graphics. Of the few 3D
+                                                                                                                        4
+best way for all kind of 3D contents and purposes. The 3D                               implementations, Elica Logo has a more natural 3D turtle
+contents could include static 3D solids to dynamic 3D                                   graphics. However, unlike VR 3D, its 3D graphics is non-
+simulations and large-scale virtual worlds. This paper will                             interactive. For example, In Elica Logo, users cannot change
+highlight both the strength and weakness about the                                      viewpoint by direct mouse dragging but can program a camera
+programming driven 3D modeling in the VRMath2 application.                              turtle to change and/or animate the 3D viewpoint. Most
+                                                                                        noticeably, it has extended the traditional Logo to include a set
+2 RELATED WORK                                                                          of 3D movements and rotations (see Table 1 for example).
+The idea of using programming to generate 3D graphical
+contents is not new. In fact, many mathematical (e.g., MATLAB)                                    Table 1: 3D Movement Commands in Elica Logo
+and engineering (e.g., various CAD/CAM) software offer their
+own scripting and/or specific programming language to
+                                                                                                 Command                   Explanation of movement
+construct 3D objects. Generally, programming interface
+complements interactive interface (i.e. direct manipulation of 3D                                forward (fd)              Moves turtle forward
+objects), and can offer precise calculation for mathematical                                     backward (bk)             Moves turtle backward
+visualization and scientific simulation. These works are all                                     rise                      Moves turtle up
+                                                                                                 lower                     Moves turtle down
+inspiring to the development of VRMath2. However, since the
+                                                                                                 stepleft                  Moves turtle to the left
+purpose of VRMath2 is to facilitate learning (including
+                                                                                                 stepright                 Moves turtle to the right
+developing spatial abilities) and enable accessible 3D contents on
+                                                                                                 left (lt)                 Turns turtle to the left
+the Web, the focus here is on reviewing 3D environments that                                     right (rt)                Turns turtle to the right
+are either using turtle graphics and/or using X3D on the Web.                                    uppitch (up)              Turns turtle up
+                                                                                                 downpitch (dn)            Turns turtle down
+2.1 Turtle Graphics                                                                              leftroll (lr)             Rolls turtle to the left
+One of the main reasons for choosing turtle graphics or turtle                                   rightroll (rr)            Rolls turtle to the right
+geometry is the aforementioned egocentric movement such as
+forward, back, left and right, which are integrated as part of the                         These 3D movements integrated in Logo programming cover
+Logo programming language. Egocentric movement is an                                    a wide range of spatial awareness and thus have great potential
+intuitive way of moving around in space as it constantly refers                         for developing spatial abilities. This Elica Logo 3D environment,
+to the mover’s own direction and/or location. The ‘turtle’ in                           however, is limited in terms of 3D interactivity (e.g., no free
+turtle graphics is the mover, which serves as a reference point                         navigation in 3D virtual space) and system dependency (i.e., a
+for geometric location and direction. Therefore, a 100 by 100                           standalone application for Microsoft Windows system).
+pixel square can be created with the following program.
+                                                                                        2.2 X3D on the Web
+      repeat 4 [ forward 100 right 90 ]
+                                                                                        X3D and HTML5 are both current international standards of
+                                                                                        Web technology, and they are looking to sustain into future
+2
+  The Logo programming language adopted and extended in VRMath2 is jslogo               years of online applications and services. There are a few online
+(Logo in JavaScript), which is available at https://github.com/inexorabletash/jslogo.
+3
+  X3DOM is a JavaScript library, which integrates X3D into HTML5. It is available
+                                                                                        4
+at https://www.x3dom.org/.                                                                  Elica Logo: http://elica.net
+Programming Driven 3D Modeling on the Web                                               Web3D ’17, June 2017, Brisbane, QLD, Australia
+
+3D applications, in which 3D models can be built with direct        to introduce the programmatic approach in VRMath2
+interaction (e.g., direct dragging to manipulate 3D models)         (specifically to its 3D modeling environment called VRMath2
+and/or via programming or scripting. Direct interaction is a        Editor at https://vrmath2.net/VRM2, see Fig. 3.), and discuss its
+friendly way for 3D modeling. However, in order to include the      applications. In this section, the focus is on two of its key
+educational value of programming, the author is particularly        components: Logo programming and VR 3D space.
+                                           5
+interested in the later, and OpenJSCAD is such an online
+application that uses the programmer’s approach for 3D model        3.1 Logo programming in VRMath2
+development.                                                        The Logo programming language in VRMath2 is derived from
+    OpenJSCAD is an object-oriented programming language that       jslogo, which is a JavaScript implementation of Berkeley Logo .
+                                                                                                                                    6
+
+has JavaScript-like syntax and is able to use JavaScript            The core components of this Logo programming such as data
+programming concepts and libraries. This is powerful because        type, syntax and control structure etc. are preserved, but its 2D
+programmers can then design some HTML form (e.g., menu,             turtle graphics has been extended to 3D graphics in VRMath2.
+button and checkbox etc.) for some interactive event control or     As a result, many Logo primitives (commands) are modified
+dynamic generation of 3D models (see Fig 2.).                       and/or added/removed in VRMath2’s Logo language.
+
+
+
+
+Figure 2: OpenJSCAD with example program, 3D model
+and interactive web widgets.
+
+   OpenJSCAD is tuned to develop 3D models for 3D printing. It      Figure 3: VRMath2 Editor.
+supports a range of file format such as STL for the purpose of 3D
+printing. It also exports its 3D models to X3D format using the        Moving from 2D finite space (i.e., a rectangular area on
+IndexedFaceSet element or node of X3D. This is enough to            screen) to 3D space (i.e., virtually infinite VR 3D space), there are
+record the 3D solids but the majority of the X3D features (e.g.,    some key conceptual differences to reflect on the Logo language.
+animation, interaction) are not utilised.                           Firstly, there is no need for the window management commands
+   This programmer’s approach in OpenJSCAD is inspiring and         such as wrap (the turtle will continue on the other side if it
+is powerful to achieve its aim of developing precise 3D models      moves off the edge of the screen), and fence (the turtle will stop
+for 3D printing. However, like most professional applications,      at the edge if it tries to move past the edge of the screen).
+the 3D geometry is mainly operating on formal 3D coordinate         Secondly, the distance to forward or back will change from the
+system. It would suit for users with the same purpose of            number of pixels to meters in 3D virtual space. Lastly and the
+creating CAD solids for 3D printing, but not necessary for          most important change is the inclusion of potential 3D
+developing spatial ability as users would need to have developed    movements and their naming.
+some higher level of spatial sense and programming skills              3D movements can be classified into three frames of reference
+already to use this programming environment for 3D modeling.        (FoR): egocentric, fixed and universal (Darken 1996).
+                                                                    Egocentric FoR based movements are moving according to the
+3 VRMATH2 ENVIRONMENT                                               mover’s own direction and location. Fixed FoR based movements
+VRMath2 started its development in 2001, and over the years, it     are moving towards landmark or cardinal/compass points.
+has evolved to include social aspects of learning. The “2” in       Universal FoR based movements are moving according to a
+VRMath2 stands for the Web 2.0 or the rewrite Web, so learners      globally defined coordinate system. Table 2 shows some key
+are able to design, create and share (discuss) online their         Logo commands associated with these three FoR in VRMath2.
+creations of 3D virtual world. The main purpose of this paper is
+                                                                    6
+                                                                      Berkeley Logo or UCB Logo was developed by Brian Harvey. The latest version
+5
+    OpenJSCAD: http://openjscad.org                                 6.0 is available at https://people.eecs.berkeley.edu/~bh/.
+Web3D ’17, June 2017, Brisbane, QLD, Australia                                                                                      A. Yeh
+
+   Table 2: 3D Movement Commands in VRMath2 Logo                  jumpeast (je) for east command and so forth. The purpose of
+                                                                  jump series of commands is to temporarily disable turtle tracks
+    Command           Explanation                     Change      during the creation of PointSet, IndexedLineSet or
+                                                                  IndexedFaceSet object. For example, Fig. 4 shows two faces in
+                  Egocentric FoR
+                                                                  one IndexedFaceSet node created by a Logo program in
+    forward (fd)         Moves turtle forward         Location    VRMath2.
+    back (bk)            Moves turtle backward        Location       Because X3D is used to represent the 3D objects/worlds, the
+    left (lt)            Turns turtle to its left     Direction
+                                                                  Logo language in VRMath2 thus includes a set of 2D and 3D
+    right (rt)           Turns turtle to its right    Direction
+                                                                  primitive objects as defined in X3D. These include geometric
+    rollup (ru)          Pitch turtle head up         Direction
+                                                                  objects (e.g., arc, pie, circle, box, cylinder, sphere, cone, torus, dish,
+    rolldown (rd) Pitch turtle head down              Direction
+    tiltleft (tl)        Tilt left on forward axis    Direction   elevationgrid, extrusion etc.), lighting objects (e.g., spotlight,
+    tiltright (tr)       Tilt right on forward axis   Direction   directionlight, pointlight), and objects for animation (e.g.,
+                  Fixed FoR                                       timesensor, interpolators and route). Every geometry object when
+                                                                  created is enclosed within a Transform node. Another set of
+    up                   Slides turtle up             Location
+    down (dn)            Slides turtle down           Location    scaling commands (e.g., setscale x y z) can provide scale
+    east                 Slides turtle east           Location    information for the Transform node/object, while its translation
+    west                 Slides turtle west           Location    and rotation fields can be derived from the turtle’s location and
+    north                Slides turtle north          Location    direction. With X3D, the 3D turtle graphics in VRMath2 records
+    south                Slides turtle south          Location    individual object and are able to manipulate objects
+                  Universal FoR                                   programmatically through document object model (DOM) in
+    setxyz               Moves turtle to (x,y,z)      Location    HTML5. Examples can be seen in later section about applications
+                                                                  of VRMath2.
+Using these 3D movement commands, the programmer can
+move the turtle to create points (using PointSet node in X3D),    3.2 VR 3D Space
+lines (IndexedLineSet), and faces (IndexedFaceSet) in 3D space.   The virtual reality 3D space in VRMath2 is achieved by the
+The traditional Logo’s color and fill commands have become a      X3DOM library, which renders the X3D (in HTML5 format) as
+series of color (Color), material (Material) and texture          generated from the Logo programs. In comparison with other 2D
+(ImageTexture) commands.                                          and 3D turtle graphics, this VR 3D space in VRMath2 has better
+                                                                  interactivity to facilitate the development of the three types of
+                                                                  spatial ability (Lohman 1988). These three types of spatial ability
+                                                                  are defined as below:
+                                                                     Spatial visualization: the ability to mentally rotate,
+                                                                  manipulate, and twist two- and three-dimensional stimulus
+                                                                  objects.
+                                                                     Spatial orientation: the comprehension of the arrangement
+                                                                  of elements within a visual stimulus pattern; the aptitude for
+                                                                  remaining unconfused by the changing orientations in which a
+                                                                  figure may be presented; the ability to determine spatial relation
+                                                                  with respect to one’s body.
+                                                                     Spatial relations: the ability to mentally transform (e.g.,
+                                                                  translate or rotate) objects with respect to an environmental
+                                                                  frame of reference (e.g., a landmark or cardinal points) while
+                                                                  one’s egocentric reference frame does not change.
+                                                                     In VRMath2, spatial visualization can be developed or put
+                                                                  in action when commanding the turtle to move or turn, or when
+                                                                  experiencing the animation of objects. In either case, the
+                                                                  programmer/learner is mentally manipulating objects and can
+                                                                  receive real-time visual feedback. Spatial orientation can be
+                                                                  developed or put in action when navigating in the 3D virtual
+                                                                  space and examining the virtual objects/worlds. In this situation,
+Figure 4: Two separate faces in one IndexedFaceSet object.
+                                                                  the programmer/learner is aware that his/her own orientation is
+                                                                  changing in the virtual space, and thus the view of virtual
+   In addition to the movement commands in Table 2, a series of
+                                                                  objects. Lastly, the spatial relations can be developed or put in
+jump commands are implemented. Most of the movement
+                                                                  action when the programmer/learner is designing a world with
+commands have their associated jump commands. For example,
+                                                                  arrangement of many geometric and environmental objects. The
+there is a jumpforward (jf) command for forward command, and
+Programming Driven 3D Modeling on the Web                                               Web3D ’17, June 2017, Brisbane, QLD, Australia
+
+use of fixed FoR movements in VRMath2’s Logo language is also          Logo’s turtle geometry is an intuitive language for geometry and
+related to the development of spatial relations.                       measurement. The 3D extension of Logo in VRMath2 further
+    The VR 3D space (i.e., 3D turtle graphics of VRMath2) is           enabled a wide range of mathematical activities. These activities
+interactive in terms of its free navigation. However, with respect     range from constructing basic 2D and 3D shapes, plotting and
+to creation of 3D objects/worlds, it is semi-interactive. By this it   visualizing 3D functions to fractals with recursive procedures
+means that using programming to construct 3D contents is non-          (see Fig. 5 and Fig. 1).
+interactive because there is no direct dragging to scale or move          The 3D movements in Table 2 allow young children multiple
+objects in the 3D virtual space. However, the VRMath2 Editor           ways to construct 3D shapes such as a frame of a cube (Yeh
+has a few graphical user interfaces such as the Property               2013). The non-commutative nature of 3D rotations can also be
+Inspector and Object Tree (see Fig. 3) that enable some                explored in this VRMath2 environment (Yeh 2004). Through
+interactions to assist the creation of 3D contents.                    programming in the 3D turtle geometry, learners are engaged in
+    Both the Logo programs and virtual worlds created in               mathematical thinking and reasoning about location, direction
+VRMath2 Editor can be saved online and re-opened for editing           and movement, and thus develop further their spatial abilities.
+(or remixing if shared) or presenting in the VRMath2 community
+site. The 3D world window also has a publish function to export        4.2 In Science Education
+the 3D contents as X3D files (see Fig. 1). The X3D files can be        The Logo language in VRMath2 includes environmental objects
+inserted into other virtual worlds with world or inline command        (e.g., background and lighting) and animation feature of X3D.
+at the turtle’s position and direction. This could reduce the size     This enables applications in scientific visualization and
+of X3D and Logo files, and assist with the replication or reuse of     simulation. Fig. 6 shows a solar system simulation for observing
+objects/worlds in the online 3D contents.                              day and night, and seasons, and a sundial simulation for
+                                                                       observing the variation of shadows in a day.
+4 APPLICATIONS
+As stated earlier, this VRMath2 environment was originally
+designed as an educational tool for developing spatial ability.
+Spatial ability is also mostly associated with geometry and
+mathematics. However, over the past four years, it has been
+identified that this VRMath2 environment can have applications
+in areas other than mathematics education. More specifically, the
+programming driven 3D modeling in VRMath2 can facilitate
+learning in STEM education (Yeh and Chandra 2015).
+
+4.1 In Mathematics Education
+
+
+
+
+                                                                       Figure 6: Solar system and sundial simulations.
+
+                                                                           In a recent project, a group of 84 Year 9 students have also
+                                                                       utilized VRMath2 to model atoms and molecules. Through 3D
+                                                                       modeling activity, they investigated the structures,
+                                                                       characteristics and theories about atoms and molecules. This
+                                                                       atomic modeling project was designed using a STEM integrated
+                                                                       approach. Not only they learnt about atomic science, students
+                                                                       also commented on their learning in mathematics, particularly in
+                                                                       geometry about location and angle to place atoms. For example,
+                                                                       some students are able to discover the tetrahedral angle when
+Figure 5: Applications in mathematics education.                       modeling a methane molecule. Other students also commented a
+Web3D ’17, June 2017, Brisbane, QLD, Australia                                                                               A. Yeh
+
+steep learning curve, as they have not had any programming          environment can be applied in STEM education because of the
+experience before. There is a mixture of frustration and joy        computational thinking promoted in the use programming.
+about programming in using VRMath2’s Logo language, but
+most students are able to collaborate and program animations of
+their atoms as shown in Fig. 7.
+
+
+
+
+Figure 7: Ethanol molecule and aluminum atom models.
+
+4.3 In Technology Education
+The current Australian National Curriculum: Technologies
+promotes systems thinking, design thinking and computational
+thinking (ACARA 2017). Projects such as furniture design using
+VRMath2 could encourage students in these types of thinking.
+Fig. 8 depicts the use of Logo programming to produce a coffee      Figure 8: Design and visualization of products.
+table, a study desk and a customizable clock.
+   The design process involved analysis of the product both as a    4.4 In Engineering Education
+whole system and individual components. The Logo programs           Engineering education has become more prominent in school
+show the parts of furniture are systematically dealt with           education in recent years. It is seen as applications of
+individually then put together as a whole. The design thinking      mathematics and science, involving iterative design/engineering
+involved using the 3D movements to navigate the way for the         processes to define problems (e.g., criteria and constraints),
+turtle to construct the virtual products. The Logo programming      generate and evaluate solutions, and optimize solutions through
+in VRMath2 also enables the design of interactive 3D objects. As    systematic testing and refining (English 2016). Fig. 9
+can be seen in the analog clock example, users are able to click    demonstrates the engineering processes when programming and
+on different border sizes and colors to customize their clock.      designing gears.
+This reflects a need analysis in the design thinking (ACARA            The engineering processes of gears involve the study of
+2017). The programming and virtual products reflect significant     mathematics and science about involute gears. For example, the
+computational thinking (ACARA 2017), in which data are              pressure angle and diametral pitch etc. are required in order to
+quantified and digital solutions (i.e., the programming codes and   program precise meshing gears. There are cyclic testing,
+the virtual products) are created. Kafai and Burke (2013) argued    debugging, and evaluating during the programming, and
+that computational thinking, while often associated with            eventually the spur gears are completed with IndexedFaceSet
+computer science, is the extension of computer science              and the helical gears are completed using Extrusion (a X3D
+principles applied across disciplines including mathematics and     node) for faster creation and performance in this gear project.
+science, and also to the humanities in fields such as journalism    The use of Extrusion seems to be a more optimized solution but
+and literature. This supports the idea that the VRMath2
+Programming Driven 3D Modeling on the Web                                              Web3D ’17, June 2017, Brisbane, QLD, Australia
+
+both uses of IndexedFaceSet and Extrusion are valuable                patterns and functions. This is particularly useful for
+experiences in terms of learning and education.                       mathematical and scientific visualizations and simulations. For
+                                                                      example, using recursive function calls, which include the
+                                                                      control structure of programming (e.g., if else), can generate
+                                                                      coordinates for fractals such as the 3D fern leaf in Fig. 1.
+                                                                          Another strength of this programming driven 3D modeling is,
+                                                                      perhaps debatable, attributed to the egocentric and fixed 3D
+                                                                      movements in the Logo language. In the sundial simulation
+                                                                      example (see Fig. 6), a directional light is tilted 23.5 degrees to
+                                                                      simulate the earth’s tilt on its spinning axis, and the sun passes
+                                                                      the northern part of the sky as viewed on southern hemisphere.
+                                                                      There are ways to create such virtual world in different
+                                                                      modeling software, but in the Logo programming, a simple
+                                                                      tiltright 23.5 can achieve this modeling with precision.
+                                                                          As a high-level programming language, Logo programs are
+                                                                      easily readable and recorded in plain texts. This makes it very
+                                                                      easy to repeat (i.e., loop structure) for patterns and reuse the
+                                                                      programming codes. Using loop structure, this Logo language in
+                                                                      VRMath2 can generate large-scale virtual worlds or data sets. 3D
+                                                                      contents can be recreated by running the Logo programs and/or
+                                                                      remix and share with others. Data such as coordinates generated
+                                                                      can be stored in variables and used later for animation or objects
+                                                                      such as IndexedFaceSet and Extrusion. Fig. 10 shows a Logo
+                                                                      program uses loop structure (i.e., for [ :var start end step ] ) to
+                                                                      generate coordinate data through a mathematical function, then
+Figure 9: Engineering spur and helical gears.
+                                                                      applies the coordinate data to animate an ElevationGrid. This is
+    To sum up for the applications, it should be noted that           done in 34 lines of codes, and the Logo program can be easily
+although they are reported in individual STEM area, each              modified with different grid sizes, heights and of course the
+application is in fact problem-based or project-based learning        mathematical functions for different animations.
+that involves more than just one discipline in STEM. This is
+attributed to the nature of the Logo programming language that
+is used to create the 3D contents in the VRMath2 environment.
+
+5 DISCUSSIONS
+The use of computer programming to generate 3D models or
+virtual worlds is neither a new idea nor the best way to create
+3D contents. However, in the case of VRMath2, the use of Logo
+programming language to create 3D virtual worlds on the Web is
+the first of its kind. Nevertheless, it has its strengths and
+weaknesses in different contexts. The Logo programming
+language adapted in the VRMath2 environment is still                  Figure 10: Sea surface animation simulation.
+developing, in the directions of aiming to better facilitate
+learning and generating more sophisticated online 3D virtual             The current implementation of VRMath2’s Logo language
+worlds.                                                               also includes a set of animation primitives that utilizes the
+                                                                      interpolators of X3D. Simplified commands such as spin, travel,
+5.1 Strength                                                          and tour can interpolate rotation, translation and viewpoints
+X3D is an international standard for 3D on the Web. It is             respectively. There is also a developing prototype of behavior
+powerful to represent and describe 3D contents with its current       model in this Logo that can capture input events (e.g., click,
+specification, and more importantly it is still evolving to further   mouseover and mouseout) to manipulate 3D objects. Fig. 11
+3D representations. However, it is unusual to code directly in        shows a spinning Box, which also acts as a switch (when clicked)
+X3D for complex objects such as a mesh or multi-faces objects         to toggle a DirectionalLight. This strength of programming
+that have large sets of 3D coordinates for triangles (e.g.,           animation and behavior is attributed to the close meshing
+IndexedTriangleSet) and faces (e.g., IndexedFaceSet). Using           between the Logo language, HTML5 (including the DOM and
+programming such as in Logo language can generate these               JavaScript) and the features of X3D in VRMath2.
+coordinates randomly and/or through certain mathematical
+Web3D ’17, June 2017, Brisbane, QLD, Australia                                                                                                             A. Yeh
+
+                                                                                  interface. And as a web application, its performance and
+                                                                                  functionalities in programming 3D contents are limited by the
+                                                                                  JavaScript and the implementation of X3DOM. Examples of
+                                                                                  these limitations are provided in the next section.
+
+                                                                                  5.3 Future direction
+                                                                                  In order to encourage more participation to this VRMath2
+                                                                                  application, the refining of the programming interface for 3D
+                                                                                  content creation is one the main tasks that this author is
+                                                                                  constantly aiming to improve. At this stage however, the
+                                                                                  programming paradigm in VRMath2 will still be kept as text-
+Figure 11: A spinning box that controls a directional light.                      based, but it will be assisted with more graphical widgets and
+                                                                                  new technologies. For example, there are three developing
+5.2 Weakness and limitation                                                       prototypes of component in VRMtah2.
+Despite the programming language can be powerful to create 3D                        Speech recognition interface. At this stage, the speech
+virtual worlds, the immediate weakness is on this dialect of Logo                 recognition can recognize most of the 3D movement commands,
+language. Unlike direct interactive modeling software with user-                  and execute to create simple geometry (see Fig. 13). This is only
+friendly graphical interface, this text-based Logo programming                    a simple direct mapping of spoken words to the programming
+requires considerable time to master. Users who have prior                        language. In the future, it will aim at analyzing more natural
+programming experience may find Logo programming language                         speech and translate to not just a command, but a set of codes to
+easy to code. However, users who are new to programming may                       achieve the 3D modeling required by the user. Currently, this
+find it difficult except for the turtle geometry component of the                 speech recognition prototype only works in Google Chrome
+                                                                                                                        8
+Logo. As an educational tool, this could be the biggest hurdle for                browser because the Web Speech API is still a W3C draft and
+students to enjoy learning in the VRMath2 environment.                            only the Google Chrome browser has implemented this API.
+    The text-based programming paradigm of Logo (as well as
+Basic and Pascal) in schools has suffered disinclination since mid
+1990s. One of the key reasons for the diminishing of text-based
+programming is the interactive multimedia and visual
+                                            7
+programming paradigm such as Scratch emerged (Kafai and
+Burke 2013). Fig. 12 shows an example program, which creates a
+square in Scratch. The visual programming can be more
+appealing to beginning programmers. However, the types and
+effectiveness of learning from both text-based and visual
+programming require more empirical studies to validate.                           Figure 13: Speech recognition interface.
+                                                                                                                                                       9
+                                                                                     Mobile sensor interface. This working prototype utilizes
+                                                                                  the gyro sensor in mobile devices such as an iPhone to transmit
+                                                                                  3D rotation data for the turtle. In doing so, the user can hold and
+                                                                                  rotate a mobile device to control the direction or rotation of the
+                                                                                  turtle during construction of 3D objects or collection of data
+                                                                                  such as location and direction. Collected data can be stored in
+                                                                                  variables for creating animation and/or 3D objects later in Logo
+                                                                                                                                     10
+                                                                                  programs. This prototype utilizes Node.js              to setup a
+Figure 12: Visual programming of a square in Scratch.                             communication server, which essentially is the concept of a chat
+                                                                                  room that broadcast a transmitter’s (e.g., an mobile phone with
+    Other weaknesses and limitations can be derived from the                      gyro sensor) 3D rotation data to all receivers (e.g., computers
+Web platform that this Logo programming of VRMath2 adopts.                        running VRMath2 Editor). The transmitter device needs to have
+On the surface, it is cross-platform and easy to access with just                 a gyro sensor and a browser that supports the DeviceOrientation
+Internet connection and a web browser. However, this also
+means that offline editing is not possible. In some cases, without
+offline editing capability presents some equity issues in
+                                                                                  8
+education. VRMath2 is also dependent on X3DOM for the 3D                            The Web Speech API is a draft Web technology at https://dvcs.w3.org/hg/speech-
+                                                                                  api/raw-file/tip/webspeechapi.html
+                                                                                  9
+                                                                                     For example, see https://vrmath2.net/content/how-control-movement-turtle-
+7
+  Scratch is a visual      programming   language   developed   by   MIT.   See   using-mobile-phone
+                                                                                  10
+https://scratch.mit.edu/                                                             Node.js is a server side JavaScript runtime. See https://nodejs.org/en/
+Programming Driven 3D Modeling on the Web                                                         Web3D ’17, June 2017, Brisbane, QLD, Australia
+
+           11
+Event API . Unfortunately, the support and implementation of                designed for developing spatial abilities, and offering a unique
+this API are inconsistent and vary in different mobile browsers.            and convenient way of constructing 3D virtual worlds in X3D
+   Cardboard VR application. This is not directly related to                format on the Web. The process of programming for 3D contents
+the programming of 3D contents, but a viewing application for               can foster computational thinking and skills for problem solving.
+                                                   12
+the 3D contents. Currently, this prototype             allows all           With this programming driven 3D modeling approach, VRMath2
+conforming X3D files in the VRMath2 website to be viewed on a               has the potential to facilitate learning in STEM education. There
+mobile phone as stereoscopic 3D for cardboard VR experience                 are limitations due to Web technologies, but perhaps the biggest
+(see Fig. 14). This application may encourage users to create and           limitation is one’s imagination about how the VRMath2
+rethink their design of 3D virtual world, before they export and            environment and programming approach can be utilized for
+publish their 3D contents in VRMath2 website. For example, the              education and sophisticated 3D content creation.
+designer could include multiple viewpoints and behaviors (e.g.,
+mouse click) so the viewers could interact with some virtual                REFERENCES
+objects through this Cardboard VR application.                              Australian Curriculum, Assessment and Reporting Authority (ACARA). 2017. F-10
+                                                                                Curricuum: Technologies – Key ideas, v8.3, (February, 2017),
+                                                                                http://www.australiancurriculum.edu.au/technologies/key-ideas.
+                                                                            R. P. Darken. 1996. Wayfinding in large-scale virtual worlds. Unpublished Doctor of
+                                                                                Science thesis, George Washington University, Washington, DC.
+                                                                            Lyn D. English. 2016. STEM education K-12: perspectives on integration.
+                                                                                International Journal of STEM Education, 3:3 DOI 10.1186/s40594-016-0036-1
+                                                                            Jennifer L. Ivie and Susan E. Embretson. 2010. Cognitive process modeling of spatial
+                                                                                ability: The assembling objects task. Intelligence, 38(3), 324-335.
+                                                                            Yasmin B. Kafai and Quinn Burke. 2013. Computer programming goes back to
+                                                                                school. The Phi Delta Kappan, 95(1), 61-65.
+                                                                            D. Lohman. 1988. Spatial abilities as traits, processes and knowledge. In R. J.
+                                                                                Sternberg (Ed.), Advances in the psychology of human intelligence, Vol. 40.
+                                                                                Hillsdale, LEA, 181-248.
+                                                                            Marios Pittalis and Constantinos Christou. 2010. Types of reasoning in 3D
+                                                                                geometry thinking and their relation with spatial ability. Educational Studies in
+                                                                                Mathematics, 75(2), 191-212.
+                                                                            Andy Yeh. 2013. Constructing a frame of cube: connecting 3D shapes with
+                                                                                direction, location and movement. In Steinle, V., Ball, L., & Bardini,
+                                                                                C. (Eds.) Mathematics Education : Yesterday, Today and Tomorrow (Proceedings
+Figure 14: Stereoscopic VR of helium atom from VRMath2.                         of the 36th Annual Conference of the Mathematics Education Research Group
+                                                                                of Australasia), pp. 690-697. Melbourne, VIC: Mathematics Education Research
+                                                                                Group of Australasia Inc.
+   Currently, this Cardboard VR application in VRMath2 utilised             Andy Yeh. 2004. Two Turns Must Take Turns: Primary School Students’ Cognition
+the RenderedTexture and ComposedShader nodes as                                 about 3D Rotation in a Virtual Reality Learning Environment. In Yang, Wei-
+                                                                                Chi, Chu, Sung-Chi, De Alwis, Tilak, & Ang, Keng-Cheng (Eds.) Asian
+implemented in X3DOM to achieve the stereoscopic VR effect.                     Technology Conference in Mathematics (ATCM), 13-17 December, 2004,
+                                  13
+The X3DOM Runtime API pictRect is used to help implement a                      Singapore.
+                                                                            Andy Yeh and Vinesh Chandra. 2015. Mathematics, Programming and STEM. In M.
+mouse click or touch event. The utilization of mobile                           Marshman, V. Geiger, & A. Bennison (Eds.). Mathematics education in the
+magnetometer sensor through JavaScript has very limited                         margins (Proceedings of the 38th annual conference of the Mathematics
+support so the use of magnets to simulate click or touch event                  Education Research Group of Australasia), pp. 659–666. Sunshine Coast:
+                                                                                Mathematics Education Research Group of Australasia Inc.
+cannot be achieved in this current prototype. In the future, the
+            14
+WebVR API may bring more possibilities for this Cardboard
+VR application in VRMath2.
+
+6 CONCLUSION
+This paper introduces the use of Logo programming to create 3D
+virtual worlds online in the VRMath2 application. Using a
+programming language to generate 3D contents can have high
+precision for mathematical and scientific visualization and
+simulation. The programming codes can be easily modified,
+shared and reused to generate and handle large sets of data,
+which can be used for purposes such as complex objects and
+animations. The Logo programming in VRMath2 has a range of
+3D movements (i.e., egocentric, fixed and universal) that are
+
+11
+    The DeviceOrientation Event API is a draft Web technology          at
+https://w3c.github.io/deviceorientation/spec-source-orientation.html
+12
+   For example, see https://vrmath2.net/content/vrbox-world
+13
+   See https://doc.x3dom.org/author/runtime.html#pickRect
+14
+   See https://w3c.github.io/webvr/
+

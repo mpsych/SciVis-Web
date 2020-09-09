@@ -1,0 +1,875 @@
+                                                                 Informatics in Medicine Unlocked 17 (2019) 100253
+
+
+                                                                      Contents lists available at ScienceDirect
+
+
+                                                         Informatics in Medicine Unlocked
+                                                          journal homepage: http://www.elsevier.com/locate/imu
+
+
+
+
+Medical data visual synchronization and information interaction using
+Internet-based graphics rendering and message-oriented streaming
+Qi Zhang
+School of Information Technology, Illinois State University, 100 North University Street, Normal, IL, 61761, United States
+
+
+
+
+A R T I C L E I N F O                                       A B S T R A C T
+
+Keywords:                                                   The rapid technology advances in medical devices make possible the generation of vast amounts of data, which
+Medical information                                         contain massive quantities of diagnostic information. Interactively accessing and sharing the acquired data on
+Graphics rendering                                          the Internet is critically important in telemedicine. However, due to the lack of efficient algorithms and high
+Visual synchronization
+                                                            computational cost, collaborative medical data exploration on the Internet is still a challenging task in clinical
+Collaborative diagnosis
+Bidirectional internet connection
+                                                            settings. Therefore, we develop a web-based medical image rendering and visual synchronization software
+Message streaming                                           platform, in which novel algorithms are created for parallel data computing and image feature enhancement,
+                                                            where Node.js and Socket.IO libraries are utilized to establish bidirectional connections between server and
+                                                            clients in real time. In addition, we design a new methodology to stream medical information among all con­
+                                                            nected users, whose identities and input messages can be automatically stored in database and extracted in web
+                                                            browsers. The presented software framework will provide multiple medical practitioners with immediate visual
+                                                            feedback and interactive information in applications such as collaborative therapy planning, distributed treat­
+                                                            ment, and remote clinical health care.
+
+
+
+
+1. Introduction                                                                                    Ref. [13] to process and visualize body surface potential maps in web
+                                                                                                   browsers, where Description Extensible Markup Language (XML) is used
+    Medical data and information visualization has wide clinical appli­                            to process data storage. For the purpose of providing web-based he­
+cations [1], and software platforms that reside on web engines present                             reditary disease information to medical personals, the authors in
+advantages over local applications [2]. When compared with utilizing                               Ref. [14] present an Android mobile platform, where Java and XML are
+stand-alone software platforms, the use of Internet-based solutions can                            integrated into the web framework to handle data rendering. To display
+lead to better performance in diagnostic information collaborative                                 and analyze 3D microscopy data on Internet, a web-based software
+analysis and treatment decision-making [3]. The advancement of                                     package is developed in Ref. [15], where a Java applet and an interface
+Internet technologies has made it possible to establish a “common                                  that interacts with the applet inside HTML browsers are utilized for
+ground” for medical practitioners to collaboratively explore medical                               rendering medical data at a desired contour level. A similar Java applet
+data and share diagnostic information across the globe [4,5]. When a                               technology is used by Salavert-Torres et al. [16] to interactively display
+software application is developed for the web, it can be directly accessed                         2D slice images extracted from 3D microscopy data in web browsers.
+and executed by any users around the world with Internet connection                                The following development of this technology used WebGL [17] and
+and web browser [6]. Internet-based medical information systems at all                             HTML5 to build a platform for rendering medical images in web
+levels can expand doctors’ capacities and capabilities to meet the                                 browsers, where VTK [18] is employed for slicing volumetric medical
+growing demand for delivering clinical services across wide geographic                             data [19]. All the outlined software platforms are constructed on a
+areas [7,8], and can also allow medical practitioners to interact each                             client-server structure, which is based on a request-response scheme to
+other at remote locations and effectively share medical resources [9].                             access web page and medical data information [20].
+    Some interesting network-based medical information platforms have                                  Furthermore, web technologies, third-party libraries and software
+been developed, such as streaming medical data [10] or images [11] on                              frameworks have been developed for applications of interactive
+Internet, transporting data between web server and clients for medical                             browser-based custom visualization [21] or presenting 3D graphics on
+image sharing and analysis [12]. A medical data viewer is reported in                              the web [22]. Kitware releases a JavaScript library, ParaViewWeb [23],
+
+
+
+    E-mail address: qzhan10@ilstu.edu.
+
+https://doi.org/10.1016/j.imu.2019.100253
+Received 6 August 2019; Received in revised form 20 September 2019; Accepted 25 September 2019
+Available online 8 October 2019
+2352-9148/© 2019 Published by Elsevier Ltd. This is an open access article under the CC BY-NC-ND license (http://creativecommons.org/licenses/by-nc-nd/4.0/).
+Q. Zhang                                                                                                          Informatics in Medicine Unlocked 17 (2019) 100253
+
+
+
+
+Fig. 1. The flowchart of our system architecture, whose components include Internet-based message streaming, data management, information sharing, 3D medical
+data real-time rendering and enhancement, as well as bi-directional network connection and medical data visual synchronization. The shared web worker is
+employed to optimize multi-thread based data loading and medical data exploration.
+
+
+which is used as a web tool for scientific data visualization inside web          extraction. Later, a similar strategy of using PHP to communicate with
+browsers. At the same time, a number of researchers explore medical               MySQL database server is reported in Ref. [42], where the authors use a
+images on the Internet using graphics rendering in web browsers [24].             server-client connection protocol to collect data of electronic
+For example, the authors in Ref. [25] deploy a single-pass data rendering         patient-reported outcome registry.
+pipeline on mobile devices, where 2D texture in WebGL is used to
+simulate 3D texture for volume rendering. The same rendering tech­                2. Current work
+nique is applied to interactively process 2D/3D medical images [26] and
+is combined with WebSocket for remote collaborative data exploration                  To the best of our knowledge, current published software packages
+[27]. Later, Jim�enez et al. further developed the presented algorithm            are generally created on isolated server and clients, which lack the ca­
+and put forward an advanced platform to interactively display and                 pabilities of streaming messages in the network and data exploration
+analyze 3D fractal dimension of Magnetic resonance imaging (MRI) data             cannot be synchronized among multiple users [2–9]. In addition, Java
+in web browsers [28]. Additional applications include developing open             applets or other external plug-ins are usually required in client com­
+source libraries and software packages to show neurological data [29],            puters to handle data transmission and rendering in web browsers
+protein structure [30] and molecular data [31,32] on the web. Some                [14–16], and the applet connections relay on HTTP Protocol for data
+authors also designed web-based rendering interfaces for advanced                 transmission, which lacks the capability of full-duplex communication.
+medical applications such as personalizing the management of athero­              In addition, most reported software platforms are based on event
+sclerotic patients and assisting the diagnostic process by retrieving             request-response pipeline instead of automatic bidirectional connection
+similar past cases through the Internet [33], exploring multivariate              [10–12,19,20]. Some web applications are centralized in cloud [23,35],
+vascular data by visualizing spatial and temporal relationships among             while others are created on an Apache HTTP Server [39] to maintain
+the hemodynamic parameters of interest [34].                                      data communication [21,22,36–38], both of which cannot stream data
+    Recently, to share medical data and research results among clinical           in the network and cannot link the explored data with database auto­
+and research institutions, the authors in Ref. [35] present a GIFT-Cloud          matically [41,42].
+Server to store anonymized data and use a Representational State                      Master-slave interaction mode is also commonly presented, which
+Transfer Application Programming Interface (REST API) to integrate                uses server as master to organize network connections [36–38] or em­
+with external software on Internet. Instead of building server on cloud, a        ploys clients to manage data transformation [27]. However, both of the
+master-slave mode is introduced in Ref. [36] to allow users to access and         two schemes cannot synchronize data exploration between server and
+display remote medical images using volume and surface rendering,                 clients. Furthermore, the cross-browser interface three.js [43] is gener­
+where a message-responding mechanism is designed on server to listen              ally employed to manage WebGL-based data visualization, which lacks
+to interactive requests from clients. To facilitate radiological practi­          the ability of flexibly manipulating images and integrating diagnostic
+tioners manipulate and interpret cross-sectional volumetric medical               information into medical data exploration [27–29]. In addition, surface
+data, Borgbjerg [37] integrates a browser-based Picture Archiving and             rendering is also used to display medical data at a contour level,
+Communication System (PACS) and a imaging viewer into the                         resulting in loss of inner data information [13,31,32]. Finally, due to the
+master-slave based Internet connection structure, and the authors in              limited graphics support of WebGL, 2D texture is usually exploited to
+Ref. [38] create their master computer using an open-source web server            simulate 3D texture for trilinear interpolation in volume rendering
+software, i.e. Apache HTTP Server [39], then connect the master server            process, which delivers inferior image quality and limited data visuali­
+with slave clients using the reported networking technology [36,37],              zation speed [24–26].
+where PHP Programming Language [40] is employed to link the server                    To address the above described limitations, we build a web-based
+to a MySQL [41] database management system for data storage and                   software platform [44], in which Apache HTTP Server is applied to
+
+
+                                                                              2
+Q. Zhang                                                                                                          Informatics in Medicine Unlocked 17 (2019) 100253
+
+
+construct server-client connections, MySQL and PHP are exploited for              3.2. Socket.IO connection
+data storage management, and a WebGL2 [45] based algorithm is
+developed to display 3D medical data in real time. This paper presents                To build bidirectional connections between Node.js server and all of
+our further efforts on technology development of our previous work,               the connected clients, JavaScript library Socket.IO [47] is required and
+whose major contributions include developing new algorithms that use              utilized for real-time event-based communication: one component is
+Node.js [46] and Socket.IO [47] to build a server and create real-time            running on Node.js server and the other is based on JavaScript client
+bidirectional connections with clients, designing a novel method for              library that is executing on client web browsers. The Listing 1 shows the
+information sharing and message streaming, and linking input infor­               server side configuration, where io is employed to build socket con­
+mation with MySQL database automatically. Furthermore, we imple­                  nections using event callback function io:sockets:on.
+ment a shared web worker and include it into our software framework to                In our software platform, all clients are connected to the server using
+optimize medical data multi-thread handling and web connections.                  algorithms that are based on WebSocket protocol and Socket.IO library
+Finally, new data lighting and enhancement algorithms are designed                [53], which can provide a mechanism for fast, secure, two-way message
+and integrated into our volume rendering pipeline to emphasize medical            communication and data exchange between client and server over
+data visualization and image features of interest.                                Internet without need of pulling or making request/response for each
+    The paper is organized as follows. First, we describe the full-duplex         message. WebSocket protocol uses an HTTP like handshake to offer a
+web communication architecture of our application. Then some con­                 persistent connection between server and client while keeping the
+crete implementation details regarding data and information synchro­              connection open. The working pipeline of the described Socket.IO based
+nization are illustrated. Afterwards, we present the working pipeline of          two-way connection algorithm is demonstrated on the left side of Fig. 1.
+the shared web worker [48]. In Section 5, algorithms of medical data
+visualization and image feature enhancement are outlined. The results
+of the experiments are explained and analyzed in Section 6. Finally, our
+work is summarized in the conclusions section.
+
+3. System architecture
+
+    The developed software system is a web-based framework, which is
+based on a client/server architecture. One of the main features of the
+web-based application presented in this paper is the synchronization of
+feature-enhanced medical data rendering and user input message
+streaming among server, clients and database. Thus, in this section we
+describe the system architecture, basic algorithms and the theoretical
+basis of our software platform.
+    Fig. 1 outlines the system architecture of the server side program­
+ming and the opening of a two-way interactive communication between
+server and client computer’s browser. Our software platform is based on
+an event-driven scheme that is able to synchronize web-based medical
+data visualization and message streaming, where all the users can share
+the same dynamically updated medical data exploration view and in­
+formation over the Internet.
+
+3.1. Node.js server
+
+    In this project, Node.js [46] is employed to build server for syn­
+chronizing medical data visualization and information communication,
+while JavaScript [49] is used to write programs for server-side scripting.
+As described in the Listing 1, first, Express.js (Express) [50] is required
+and used to build Node.js server. Express is a minimal and flexible Node.
+js web application framework that provides a set of features for web and
+mobile applications, while Node.js is an open-source, cross-platform
+run-time environment that executes JavaScript code outside a browser.
+The node package manager (npm) is applied to install the Express and
+create a new file called package JSON [51] to store information of the
+developed project. The Node.js server hosts the HTML and JavaScript
+files for data visualization and exploration, which is set to listen to all
+message events on port 4000.
+    The left side of Fig. 1 shows the main graphics rendering program,
+which is hosted on the Node.js server running on Express framework. We
+develop algorithms using WebGL2 [45] to visualize medical data in the
+web browsers, where OpenGL Shading Language (GLSL) [52] is utilized
+for graphics processing unit (GPU) based parallel data computing,
+rendering and image feature enhancement, which is illustrated in Sec­
+tion 5. All the connected clients are granted privilege to acquire and
+launch the web-based program hosted on the Node.js server using al­                  Listing 1: Algorithm for creating Node.js server using Express.js,
+gorithms built on WebSocket protocol and Socket.IO library.                          communicating with MySQL database, linking to public directory for
+                                                                                     HTML and JavaScript code integration, and building connections
+                                                                                     between Node.js server and clients.
+
+                                                                              3
+Q. Zhang                                                                                                            Informatics in Medicine Unlocked 17 (2019) 100253
+
+
+4. Data and information synchronization
+
+    In this section some implementation details regarding the develop­
+ment and optimization of the multi-user collaborative platform are
+outlined. In addition, shared web worker is presented for improving data
+transformation and web loading. As illustrated in Fig. 1, we develop
+algorithms to run Socket.IO on both server and clients at the same time.
+All of the data exploration and visualization have been synchronized on
+client computers that are connected with the Node.js server.
+
+4.1. Server side programming
+
+    As described in Listing 1, on the server, we develop code in lines 1–3
+to listen to all new client connections. When a client connects to the
+server and emits a message event with name message name, the server
+will send the received message to all connected clients using code in
+lines 13–17, in which callback function functionMsg will broadcast the
+message using Socket.IO function in lines 15–16. The functions of
+generated events are mainly for medical data rendering and exploration,
+such as updating viewport and mouse, menu selection, optical mapping,
+data navigation, and rendering parameter adjustment. The server is
+listening to all events on port 4000 using code in lines 1–3. We access the
+Socket.IO library using the variable io created with inputting an object of
+the Express API server as illustrated in lines 4–5, which will be used to
+keep track of the server’s input and output messages.
+    Listings 1 outlines two examples of listening mouse down and
+movement events in the function newConnectionðsocketÞ, from which we
+can see that after having received either of these two events, the server
+will emit the received one to all of the connected clients in the frame­
+work using methods described in lines 13–22. In addition, our program
+creates a link to the “public” folder using a method call in line 9. Inside
+the “public” directory, there are JavaScript programs, whose main
+functions are managing clients, rendering medical data, enhancing
+image features of interest, exploring displayed medical data, as well as
+sending and receiving messages to and from the server. Fig. 1 describes                Listing 2: Algorithm for creating client side network connection
+the flowchart of the server side architecture and the message commu­                   using Socket.IO and event-based synchronization. The mouse
+nication with connected clients, where Node.js and its web application                 movement event is used as an example.
+framework Express are exploited to host the actual graphics rendering
+and information management programs stored in the “public” folder.                      For the client side programming, first, the event listening functions
+                                                                                    are added to the client side Socket.IO component, which will monitor
+4.2. Client side programming                                                        and react to all events such as operations of mouse, keyboard, menu,
+                                                                                    color mapping, data loading, and medical data rendering parameter
+     As illustrated in Listing 2, we develop code on the client side to             adjustment, etc. When the event is user input operation, they will be
+connect the server. The socket:io library is first integrated into our client       packaged in a message and emitted to the server, including the name of
+code through linking to the JavaScript library socket:io:js in the index.           the message and the data inside the message as described in line 12 with
+html file, and then the client side Socket.IO program is connected to the           message name mousemove ws. If the event comes from the connected
+server whose IP address is 192.168.0.11 using code in line 1. The client            server, the client will conduct the operations programmed in the event
+is listening to events coming from the server on port 4000, and a unique            using the Socket.IO callback function and the transferred data described
+client socket id is created for each of the new connections to the server,          in lines 14–15, in which the mouse movement event is listed as an
+so that the server can track the connections over time.                             example.
+                                                                                        Listings 2 also describes an example of client side programming for
+                                                                                    handling a mouse movement event. Add an event listener to monitor
+                                                                                    mouse movement, if the received event comes from a local user input,
+                                                                                    the client sends the triggered event and corresponding mouse position
+                                                                                    data to the server using code in lines 14–15. On the other hand, if the
+                                                                                    event is broadcasted by the connected server, the client will accept event
+                                                                                    using the same code as the event that is received from user input. The
+                                                                                    client that has received the event will conduct operations according to
+                                                                                    the callback function, i.e., functionðdataÞ and the transferred data inside
+                                                                                    the callback function.
+
+                                                                                    4.3. Message streaming
+
+                                                                                        In our software platform, we develop a message streaming scheme
+                                                                                    for processing information real-time sharing. As demonstrated by the
+                                                                                    right side of Fig. 1 and Listings 1, Node.js server uses body-parser and
+
+                                                                                4
+Q. Zhang                                                                                                             Informatics in Medicine Unlocked 17 (2019) 100253
+
+
+
+
+Fig. 2. The working pipeline of our software platform’s message streaming and information sharing component. In the graphics user interface, users can input their
+unique identities and comments regarding medical data exploration that can be shared among all the connected clients. All the information and input messages can
+be stored in a database table and can be extracted and displayed in web browsers.
+
+
+mysql libraries to connect MySQL database and post/get data informa­                Therefore, when a thread spends a long time trying to complete a certain
+tion to/from the database table. On the client side, as illustrated in Fig. 2       task, such as data loading and information transmission, the application
+and Listings 2, users can input information such as name, unique id,                will appear to be frozen. To address this issue, we design a new algo­
+email address and phone number in our platform’s graphics user inter­               rithm that takes advantage of shared web worker to enhance web
+face. The users can also input diagnostic comments and data exploration             connection, in which the main thread and the worker communicate via
+messages that are streamed with all the connected clients in real time.             messages and the shared web workers are not reliant on any particular
+    As shown in lines [17–19], a “submit” button is designed to monitor             page. Therefore, our JavaScript web connection code can be executed in
+“clicking” event. Inside the callback function in lines [21–28], user in­           a separate thread from the page’s main thread.
+formation and input messages are sent to the server using Socket.IO emit                In our application, the shared web worker uses WebSocket protocol
+function in line 28. As outlined in Listings 1, on the server side, a Socket.       to communicate with the server, and once it gets data from the server, it
+IO function is designed to listen client events using code in line 23. When         posts them to the main thread for rendering. One shared web worker
+the server has received the user input messages, it broadcasts them with            thread can be used by multiple pages from the same domain, and the
+the integrated data to all the connected clients in real time using code in         web worker is spawned to load in data from the server progressively
+line 25.                                                                            while the main thread deals with the user interaction, so the data
+    Our web-based software platform uses the MySQL database server to               loading will not freeze the applications such as medical data rendering,
+store and process user messages and information, which are automati­                exploration, and information sharing. The right part of the center rect­
+cally stored in database tables and can be extracted by any connected               angle in Fig. 1 illustrates the procedure of using shared web worker to
+clients and displayed in web browsers, where Fig. 3 describes the mes­              optimize data loading and establish the WebSocket connection with the
+sage streaming working pipeline. The MySQL database is running on an                Apache HTTP Server. The following items describe the working pipeline:
+Apache HTTP server, which shares the same hardware computer as the
+Node.js server. Data input and output operations are controlled by Node.             – Initialize the shared web worker and establish connections with
+js, mysql and body-parser libraries. The Express API is employed to                    Apache server using WebSocket protocol.
+handle data communication between Node.js server and MySQL data­                     – The initialized web worker loads data from server for volume visu­
+base using functions in lines [29–36] of Listings 1, while the HTML user               alization. Every time the worker receives a data file, it parses the file
+interface is the top layer of the message streaming operations. The                    and then sends it to the main thread.
+manager of the system can access and visualize all the stored data and               – When the main thread receives the data from the worker, it adds
+information for the purpose of information mining and data analysis.                   them to a volume and creates a 3D texture.
+                                                                                     – Data rendering engine loads the 3D texture for volume rendering and
+                                                                                       visual exploration.
+4.4. Shared web worker
+
+   A WebSocket connection can only persist as long as the page is open,
+and cannot conduct across loading of new pages from the same domain.
+
+                                                                                5
+Q. Zhang                                                                                                                Informatics in Medicine Unlocked 17 (2019) 100253
+
+
+
+
+Fig. 3. The workflow of inputting information and messages from graphics user interface, which are automatically streamed into a database and synchronized among
+all the connected clients. As demonstrated by the right side web-based table, all the connected clients can extract the stored data from the database and display them
+in web browsers.
+
+
+5. Data rendering and enhancement
+
+    In this section we describe the major technologies used and algo­
+rithms developed to visualize and enhance 3D medical data acquired
+from medical devices such as magnetic resonance imaging (MRI) and
+computed tomography (CT). In addition to the general structure of the
+rendering engine, we highlight the aspects and novelty that are useful
+for increasing algorithm performance and medical data rendering result,
+such as using graphics hardware to calculate voxel normal, trilinear
+interpolation, optical value dynamic adjustment, and integrating light­
+ing into the rendered medical image in real time.
+
+                                                                                      Fig. 4. Web-based graphics rendering pipeline of 3D texture loading and pro­
+5.1. WebGl2 and GPU pipeline                                                          cessing in vertex and fragment shaders inside graphics processing unit (GPU)
+                                                                                      using WebGL2 and OpenGL Shading Language (GLSL).
+   WebGL (Web-based Graphics Library) [17] is a cross-platform web
+standard developed by the Khronos Group. WebGL programs consist of                    elements and composited with other parts of the page background in
+control code written in JavaScript and special effects code, i.e., shader             web browsers.
+code written in OpenGL Shading Language (GLSL) [52], that is executed                     In the described software platform, we have developed medical data
+on a computer’s Graphics Processing Unit (GPU) to access lower level                  parallel processing and rendering programs using WebGL2’s special
+graphics hardware. WebGL 2.0 (WebGL2) [45] enables web content to                     effects code, i.e., GLSL shaders running on GPU. Vertex shader is first
+use an API based on OpenGL ES 3.0 to perform 3D rendering in HTML                     designed and applied to create a 3D data graphics rendering engine. The
+<canvas> without using plug-ins. Thanks to the HTML5 canvas                           WebGL2-based medical data rendering pipeline is a process in which 3D
+element, WebGL2 objects are shown in web browsers and their related                   images are prepared and output onto the 2D screen: first, take the 3D
+data are accessible through the Document Object Model (DOM) inter­                    objects built from primitives using vertices, next, apply vertex process­
+face. Therefore, WebGL elements can be mixed with other HTML                          ing and calculation in the fragment shaders, finally, render the
+
+                                                                                  6
+Q. Zhang                                                                                                                Informatics in Medicine Unlocked 17 (2019) 100253
+
+
+
+
+Fig. 5. The outline of the new web-based medical data visualization and
+                                                                                     Fig. 6. Pipeline of raycasting calculation on GPU graphics hardware: setting
+enhancement algorithm: data loading, texture translation, texture space trans­
+                                                                                     camera and image plane, casting ray into 3D texture volume, adding light
+formation, casting ray into texture volume, texture sampling, optical mapping,
+                                                                                     source, and conducting trilinear interpolation based texture sampling.
+lighting calculation, and image generation and shading.
+
+                                                                                     5.3. Data visualization and enhancement
+calculated results on the 2D screen as image pixels.
+    As described in Fig. 4, vertex processing is a process of integrating
+                                                                                        Taking advantage of the new features of WebGL2, we develop a new
+individual vertex information into primitives and setting their co­
+                                                                                     algorithm for 3D texture based raycasting calculation on GPU with real-
+ordinates in the 3D space for display. Projection transformation then
+                                                                                     time lighting and image feature enhancement. The following items
+defines the camera settings and sets up what can be seen by the camera,
+                                                                                     describe our algorithm’s procedure of rendering 3D scalar fields into 2D
+which includes the field of view, aspect ratio and the near and far
+                                                                                     images, which is outlined in Fig. 5.
+clipping planes. Rasterization is a procedure of converting primitives
+into a set of fragments. Fragment processing focuses on textures and
+                                                                                      � Load the volumetric medical data into GPU fragment shader as a 3D
+lighting, which is a process of calculating the final colors based on the
+                                                                                        texture, at the same time, texture coordinates are loaded to vertex
+given parameters. During the output merging stage, all the fragments of
+                                                                                        shader for processing, such as adjusting aspect ratio to fix the various
+the primitives from the 3D space are transformed into a 2D grid of pixels
+                                                                                        z direction sampling distance during 3D texture generation process,
+that are then printed out on the display screen.
+                                                                                        then the adjusted 3D texture coordinates are transformed to the
+                                                                                        fragment shader for texture sampling.
+5.2. Voxel normal calculation                                                         � The normal for every voxel in the 3D texture volume calculated in
+                                                                                        subsection 5.2 is loaded to fragment shader as a 3D texture for
+    Shading is an important technique to add realistic lighting effect to               lighting computation using the variable uniform sampler3D. In addi­
+the volume rendered 3D medical data. In our application, we design an                   tion, the lighting enhancement factor Fb is also loaded to the frag­
+algorithm to integrate a real-time lighting model into the ray casting                  ment shader as an uniform float variable.
+computing process on graphics hardware unit.                                          � Use the model view matrix to transform 3D texture from texture
+    The following Eq. (1) is the calculation of a voxel normal at the                   space to world space and then to view space, which can be processed
+location (x, y, z) inside a 3D volume with dimension M � N � K, where                   in the fragment shader for final display that can be seen by viewers.
+0 � x � M, 0 �y �N, and 0 � z � K, and we assume that the voxel value                 � As shown in Fig. 6, inside the view space, based on the viewpoint
+at the location ðx, y, zÞ is Iðx, y, zÞ.                                                (camera position from which rays are cast) !     pv and view direction !v d,
+▽Iðx; y; zÞ ¼ ð∂Iðx; y; zÞ = ∂x; ∂Iðx; y; zÞ = ∂y; ∂Iðx; y; zÞ = ∂zÞ      (1)           from each pixel p on the final image plane, cast a ray rðtÞ into the data
+                                                                                        volume in 3D texture space. At each regular sampling point rðti Þ
+where for each element factor of ∂Iðx; y; zÞ=∂x, ∂Iðx; y; zÞ= ∂y, and ∂                 (i ¼ 0, 1, ⋅⋅⋅, K, we assume that there are in total K sampling points
+Iðx; y; zÞ=∂z is calculated by the following Eqs. (2)–(4):                              along the casting ray rðtÞ), acquire the voxel’s intensity value vðrðti ÞÞ
+                                                                                        using trilinear interpolation [54].
+∂Iðx; y; zÞ = ∂x ¼ ½Iðx þ 1; y; zÞ   Iðx      1; y; zÞ� = 2 þ λ           (2)         � The post color attenuated voxel classification algorithm [55] is used
+                                                                                        to create a transfer function, which is employed to map each sampled
+∂Iðx; y; zÞ = ∂y ¼ ½Iðx; y þ 1; zÞ   Iðx; y      1; zÞ� = 2 þ λ           (3)
+                                                                                        intensity value pi ¼ rðti Þ (i ¼ 0, 1, ⋅⋅⋅, K) along the casting ray rðtÞ in
+                                                                                        the previous step into color Ci ¼ Cðpi Þ ¼ Cðrðti ÞÞ and opacity αi ¼
+∂Iðx; y; zÞ = ∂z ¼ ½Iðx; y; z þ 1Þ   Iðx; y; z     1Þ� = 2 þ λ            (4)
+                                                                                        αðpi Þ ¼ αðrðti ÞÞ.
+   The variable λ is used for boundary adjustment. We can set different                                         !
+                                                                                      � The ambient light is l a , light vector, i.e., we assume that there is far
+values to λ to get a little bit different shading result. Using experimental                                                                   !
+evaluation, we find that choosing 128 can generate better shading result                away light with the same direction casting rays, l v , and the diffuse
+                                                                                                 !
+than using other values, so λ is set to 128 in the above Eqs. (2)–(4).                  light is l d . At each sampling point rðti Þ, the extracted voxel normal is
+   At the volume boundary, for example x ¼ M, the voxel Iðx þ1; y; zÞ is                !n i calculated with trilinear-based interpolation on GPU fragment
+invalid, we set it to a large number Ω, i.e., Iðx þ1; y; zÞ ¼ Ω. The same               shader. The reflection light is computed with Eq. (5):
+Iðx 1; y; zÞ ¼ Ω when x ¼ 0. In the above two cases, we assume ∂I= ∂x
+                                                                                         !i            !
+¼ λ. The same rule is used for normal calculations in the y and z di­                    l r ¼ maxðminð l d ⋅ !
+                                                                                                              n i ; 0:0Þ; 1:0Þ                                       (5)
+rections. Then load the calculated normal !     n ðx, y, zÞ ¼ ▽Iðx; y; zÞ into
+the GPU fragment shader as a global shader variable uniform sampler3D.
+
+                                                                                 7
+Q. Zhang                                                                                                                                      Informatics in Medicine Unlocked 17 (2019) 100253
+
+
+Table 1                                                                                      adding shading to the rendered 3D data with specular effect with power
+Medical data used in the experiment, including data number, image illustration,              φ ¼ 5.
+number of slices, original raw data size in megabyte (MB), and the extracted data
+size in MB, which can be loaded and displayed in HTML web browsers.                           � Volume rendering integral Eq. (10) is exploited to compute the
+ Data          Image description               Number      Original    Extracted                accumulated color and opacity Iðti Þ ¼ Iða; bi Þ, i.e., Iðti Þ ¼ Iðrðti ÞÞ is
+ number                                        of slices   data size   data size                the ray casting integral value at the ith sampling point along each
+ 1             MR brain with strokes (a        172         30.45       2.03                     casting ray starting from p0 ¼ a, and stop the ray casting calculation
+               part of the brain is                                                             when the calculated opacity is greater than the preset threshold λ
+               interrupted due to a blocked
+                                                                                                (λ ¼ 0.95 is used in our algorithm) or the ray passed the volume, i.e.,
+               blood vessel)
+ 2             Cardiac CT phase 8 with         84          30.26       1.78                     rðtn Þ ¼ b.
+               fainting (syncope,                                                                           Z bi
+               associated with high rates of                                                 Iða; bi Þ ¼ Fb      CðsÞτðsÞρðsÞds
+               morbidity)                                                                                        a
+ 3             MR heart data with              280         21.26       1.52                           "                                   #                                              (10)
+                                                                                                          X
+                                                                                                          n          Y
+                                                                                                                     n
+                                                                                                                                      �
+               surrounding bones with                                                          ¼ Fb             Ci           1   aj
+               issues of heart pumping                                                                    i¼1        j¼i¼1
+               oxygen and blood
+ 4             CT Heart with coronary          100         24.32       3.43
+               atherosclerosis, evaluation
+                                                                                             where αj is opacity of the jth segment, and the samples are evaluated
+               is necessary for the risk of                                                  from the sampling point rðti Þ to the eye on the casting ray rðtÞ. Loaded
+               heart attack                                                                                                                                        !
+                                                                                             normals at each voxel’s position is used with light source position l p
+ 5             Normal MR brain image for       176         23.41       1.70
+                                                                                                           !
+               demonstration purpose                                                         and direction l d to add shading effect to the final rendered image using
+ 6             MR brain review to check        122         21.42       2.80                  Phong optical model [56]. Fb is lighting enhancement factor and can be
+               concussions
+ 7             Skull tooth data with           100         18.27       0.87
+                                                                                             interactively adjusted through graphics user interface to change the
+               impacted wisdom teeth that                                                    brightness of the rendered 3D medical image.
+               is incompletely embedded
+               in the jawbone                                                                 � When the viewpoint and view direction changes, the casting ray
+ 8             MR brain with problems          109         1.84        0.08
+                                                                                                direction and the texture transformation matrix will be updated
+               with concentration
+ 9             Head phantom data cut the       320         33.41       2.57                     automatically, and the algorithm will resample the casting ray and
+               brain into half for teaching                                                     recompute the volume rendering integral Eq. (10) to get the updated
+               anatomical demonstration                                                         image.
+ 10            MR brain has problems of        160         39.27       2.31
+               concentration with vessel
+               high cholesterol                                                              6. Results and evaluation
+ 11            Lang data with chronic          42          1.62        0.06
+               bronchitis and emphysema                                                          In this section, we describe the experimental results using the med­
+               with a decline in lung
+                                                                                             ical data sets listed in Table 1. We illustrate the user interface (UI) and
+               function
+ 12            Brain data with vessel high     60          23.76       1.32                  major functions of our software platform. We also show the medical data
+               cholesterol, which is a                                                       visualization results using our new web-based volume rendering, spec­
+               building block of steroid                                                     ular lighting and feature enhancement algorithms. Finally, we evaluate
+               hormones                                                                      the performance of the developed web-based software platform.
+ 13            CT data for heart with          49          21.4        4.67
+               shortness of breath
+ 14            Wrist CT data with carpal       160         60.18       3.54
+               tunnel syndrome from                                                          6.1. User interface and functionality
+               sudden injuries with
+               scaphoid fractures                                                                The user interface is the communication point between the user and
+                                                                                             the software platform. The bottom right of Fig. 1 shows a snapshot of the
+            ! !          !                                                                   major interface of our web-based platform, which includes a major
+      Ci ¼ ð l a þ l ri � l d Þ � Ci                                               (6)       display area showing the volume rendered 3D medical data and a con­
+                                                                                             trol panel for medical image exploration and sharing information. The
+                                                                                             main function of our graphics user interface is collaborative medical
+ � The updated Ci using Eq. (6) is used with the flowing ray casting                         data rendering, information visual synchronization, and message
+   integral Eq. (10) for adding shading to the rendered 3D data without                      streaming. It allows all users to share the same medical data rendering
+   specular lighting.                                                                        view and to efficiently communicate during the data exploration
+ � To add specular shading, we set specular color Cs and casting ray                         process.
+                !
+   direction is d , the specular item at the voxel rðti Þ is computed with                       Fig. 7 shows the console panel for adjusting color, opacity, shading
+   Eqs. (7) and (8).                                                                         and image enhancement. Our previous work [44] includes only color
+      !         !                  !                                                         and opacity adjustment. Using our new volume rendering algorithm, we
+      l ri ¼    l v þ2�!
+                       n i � ½!
+                              n i ⋅ l v�                                           (7)       can effectively enhance the brightness and feature of interest of the
+                ! !                                                                          visualized image in real time, and we can also add specular lighting to
+      !
+      s i ¼ maxð d ⋅ l ri ; 0:0Þ                                                   (8)       the displayed 3D medical data. In the data rendering control panel, data
+                                                                                             exploration can be synchronized among all the connected clients in real
+            ! !          !
+      Ci ¼ ð l a þ l ri � l d Þ � Ci þ αi � !
+                                            s i � Cφs                              (9)       time, including data set loading and update, zooming in and out,
+                                                                                             lighting selection, feature enhancement, rotating and panning.
+                                                                                                 Fig. 3 illustrates the message streaming interface, where the user can
+       !                       !                                                             first input name, unique id, email address and phone number, then
+where l ri is the reflection of l v using normal !
+                                                 n i . The updated Ci using                  inputting comments on the displayed 3D medical data, and the message
+Eq. (9) is employed with the flowing ray casting integral Eq. (10) for                       is streamed and shared with all the connected clients. As shown in the
+
+                                                                                         8
+Q. Zhang                                                                                                              Informatics in Medicine Unlocked 17 (2019) 100253
+
+
+
+
+Fig. 7. Demonstration of medical data visual synchronization, including data rendering, opacity adjustment, feature enhancement, and specular lighting. (a)–(c) and
+(d)–(f) are generated using data number 12 and 3 in Table 1 respectively.
+
+
+top of Fig. 2, there are four clients that are using the message streaming           volume rendering function Eq. (10) to integrate lighting enhancement to
+interface, all the clients share the same dynamically updated informa­               images (b) and (e), and the second row of Fig. 8. To add specular shading
+tion panel and know the user who is typing comments. All the user in­                to the rendered images, Eqs. (7)–(9) are used to calculate the specular
+formation and input messages are automatically stored in MySQL                       shading factors and add shading to the final visualized images in (c) and
+database, and can be extracted and displayed in the web page as illus­               (f) and the bottom row. Fig. 9 shows the enlarged part of the images in
+trated in the right table of Fig. 3. In the user interface, all the connected        Fig. 8, from which we can see the details of the rendered images.
+users share the same view, data navigation and message display panel in                   When compared with the medical images generated with our visu­
+real time using our new information and data visual synchronization                  alization algorithm running on a stand-alone computer with graphics
+methodologies.                                                                       hardware [57], the 3D medical images rendered with our new
+                                                                                     web-based raycasting algorithm can deliver the same or even better
+                                                                                     image quality and additional dynamical brightness and enhancing fea­
+6.2. Data visualization
+                                                                                     tures. As demonstrated in Figs. 7, 8 and 8, our algorithms can generate
+                                                                                     high-quality volumetric images with realistic shading effects and
+    In this subsection, we will demonstrate medical data visualization
+                                                                                     various colors, which means that the developed raycasting algorithm
+results using our new data volume rendering and enhancement algo­
+                                                                                     with the integrated techniques such as lighting, image feature increase,
+rithm. Fig. 7 (a) and (d) show the original volume rendered images
+                                                                                     trilinear interpolation and post color attention classification can effec­
+without lighting and enhancement, (b) and (e) are images with bright­
+                                                                                     tively eliminate image noise and improve the image rendering result.
+ness enhancement, while (c) and (f) demonstrate images rendered with
+                                                                                          The visual demonstration in our experiment shows that the new data
+both specular lighting and enhancement. Data sets listed in Table 1 are
+                                                                                     rendering algorithm can effectively deliver high-quality feature-
+used to generate the described images: (a)-(c) are rendered using data
+                                                                                     enhanced medical images. The developed algorithm can show the
+number 12, while (d)-(f) are generated with data number 3.
+                                                                                     required details and keep all the data information during the whole
+    More rendering examples are shown in Fig. 8, where the top row are
+                                                                                     image exploration procedure. The imaging enhancement implemented
+images generated with our basic visualization algorithm. Eqs. (5) and
+                                                                                     in our web-based platform can increase the reality of the images dis­
+(6) are used to calculate ambient lighting value in the raycasting
+                                                                                     played in web browsers, which is useful in the applications such as
+computing process, which work with the adjustment factor Fb in the
+
+                                                                                 9
+Q. Zhang                                                                                                          Informatics in Medicine Unlocked 17 (2019) 100253
+
+
+                                                                                                          Fig. 8. The rendered 3D medical images using our
+                                                                                                          new WebGL2-based raycasting, image enhancement
+                                                                                                          and specular lighting algorithms. The top row images
+                                                                                                          are rendered without lighting or enhancement, the
+                                                                                                          second row are images visualized with ambient
+                                                                                                          lighting and enhancement, while the images in the
+                                                                                                          bottom row are generated with feature enhancement
+                                                                                                          and specular lighting. (a)–(c) are visualized with data
+                                                                                                          number 4 in Table 1, while (d)–(f) and (g)–(i) are
+                                                                                                          generated with data number 10 and 13 respectively.
+
+
+
+
+virtual reality based imaging guidance and medical teaching demos on               Firefox version 68 web browser and system 1, we can detect e140 frame
+the Internet.                                                                      per second (fps) rendering speed with standard deviation (SD) 5.1 on a
+                                                                                   high-frequency monitor. The platform’s rendering speed on the other
+                                                                                   hardware systems can achieve e115�7.8 fps and e76�7.5 fps respec­
+6.3. Performance evaluation
+                                                                                   tively. When using Chrome version 75 web browser to visualize the same
+                                                                                   data sets on the same hardware systems, the display speed is around 5%
+    Three hardware systems listed in Table 2 are used to evaluate the
+                                                                                   lower than that of using Firefox. The calculated SD of the rendering
+performance of our web-based software platform. Table 1 describes the
+                                                                                   speed on Firefox is around 10% smaller than the corresponding
+data set used in the experiment. Node.js and Apache servers are
+                                                                                   rendering speed’s SD on Chrome, which means that when rendering 3D
+currently running on a hardware system 1, and we run the clients on all
+                                                                                   data on the Firefox browser, the system’s performance is more uniform
+of these three hardware systems. The servers and clients are connected
+                                                                                   than that of Chrome.
+with Internet and WebSocket protocol.
+                                                                                       The top bar image in Fig. 10 visually shows our system’s perfor­
+    Five persons with basic medical imaging training and networking
+                                                                                   mance on rendering and enhancing the above described medical data
+knowledge evaluate our software platform using data listed in Table 1.
+                                                                                   sets using the hardware configurations and web browsers listed in
+All of the participants give positive or very positive feedback on the
+                                                                                   Table 3. When using Firefox or Chrome to show the above illustrated five
+system’s performance regarding the rendering quality and enhanced
+                                                                                   data sets, the average speed is faster than 68 fps with SD less than 10,
+features. They report that the rendering is smooth and they cannot
+                                                                                   which means the performance of both browsers are uniform and our
+detect synchronization delay in the process of medical data exploration
+                                                                                   algorithm can achieve real time volume rendering for normal size
+and information sharing. The evaluators can communicate using our
+                                                                                   medical data.
+message panel as illustrated in Fig. 3. From the collected feedback, we
+                                                                                       We have tested the bidirectional connection time between Node.js
+can confirm that all the messages are streamed in real time and can be
+                                                                                   server and clients using an Internet with e25 Mbps download and e3
+extracted from database, and the same medical data view and dynamic
+                                                                                   Mbps upload speed, including initial connection for server response and
+message information are shared by all participants in various locations
+                                                                                   shader connection for loading shaders to visualize medical data in web
+with Internet connection as described in Fig. 2.
+                                                                                   browsers. Table 3 shows the time consumed when using the listed three
+    As demonstrated in Table 3 and Fig. 10, the first 5 data sets listed in
+                                                                                   hardware configurations and two web browsers. Thanks to the newest
+Table 1 are used in the rendering performance experiment. When using
+
+                                                                              10
+Q. Zhang                                                                                                             Informatics in Medicine Unlocked 17 (2019) 100253
+
+
+
+
+        Fig. 9. Zoomed in part of the displayed 3D medical images in Fig. 8. The corresponding images in both figures share the same image label (a)–(i).
+
+
+                                                                                      workers allows data upload from web workers, which frees the main
+Table 2                                                                               thread and we can use it to handle data rendering and user interactions.
+Hardware configurations used in the experiment: system number, central pro­           Thanks to the efficient use of web workers, data loading in our platform
+cessing unit (CPU), memory size in Megabytes (MB) and graphics processing unit        can be conducted smoothly without disturbing other operations on
+(GPU). Three systems, i.e., sys. i (i ¼ 1, 2, 3), are employed to evaluate the        client computers. We also notice that using different hardware systems
+platform’s performance.                                                               as Node.js server does not affect the performance of duplex information
+ Sys.             CPU                        Memory              GPU                  communication and data rendering speed on client computers. Howev­
+ 1                Intel i9-9900KF            64                  GTX 1080             er, the web workers can only solve the problem partly, given their
+ 2                Intel i7-3770K             32                  GTX 680              memory overhead and communication model, the use of many workers
+ 3                Intel i7-8750H             32                  GTX 1070Q            in a single application may offset the performance gain.
+                                                                                          Our experiment demonstrates that all the client computers and the
+                                                                                      Node.js server can share the same volume rendering and data navigation
+hardware technologies, the connection time with system 1 is shortest in
+                                                                                      view in the image display window and the related messages can be
+the three systems, which is around 30% faster than the other two
+                                                                                      streamed in real time using our system’s information panel, making the
+hardware configurations. When using Firefox, the initial connection
+                                                                                      developed web-based software platform useful in collaborative diag­
+time is 0.21 ms (ms) - 0.42 ms, while the corresponding time needed is
+                                                                                      nosis, virtual reality based medical training and treatment planning
+0.35 ms–0.53 ms when using the Chrome web browser. The shader
+                                                                                      through Internet.
+connection (both vertex and fragment shaders) is around 5 times the
+corresponding initial connection time. The SD for all these connections
+                                                                                      7. Conclusion
+is less than 0.62, which means that the connection speed is relative
+uniform and the users can get smooth system performance. The bottom
+                                                                                         In this paper, we present a web-based software platform to visually
+bars in Fig. 10 visually show the connection speed of our software
+                                                                                      synchronize medical data exploration on Internet. Taking advantage of
+platform including the average connection time needed with corre­
+                                                                                      Node.js and Socket.IO, we develop algorithms to bidirectionally connect
+sponding SD, from which we can see that the connection speed is
+                                                                                      server and clients, where parameter settings for volumetric medical
+millisecond level, so the final users cannot detect any delay when using
+                                                                                      image rendering and manipulation can be interactively updated and
+our system for Internet based medical data exploration and visual
+                                                                                      shared among all connected clients. We also design an information
+synchronization.
+                                                                                      sharing pipeline for streaming messages among all the connected clients
+    In our web-based software platform, the extension in shared web
+                                                                                      and linking their input to MySQL database directly, where authorized
+
+                                                                                 11
+Q. Zhang                                                                                                                       Informatics in Medicine Unlocked 17 (2019) 100253
+
+
+Table 3
+Performance evaluation of data rendering and server-client connection using
+five medical datasets in Table 1, three hardware configurations listed in Table 2
+and Firefox (F) and Chrome (C) web browsers (Br.). The rendering speed is
+frames per second (fps), while the time cost in both the initial and shader con­
+nections is millisecond (ms). The listed numbers are the average of ten tests and
+standard deviation (SD) is also calculated.
+ Sys.      Br.   Data      Rendering           Initial Conn.�   Shader Conn.�
+                 Num.      Speed�SD            SD               SD
+
+ 1         F     1         142�5.1             0.21�0.02        1.35�0.25
+                 2         132�4.8
+                 3         145�4.5
+                 4         142�4.2
+                 5         131�3.8
+           C     1         136�5.8             0.35�0.04        1.56�0.38
+                 2         116�5.2
+                 3         143�5.6
+                 4         140�4.7
+                 5         128�4.5
+
+ 2         F     1         115�7.8             0.32�0.06        1.62�0.38
+                 2         102�6.9
+                 3         118�6.6
+                 4         112�7.3
+                 5         108�7.5
+           C     1         113�8.4             0.39�0.07        1.85�0.41                Fig. 10. Demonstration of volume rendering and system connection speed, i.e.,
+                 2         98 �7.2                                                       time used to launch the required connection, using the listed three systems and
+                 3         115�7.5                                                       five data sets in Table 3. Top: data visualization speed in frames per second.
+                 4         107�8.1                                                       Bottom: connection speed between clients and Node.js server in milli­
+                 5         100�8.8                                                       second (ms).
+
+ 3         F     1         76�7.5              0.42�0.08        1.95�0.46
+                                                                                         the combined computing features of both central processing unit (CPU)
+                 2         74�6.6
+                                                                                         and graphics processing unit (GPU) for high-performance parallel
+                 3         82�5.4
+                                                                                         medical data computing and visualization in web browsers. Finally, we
+                 4         78�7.3
+                                                                                         plan to apply our software to a large cloud framework in hospitals or
+                 5         73�5.9
+                                                                                         medical institutes to validate its real-world performance in
+           C     1         74�8.5              0.53�0.09        2.12�0.62
+                                                                                         Internet-based clinical diagnosis, treatment planning, and collaborative
+                 2         72�7.3
+                                                                                         therapy.
+                 3         78�6.4
+                 4         73�8.1
+                                                                                         Ethical statement
+                 5         68�6.2
+
+                                                                                            The author has no ethical conflicts, financial or personal or other­
+users are able to store and retrieve medical data and their associated                   wise, related to the presented research.
+information.
+    In the developed system, shared web workers are implemented and
+                                                                                         Declaration of competing interest
+integrated into our data synchronization algorithm to optimize multi-
+thread network connections and web page interactions, and novel
+                                                                                             The author declares no conflicts of interest.
+graphics lighting and specular shading algorithms are designed to
+enhance features of interest of the 3D medical images rendered in web
+browsers. Our software platform can display normal size medical data in                  Acknowledgment
+real time and deliver high-quality tissue structure enhanced images,
+which allows clinical users and medical researchers at arbitrary loca­                      The author would like to thank the Faculty Startup Grant of the
+tions to concurrently visualize and analyze the same medical data view                   School of Information Technology at Illinois State University. The
+in real time. The presented algorithms and web-based software platform                   author also thanks the support of the College of Arts and Sciences (CAST)
+will benefit medical applications such as distributed diagnosis, medical                 Publication Incentive Program Award and the CAST University Research
+collaboration and training on Internet, telemedicine, and remote                         Grant (URG). As an adjunct faculty, the author would appreciate the
+treatment.                                                                               support of the Department of Medical Biophysics at the Western Uni­
+    In the future work, we will consider designing some advanced                         versity for providing digital library access and research collaborations.
+interpolation techniques to handle the missing voxels outside the vol­                   Finally, the author would like to extend his appreciation to the re­
+ume as described in subsection 5.2, and then use the interpolation result                viewer’s suggestions and comments as well as Dr. Ciaccio’s recom­
+to calculate the boundary voxel derivatives. We also plan to improve                     mendation and proofreading this paper.
+user interactions, allowing users to dynamically change φ in Eq. (9) from
+user interface, so the shading effect of the specular volume lighting can                References
+be updated accordingly in real time. Furthermore, we will integrate new
+                                                                                          [1] Carroll LN, Au AP, Detwiler LT, chieh Fu T, Painter IS, Abernethy NF. Visualization
+web technologies such as WebCL (Web Computing Language) [58] into                             and analytics tools for infectious disease epidemiology: a systematic review.
+our current WebGL based data rendering pipeline to take advantage of                          J Biomed Inform 2014;51:287–98. https://doi.org/10.1016/j.jbi.2014.04.006.
+
+
+                                                                                    12
+Q. Zhang                                                                                                                               Informatics in Medicine Unlocked 17 (2019) 100253
+
+ [2] Glover T. Using web applications for data visualisation. In: Proceedings of the             [26] Mahmoudi SE, Akhondi-Asl A, Rahmani R, Faghih-Roohi S, Taimouri V, Sabouri A,
+     european conference on cognitive ergonomics, ECCE ’16. New York, NY, USA:                        Soltanian-Zadeh H. Web-based interactive 2d/3d medical image processing and
+     ACM; 2016. 31:1–31:2.                                                                            visualization software. Comput Methods Progr Biomed 2010;98(2):172–82.
+ [3] Kooper R, Shirk A, Lee S-C, Lin A, Folberg R, Bajcsy P. 3d medical volume                        https://doi.org/10.1016/j.cmpb.2009.11.012.
+     reconstruction using web services. Comput Biol Med 2008;38(4):490–500. https://             [27] Marion C, Jomier J. Real-time collaborative scientific webgl visualization with
+     doi.org/10.1016/j.compbiomed.2008.01.015.                                                        websocket. In: Proceedings of the 17th international conference on 3D web
+ [4] Min Q, Wang Z, Liu N. An evaluation of html5 and webgl for medical imaging                       technology, Web3D ’12; 2012. p. 47–50.
+     applications. Journal of Healthcare Engineering 2018;2018:11. https://doi.org/              [28] Jim�enez J, L�opez A, Cruz J, Esteban F, Navas J, Villoslada P, de Miras JR. A web
+     10.1155/2018/1592821.                                                                            platform for the interactive visualization and analysis of the 3d fractal dimension
+ [5] Qiao L, Li Y, Chen X, Yang S, Gao P, Liu H, Feng Z, Nian Y, Qiu M. Medical high-                 of mri data. J Biomed Inform 2014;51:176–90. https://doi.org/10.1016/j.
+     resolution image sharing and electronic whiteboard system: a pure-web-based                      jbi.2014.05.011.
+     system for accessing and discussing lossless original images in telemedicine.               [29] Sherif T, Kassis N, Rousseau M-t, Adalat R, Evans AC. Brainbrowser: distributed,
+     Comput Methods Progr Biomed 2015;121(2):77–91. https://doi.org/10.1016/j.                        web-based neurological data visualization. Front Neuroinf 2015;8:89. https://doi.
+     cmpb.2015.05.010.                                                                                org/10.3389/fninf.2014.00089. https://www.frontiersin.org/article/10.33
+ [6] Ku W-Y, Nfor ON, Liu W-H, Tantoh DM, Hsu S-Y, Wang L, Chou T-Y, Liaw Y-P.                        89/fninf.2014.00089.
+     Online community collaborative map: a geospatial and data visualization tool for            [30] Shi M, Gao J, Zhang MQ. Web3DMol: interactive protein structure visualization
+     cancer data. Medicine 2019;98:89. https://10.1097/MD.0000000000015521.                           based on WebGL. Nucleic Acids Res 2017;45(W1):W523–7.
+ [7] Elhoseny M, Bian G-B, Lakshmanaprabu S, Shankar K, Singh AK, Wu W. Effective                [31] Rego N, Koes D. 3Dmol.js: molecular visualization with WebGL. Bioinformatics
+     features to classify ovarian cancer data in internet of medical things. Comput                   2014;31(8):1322–4.
+     Network 2019;159:147–56. https://doi.org/10.1016/j.comnet.2019.04.016.                      [32] Marion C, Pouderoux J, Jomier J, Jourdain S, Hanwell M, Ayachit U. A hybrid
+ [8] Woo J, Lee MJ, Ku Y, Chen H. Modeling the dynamics of medical information                        visualization system for molecular models. In: Proceedings of the 18th
+     through web forums in medical industry. Technol Forecast Soc Chang 2015;97:                      international conference on 3D web technology, Web3D ’13. New York, NY, USA:
+     77–90. https://doi.org/10.1016/j.techfore.2013.12.006.                                           ACM; 2013. p. 117–20.
+ [9] Fonzo GA, Fine NB, Wright RN, Achituv M, Zaiko YV, Merin O, Shalev AY, Etkin A.             [33] Gastounioti A, Kolias V, Golemati S, Tsiaparas NN, Matsakou A, Stoitsis JS,
+     Internet-delivered computerized cognitive & affective remediation training for the               Kadoglou NP, Gkekas C, Kakisis JD, Liapis CD, Karakitsos P, Sarafis I, Angelidis P,
+     treatment of acute and chronic posttraumatic stress disorder: two randomized                     Nikita KS. Carotid – a web-based platform for optimal personalized management of
+     clinical trials. J Psychiatr Res 2019;115:82–9. https://doi.org/10.1016/j.                       atherosclerotic patients. Comput Methods Progr Biomed 2014;114(2):183–93.
+     jpsychires.2019.05.007.                                                                          https://doi.org/10.1016/j.cmpb.2014.02.006.
+[10] Al-Shammari A, Zhou R, Naseriparsaa M, Liu C. An effective density-based                    [34] Tao J, Huang X, Qiu F, Wang C, Jiang J, Shene C-K, Zhao Y, Yu D. Vesselmap: a
+     clustering and dynamic maintenance framework for evolving medical data streams.                  web interface to explore multivariate vascular data. Comput Graph 2016;59:79–92.
+     Int J Med Inform 2019;126:176–86.                                                                https://doi.org/10.1016/j.cag.2016.05.024.
+[11] Shen H, Ma D, Zhao Y, Sun H, Sun S, Ye R, Huang L, Lang B, Sun Y. Miaps: a web-             [35] Doel T, Shakir DI, Pratt R, Aertsen M, Moggridge J, Bellon E, David AL, Deprest J,
+     based system for remotely accessing and presenting medical images. Comput                        Vercauteren T, Ourselin S. Gift-cloud: a data sharing and collaboration platform for
+     Methods Progr Biomed 2014;113(1):266–83. https://doi.org/10.1016/j.                              medical imaging research. Comput Methods Progr Biomed 2017;139:181–90.
+     cmpb.2013.09.008.                                                                                https://doi.org/10.1016/j.cmpb.2016.11.004.
+[12] Koulouzis S, Zudilova-Seinstra E, Belloum A. Data transport between visualization           [36] Qiao L, Chen X, Zhang Y, Zhang J-N, Wu Y, Li Y, Mo X, Chen W, Xie B, Qiu M. An
+     web services for medical image analysis. Procedia Computer Science 2010;1(1):                    html5-based pure website solution for rapidly viewing and processing large-scale
+     1727–36. https://doi.org/10.1016/j.procs.2010.04.194. iCCS 2010. URL.                            3d medical volume reconstruction on mobile internet. International Journal of
+[13] Bond RR, Finlay DD, Nugent CD, Moore G. A web-based tool for processing and                      Telemedicine and Applications 2017;2017:1–13. https://doi.org/10.1155/2017/
+     visualizing body surface potential maps. J Electrocardiol 2010;43(6):560–5.                      4074137.
+     https://doi.org/10.1016/j.jelectrocard.2010.05.010.                                         [37] Borgbjerg J. Mulrecon: a web-based imaging viewer for visualization of volumetric
+[14] Oluwagbemi O, Oluwagbemi F, Ughamadu C. Android mobile informatics                               images. Curr. Probl. Diagn. Radiol. 2019;48(6):531–4. https://doi.org/10.1067/j.
+     application for some hereditary diseases and disorders (amahd): a complementary                  cpradiol.2018.09.001.
+     framework for medical practitioners and patients. Informatics in Medicine                   [38] Huang Q, Huang X, Liu L, Lin Y, Long X, Li X. A case-oriented web-based training
+     Unlocked 2016;2:38–69. https://doi.org/10.1016/j.imu.2016.03.001.                                system for breast cancer diagnosis. Comput Methods Progr Biomed 2018;156:
+[15] Lagerstedt I, Moore WJ, Patwardhan A, Sanz-García E, Best C, Swedlow JR,                         73–83. https://doi.org/10.1016/j.cmpb.2017.12.028.
+     Kleywegt GJ. Web-based visualisation and analysis of 3d electron-microscopy data            [39] Bloom RB. Apache server 2.0: the complete reference. New York, NY, USA:
+     from emdb and pdb. J Struct Biol 2013;184(2):173–81. https://doi.org/10.1016/j.                  McGraw-Hill, Inc.; 2002.
+     jsb.2013.09.021.                                                                            [40] Atkinson L, Suraski Z. Core PHP programming. third ed. Prentice Hall Professional
+[16] Salavert-Torres J, Iudin A, Lagerstedt I, Sanz-García E, Kleywegt GJ,                            Technical Reference; 2003. third ed.
+     Patwardhan A. Web-based volume slicer for 3d electron-microscopy data from                  [41] Widenius M, Axmark D. Mysql reference manual. first ed. Sebastopol, CA, USA:
+     emdb. J Struct Biol 2016;194(2):164–70. https://doi.org/10.1016/j.                               O’Reilly & Associates, Inc.; 2002.
+     jsb.2016.02.012.                                                                            [42] Lizzio VA, Gulledge CM, Meta F, Franovic S, Makhni EC. Using a web-based data
+[17] The Khronos Group, WebGL. OpenGL ES for the web. URL, https://www.khronos.                       collection platform to implement an effective electronic patient-reported outcome
+     org/webgl/; 2019.                                                                                registry. Arthroscopy Techniques 2019;8(6):e535–9. https://doi.org/10.1016/j.
+[18] Schroeder W, Martin K, Lorensen B. The visualization toolkit–an object-oriented                  eats.2019.01.012.
+     approach to 3D graphics. fourth ed. Kitware, Inc.; 2006.                                    [43] Dirksen J. Learning Three.js – the JavaScript 3D library for WebGL. second ed.
+[19] Tiwari M, Kumar P, Agrawal A. Web-based volume visualization of 3d medical data                  Packt Publishing - ebooks Account; 2015. second ed. https://threejs.org.
+     using slice streaming method. In: Proceedings of the sixth international conference         [44] Zhang Q. Web-based medical data visualization and information sharing towards
+     on computer and communication technology 2015, ICCCT ’15. New York, NY,                          application in distributed diagnosis. Informatics in Medicine Unlocked 2019;14:
+     USA: ACM; 2015. p. 194–8.                                                                        69–81. https://doi.org/10.1016/j.imu.2018.10.010.
+[20] Min Q, Liu N, Chen Y. A web-based medical image viewer for 2d and 3d                        [45] The Khronos Group. WebGL 2.0 specification. https://www.khronos.org/registry/
+     visualization. In: Proceedings of the 2018 2Nd international conference on                       webgl/specs/latest/2.0/; 2019.
+     management engineering, software engineering and service Sciences, ICMSS 2018.              [46] Teixeira P. Professional Node.Js: building javascript based scalable software. first
+     New York, NY, USA: ACM; 2018. p. 261–4.                                                          ed. Birmingham, UK, UK: Wrox Press Ltd.; 2012.
+[21] Shahzad F, Sheltami TR, Shakshuki EM, Shaikh O. A review of latest web tools and            [47] Rauch G. Socket.io 2.0 is here: featuring the fastest and most reliable real-time
+     libraries for state-of-the-art visualization. Procedia Computer Science 2016;98:                 engine. https://socket.io; 2019.
+     100–6. https://doi.org/10.1016/j.procs.2016.09.017. the 7th International                   [48] The Web Hypertext Application Technology Working Group (WHATWG). HTML
+     Conference on Emerging Ubiquitous Systems and Pervasive Networks (EUSPN                          living standard. https://html.spec.whatwg.org/multipage/workers.html; 2019.
+     2016)/The 6th International Conference on Current and Future Trends of                      [49] Ready to try javascript?. https://www.javascript.com/. [Accessed 16 July 2019].
+     Information and Communication Technologies in Healthcare (ICTH-2016)/                       [50] Holmes S. Getting MEAN with mongo, express, angular, and node. first ed.
+     Affiliated Workshops. URL.                                                                       Greenwich, CT, USA: Manning Publications Co.; 2015.
+[22] Evans A, Romeo M, Bahrehmand A, Agenjo J, Blat J. 3d graphics on the web: a                 [51] Contributing packages to the registry: creating a package.json file. https://docs.
+     survey. Comput Graph 2014;41:43–61. https://doi.org/10.1016/j.                                   npmjs.com/creating-a-package-json-file. [Accessed 16 July 2019].
+     cag.2014.02.002.                                                                            [52] Wolff D. OpenGL 4 Shading Language cookbook: build high-quality, real-time 3D
+[23] Jomier J, Jourdain S, Ayachit U, Marion C. Remote visualization of large datasets                graphics with OpenGL 4.6, GLSL 4.6 and Cþþ17. third ed. Packt Publishing; 2018.
+     with midas and paraviewweb. In: Proceedings of the 16th international conference            [53] Fette I, Melnikov A. Relationship to TCP and HTTP. In: RFC 6455 the WebSocket
+     on 3D web technology, Web3D ’11. New York, NY, USA: ACM; 2011. p. 147–50.                        protocol. first ed. Chichester: IETF; 2011.
+[24] Noguera JM, Jim�    enez JR. Mobile volume rendering: past, present and future. IEEE        [54] Hill S. Graphics gems iv. Ch. Tri-linear Interpolation. San Diego, CA, USA:
+     Trans Vis Comput Graph 2016;22(2):1164–78. https://doi.org/10.1109/                              Academic Press Professional, Inc.; 1994. p. 521–5. http://dl.acm.org/citation.cfm?
+     TVCG.2015.2430343.                                                                               id¼180895.180944.
+[25] Mobeen MM, Feng L. High-performance volume rendering on the ubiquitous webgl                [55] Zhang Q, Eagleson R, Peters TM. Rapid scalar value classification and volume
+     platform. In: IEEE 14th international conference on high performance computing                   clipping for interactive 3d medical image visualization. Vis Comput 2011;27(1):
+     and communication 2012 IEEE 9th international conference on embedded software                    3–19. https://doi.org/10.1007/s00371-010-0509-z.
+     and systems, 2012; 2012. p. 381–8. https://10.1109/HPCC.2012.58.
+
+
+
+
+                                                                                            13
+Q. Zhang                                                                                                                       Informatics in Medicine Unlocked 17 (2019) 100253
+
+[56] Phong BT. Illumination for computer generated pictures, Commun. ACM 1975;18            [58] The Khronos Group. Webcl overview: heterogeneous parallel computing in html5
+     (6):311–7. https://doi.org/10.1145/360825.360839.                                           web browsers. https://www.khronos.org/webcl/; 2019.
+[57] Zhang Q, Eagleson R, Peters TM. Dynamic real-time 4d cardiac mdct image display
+     using gpu-accelerated volume rendering. Comput Med Imag Graph 2009;33(6):
+     461–76. https://doi.org/10.1016/j.compmedimag.2009.04.002.
+
+
+
+
+                                                                                       14
+

@@ -1,0 +1,845 @@
+                                               MNRAS 000, 1–10 (2015)                              Preprint 2 April 2018             Compiled using MNRAS LATEX style file v3.0
+
+
+
+
+                                               Interactive 3D Visualization for Theoretical Virtual
+                                               Observatories
+
+                                                Tim Dykes,           1?   A. Hassan,2 C. Gheller,3 D. Croton,2 M. Krokos,1
+                                               1 School
+                                                      of Creative Technology, University of Portsmouth, Eldon Building, Winston Churchill Ave, Portsmouth PO1 2UP, UK
+                                               2 Centrefor Astrophysics and Supercomputing, Swinburne University of Technology, Hawthorn, Victoria, 3122, Australia
+                                               3 CSCS-ETH, Via Trevano 131, Lugano 6900, Switzerland
+arXiv:1803.11399v1 [astro-ph.IM] 30 Mar 2018
+
+
+
+
+                                               Accepted XXX. Received YYY; in original form ZZZ
+
+
+
+                                                                                  ABSTRACT
+
+                                                                                       Virtual Observatories (VOs) are online hubs of scientific knowledge. They encom-
+                                                                                  pass a collection of platforms dedicated to the storage and dissemination of astronom-
+                                                                                  ical data, from simple data archives to e-research platforms offering advanced tools for
+                                                                                  data exploration and analysis. Whilst the more mature platforms within VOs primar-
+                                                                                  ily serve the observational community, there are also services fulfilling a similar role
+                                                                                  for theoretical data. Scientific visualization can be an effective tool for analysis and
+                                                                                  exploration of datasets made accessible through web platforms for theoretical data,
+                                                                                  which often contain spatial dimensions and properties inherently suitable for visual-
+                                                                                  ization via e.g. mock imaging in 2d or volume rendering in 3d. We analyze the current
+                                                                                  state of 3d visualization for big theoretical astronomical datasets through scientific
+                                                                                  web portals and virtual observatory services. We discuss some of the challenges for
+                                                                                  interactive 3d visualization and how it can augment the workflow of users in a vir-
+                                                                                  tual observatory context. Finally we showcase a lightweight client-server visualization
+                                                                                  tool for particle-based datasets allowing quantitative visualization via data filtering,
+                                                                                  highlighting two example use cases within the Theoretical Astrophysical Observatory.
+                                                                                  Key words: virtual observatory tools – astronomical data bases: miscellaneous
+
+
+
+                                               1    INTRODUCTION                                                   many years now in an effort to improve data accessibility
+                                                                                                                   for the scientific community (Szalay & Gray 2006). The in-
+                                               Data intensive science, heralded as the fourth paradigm of
+                                                                                                                   creased availability of data provided by these services al-
+                                               science, revolves around the use of data intensive computing
+                                                                                                                   lows scientists to publish original research despite not hav-
+                                               for scientific discovery. One of the first fields to undergo a
+                                                                                                                   ing been part of the original data production team. One of
+                                               paradigm shift towards data intensive science was astron-
+                                                                                                                   the first international collaborative efforts to aggregate and
+                                               omy. Data generated by observations and theoretical sim-
+                                                                                                                   share access to data in astronomy resulted in the Virtual
+                                               ulations has been continually growing in complexity and
+                                                                                                                   Observatory (VO) concept, a collection of services with de-
+                                               size due to technological advances in instrumentation and
+                                                                                                                   fined standards for storage and access. A history of the VO
+                                               computing systems, which has caused astronomers to face
+                                                                                                                   is provided by Djorgovski & Williams (2005). This concept
+                                               increasingly difficult processes of data storage and access.
+                                                                                                                   and other efforts are supported by the ubiquity and con-
+                                               These difficulties can be exacerbated by logistical problems
+                                                                                                                   tinuous advancement of modern web technologies, enabling
+                                               relating to long term maintenance, and can create barriers
+                                                                                                                   accessible-anywhere web platforms that bring scientists ever
+                                               that prevent data sharing and inhibit collaboration. Physi-
+                                                                                                                   closer to their big research datasets. In some cases this ex-
+                                               cal storage and transport, security protocols, and complex
+                                                                                                                   tends to e-research platforms with multiple in-built services
+                                               file formats are just some of the problems that can prevent
+                                                                                                                   to support a community of scientists in the process of discov-
+                                               researchers from effectively managing their data and lead to
+                                                                                                                   ery, from data search, subset, and download, to automated
+                                               an environment that is not conducive for cross-institutional
+                                                                                                                   creation of derived datasets and online analysis.
+                                               and international collaboration.
+                                                     It has been commonplace for data-intensive scientists
+                                               to employ online databases and associated web portals for
+
+                                                                                                                       Some notable examples include the extensive services
+                                               ?   E-mail: tim.dykes@port.ac.uk                                    incorporated into the Strasbourg Astronomical Data Center
+
+                                               © 2015 The Authors
+2      T. Dykes et al.
+(CDS)1 , and projects related to the International Virtual         data from computer simulations is frequently expressed in
+Observatory Alliance (IVOA)2 such as the German Astro-             three spatial dimensions, and more naturally explored via in-
+physical Virtual Observatory (GAVO)3 , and the All-Sky Vir-        teractive 3d scientific visualization. This is a more difficult
+tual Observatory (ASVO)4 . These are on-line umbrella ser-         service for a web portal to provide because on-demand 3d vi-
+vices that have historically hosted very large repositories of     sualization can be computationally expensive, especially so
+observational images and surveys in standardized formats,          in this context as the size and complexity of theoretical data
+alongside web-based tools to assist in finding, identifying,       can easily exceed the capabilities of modern web browsers,
+and extracting data from the archives, for example Vizier          and is continually growing.
+(Ochsenbein et al. 2000) and Aladin Lite hosted at the CDS.             Astrophysical simulations can have extremely high com-
+     In the case of theoretical data, such as large cosmo-         putational and memory requirements, requiring large scale
+logical simulation outputs, a public data release will often       solutions provided by HPC facilities. For example, the raw
+link to an online database where users can download some           data of the flagship Millennium run consisted of over 10 bil-
+or all of the data. For example, the Millennium Simulation         lion particles and was executed on the Max Planck Societies
+Data Archive (Lemson & Virgo Consortium 2006) is hosted            principle HPC system for over a month, with the final out-
+through GAVO and accessible via SQL query, and the out-            put requiring roughly 25 TB of storage. These types of data
+puts of the EAGLE simulation (McAlpine et al. 2016) are            products are far too large to fit in the memory of a personal
+hosted and query-able in a similar manner at the Institute         workstation and require large scale computing resources to
+for Computational Cosmology of Durham University. While            host and process. Due to the fact subsequent processing and
+this is undoubtedly beneficial for scientists, access to the raw   analysis requires HPC as well, it is a natural consequence
+data is not the only solution that can be offered by data por-     that web portals for these data products are also being sup-
+tals, and is sometimes the least convenient. The raw size of       ported by HPC systems.
+data releases means a potentially non-trivial process of iden-
+                                                                        The key topic of this paper is to demonstrate how in-
+tifying and extracting useful data can become prohibitive
+                                                                   teractive 3d visualization can support users of virtual obser-
+without dedicated computing resources.
+                                                                   vatory interfaces in accessing, filtering, exploring, and ex-
+     There is now emerging a more advanced type of web
+                                                                   tracting theoretical data. We consider the potential to fur-
+portal for theory data that not only provides access to the
+                                                                   ther utilize HPC resources to provide 3d visualization di-
+raw outputs of simulation, but includes tools to assist the
+                                                                   rectly within web portals, as an additional service to sup-
+astronomer in exploring the data as well as creating or ac-
+                                                                   port the scientist in management and analysis of large the-
+cessing derived datasets that can be more directly useful for
+                                                                   ory datasets. 3d visualization can be exploited to improve
+their science case. An early example of this type of reposi-
+                                                                   the efficiency of accessing data, and particularly interactive
+tory is the Mock Map facility (Blaizot et al. 2005), an online
+                                                                   visualization can provide real-time visual feedback to further
+tool that allows users to access mock galaxy catalogues gen-
+                                                                   support the exploration and extraction process. We aim to
+erated via the GALICS semi-analytic model (Blaizot et al.
+                                                                   ensure that larger datasets and demanding processing tasks
+2004). More recent examples (see review in Section 2.1) may
+                                                                   remain within the web portal, while the user only downloads
+also have powerful hardware back-ends such as High Perfor-
+                                                                   and processes the minimum amount of data they require.
+mance Computing (HPC) systems to support more complex
+                                                                   Those larger datasets and tasks can then further rely on the
+tools for selection, customization and generation of derived
+                                                                   support of HPC resources to ensure we have the performance
+data, enabling the processing of large and complex datasets
+                                                                   necessary to visualize and interact in real-time.
+through sophisticated on-line services.
+     Scientific visualization has been applied in many differ-          To this end we review the current state of the art in
+ent contexts in an effort to support the knowledge discovery       3d visualization within web-based astronomy data portals,
+process, as can be seen in the comprehensive reviews on vi-        and present a approach based on the open source visualiza-
+sualization techniques for general physical sciences, (Lipsa       tion software Splotch (Dolag et al. 2008) with discussion of
+et al. 2012), and specifically for astronomy (Hassan & Fluke       its application for data selection and exploration. Splotch,
+2011). It is already commonplace to exploit visualization          discussed further in Section 3, is a high performance code
+in virtual observatories; observational data is represented        designed for HPC systems, with recent developments includ-
+with all-sky and per-object image compositions and theo-           ing a client server model with web interface and data filter-
+retical data with virtual observations and 3d visualization        ing features. We exploit these developments to demonstrate
+images. Furthermore, interactive visualization is commonly         the utility of 3d visualization within theoretical astronomical
+used in the case of 2d observational images. For example,          data portals, with examples in the context of the Theoretical
+while searching for and extracting observational data ob-          Astrophysical Observatory (TAO) (Bernyk et al. 2016).
+jects, a user typically visualizes and navigates images in their        The paper is structured as follows: Section 2 reviews
+web browser using an interactive 2d interface such as the Al-      current online web-portals for theoretical astronomical data
+adin Lite Sky Atlas (Boch & Fernique 2014).                        with a focus on visualization capabilities, and presents a
+     Ideally, a user should be able to follow a similar interac-   brief discussion of the challenges inherent in 3d web-based
+tive navigation process to access theoretical data. However,       visualization in this context. Section 3 details a novel ap-
+                                                                   proach for interactive web-based visualization we have de-
+                                                                   veloped for astrophysical observatories building upon an ex-
+1   http://cdsweb.u-strasbg.fr/                                    isting visualization software, with Section 3.2 detailing the
+2   http://www.ivoa.net/                                           quantitative visualization process enabled. Contextual appli-
+3   http://www.g-vo.org/pmwiki/Main/HomePage                       cation, within specific scientific use cases, is shown in Section
+4   http://www.asvo.org.au/                                        4. Discussion of the work in Section 5 compares with related
+
+                                                                                                         MNRAS 000, 1–10 (2015)
+                                                                       Visualization for Virtual Observatories                 3
+tools and highlights longer term goals, with final conclusions   et al. 2015) which hosts query-able data produced by the
+presented in Section 6.                                          suite of Illustris simulations along with various tools for data
+                                                                 searching and exploration. The site is supported by a cluster
+                                                                 back-end and includes The Explorer for 2D exploration of
+                                                                 Illustris visualizations, along with the Galaxy Observatory
+2     VISUALIZATION FOR THEORETICAL WEB
+                                                                 which provides mock images of galaxies at z=0 where stellar
+      PORTALS
+                                                                 mocks have been built. While visualizations are currently
+There is a new type of theoretical astronomical web portal       pre-computed, the authors indicate that future promising
+emerging, exploiting advances in modern web technologies         directions include providing tools and resources for users to
+and powered by high performance back ends. In this section       compute their own arbitrary results from the hosted data.
+we focus on the visualization capabilities of those character-        Bernyk et al. (2016) describe the Theoretical Astrophys-
+ized by hosting large theoretical data for public access with    ical Observatory (TAO). TAO is an online virtual observa-
+the support of high performance computing resources.             tory providing access to mock extragalactic survey data gen-
+                                                                 erated by running complex semi-analytic galaxy formation
+                                                                 models on the output of large N-body cosmological simula-
+2.1     The Web Observatories                                    tions. TAO provides a variety of science modules for users
+Current theoretical astronomical portals have visualization      to generate and extract data useful for their specific science
+capabilities as summarized in Table 1. We take note of three     case, supported by a supercomputing system as a back-end.
+types of visualization capability:                               In terms of visualization, users can apply a science mod-
+                                                                 ule to generate custom mock image observations. TAO is
+  2d: Two dimensional plotting capabilities such as his-         an example-case and motivation of the presented effort to-
+tograms, line graphs, scatterplots.                              ward incorporation of interactive 3d visualization to virtual
+  3d: Three dimensional plotting capabilities such as maps       observatories, and discussed further in Section 4.
+and 3d renderings.                                                    The Cosmological Web Portal (Ragagnin et al. 2016) is
+  VObs: Virtual observations generated by scientific mock        an online web service for hydrodynamical, cosmological sim-
+imaging packages.                                                ulations. Supported computationally by LRZ and C2PAP,
+                                                                 the portal provides services to browse and subset Mag-
+     For each type of visualization we note the availability
+                                                                 neticum data8 as well as generate various 2d maps, vir-
+type, either user-generated or pre-computed, which distin-
+                                                                 tual observations and spectra. Visualizations in 3d are pre-
+guishes respectively whether the user can generate their own
+                                                                 computed via the Splotch software. These services create
+new visualizations or simply browse a selection of existing
+                                                                 jobs on the underlying HPC system in order to satisfy user
+visualizations.
+                                                                 requests, and so allow users to not only explore existing raw
+     We further note the type of interaction available: static
+                                                                 and derived data, but generate further results to suit their
+in the case of simple images; 2d interaction in the case of
+                                                                 own needs.
+Zoomify-like5 navigable images; and 3d interaction for 3d
+                                                                      As can be seen from Table 1, in general it is not com-
+rotate and zoom navigation such as found in traditional in-
+                                                                 mon to include interactive 3d visualization for astronomical
+teractive 3d visualization packages.
+                                                                 web portals. The exception, Chard et al. (2014), is the most
+     The Millenium Run and later simulations are housed in
+                                                                 advanced platform, built upon an existing workflow engine
+the Millenium Run Database, an SQL-queryable database
+                                                                 and customized for cosmological workflows. A key difference
+for the original data outputs of the simulations (Lemson &
+                                                                 between PDACS and the other portals presented is that it is
+Virgo Consortium 2006). This is combined with the Mille-
+                                                                 a workflow engine for cosmology, rather than a public access
+nium Run Observatory (Overzier et al. 2013) hosting light-
+                                                                 repository. For example, in order to use PDACS a user must
+cone catalogues with virtual observations in many different
+                                                                 have an associated account with computing allocation.
+configurations and other associated data, all of which can be
+                                                                      A strong factor in the lack of 3D vizualization for
+traced back to the data products hosted in the Millenium
+                                                                 web portals is the computational expense. Large theoretical
+Run Database.
+                                                                 datasets require HPC resources for visualization, however
+     PDACS (Chard et al. 2014) is a web portal and sci-
+                                                                 achieving interactivity is not trivial on HPC systems due to
+ence gateway built upon the GALAXY workflow engine for
+                                                                 both the computational expense and factors such as schedul-
+life sciences research6 , re-purposing the engine as a plat-
+                                                                 ing and integration of web and HPC applications. Technical
+form for data access and analysis for a suite of cosmolog-
+                                                                 challenges are further discussed in Section 2.3.
+ical data products forming the Coyote universe (Lawrence
+et al. 2010). The platform is supported by NERSCs comput-
+ing infrastructure and ANLs scientific cloud. It incorporates    2.2    Visualization as part of the Data Access
+a variety of data analysis services, including ParaviewWeb              Workflow
+(discussed further in Section 2.3) integration that enables
+interactive 3d visualization(Madduri et al. 2015).               Visualization is an essential factor in effective data explo-
+     The Illustris project (Vogelsberger et al. 2014) released   ration, and we explain here how it can also support the data
+a web portal7 along with their public data release (Nelson       access workflow. The workflow in Figure 2 is a minimal rep-
+                                                                 resentation of the steps a scientist, or user, would take to ac-
+                                                                 cess data within a web platform. The user will start by defin-
+5   http://www.zoomify.com/
+6   https://galaxyproject.org/
+7   http://www.illustris-project.org/                            8   http://www.magneticum.org/
+
+MNRAS 000, 1–10 (2015)
+4     T. Dykes et al.
+
+Table 1. Visualization in Theoretical Astronomy Portals
+
+                             Portal                    Visualization         Availability      Interaction
+
+                             (Overzier et al. 2013)        VObs              pre-computed     2d interaction
+
+                             (Chard et al. 2014)            2d              user-generated             static
+                                                           VObs             user-generated             static
+                                                            3d              user-generated    3d interaction
+
+                             (Nelson et al. 2015)          VObs              pre-computed              static
+                                                            3d               pre-computed     2d interaction
+
+                             (Bernyk et al. 2016)          VObs             user-generated             static
+
+                             (Ragagnin et al. 2016)         2d              user-generated             static
+                                                           VObs             user-generated             static
+                                                            3d              pre-computed      2d interaction
+
+
+
+ing an initial dataset, and apply post-processing to build a
+derived dataset. This may include an extraction process in
+which the user applies filters to constrain data properties
+and extract a specific data subset (see example interface
+from the TAO platform in Figure 1), as well as applying
+transformations via science modules made available to the
+user. Finally they may download the resultant dataset(s).
+
+
+     In current web repositories without on-demand anal-
+ysis, the user must download their data before performing
+some initial data processing to confirm it is as required. This
+may be done with a variety of analysis techniques, often in-
+cluding local visualization. However, if after some analysis
+and exploration it is clear that the data is not exactly as
+required, the user may need to return to the web portal and
+begin their process again. This feedback loop represents a
+trial and error process, an unnecessary barrier that can be
+time consuming and interrupt the users workflow. It is high-
+lighted in Figure 2 as the solid-line green box on the left side
+of the figure.
+                                                                       Figure 1. Example section of the interface for specifying and
+                                                                       extracting data from the Theoretical Astrophysical Observatory.
+     Conversely, the dotted red box in Figure 2 represents
+the inclusion of in-situ and on-demand analysis techniques.
+In this case, in-situ refers to the preliminary analysis being         2.3      Technical Challenges for Web Visualization in
+performed within the portal where the data is situated, while                   Astronomy
+on-demand refers to the use of scheduled HPC resources
+to fulfill analysis task requirements. In-situ and on-demand           In order to exploit scientific visualization on the web, visual-
+visualization allows the user a quick view of their dataset            ization tools must be able to communicate with the ecosys-
+during the filtering and transformation process, helping to            tem of software that makes up modern web applications.
+identify areas of interest or visible errors before downloading        For example, current browsers come equipped with power-
+the data.                                                              ful engines for Javascript, which has become the de-facto
+                                                                       language of the web. As such, the various approaches for 3d
+                                                                       rendering in a web browser are predominantly Javascript li-
+      Furthermore, an interactive visualization tool that in-          braries based on the WebGL graphics API (for a thorough
+cludes some built-in means of manipulation and filtering can           review of these technologies the reader is referred to Evans
+enhance this process by allowing the feedback loop between             et al. (2014)). The most notable web-only approach to 3d
+visual examination and filter application to take place in-            scientific visualization is the currently ongoing effort to port
+teractively. This enables a more intuitive exploration and             a subset of the Visualization Toolkit library9 to Javascript
+filtering process where the user can add and remove exper-             as vtk.js10 . Further approaches can be seen in the recent
+imental filters as necessary with real-time visual feedback
+(discussed further in Section 3.2). The ultimate goal is to
+provide the scientist with a clearer understanding of their            9    https://www.vtk.org/
+data before leaving the portal to apply their own methods.             10    https://kitware.github.io/vtk-js/
+
+                                                                                                                 MNRAS 000, 1–10 (2015)
+                                                                          Visualization for Virtual Observatories                5
+                                                                    aviewWeb12 . The web-toolkit allows developers to integrate
+                                                                    a web-client for the Paraview server into their application.
+                                                                    While the web framework is relatively recent it is the most
+                                                                    advanced tool currently for web based scientific visualiza-
+                                                                    tion, with options from web-only visualization to a full
+                                                                    client-server mode with a Paraview or VTK (Schroeder et al.
+                                                                    2006) backend.
+                                                                          VisIVO is a suite of visualization software targeting the
+                                                                    virtual observatory environment (Comparato et al. 2007)
+                                                                    (Becciani et al. 2010). The suite includes a client-server
+                                                                    tool supporting grid computing systems, which can integrate
+                                                                    with a web-based science gateway tool built around grid-
+                                                                    computing middle-ware workflow tools(Sciacca et al. 2013).
+                                                                    The underlying viewer can exploit both VTK and Splotch as
+                                                                    rendering engines. VisIVO is currently under development to
+                                                                    extend capability for visual analytics (Sciacca et al. 2015),
+                                                                    and is currently the most VO-compliant scientific visualiza-
+                                                                    tion tool.
+Figure 2. The process for a user to access theory data from a             A more recent concept that has gathered momentum is
+web portal. The feedback loop in green highlights the current
+                                                                    the use of cloud technologies for high performance process-
+process for data inspection, while the feedback loop in red shows
+                                                                    ing, including visualization. NVIDIA offer a GPU Cloud ser-
+the proposed process.
+                                                                    vice that can provide high performance visualization capa-
+                                                                    bilities on cloud based GPU hardware with minimum setup
+state of the art review of web-based visualization techniques       and installation13 . There is not yet much progress toward
+(Mwalongo et al. 2016).                                             utilizing a service such as this for visualization in a virtual
+     Whilst web-only approaches to visualization would be           observatory setting. A key hurdle to this approach is the lo-
+ideal, two of the most challenging technical aspects of 3d vi-      cation of the source data, usually already stored in a HPC
+sualization for astronomy are the computational and mem-            center. To use cloud based visualization services the web
+ory requirements. Theoretical astronomical datasets are of-         platform must also store the data within the cloud, which
+ten orders of magnitude larger than one could store and             can be costly. However, as the technology matures and cost
+process on a home desktop or laptop. For example, the semi          is reduced future efforts may be able to exploit cloud based
+analytic galaxies currently stored on TAO11 are built from          technologies for this type of high performance visualization
+N-Body simulations ranging up to tens of billions of parti-         directly within a web platform.
+cles, while at the extreme scale modern day simulations are
+advancing even further with a recent run of the PKDGRAV
+cosmological code exploiting two trillion particles and re-         3     ADVANCED PARTICLE VISUALIZATION
+quiring roughly 124 terabytes of storage (Potter et al. 2017).            FOR WEB
+With current web-only visualization tools it is not possible
+to visualize data of this size interactively in 3d solely via       3.1    Splotch
+web browser. Instead, as seen in Mwalongo et al. (2016), it         Splotch is an open source scientific visualization tool de-
+is possible to perform remote 3d rendering via a powerful           signed for high performance computing environments. Writ-
+back-end computing system connected to a web based client           ten in C++, with minimal external dependencies, Splotch
+in a client-server architecture.                                    is implemented with a variety of parallel models including
+     The concept of performing large data processing as             hybrid OpenMP and MPI for x86 64 environments such as
+physically close as possible to the storage is coined moving        Xeon and Xeon Phi CPUs, as well as CUDA (NVIDIA Cor-
+computing to the data. Transferring large amounts of data           poration 2007) for GPU based systems (Rivi et al. 2014)
+to the client for rendering is often impractical, if not simply     (Jin et al. 2010). The lack of dependencies and inclusion of
+impossible, due to data size and network transport. How-            multiple parallel models means Splotch can be built to ex-
+ever, sending compressed images is often a much easier task         ploit almost any type of system, from a standalone desktop
+and it is well within the capabilities of modern browsers to        system with or without a GPU to large heterogeneous HPC
+receive and display these at high speed. In this context it         architectures. The key strengths of the Splotch software are:
+is common to use a client-server architecture that performs         support of very large particle based datasets and diverse
+compute tasks on a server close to the data and streams im-         HPC systems (Splotch has successfully visualized 1.86x1011
+ages or video to a client, reducing large data transfers over       particles, pictured in Figure 3), and fast, high quality vol-
+wide-area networks such as the internet.                            ume rendering of particle datasets such as those resulting
+     There are two notable solutions for client-server              from SPH simulations. We choose to use Splotch as the vi-
+web based visualization for astronomy. Firstly, the well-           sualization engine for this work due to these key strengths.
+known general purpose scientific visualization tool Par-
+aview (Ahrens et al. 2005) and associated web-toolkit Par-
+                                                                    12 https://github.com/Kitware/paraviewweb
+                                                                    13 https://www.nvidia.com/en-us/gpu-cloud/hpc-visualization-
+11   https://wiki.asvo.org.au/display/TAOC/Available+Data+Sets      containers/
+
+MNRAS 000, 1–10 (2015)
+6       T. Dykes et al.
+Figure 4 illustrates the structure of Splotch, with various          3.2    Data Filtering for Quantitative Visualization
+readers for standard binary files and common astrophysical
+                                                                     Quantitative visualization allows the user to directly tie the
+file formats included.
+                                                                     numerics of their data to the visual output of a visualization,
+      Recent developments in Splotch include moving from
+                                                                     inferring quantitative information from visual presentation
+a traditional batch HPC software approach to an interac-
+                                                                     (Peskin et al. 1991). This is achieved by providing ways to
+tive client-server model. The traditional batch approach, i.e.
+                                                                     perform quantitative data processing as part of the visual
+where the user submits a job script and waits for the job to
+                                                                     interaction process. We approach this in Splotch by includ-
+be scheduled and run producing a collection of static images,
+                                                                     ing a data filtering menu, which allows the user to perform
+is acceptable for pre-rendered visualizations and movies,
+                                                                     a variety of quantitative tasks on their dataset. Currently
+however for interactive visualization it is necessary to have
+                                                                     supported are three types of filter: clipping, arithmetic, and
+access to the resources during job execution. Full technical
+                                                                     combinatory.
+details of this approach are out of the scope of this paper and
+                                                                          Clipping filters allow the user to subsample their data
+will be presented (in preparation), however a brief overview
+                                                                     by inputting ranges of any existing field in the data (includ-
+is given here for context.
+                                                                     ing those not currently being used in the visualization). An
+      The new client-server Splotch consists of a rendering
+                                                                     example of this could be clipping a lightcone geometrically
+server that can run on a remote HPC system, which streams
+                                                                     in Right Ascension and Declination, followed by applying a
+visualization results to a web client running on a user ma-
+                                                                     mass cutoff to show only very high mass galaxies.
+chine. The data to be visualized is stored on the high per-
+                                                                          Arithmetic filters provide a way of scaling or otherwise
+formance back end, and only compressed images are sent
+                                                                     arithmetically modifying any existing field of the data. An
+to the client. The server receives input asynchronously from
+                                                                     example of this could be applying a logarithmic filter to
+the client in the form of interaction events such as user con-
+                                                                     the visualized quantity to better distinguish fields across a
+nection, key and mouse events, and remote procedure calls
+                                                                     high dynamic range, or scaling data quantities for use e.g.
+(RPCs), all processed in order of receipt during an event
+                                                                     in combinatory filters.
+handling stage at the beginning of each frame. The scene is
+                                                                          Combinatory filters allow the combination of multiple
+updated accordingly, and results are generated, compressed,
+                                                                     fields of the data to create derived fields for visualization. A
+and streamed to the web client as JPEG images.
+                                                                     user can provide data fields as left and right hand sides of
+      The client is a standalone web application written en-
+                                                                     a statement, and pick a combinatory function to apply such
+tirely in Javascript, embedded in a HTML web page with
+                                                                     as adding or subtracting. This can, for example, be used to
+CSS formatting. A default interface consisting of an image
+                                                                     subtract colour bands from one another in a galaxy survey,
+window and debugging console is defined on the client while
+                                                                     the differences of which can point to patterns in the data
+any further user interface elements are generated on-the-fly
+                                                                     such as concentrations of old vs young stars or be used as a
+from an interface descriptor received from the server. The
+                                                                     proxy for redshift.
+default interface is built using a quick and simple UI library,
+                                                                          Filters can be stacked on top of one another which al-
+dat.gui14 , however the design is such that implementors can
+                                                                     lows a user to interactively build e.g. advanced selection cuts
+and would override this using any other user interface li-
+                                                                     for a galaxy catalogue. An example of the potential appli-
+brary. The key feature of this client is that it is thin, there is
+                                                                     cations of combinatory and arithmetic cuts can be seen in
+minimal processing happening on the user machine and as
+                                                                     Eisenstein et al. (2001), where multiple colour bands are
+much as possible is relegated to the high performance server.
+                                                                     combined and various scale factors applied to create derived
+      Communication is handled via the WebSocket protocol
+                                                                     fields that are used to select luminous red galaxy targets
+(Fette & Melnikov 2011), and illustrated in Figure 5. A pri-
+                                                                     from the Sloan Digital Sky Survey. The process of quanti-
+mary Websocket provides two-way binary streaming for im-
+                                                                     tative visualization through data filtering allows a user to
+ages and high frequency events (mouse and keyboard), and a
+                                                                     interactively experiment with selection cuts such as these,
+secondary WebSocket provides text based JSON15 request-
+                                                                     with interactive visual feedback from their data to aid the
+response message passing (for RPC calls). The rendering
+                                                                     scientific process.
+server and interaction client both act as simultaneous RPC
+                                                                          Once satisfied with the results of an interactive filtering
+client-servers, i.e. on either end of communication RPC re-
+                                                                     process, the user can opt to store the filtered dataset to a
+quests can be both sent and received. These are formatted
+                                                                     specified location on the server. Embedded in a web service,
+in a simple and portable manner through the JSON-RPC
+                                                                     this extends to a direct download of the dataset via HTTP.
+protocol16 . The structure of the Splotch client-server imple-
+                                                                     Additionally, a metadata file is stored containing a JSON
+mentation allows a thin web-client to be embedded in a web
+                                                                     representation of the server state and applied filters, which
+service, connecting a web-based user (e.g. the TAO service)
+                                                                     can be used to reload a desired scene and filter configuration.
+to an interactive visualization environment.
+      Alternatively the user can run both client and server
+on their laptop or a desktop with or without GPU for local
+                                                                     4     VISUALIZATION IN THE CONTEXT OF
+visualization of smaller datasets that do not necessitate a
+                                                                           TAO
+high performance system.
+                                                                     In this section, we present several use cases applying our
+                                                                     tool to TAO data, demonstrating the current capability to
+                                                                     build up advanced filters for target selections and to extract
+14   https://github.com/dataarts/dat.gui                             useful subsets from a larger scientific dataset. This approach
+15   JSON Standard: https://tools.ietf.org/html/rfc7159              could in future be similarly adopted by other theoretical web
+16   http://www.jsonrpc.org/specification                            platforms.
+
+                                                                                                          MNRAS 000, 1–10 (2015)
+                                                                            Visualization for Virtual Observatories                 7
+
+
+
+
+                         1300MPC
+                                                                                              81.
+                                                                                                25MPC
+
+Figure 3. A flagship Splotch visualization. The image depicts the Magneticum simulation, Box/mr0, consisting of 1.86x1011 particles
+(Dolag et al. 2015). The full size image (left) is rendered in 160002 pixels and shown alongside a 16x zoom-in image of the box center
+(right).
+
+
+     TAO is a web platform hosting data from multiple cos-            scientific process to demonstrate the utility of an interactive
+mological dark matter numerical simulations and galaxy for-           3d web visualization tool in this context.
+mation models. TAO includes various science modules for                    Framerates reported in this section are recorded with
+users to apply to their data, this includes extracting a light        the Splotch visualization server running on Swan, a Cray
+cone with parameters that match particular survey geome-              XC50 located at the Cray computing facility in Wisconsin,
+try, or generating custom mock images through SkyMaker                USA. Each node consists of 2 Broadwell 22-core Xeon CPUs
+(Bertin 2009). TAO is an example-case and motivation of               clocked at 2.2Ghz. The web client is running on a Macbook
+the presented effort toward incorporation of interactive 3d           Pro (early 2013 model) with 2.7 GHz Intel Core i7, and
+visualization to virtual observatories, and discussed further         Mozilla Firefox 57.0.4, at the University of Portsmouth in
+in Section 4. A node of the ASVO project17 , TAO is sup-              the UK.
+ported by the Center for Astrophysics and Supercomputing
+(CAS) at Swinburne University of Technology, Melbourne,
+Australia. In addition to support and administration, CAS
+provides use of the Swinburne HPC cluster as a high per-
+                                                                      4.1    Exploring the environments of recently
+formance back-end to support the cloud-based platform. As
+                                                                             merged galaxies
+a web platform for theoretical data supported by HPC re-
+sources, and built in a modular way to enable integration of          One example of the power of interactive data visualisation
+new science modules, TAO is an ideal example platform to              for a service like TAO is as a tool to find the large-scale en-
+demonstrate the utility of 3d visualization in this context.          vironments of recently merged galaxies. Galaxy-galaxy col-
+     Users are able to access the database through a point            lisions are common and can have dramatic effects on the re-
+and click web-client, and can exploit various science modules         sulting galaxy’s properties. Just where and when these occur
+for tasks such as constructing observer light-cones, spectral         is a matter of active study by the community. After creating
+distributions and virtual observations. TAO has been used             a mock survey universe in TAO, additional visualisation can
+as a source of data for many science users (e.g. Section 4.1),        be performed using clipping, arithmetic and combinatory fil-
+and provides a vital service to the Astronomical community.           ters allowing the user to draw out recently merged systems
+Starting from existing scenarios utilizing data from the TAO          (or even those about to merge) so that their properties can
+database, we replicate some of the early steps taken in the           be studied and cross-correlated with the broader environ-
+                                                                      ments in which they live (void, filament, group or cluster).
+                                                                      Such information can then be used for mock imaging or for
+                                                                      additional processing once downloaded locally, and directly
+17   http://www.asvo.org.au/                                          compared with equivalent observational data sets.
+
+MNRAS 000, 1–10 (2015)
+8     T. Dykes et al.
+                                                                      the TAO archive via a series of filters in the web interface,
+                                                                      followed by further neighbour-based local environment fil-
+                                                                      tering, and presented visualization comparisons (e.g. Figure
+                                                                      12 of Penny et al. (2015)).
+                                                                           Investigating the properties of galaxies in cosmic voids
+                                                                      is a key science goal. The initial dataset is a 250 h-1 Mpc x
+                                                                      250 h-1 Mpc x 20 h-1 Mpc subset of the galaxy catalog. In
+                                                                      many contexts a random selection here is fine, however it is
+                                                                      also possible to tune the location of the sample to increase
+                                                                      the number of voids and therefore targets for studying. Vi-
+                                                                      sualization can allow the user to undertake a visual process
+                                                                      of sampling to identify relevant sections of the box, in order
+                                                                      to increase the potential number of useful galaxies.
+                                                                           To illustrate this, we take a selection of galaxies starting
+                                                                      with the full SAGE dataset (500 h-1 Mpc3 ) at z=0, extract-
+                                                                      ing 3d galaxy positions, Total stellar mass and Time of last
+                                                                      major merger. This consists of 15619131 galaxies.
+                                                                           Using 2 compute nodes of our test system Swan, we are
+                                                                      able to visualize the full volume interactively at >10 Frames
+                                                                      Per Second (FPS), and begin to visually identify locations
+                                                                      to filter remotely from the web browser of a local laptop,
+                                                                      demonstrated in Figure 6. Subsequently, Figures 7, 8, 9, and
+                                                                      10, document the incremental application of filters to match
+                                                                      the initial selection criteria of Penny et al. (2015).
+                                                                           In this use case, the initial selection becomes an interac-
+                                                                      tive process supporting visual input and feedback, with the
+                                                                      ability to undo-redo filtering and in real-time explore the en-
+                                                                      vironment and history of galaxy mergers before downloading
+                                                                      specific subsets for further analysis.
+
+
+                                                                      4.2   Target Selection in the Large Scale Galaxy
+Figure 4. The software structure of the Splotch code, describing            Distribution
+the main algorithm stages, various parallel models and a non-
+exhaustive list of available file readers. The sections highlighted   One common scenario an astronomer faces is to find a spe-
+in red are key new additions to support a client-server interactive   cific galaxy population for analysis amongst the wider distri-
+model, with significant re-design and optimization throughout the     bution of galaxies spread across the Universe. For example,
+pipeline to support interactivity and data filtering.                 astronomers commonly study the physics of massive galaxy
+                                                                      formation inside galaxy clusters, which host all kinds of in-
+                                                                      teresting phenomena such as red-and-dead elliptical galax-
+                                                                      ies and active radio galaxies. Beyond galaxy evolution, such
+                                                                      clusters are also important probes of the cosmology of the
+                                                                      Universe and can be the focus of highly sophisticated ob-
+                                                                      serving campaigns (e.g. eRosita (Merloni et al. 2012)). Us-
+                                                                      ing TAO one can build a mock universe that includes many
+                                                                      millions of galaxies out to great distances. Currently, to sub-
+                                                                      select from this larger population and identify e.g. clusters,
+                                                                      the data needs to be first downloaded and processed by the
+Figure 5. Splotch: Client server framework with Websocket             user locally with their own code. Any subsequent imaging
+based communication.                                                  within TAO then requires the user to run a new job using
+                                                                      this new information, duplicating effort and data.
+                                                                            Figure 11 exhibits a 20 deg2 lightcone where 0 < z <
+     Penny et al. (2015) sub-sampled galaxies from the                0.1. Built using the lightcone science module on top of the
+Galaxies and Mass Assembly survey (Driver et al. 2009) to             Millennium simulation and SAGE galaxy model, TAO cal-
+study bright galaxies found in voids. One question posed              culates the spectral energy distribution for SDSS bandpass
+by the authors is whether the stellar mass of these galax-            filters using the model of Conroy et al. (2009). Galaxies are
+ies is primarily attained through star formation or merg-             coloured relative to SDSS absolute g filter, while size and
+ers. The study made use of theoretical data in the form of            intensity are further scaled by total stellar mass for visual
+a galaxy catalogue produced by the semi-analytic galaxy               emphasis. Using a single compute node of our test system
+model SAGE (Croton et al. 2016) run upon the Millen-                  Swan, we are able to visualize the full volume of 136298
+nium N-body simulation, which includes information un-                galaxies interactively at >30 FPS.
+available in observational data such as the time since last                 To investigate the rare but significant superclusters in
+major merger. The authors extracted these galaxies from               the galaxy distribution, we create a filter that extracts only
+
+                                                                                                            MNRAS 000, 1–10 (2015)
+                                                                         Visualization for Virtual Observatories                   9
+galaxies where mVir > 5x1013 h-1 M , shown in Figure 12.             percomputing systems. We envision Splotch as a tool that
+Following this, Figure 13 demonstrates the use of a combina-         can be used entirely in its own right as discussed in this
+tory filter, colour-coding galaxies by the difference between        paper, or alternatively embedded within a larger and more
+SDSS bands g and r. This further highlights the age distribu-        generic visualization package. For example, Splotch is al-
+tion of galaxies within such massive structures, where bluer         ready exploited as a batch rendering mode within VisIVO,
+galaxies (which tend to be younger and have higher star              and there has been some work toward building a Splotch
+formation rates) live preferentially on the outskirts, while         plugin for Paraview. We aim to be considered a lightweight
+the redder galaxies (and hence older and mostly devoid of            alternative to more general visualization software packages,
+star formation) occupy the cluster cores. The series of fig-         ideal for building into a web module of an online virtual
+ures demonstrate an interactive and in-situ process where            observatory.
+the user can find unique populations, such as galaxy clus-                The work we present here shows the viability and ef-
+ters and the distribution of galaxies within such structures,        ficacy of remote visualization as a support for theoretical
+which can then be imaged without the need for external               data web portals, and the functionalities for data processing
+analysis. The subsequent output, images and data, can then           can already be useful for scientific applications (Section 4).
+be jointly downloaded to local storage for subsequent use            The next steps are full integration in a production service,
+and publication.                                                     along with further investigation of advanced visualization
+                                                                     methods in this context towards a future vision of a user in-
+                                                                     teractively and in real-time making virtual observations as
+                                                                     a part of their web-based analysis workflow.
+5   DISCUSSION AND NEXT STEPS                                             In relation to this, a further step to be taken is re-
+Interactive visualization can provide an added value to the          garding comparative visualization. Along with quantitative
+process of extracting theoretical datasets from newly emerg-         methods, comparative approaches to visualization have been
+ing web portals. As demonstrated in Section 4, some of               used to good effect for tasks such as verifying scientific simu-
+the common scenarios in which a scientist may require data           lations (Ahrens et al. 2010) and analysing large sets of multi-
+from a theoretical web portal can be accomplished in a more          dimensional data (Vohl et al. 2016). Whilst 3d visualization
+fluid manner with visualization and interactive data filtering       is inherently suited to viewing of theoretical astronomical
+techniques. We have demonstrated a client-server tool for in-        data, many astronomers, particularly those from observa-
+teractive web visualization, which we see as an embeddable           tional backgrounds, are more accustomed to viewing virtual
+module within a more general web framework. We are aim-              observations. These provide one of the crucial links between
+ing to apply this work in multiple facilities, initially targeting   theoretical and observational astronomy, and a common fac-
+TAO. However, there are further challenges to be addressed           tor amongst each of the portals reviewed in Section 2.1 is
+before the system is integrated in a production facility, such       the inclusion of virtual observations.
+as the integration of interactive jobs to the scheduling sys-             An experimental science module currently available in
+tem of TAO. As discussed previously, the traditional model           TAO is the mock imaging module, which employs the Sky-
+of running jobs on HPC systems is batch. For interactive             Maker software package (Bertin 2009) to generate mock tele-
+visualization to work effectively in this model, the user and        scope images considering common observational phenomena
+scheduling system must be able to cooperate to schedule              such as aperture, optical defects, and others not commonly
+the resources at a time that is acceptable. However, it is           used in 3d visualization. These images facilitate understand-
+becoming more common for high performance systems to                 ing of the relationship between properties of galaxies and
+have a variety of queues for varying job size, hardware, and         real observations, and can be used to compare synthetic
+memory requirements. It is starting to become common to              datasets from different sources with each other and telescope
+include interactive queue with dedicated resources, precisely        observations.
+for jobs such as visualization, debugging and other interac-              Mock imaging is traditionally not an interactive process.
+tive tasks. In this model it is feasible to imagine the ideal        The user sets initial parameters and provides input data,
+scenario where the user requests an interactive session and          then launches a job to generate an image. We would like to
+receives it instantly.                                               tie this process to the 3d visualization module, such that a
+     Furthermore, it must be considered that users of the            user can interactively filter their data in 3d, then launch an
+TAO service are likely not also users of the underlying HPC          on-the-fly mock image generator to see the effects of their
+service, and as such they should not be able to exploit the          interaction in a more recognizable format. While mock image
+rendering server in order to access restricted data. In con-         generation need not be as interactive as 3d visualization, the
+sideration of this, Splotch contains a compile-time option to        viability of this approach depends on a fast mock imaging
+restrict the ability to load files direct from a file path on a      tool that can generate images in a reasonable time frame. As
+per-user basis. Instead, the user may only loading datasets          such, future work includes the evaluation of mock imaging
+from a specific list which can be provided directly by the           tools and their suitability for this use case.
+web framework.
+     As discussed in Section 2.3, there are a few existing tools
+that could enable the type of usage we discuss here. Par-
+                                                                     6   CONCLUSIONS
+aview Web is the most advanced tool for connecting HPC
+and web visualization, and has already been proven useful            We present an overview of the applications and potential of
+within the context of PDACS (see Section 2.1). A key dif-            3d visualization in astronomy web portals, initially through
+ference in Splotch is the optimized support for high quality         an examination of methods currently in use in web portals
+rendering of particle data using large and heterogeneous su-         for astronomy, followed by a further examination of the cur-
+
+MNRAS 000, 1–10 (2015)
+10      T. Dykes et al.
+rent status of web-capable 3d visualization tools for astron-         Evans A., Romeo M., Bahrehmand A., Agenjo J., Blat J., 2014,
+omy. We show a clear lack of 3d visualization capabilities in             Computers & Graphics, 41, 43
+current astronomy data portals, and additionally only few             Fette I., Melnikov A., 2011, RFC 6455, The WebSocket Protocol,
+3d visualization tools for astronomy that are web-capable.                http://www.rfc-editor.org/rfc/rfc6455.txt. RFC Editor,
+                                                                          http://www.rfc-editor.org/rfc/rfc6455.txt
+     We further present an approach based on the high per-
+                                                                      Hassan A., Fluke C. J., 2011, Publ. Astron. Soc. Australia, 28,
+formance batch visualization software Splotch, enabled for
+                                                                          150
+interactive 3d visualization via the web, and demonstrate an          Jin Z., Krokos M., Rivi M., Gheller C., Dolag K., Reinecke M.,
+application of our work through the Theoretical Astrophys-                2010, preprint, (arXiv:1004.1302)
+ical Observatory, a virtual observatory for theory data. We           Lawrence E., Heitmann K., White M., Higdon D., Wagner C.,
+comment on future directions for quantitative and compar-                 Habib S., Williams B., 2010, ApJ, 713, 1322
+ative visualization to aid the scientific data access workflow.       Lemson G., Virgo Consortium t., 2006, ArXiv Astrophysics e-
+                                                                          prints,
+                                                                      Lipsa D. R., Laramee R. S., Cox S. J., Roberts J. C., Walker R.,
+                                                                          Borkin M. A., Pfister H., 2012, Comput. Graph. Forum, 31,
+ACKNOWLEDGEMENTS                                                          2317
+                                                                      Madduri R., et al., 2015, Computing in Science Engineering, 17,
+We gratefully acknowledge Swinburne Centre for Astro-                     18
+physics and Supercomputing for hosting author Tim Dykes               McAlpine S., et al., 2016, Astronomy and Computing, 15, 72
+while the majority of this work was completed. This work              Merloni A., et al., 2012, preprint, (arXiv:1209.3114)
+utilized the gSTAR national facility at Swinburne University          Mwalongo F., Krone M., Reina G., Ertl T., 2016, Comput. Graph.
+of Technology. gSTAR is funded by Swinburne and the Aus-                  Forum, 35, 553
+tralian Government’s Education Investment Fund. Thanks                NVIDIA Corporation 2007, NVIDIA CUDA Compute Unified De-
+                                                                          vice Architecture Programming Guide. NVIDIA Corporation
+to Cray UK for providing further HPC resources used for
+                                                                      Nelson D., et al., 2015, Astronomy and Computing, 13, 12
+development, performance, and debugging.
+                                                                      Ochsenbein F., Bauer P., Marcout J., 2000, A&AS, 143, 23
+                                                                      Overzier R., Lemson G., Angulo R. E., Bertin E., Blaizot J., Hen-
+                                                                          riques B. M. B., Marleau G.-D., White S. D. M., 2013, MN-
+                                                                          RAS, 428, 778
+REFERENCES                                                            Penny S. J., et al., 2015, MNRAS, 453, 3519
+Ahrens J., Geveci B., Law C., 2005, in Hansen C. D.,                  Peskin R. L., Walther S. S., Froncioni A. M., Boubez T. I., 1991,
+    Johnson C. R., eds, , Visualization Handbook.                         IBM Journal of Research and Development, 35, 205
+    Butterworth-Heinemann, Burlington, pp 717 – 731,                  Potter D., Stadel J., Teyssier R., 2017, Computational Astro-
+    doi:https://doi.org/10.1016/B978-012387582-2/50038-1,                 physics and Cosmology, 4, 2
+    https://www.sciencedirect.com/science/article/pii/                Ragagnin A., Dolag K., Biffi V., Cadolle Bel M., Hammer
+    B9780123875822500381                                                  N. J., Krukau A., Petkova M., Steinborn D., 2016, preprint,
+Ahrens J., et al., 2010, IEEE Computer Graphics and Applica-              (arXiv:1612.06380)
+    tions, 30, 16                                                     Rivi M., Gheller C., Dykes T., Krokos M., Dolag K., 2014, As-
+Becciani U., et al., 2010, Publications of the Astronomical Society       tronomy and Computing, 5, 9
+    of the Pacific, 122, 119                                          Schroeder W., Martin K., Lorensen B., 2006, The Visualization
+Bernyk M., et al., 2016, ApJS, 223, 9                                     Toolkit. Vol. 4, Kitware
+Bertin E., 2009, Mem. Soc. Astron. Italiana, 80, 422                  Sciacca E., et al., 2013, in 2013 21st Euromicro International Con-
+Blaizot J., Guiderdoni B., Devriendt J. E. G., Bouchet F. R.,             ference on Parallel, Distributed, and Network-Based Process-
+    Hatton S. J., Stoehr F., 2004, MNRAS, 352, 571                        ing. pp 164–171, doi:10.1109/PDP.2013.31
+Blaizot J., Wadadekar Y., Guiderdoni B., Colombi S. T., Bertin        Sciacca E., et al., 2015, Astronomy and Computing, 11, 146
+    E., Bouchet F. R., Devriendt J. E. G., Hatton S., 2005, MN-       Szalay A., Gray J., 2006, Nature, 440, 413
+    RAS, 360, 159                                                     Vogelsberger M., et al., 2014, MNRAS, 444, 1518
+Boch T., Fernique P., 2014, in Manset N., Forshay P., eds, Astro-     Vohl D., et al., 2016, preprint, (arXiv:1610.00760)
+    nomical Society of the Pacific Conference Series Vol. 485, As-
+    tronomical Data Analysis Software and Systems XXIII. p. 277       This paper has been typeset from a TEX/LATEX file prepared by
+Chard R., et al., 2014, in 2014 9th Gateway Computing Environ-        the author.
+    ments Workshop. pp 30–33, doi:10.1109/GCE.2014.7
+Comparato M., Becciani U., Costa A., Larsson B., Garilli B.,
+    Gheller C., Taylor J., 2007, Publications of the Astronomical
+    Society of the Pacific, 119, 898
+Conroy C., Gunn J. E., White M., 2009, ApJ, 699, 486
+Croton D. J., et al., 2016, ApJS, 222, 22
+Djorgovski S. G., Williams R., 2005, in Kassim N., Perez M.,
+    Junor W., Henning P., eds, Astronomical Society of the Pa-
+    cific Conference Series Vol. 345, From Clark Lake to the
+    Long Wavelength Array: Bill Erickson’s Radio Science. p. 517
+    (arXiv:astro-ph/0504006)
+Dolag K., Reinecke M., Gheller C., Imboden S., 2008, New Jour-
+    nal of Physics, 10, 125006
+Dolag K., Gaensler B. M., Beck A. M., Beck M. C., 2015, MNRAS,
+    451, 4277
+Driver S. P., et al., 2009, Astronomy and Geophysics, 50, 5.12
+Eisenstein D. J., et al., 2001, AJ, 122, 2267
+
+                                                                                                             MNRAS 000, 1–10 (2015)
+                                                                          Visualization for Virtual Observatories                    11
+
+
+
+
+Figure 6. Splotch: the full SAGE dataset at z=0, 500 h-1 Mpc x 500 h-1 Mpc x 500 h-1 Mpc, coloured by Time of last major merger.
+The server is running on a HPC cluster, while the client is on a local laptop. Mouse/keyboard controls allow the user to rotate and zoom,
+while the interface to the right allows to change colour palettes, modify visualized quantities and more.
+
+
+
+
+Figure 7. Splotch: clipping filters applied to the data of Figure 6 extract a 250 h-1 Mpc x 250 h-1 Mpc x 20 h-1 Mpc sub-slice. The
+user zooms in to fill the screen with the filtered dataset. The menu for applying and modifying filters can be seen in the lower right of
+the figure.
+
+
+
+
+MNRAS 000, 1–10 (2015)
+12      T. Dykes et al.
+
+
+
+
+Figure 8. Splotch: further clipping filters applied to the data of Figure 7 extract a sub-slice containing only galaxies with stellar mass
+> 5x109 h-1 M .
+
+
+
+
+Figure 9. Splotch: Extending the filtering process of Figure 8, an additional filter is placed on Time since last major merger showing
+only galaxies who have undergone a major merger at some point in their evolutionary history.
+
+
+
+
+                                                                                                               MNRAS 000, 1–10 (2015)
+                                                                        Visualization for Virtual Observatories                   13
+
+
+
+
+Figure 10. Splotch: Exploring the merger history of galaxies, the filter on Time since last major merger is modified to only include
+galaxies with a merger in the last 5 Gyr. The filter menu allows this dataset to be saved locally, along with visualization images and
+interaction history.
+
+
+
+
+Figure 11. Splotch: A 20 deg2 lightcone where 0 < z < 0.1. Built using the TAO lightcone science module on top of the Millennium
+with spectral energy distribution computed for SDSS bandpass filters using the model of Conroy et al. (2009). Galaxies are colouring
+according to SDSS Absolute G field, while size and intensity are scaled by total stellar mass for visual emphasis.
+
+
+
+
+MNRAS 000, 1–10 (2015)
+14     T. Dykes et al.
+
+
+
+
+     Figure 12. Splotch: the lightcone of Figure 11 is filtered such that only galaxies with central galaxy mVir > 5x1013 remain.
+
+
+
+
+Figure 13. Splotch: a combinatory filter is applied to the remaining galaxies of Figure 12. The visualized field represents (G-R), while
+the view has been rotated to align with the direction of increasing redshift.
+
+
+
+
+                                                                                                             MNRAS 000, 1–10 (2015)
+

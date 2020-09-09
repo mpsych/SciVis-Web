@@ -1,0 +1,1173 @@
+Multimed Tools Appl (2016) 75:4383–4410
+DOI 10.1007/s11042-015-2481-0
+
+
+
+
+Remote rendering solutions using web technologies
+
+Peter Quax · Jori Liesenborgs · Arno Barzan · Martijn Croonen ·
+Wim Lamotte · Bert Vankeirsbilck · Bart Dhoedt · Tom Kimpe ·
+Kurt Pattyn · Matthew McLin
+
+
+
+
+Received: 30 July 2014 / Revised: 11 December 2014 / Accepted: 19 January 2015 /
+Published online: 8 February 2015
+© Springer Science+Business Media New York 2015
+
+
+Abstract Remote rendering is a well-known solution to the issue of running high-
+performance applications requiring complex visualizations on less capable hard-
+ware/software platforms or when client access to the data source for visualization is
+undesired or prohibitive in terms of required bandwidth. Visualizing the output of these
+remote rendering applications is typically achieved through native applications or, when
+considering a browser environment, through plug-ins. In this paper, several solutions are
+presented that enable deployment of these applications on standard web browsers, even
+those from the pre-HTML5 era. The focus in this paper is on two specific use case scenarios,
+taking into account that the proposed solutions are generic enough to be applied to a range
+of similar applications. The technologies presented cover the entire range of sub-processes
+contained in a complete remote rendering solution, such as the establishment of interac-
+tion feedback channels and delivery of images as part of the rendering pipeline. Depending
+on factors such as application requirements, developer preferences, feature availability in
+the web browser or raw performance figures, a custom solution can be composed from the
+options discussed in this paper. This is illustrated by applying them to the two aforemen-
+tioned use cases, each with specific requirements and challenges, and benchmarking these
+example setups in terms of performance. A comparison of advantages and disadvantages is
+presented to guide developers in applying the technologies under real-life conditions.
+
+
+P. Quax () · J. Liesenborgs · A. Barzan · M. Croonen · W. Lamotte
+Expertise Centre for Digital Media, iMinds / tUL / Universiteit Hasselt,
+Wetenschapspark 2, 3590 Diepenbeek, Belgium
+e-mail: peter.quax@uhasselt.be
+
+B. Vankeirsbilck · B. Dhoedt
+Department of Information Technology, Internet Based Communication Networks and Services
+(IBCN), Ghent University - iMinds, Gaston Crommenlaan 8 bus 201, 9050 Gent, Belgium
+
+T. Kimpe · K. Pattyn
+Barco NV, President Kennedypark 35, 8500 Kortrijk, Belgium
+
+M. McLin
+Barco Inc, 9125 SW Gemini Drive, Beaverton, OR 97008, USA
+4384                                                    Multimed Tools Appl (2016) 75:4383–4410
+
+
+Keywords Remote rendering · Web technology · Scalability
+
+
+1 Introduction
+
+Applications dealing with complex 2D and 3D graphics typically require deployment as
+native executables, able to take advantage of specific hardware in the client platform (e.g.
+GPUs). The disadvantage of this approach is clear: the solution becomes highly platform
+dependent and thus will need to be redeveloped for different operating systems and hard-
+ware configurations. With the increased popularity of the Web browser as platform for
+applications, measures have been taken to provide Web developers with the same level of
+access to system resources as in native applications. However, this usually meant that spe-
+cific plug-ins were required in the browser (e.g. Adobe Flash or Unity3D’s Web player
+plug-in). While these solutions were once quite popular, the support for them has dimin-
+ished greatly with the proliferation of mobile hardware. The Web browsers running on these
+mobile operating systems no longer support plug-ins, which are typically resource-hungry
+and plagued by a multitude of security issues. As an example, Google Chrome has recently
+disabled support for nearly all plug-ins due to security concerns. Besides the already men-
+tioned drawbacks, there is clearly a vendor and platform lock-in associated with the use of
+plug-ins.
+    A (partial) solution to these issues can be found in the HTML5 standard and its asso-
+ciated new APIs exposed through JavaScript. These promise to expose the power of
+dedicated hardware within the platform to application developers without the cumbersome
+workaround of plug-ins. Examples of new functionalities included in the latest incarna-
+tion of the standard are <canvas> objects to freely draw 2D graphics on (part) of the
+screen, WebGL to support acceleration of 3D graphics and the <video> tag to directly
+integrate multimedia fragments in Web pages. However, these are not the end-all solu-
+tions to the issues presented above. For example, the inclusion of video in Web pages
+through the <video> tag is oftentimes still a practical issue due to the lack of standard-
+ization with regards to the codec being used (cf. the H.264 versus WebM debate [19]).
+Despite some of these practical issues, which can be overcome if developers take into
+account some platform and browser specific properties, the integration of these technolo-
+gies has made the HTML5 standard a valid alternative to the use of plug-ins for many
+applications.
+   In some cases, it might not be feasible to perform all processing within the client plat-
+form (hardware/software). This could be due to many factors: either the required system
+resources are not available (processing power, dedicated graphics hardware, . . . ) or the data
+to be processed cannot be transmitted in its entirety to the client. In Section 3, two use cases
+will be described that showcase this assessment. In such scenarios, using remote rendering is
+an attractive alternative that has been extensively researched and utilized in practice. Some
+of the most prominent examples can be found in on-line gaming, with OnLive’s service as a
+prime example [14], as well as Sony’s PlayStationNow [17] backwards-compatibility pro-
+gram for PlayStation 3 software on the PS4 platform using technology formerly developed
+by GaiKai.
+   On a high level, the working of such remote rendering solutions can be described in
+three stages. First, interactions performed by the user are encoded into network packets
+and sent to the server infrastructure. In the data center, a (dedicated or shared) resource is
+assigned to each client and a frame is rendered specifically for each user. This frame is
+encoded using video compression techniques and delivered to the client. The latter, in the
+Multimed Tools Appl (2016) 75:4383–4410                                                    4385
+
+
+final phase of the process, decodes the frames and displays them. There is no application-
+specific processing done by the client – making such a platform usable for a wide range of
+applications. Hardware support for video decoding in the client platform can be utilized to
+speed up processing as well as reduce power consumption.
+    There are clearly some inherent drawbacks of using remote rendering. First of all, scala-
+bility is an issue, with all processing moved towards the data center instead of the (currently
+quite capable) client platform. Secondly, there is an inherent delay associated with sending
+the data towards the server infrastructure, processing it into video frames and getting these
+back to the client. This paper does not claim to resolve these issues, as they have been stud-
+ied extensively in the past, but rather shows them to be manageable under certain conditions
+and for some application scenarios.
+    The contributions of this paper are in the fact that remote rendering is shown to be feasi-
+ble completely within the (standards-compliant) Web browser as a platform, with no more
+need for either native applications or specific plug-ins. This is done by describing all steps
+and technologies needed for every stage in the remote rendering pipeline and applying them,
+as examples, to the two use case scenarios proposed in Section 3.
+    Contrary to existing works that describe advances in remote rendering on browser
+platforms based on a single Web technology (e.g. only using WebSockets as delivery mech-
+anism), this paper considers an entire range of web-technology-based solutions that can be
+compared in terms of applicability and usefulness under specific conditions. Also included
+and specific to this paper is a discussion on the latest WebRTC technology, which has
+opened up a new (and direct) communication channel for exchange of real-time video and
+associated data. Provided as addendum to this publication is an archive of open source code
+that enables application developers to simplify the process of supporting web-based remote
+rendering. The boilerplate code provided can speed up development for new applications
+and facilitates benchmarking of solutions other than the ones provided in this paper for spe-
+cific usage conditions and scenarios. It is freely available from http://research.edm.uhasselt.
+be/mtap/.
+    An additional specific aspect of this paper that sets it apart from previous work is the
+focus on practical deployment issues in real-life situations. This is demonstrated by the
+fact that solutions for the older generation of browsers (those that do not support the latest
+HTML5 standard and related APIs) are also presented as fallback scenarios. Although only
+applicable for specific application scenarios, these fallback solutions may be a vital compo-
+nent needed when considering applications that are to be deployed in specific environments
+that still rely on older (browser) software. While performance will be degraded to a certain
+extent when compared to the latest generation of browsers, the fact that these can be sup-
+ported as well highlights the fact that one can now develop a truly platform independent
+method for distributing high-performance applications that rely on 2D and 3D visualiza-
+tions. Novel methods for measurement of the performance of parts of the remote rendering
+pipeline (which is not trivial because of limitations put in place by the browser as a platform)
+also make up a unique contribution of this work.
+
+
+2 Related work
+
+The idea of remotely rendering scenes is definitely not new. Because a number of inter-
+esting overview papers on this topic are already established in the community (focusing
+on native client-side visualization applications, see e.g. the overview in [16]), the empha-
+sis in this brief overview is specifically on those examples that utilize the browser as a
+4386                                                   Multimed Tools Appl (2016) 75:4383–4410
+
+
+delivery platform. At the same time, focus is primarily on those solutions that are truly
+standards-compliant (i.e. not plugin-based through Flash or Java).
+   An extensive overview of optimizations available for device-local rendering using
+HTML5 compliant browsers as a platform is presented in [4]; the authors also briefly
+describe remote rendering as a possible solution and provide pointers to existing systems –
+but nearly always geared towards native applications for the viewer component instead of
+the browser.
+   As early as 2002, attempts were made to visualize the output of remote rendering tasks
+in a Web browser context [21]. The solution utilized Java applets, and is thus more or less
+comparable to today’s use of plugins to accomplish the same thing. More recent work has
+focused on the integration of the output in Web browsers through more modern (standards-
+compliant) means.
+   In [9], the authors present ParaViewWeb, a framework that is capable of remotely render-
+ing scenes and delivering them to the end-user through a Web browser. Three main options
+for delivery are established, two of them relying on plugins like Java Applets or Flash and
+one based on JavaScript. The latter is similar to the approach that will be described in
+Section 6.3, but in comparison to more recent technologies, it can only deliver sub-optimal
+results and should now only be considered as a solution for older-generation browsers.
+   In [10], a WebSocket channel is established for the transfer of information between server
+and browser, but the actual content being transferred is 3D information for device-local
+rendering (through X3Dom) and not generic image/video data – it can therefore not be
+considered a remote rendering setup. On the other hand, the authors of [20] suggest using
+WebSockets as a means to deliver output from the server-side rendering process to the Web
+browser (visualized in a <canvas> object), although no in-depth technical description,
+benchmarking or comparison to other solutions is provided. The idea aligns with one of the
+solutions presented in our work.
+   In [22], a software 3D framework is described that utilizes hybrid rendering as an alter-
+native display technique for typical set-top-box hardware (which suffers from the lack of 3D
+graphics acceleration). In such a setup, only limited local rendering is performed (mainly for
+foreground objects, to a degree supported by the hardware), while other content is rendered
+remotely (like the background information). The system assumes HTML5 compatibility in
+the browsers (it uses a WebSocket connection between the end-user device and the server)
+and is not application-agnostic. The idea of a hybrid approach however can in some cases
+lead to a better performance (e.g. interaction delay) than a fully remotely rendered scene.
+A similar approach is taken in [12], but applied to the visualization of complex molecular
+models. Note that in both cases, the hybrid approach can only be utilized with 3D content
+(to distinguish important objects in the foreground versus the background). The system pro-
+posed in our work can also deal with complex 2D scenes and requires no ‘raw’ source data
+to be sent to the client – which might be important for security reasons.
+   The authors of [5] propose a solution that enables easy conversion of existing 3D appli-
+cations to the Web which would otherwise require complete redevelopment). A hybrid
+approach is considered, where the server performs the main conversion of the application
+into a set of (WebGL enabled) Web pages. By exploiting local operations in the client
+for simple manipulations (e.g. camera movement) and extensive capabilities in the server
+for more intricate operations, interactivity is guaranteed. However, the solution requires
+WebGL support in the client’s Web browser, hardware acceleration which is not always
+available.
+   For specialized purposes, other optimizations can be implemented. As an example, in
+[8] the authors propose a hybrid scheme for medical information visualization. It uses
+Multimed Tools Appl (2016) 75:4383–4410                                                   4387
+
+
+server-side processing to extract 3D models from scanner data sets (representing e.g. bones
+and other structures). These are subsequently sent to the client, which renders them using
+local WebGL acceleration. The task of the server in this case is not to render frames based
+on user input, but rather to generate new models at runtime upon request. Similar to the
+use case described in our work, the authors of [2] apply remote rendering techniques for
+visualization of panoramas on mobile devices. Again, assuming a specific usage context
+allows for customizations that improve the performance of a remote rendering system. By
+creating a custom rate control mechanism (that also takes into account the properties of a
+wireless channel), interactive frame rates can be achieved. The system does not however
+target deployment in a Web browser context.
+    As will be discussed in this paper, a very important metric for remote rendering is the
+amount of interaction delay experienced by a user. This is a major contributor to the final
+Quality of Experience (QoE). For systems that utilize local rendering, this interaction delay
+is negligible, as long as the system is not overloaded (which would lead to frame rate drops).
+In a remote scenario, the visualization of the outcome of each action is at least delayed by
+the network round-trip-time between the client and the server. Although the tolerance level
+for this delay is heavily application dependent, on-line games are typically regarded as a
+challenging example use case. In his book [18], Anthony Steed provides a comprehensive
+overview of acceptable delay values for different game genres. More specifically applied to
+the remote rendering case, [1] presents an overview of the influence that users report on their
+enjoyment of a remotely rendered gaming session using the commercial OnLive gaming
+service (applied to different game genres). The authors of [11] try to quantify the interaction
+delay on a network level by investigating trace data. In the section on the benchmark results
+(Section 8), it will be shown that the total amount of end-to-end interaction delay achievable
+using the techniques described in this work are in the same order of magnitude – even within
+the constraints of the Web browser as a delivery platform.
+    The remainder of this paper is structured as follows: Section 3 introduces two use
+case scenarios, each representing a possible application of remote rendering with specific
+requirements and features. Starting with Section 4, the different components required for
+an end-to-end remote rendering pipeline are detailed. The first of these parts looks into
+the components needed in the web browser environment for capturing user input, fol-
+lowed in Section 5 by an analogous description for the server-side components. The final
+step in the rendering pipeline, delivery of the image sequences, is discussed in Section 6.
+Section 7 describes the methodology used to analyze the performance of the setups consid-
+ered in the benchmarks, because it needs to deal with the specifics of the browser platform
+(where access to performance data is typically restricted). In Section 8, two example setups
+that contain combinations of the technologies presented in this paper are benchmarked.
+Finally, Section 9 presents general conclusions and observations/recommendations that
+can be made, based on practical development of the proof-of-concept demonstrators and
+analysis thereof.
+
+
+3 Use case description
+
+Although remote rendering can, in theory, be used to support any application, two examples
+will be detailed in this section that showcase the possibilities and the type of interactions
+exposed to the user. A set of requirements will be derived for these scenarios, which will
+be utilized in Section 8 for benchmarking. These examples have been selected because they
+each have a number of properties that make them uniquely suitable for deployment in a
+4388                                                        Multimed Tools Appl (2016) 75:4383–4410
+
+
+remote rendering context, their requirements are distinct with regards to each other and
+include other factors besides low interaction latency.
+
+3.1 Scientific dataset exploration
+
+A first example is the visualization of and interaction with scientific still images. In this
+case, especially high resolution imagery is considered. This may consist of, for example,
+astronomical data, images obtained through microscopy or medical data sets. These images
+often contain many megapixels to even gigapixels worth of data and may have a bit depth
+that is much larger than the normal 8/24 bit RGB values for a standard JPEG compressed
+picture.
+    Users of these types of applications such as lab technicians, scientists or medical pro-
+fessionals typically require a short startup delay (the so-called First Time to Picture). When
+bandwidth is a scarce commodity, transmitting all image data (tens of megabytes up to
+several gigabytes) to the client introduces too much delay. In contrast, in a remote render-
+ing setup, it should be pointed out here that the size of the resulting imagery sent to the
+client by the server is determined solely by the size of the output window or container on
+screen and not the full original image size. Note that, as will become apparent from the
+technical description, the remote rendering system can even adapt automatically to different
+bandwidth conditions.
+    Typical operations carried out on such large-scale data sets include pan and zoom, as
+well as modifying the clamping parameters for the bit depth that can be visualized on an
+RGB screen. It is vital that these operations are carried out at such speeds that the operator
+is (nearly) unaware of the fact that the actual data is being processed remotely. A proof-of-
+concept demonstrator is implemented around this use case; a screenshot is shown in Fig. 1.
+The components needed to build the demonstrator are provided in the open-source code
+archive.
+    The specific requirements and features considered for this scenario are as follows:
+–      The visualization does not have a pre-defined and/or constant update rate. During some
+       periods, the same (static) image will remain on-screen, only requiring updates when
+       manipulations are performed.
+–      Visual artifacts present in images may not be tolerated. These may appear when
+       imagery is compressed in lossy fashion and might lead to false conclusions or other-
+       wise undesirable side-effects. It is essential that the operator is presented with a lossless
+       image to analyze.
+–      Manipulations performed by the operator can typically be described in an application-
+       specific set of commands (e.g. alterations to brightness/contrast or the addition of
+       markup through annotations).
+
+3.2 Novel video format presentation
+
+Novel media formats such as omni-directional or panoramic video footage consume huge
+amounts of network bandwidth. A typical recording made with an omni-directional array of
+cameras is at least 8000 by 2000 pixels in size. In comparison to a ‘standard’ resolution of
+1920 by 1080, this represents an eightfold increase. Even with the most recent codecs (such
+as H.265/HEVC), streaming these amounts of data to mobile devices becomes troublesome.
+In contrast, as indicated in the previous section, with remote rendering the resolution of the
+rendering stream is only dependent on the viewport size of the output device. Considering
+Multimed Tools Appl (2016) 75:4383–4410                                                          4389
+
+
+
+
+Fig. 1 Example microscopy image viewer application. The actual image shown on screen is being rendered
+remotely
+
+
+
+that the user is normally only watching at most 120 degrees of the entire 360◦ recording,
+this constitutes a substantial reduction.
+   Although alternative solutions exist to efficiently deliver these novel types of video to the
+client, including tiled delivery [15], these require custom solutions to be implemented client-
+side (mainly for synchronization). While scalability of the server is likely to become an issue
+in this scenario, consider the fact that for live transmissions – typically regarded as most
+demanding – the raw input content is the same for all clients and only the correct viewport
+needs to be custom encoded. This lowers the processing load on the server considerably,
+making this scenario practically feasible. The operations to be supported for the user are
+similar to the still image case (change view direction and zoom), with the sidenote that in
+this scenario the input data is continuously changing. A screenshot of a demonstrator is
+shown in Fig. 2.
+   Specifics to this use case scenario include:
+–   The content being shown has an inherent need for updating. Unlike the previous case,
+    the visualization will not remain static and the need for updates is driven by the frame
+    rate of the video being displayed.
+–   Interactions performed by the user do not directly influence the need for updating the
+    remotely rendered viewport (in terms of frame rate) but will instruct the server-side
+    component to e.g. orientate the virtual camera or zoom in/out.
+–   The user can typically cope with artifacts introduced by (motion) compression. The
+    content being displayed is typically already compressed on the server for storage
+    reduction purposes.
+4390                                                       Multimed Tools Appl (2016) 75:4383–4410
+
+
+
+
+Fig. 2 Example omni-directional video viewer application. The viewport shown to the user is remotely
+rendered on a server setup
+
+
+
+
+4 Client-side (browser) components
+
+As indicated in Section 1, the first stage of the remote rendering process consists of
+introducing a client-side object that is responsible for capturing user interactions and
+sending the interaction information from the client to the process running on the server
+infrastructure. Two alternatives will be considered here, both developed with specific appli-
+cation constraints in mind. As will be discussed, it is up to the application developer to
+decide on the best approach to be considered for a certain scenario.
+
+4.1 Remote canvas
+
+A first possible solution to the command capture and transport issue is the creation of a
+‘remote canvas’ object that can be substituted for a normal WebGL canvas object, which
+forwards the WebGL calls to a server.
+   WebGL, used for in-browser accelerated rendering, defines an extension API that allows
+for a range of OpenGL ES 2.0 commands to be executed in the browser through JavaScript.
+These will internally be translated into OpenGL/DirectX calls and accelerated through the
+Multimed Tools Appl (2016) 75:4383–4410                                                    4391
+
+
+graphics hardware in the user’s system. The resulting imagery is contained within a stan-
+dard HTML <canvas> object. With the approach described in this section, there is no
+need for WebGL support in the browser. It is therefore especially relevant for those scenar-
+ios in which WebGL support is lacking on the host platform (e.g. on Apple’s iOS devices
+pre-iOS 8).
+   From the application developer’s standpoint, the remote canvas is designed in such a
+way as to support nearly exactly the same commands as a traditional WebGL application
+would. It is therefore almost completely transparent to him/her that a remote rendering
+solution is used. This makes it easy to port existing applications developed with WebGL
+in mind. Internally, calls made to the remote canvas are redirected to the server through a
+WebSocket connection or standard HTTP GET/POST exchanges (AJAX) without explicit
+programmer’s intervention (more detailed information on the methods for data exchange
+will follow in later sections).
+   An important note is that an exception needs to be made for those WebGL functions that
+‘block’ program execution while waiting for them to finish (so-called synchronous func-
+tions). These cannot be directly replaced by a remote counterpart, because JavaScript is
+asynchronous in nature. In practice, this means that normal execution of the browser pro-
+cess will continue after the initial call is made, and a callback function needs to be triggered
+once the result is ready (processed by the server). Examples of such WebGL/OpenGL func-
+tions include getShaderInfoLog, getError and getTexParameter. This small
+but essential detail is an important factor to take into account, because it implies that it is
+not feasible to perform a complete 1:1 mapping of the WebGL interface to the remote can-
+vas. For implementations that do not make use of these specific functions, this is of course
+not an issue.
+
+4.2 Remote GL proxy
+
+A second solution consists of a ‘Remote GL Proxy’. This is a custom JavaScript object that
+has a specific API, different from WebGL. Two alternatives for the definition of such an
+API are considered here (although in practice, combinations could be made as well).
+    First, the proxy object could expose an application-specific programming interface, con-
+sisting of methods that are tailored to a use case or application to be supported. An example
+of this could be the alteration of image properties such as brightness/contrast (see the use
+case description for scientific dataset exploration in Section 3.1) or manipulations of the
+virtual camera in the panning information as proposed in the omni-directional video viewer
+application described in Section 3.2. The API would primarily consist of commands which
+inform the server what action should be performed, e.g. pan to position (2, 4) or zoom in by
+a factor of 3.
+    On the other end of the spectrum, one could consider an interface that closely resem-
+bles the OpenGL command set. This will consist of a set of generic (with regards to the
+application) but typically very low-level drawing commands that could extend the feature
+set of WebGL. The latter instruction set support is limited because of its roots in OpenGL
+ES 2.0; various features available in OpenGL are not available in the built-in WebGL API.
+This type of command set primarily focuses on instructing the application how precisely a
+task should be executed, e.g. to inform the server what shader to use or which triangles to
+draw.
+    Regardless of the choice made, instructions passed on to the JavaScript object are inter-
+nally encoded and may be sent to the server through either WebSockets or AJAX calls
+(although the latter is not recommended).
+4392                                                    Multimed Tools Appl (2016) 75:4383–4410
+
+
+   For developers, the remote GL Proxy approach comes with a drawback, as it may require
+adaptation to existing programming habits when one is accustomed to writing code for
+WebGL. While this is not typically an issue when considering applications that need to be
+developed from scratch, it might be more difficult to port existing WebGL applications to
+the new instruction set. Specifically if a low-level drawing command interface (i.c. based on
+OpenGL) is exposed by the Proxy, just like was the case with the remote canvas solution pre-
+sented earlier, not all (OpenGL) commands may be easy to move over to a new API because
+of JavaScript’s asynchronous nature. A similar workaround using callback functions (for
+some OpenGL or other low-level drawing command calls) may be required here.
+   Both approaches described in this section come, however, with several advantages over
+the remote canvas alternative: they enable the exposure of the entire OpenGL command
+set to developers (unlike WebGL) within the constraints of the web browser. Alternatively,
+when considering a Remote GL Proxy with an application-level command set, which can
+be optimally tailored to a specific use case, a single instruction can act as a substitute for a
+whole series of calls that would be needed in the remote canvas approach.
+
+4.3 Command channel establishment
+
+For both solutions mentioned before, a command channel between the client (browser) and
+server components needs to be established, since the instructions (as input by the user)
+need to be transported from the client to the server for processing. For modern browsers,
+a WebSocket connection is typically utilized. Although a comprehensive description of the
+technology behind WebSockets is out of scope for this paper, a brief overview is provided
+here.
+   WebSockets are a relatively new W3C-standardized technology [7], available in all major
+current-generation browser platforms. The technology allows for the establishment of a per-
+manent communication channel between browser and server. Such a channel may be used
+by the server to push information towards the browser, a feature that was typically not avail-
+able in previous generations. For those browsers, it was sub-optimally simulated by Comet,
+a programming model that utilizes, among others, AJAX and long-polling as behind-the-
+scenes technology. It tries to keep the channel open by the server delaying its response to
+client requests (which need to be repeated regularly), a solution far less elegant than a true
+persistent connection. In effect, application developers are free to design and deploy their
+own custom protocol to be used over such a WebSocket connection, just as with ‘normal’
+system sockets. However, compared to normal sockets, WebSocket traffic is compatible
+with HTTP (in terms of handshaking etc) and can use ports standardized for HTTP (i.e. 80
+and 443). Note that it is not possible, using off-the-shelf browsers, to communicate directly
+between two browser instances using WebSockets. In effect, a server is always needed as
+a passthrough; this can take the form of a fully-fledged web server or a minimal process
+that enables WebSocket communication only. This clearly differentiates WebSockets from
+WebRTC, another technology that can be used and which will be introduced later in this
+paper in Section 6.2. WebRTC enables full peer-to-peer real-time communication between
+browser instances.
+   A WebSocket command channel can be utilized for both the remote canvas, as
+well as the Remote GL Proxy solutions presented earlier. For compatibility with older
+browsers, AJAX (XMLHttpRequests) can also be utilized, albeit at the price of per-
+formance degradation (which is intuitively clear, as they are based on polling versus a
+server-push-based mechanism). Other drawbacks of the AJAX solution will be presented in
+Section 6.3.
+Multimed Tools Appl (2016) 75:4383–4410                                                    4393
+
+
+5 Server-side processing
+
+The second step in the remote rendering process is the generation of the resulting images
+on the server infrastructure. Note that the choice between the alternatives presented here
+is independent of the communication channel chosen to transport the commands from the
+browser to the server (as discussed in the previous section).
+
+5.1 Server-side off-the-shelf browser
+
+Given that the final result of the remote rendering process will be displayed in a Web
+browser at client-side, one could consider running one or more browser processes server-
+side. Reasons for using a browser as the server component include access to the WebGL API
+and ease of development using JavaScript. Note that a single process may serve multiple
+clients. These will be responsible for processing the input provided through the client-server
+communication channel and rendering the output either on- or off-screen. This approach
+clearly has the advantage of providing consistent results when moving an existing applica-
+tion from client-oriented execution to the remote rendering paradigm. In fact, if the same
+browser is chosen client- and server-side, the (visual) results generated server-side will be
+exactly the same.
+    This approach also takes away a lot of the complexity of developing a custom server
+back-end to actually process and render the output. At the same time, it supports a wide
+range of applications, as the feature set of the remote renderer is exactly the same as a
+WebGL browser used client-side. For the remote canvas solution, a basic deserialization
+routine suffices to recreate the WebGL command flow that can be executed as-is by the
+server-side browser process. In fact, this process itself is unaware that it is being instructed
+by the client’s browser and not by a human operator.
+    Although it is very flexible and relatively easy to implement, this approach does come
+with drawbacks. Scalability is an issue because of two factors. First of all, running an entire
+browser process for remote clients introduces overhead. In reality, only limited function-
+ality is actually required, not the entire browser function set. This limits the amount of
+clients that can be supported because of the use of server-side system resources. Secondly,
+reaction times are typically slower when compared to the approach described in the next
+section – also due to the overhead of the entire browser architecture underlying the server
+implementation and the fact that messages need to pass through an intermediate Web or
+WebSocket server (see also Fig. 3). Note: because the browser process can execute arbitrary
+WebGL code, this approach is compatible with both the remote canvas solution presented
+in Section 4.1 as well as the Remote GL Proxy.
+
+5.2 Dedicated server application
+
+Alternatively, a dedicated application can be developed that implements only the specific
+functionality needed for the application being moved to the remote rendering platform. Two
+approaches have been developed as a proof-of-concept.
+   A first optimization consists of the creation of a Qt application that incorporates all basic
+functionality of a Web browser through the QWebView widget (as functionality to ren-
+der WebGL content is required) without the overhead of GUI elements and other features
+not required for automated processing, as would be the case with a fully-fledged Chrome
+process. It also has the advantage of being compatible with both types of communication
+channels used between client and server (remote canvas and remote GL Proxy). This option
+4394                                                             Multimed Tools Appl (2016) 75:4383–4410
+
+
+
+
+Fig. 3 Various options to interconnect different browser generations (left) to server-side rendering processes
+(right). Both AJAX and WebSocket solutions may require an additional (minimal) in-between server process
+
+
+
+
+could be considered as a lightweight alternative to the off-the-shelf browser presented in the
+previous section.
+   Secondly, a native OpenGL application can be implemented server-side – no longer con-
+taining Web browser components. As long as commands are correctly deserialized when
+coming in from the communication channel, they can be processed as-is. Again, a remark
+needs to be made about the conversion to asynchronous execution for some OpenGL calls.
+Apart from using such OpenGL-like commands, an application-specific command set can
+be employed as well, as was described earlier. It is this last approach that has been imple-
+mented as a proof-of-concept. It will become clear from the discussion of the benchmark
+results in Section 8.1 that performance is improved over the server-side browser alternative
+(which requires a mediating server entity, as shown in Fig. 3, because off-the-shelf browser
+instances cannot communicate directly using WebSockets).
+
+
+6 Server to client channel
+
+The final step in the remote rendering pipeline is to transmit the generated images back to
+the client. To accomplish this, three different approaches are proposed. The choice between
+these alternatives should be mainly driven by the capabilities of the end-user device and the
+browser it is running.
+
+6.1 WebSockets and image data
+
+A first solution consists of the establishment of a persistent WebSocket connection between
+the client and server. Over this channel, binary data can be exchanged. In this case, the
+server will, when a new frame becomes ready for transmission to the client, encode it using
+standard image compression algorithms like JPEG or PNG and transport these over the
+WebSocket channel. This has the advantage of the server being able to actively push infor-
+mation to the browser, rather than requiring the client to poll at all times (see Section 6.3).
+However, the server process needs to take care not to overflow the client with updates;
+a throttling mechanism is needed. In the proof-of-concept implementation, the browser
+Multimed Tools Appl (2016) 75:4383–4410                                                  4395
+
+
+signals the server once it has fully received a frame – thereby indicating its willingness to
+receive an update. This mechanism represents a worst-case condition as more intelligent
+approaches could be envisaged – although the latter were not considered for the bench-
+mark setups which were executed on a low-delay network. If an off-the-shelf browser is
+used as server-side renderer (see Section 5.1), it should also be noted that images need to
+be ‘forwarded’ through an intermediate WebSocket server. This is due to the constraint that
+browsers only support outbound WebSocket connections (see Fig. 3).
+   Depending on application requirements, the compression algorithm and its parameters
+can be adjusted. As long as support for decoding is present in a normal Web browser,
+there is no compatibility issue. The main disadvantage of this approach, similar to motion
+JPEG, is that, typically, bandwidth is wasted. In most cases, interactions performed by
+the user do not drastically change the contents of the rendering viewport. As an exam-
+ple, a panning operation in the omni-directional video viewing use case would only shift
+the viewport in a specific direction by a few degrees. These viewport changes could
+be more optimally encoded using motion compression algorithms (which will be the
+case for the next alternative, described in Section 6.2), leading to significant bandwidth
+reductions.
+
+6.2 WebRTC
+
+WebRTC, Web Real-Time Communication [13], is one of the newest Web APIs to be pro-
+posed by Google (currently the API is a W3C draft) and allows for real-time communication
+between off-the-shelf browser instances without the need for a passthrough server. Behind
+the scenes, existing and established standards for real-time communication are re-used and
+made compatible with the Web browser platform. WebRTC uses Interactive Connectiv-
+ity Establishment (ICE), Session Traversal Utilities for NAT (STUN) and Traversal Using
+Relay NAT (TURN) for signaling and NAT-penetration purposes. WebRTC exposes two
+separate data paths to the developer, one used for transmission of real-time information (typ-
+ically non-reliable over UDP). Internally, this path uses the (Secured) Real-Time Protocol
+(SRTP) for real-time data transmission. Secondly, WebRTC provides a generic channel for
+delivery of (control) information, typically in a reliable fashion – referred to as the WebRTC
+data channel. In this case, the Stream Control Transmission Protocol (SCTP) is utilized
+internally. All of these protocols have been around for many years and are widely adopted
+in Voice-over-IP (VoIP) and video conferencing applications. WebRTC enables developers
+to use them in a Web browser context through a convenient API.
+   The archetypical application scenario for WebRTC is to enable the exchange of webcam
+video streams between users or to support screen sharing functionalities for conferencing
+purposes. Depending on the browser and OS platform used – WebRTC is supported on
+Chrome, Firefox and Opera on most operating systems including mobile platforms – dif-
+ferent codecs can be used to encode/decode the video information. In case of Chrome, the
+codec used is VP8. A WebRTC session is typically directly established between two peers;
+in case of remote rendering this channel is created between the server and the client. In
+some cases, a mediating server is required, but only for establishing the connection (e.g.
+STUN/TURN).
+   Note that this approach could be applied to both the server-side browser as well as
+the custom server alternative, since WebRTC is available in the browser (Chrome, Fire-
+fox, Opera) as well as for stand-alone applications (through a Google library [6] and, more
+recently, also through OpenWebRTC [3]).
+4396                                                    Multimed Tools Appl (2016) 75:4383–4410
+
+
+6.2.1 WebRTC video channel
+
+As mentioned before, WebRTC typically obtains its information from the user’s web-
+cam or performs full-screen grabs for screen sharing purposes. As a proof-of-concept, the
+extensible nature of the library was utilized to provide the ability to grab the contents of an
+arbitrary window on the desktop or the off-screen output of an application.
+    It was indicated before in Section 6.1 that bandwidth is wasted if the server-generated
+imagery is considered to be a series of non-related frames. By using WebRTC video func-
+tionality, motion coding is performed on the output of the server. This reduces the required
+amount of bandwidth considerably. However, it comes at the price of precision: motion cod-
+ing in this context is always a lossy process. This is not an issue with typical video use
+cases (as described in Section 3.2), but it might pose a serious problem for e.g. microscopy
+images, where visual artifacts are potentially undesired.
+    To circumvent these issues for specific use case scenarios (mainly those in scientific data
+visualization), it is proposed to visualize the data from the WebRTC Video channel (lossy
+encoded) while the client is performing manipulations. This solution, applied to the web
+browser context in this paper, minimizes the amount of processing overhead and interac-
+tion delay. As soon as manipulation stops, the server takes notice and encodes a lossless
+frame using the PNG algorithm. This frame is sent over the WebRTC Data Channel (see
+next section) or WebSocket connection and is superimposed over the last frame received
+from the video decoder. By indicating the fact that the imagery shown is either lossy or
+lossless through an on-screen icon or notification, the user is provided both with accept-
+able interaction delays, as well as feedback on whether he/she can trust the image to be
+artifact-free.
+    An added advantage of using the WebRTC video channel is that a lot of features come
+‘for free’. Mechanisms to adapt to changing bandwidth conditions are built-in and need
+no specific developer intervention. Flow control is also no longer something programmers
+have to deal with manually. However, bandwidth is consumed at a constant rate, even if no
+explicit updates are required (WebRTC assumes a constant frame rate, irrespective of the
+actual contents).
+
+6.2.2 WebRTC data channel
+
+As discussed before, WebRTC provides a data (side) channel – using SCTP – when a con-
+nection is established between two peers. This channel comes with a major advantage over
+WebSockets/AJAX, as no mediating servers are required to have two browser instances
+communicate with each other. The channel can optionally be configured to guarantee order-
+ing and/or reliability. This channel can be utilized to transmit the output of the rendering
+process being performed server-side to the client. Similar caveats as with the WebSocket
+approach apply however: application-level flow control is needed to ensure smooth visual
+results at client-side. In case of continuously changing input information (as is the case with
+the panoramic/omni-directional video viewer described in Section 3.2), the overhead of reli-
+ability may not be desired, as corrected data is likely to be outdated by the time it arrives at
+the client for decoding.
+
+6.3 AJAX
+
+A third possible solution, which should really be considered a fallback scenario of last resort
+for older browsers, is to actively fetch new images on regular intervals using AJAX through
+Multimed Tools Appl (2016) 75:4383–4410                                                  4397
+
+
+the XMLHttpRequest interface (see also Fig. 3). This way, the browser remains responsive
+while updates to the canvas are being sent from server to client. However, AJAX does not
+cleanly support a truly persistent connection between browser and server.
+    Support for AJAX is present even in – by current standards – ancient browsers like
+IE8. If the actual pixel data of the image is contained in a data URL (Base64 encoded), it
+should additionally be noted that there are limits to the amount of data that can be obtained
+for this generation of browsers. This can be overcome by generating and providing indi-
+vidual images server-side; one just needs to ensure that they are not cached client-side.
+Typical measures to avoid caching can be utilized, e.g. using continuously varying URLs
+that are subsequently fetched by the client or including an image-specific suffix after the
+filename (concatenated with a ‘?’). Visualization in the client is done through standard
+<img> tags, the contents of which are substituted at run-time by the contents of the AJAX
+responses.
+    Such an approach is clearly not very efficient in terms of resources, both client- as well
+as server-side. Performance is also not nearly as good as the alternatives described before.
+Given the many browser-specific workarounds required for actual practical use, this type
+of delivery channel is not selected for benchmarking in Section 8. Intuitively however, one
+can see that the generation and serving of individual images, followed by an inefficient
+delivery scheme that is focused on a client-polling mechanism over a non-persistent chan-
+nel, will yield inferior results. Each time a new image is received by the browser, it has
+to be substituted in the page Document Object Model (DOM), possibly leading to visual
+artifacts and lowering the achievable update rate. Depending on the application to be sup-
+ported, this may be an acceptable trade-off (although a proof-of-concept implementation
+has shown that it is not feasible to smoothly deliver video – in acceptable frame rates – in
+this manner).
+    It should be noted that this solution does have the unique advantage that it is compat-
+ible with all browsers currently in use – even those without HTML5 support. Depending
+on the usage scenario, the low update rates might be considered satisfactory for the
+end-user.
+
+
+7 Methodology
+
+To obtain benchmark results for analysis, it is vital to insert timing routines into different
+parts of the remote rendering process. Some of these timings are trivial to obtain, while
+others require specialized solutions. The most interesting of these are discussed in this sec-
+tion, because the methodology may be universally applicable to other application scenarios
+besides remote rendering.
+
+7.1 Interaction delay with WebRTC video
+
+A very important metric, which influences the final Quality of Experience (see discussion in
+Section 2), is the interaction delay between the user performing an action in the browser and
+the visualization of the frame representing the outcome of this action. In some conditions,
+timing information can be piggybacked onto existing data streams that are already estab-
+lished between the client and the server or vice versa. In case data is transported over the
+WebRTC video channel (using video compression) however, it is impossible for the browser
+to determine which video frame corresponds to a specific action undertaken by the user.
+No custom information can be added to these video frames, as they are encoded/decoded
+4398                                                    Multimed Tools Appl (2016) 75:4383–4410
+
+
+by a generic video codec on the server and client respectively. The solution proposed
+for this issue is to embed the information relevant for timing visually within the video
+frames.
+   Once an operation is sent from the client to the server, a unique identifier is created and
+attached to the instruction sent to the server (which, as indicated in Section 4.3, is typically
+tunneled over a WebSocket connection, but could also be implemented through AJAX).
+When the server receives the operation, it is evaluated and an output frame is generated,
+which is subsequently delivered to the WebRTC engine. Before this happens however, a
+Quick Response (QR) tag is created which contains the information on the identifier of
+the action (as defined by the client). The advantage of using these tags is that they can
+be evaluated at client-side, even when the frames are coded with aggressive settings. A
+degradation in image quality can be overcome by redundancy/error correction information
+contained within the tag. The process of creating and adding the QR tag to a frame only
+introduces a negligible delay of around 0.3ms on the server. The QR tag is superimposed on
+top of the image or hidden in a pre-determined location (outside normal image boundaries)
+and will only be present when running the server and client components for benchmarking
+purposes.
+   Once the frame is received by the client, it is decoded and visualized. An analyzer process
+running in the browser grabs frames in specific intervals (i.c. 40ms) and extracts the part of
+the frame containing the QR code. This procedure is necessary because there is no signaling
+provided by WebRTC to indicate that a new frame is being displayed. It is subsequently
+handed over to a JavaScript QR decoder library that is able to extract the identifier of the
+corresponding action. By comparing timestamps between the initial interaction and the ID
+obtained from analyzing the tag, the client can then calculate the total amount of interaction
+delay as experienced by the end-user. The process of extracting the tag and decoding it in
+JavaScript consumes around 1.5 ms of processing time on a typical workstation, i.c. a Dell
+Optiplex 9010 (Intel Core i7-3770, 16GB RAM) running Chrome 34 on 64-bit Linux. The
+reported interaction delay value will, because of this method of timing with minimal check
+intervals, always be a worst-case calculation. An example, as integrated in the microscopy
+Proof-of-Concept (PoC) demonstrator, is shown in Fig. 1 in the top left hand side of the
+output canvas.
+
+7.2 Frame rate determination
+
+Maintaining a high frame update rate requires resources on both the server and the client
+(in terms of encoding/decoding capacity). Again in the case of a server to client channel
+based on WebRTC, it is not possible to determine the actual frame rate through a JavaScript
+API call. Rather, this information can be extracted based on the information contained
+within the RTP headers of the video channel of the WebRTC stream (which are readable,
+because Secure RTP only encrypts the payload). Two methods can be applied to extract
+the frame rate from the RTP information. First, by examining the RTP timestamp infor-
+mation from two consecutive frames, one can calculate the difference between them. As
+the timestamp unit is known beforehand, it is trivial to extract the time difference associ-
+ated with the difference in RTP timestamps. Alternatively, the number of RTP timestamps
+received over a specified time interval can be considered (e.g. 10 seconds), which corre-
+sponds to the number of frames in that interval. This enables extraction of the number of
+frames received during this time period, and thus also the number of frames per second. It
+will be demonstrated in Section 8 that this represents a good indicator of system load.
+Multimed Tools Appl (2016) 75:4383–4410                                                     4399
+
+
+7.3 Generic server metrics
+
+Other relevant information for benchmarking includes the amount of data being
+sent/received by the server (indicating bandwidth usage), as well as CPU load figures. Such
+information is readily obtained on the server through the /proc filesystem. These fig-
+ures can be queried in software by scripting languages; in the proof-of-concept, this was
+achieved using the PSUtil library (in Python). While the information can be made available
+to the client using any of the mechanisms described earlier, in the PoC implementation the
+client makes a connection to a monitoring process on the server using a WebSocket. This
+process subsequently and periodically sends information about the server load back to the
+client over this (persistent) WebSocket connection.
+
+
+8 Performance benchmarking
+
+In this section, objective measurements will be provided that show that the solutions dis-
+cussed earlier are indeed practically viable. They will also provide some insight into the
+scalability of the various proposed technologies. One has to keep in mind that, although
+provided, absolute performance figures are highly dependent on the platform used for
+benchmarking; more interesting information is available by investigating trends that appear
+in the analyses of that data. Also, composing a solution from the different options pre-
+sented in this paper, purely based on performance figures, may result in less than satisfying
+results. One should also take into account Web browser specifics and application developer
+preferences for a specific technology.
+   Results are presented based on two setups, composed of techniques proposed in this
+paper. Note that the choice for client-side programming model (remote canvas vs. remote
+GL proxy) only entails a minor impact on the performance, resulting from the amount of
+command data that needs to be transmitted. The other two elements of the pipeline clearly
+have a much larger impact (server-side processing and the choice of return channel). As
+it would be infeasible to compare all possible solutions provided in this paper (see Fig. 3
+for an overview of possible combinations), two composited solutions that have no specific
+technique in common were chosen for benchmarking. The benchmark parameters were also
+specifically chosen to align with real-world scenarios instead of artificial (idealistic) circum-
+stances. To showcase this, both setups will be related to the use case descriptions provided
+earlier in this paper.
+
+8.1 Setup 1
+
+Figure 4 shows the main results from the benchmarking performed using a PoC system that
+is composed of the following (partial) solutions described in this paper – section references
+in parentheses:
+–   Client-side: a remote GL Proxy object that communicates with the server over a
+    WebSocket channel (Section 4.2).
+–   Server-side: a dedicated server application containing a WebSocket server that inter-
+    prets an application-specific command set and renders the output images (Section 5.2).
+–   Return channel: a video WebRTC channel for delivering the output to the client
+    (Web browser) (Section 6.2.1), augmented with the existing WebSocket channel
+4400                                                            Multimed Tools Appl (2016) 75:4383–4410
+
+
+
+
+Fig. 4 Performance figures for benchmark setup 1 for two output canvas resolutions. The cut-off point at
+which performance degrades is clearly visible through all four metrics (20 clients for 500×500, 8 clients for
+1000×1000)
+Multimed Tools Appl (2016) 75:4383–4410                                                   4401
+
+
+    over which lossless PNG images are sent back when the user stops manipulating
+    the view.
+   The PoC application assumes a simple case in which trivial operations are performed
+(e.g. panning and zooming), in order not to skew the results with heavy server-side 3D or
+image processing. An automated procedure spawns clients that interact in a scripted manner
+in pre-determined time intervals, using a single server rendering process. The automated
+clients continuously perform operations that require updates from the server, so while the
+mechanism to send a lossless PNG image back to the client when manipulation stops is
+present, in this setup it will not be used. The system specification of the server is a Dell
+Precision T3610 workstation, featuring an Intel Xeon E5-1620 CPU with hyperthreading
+support and 16GB of RAM.
+   For the benchmark results in this section, clients were added to the setup at regular
+intervals of one minute, up to a maximum of 30 clients. Apart from monitoring the server
+machine, the first client spawned was also continuously monitored to observe the impact
+of the presence of other clients. Regarding the client-side figures, it is the measurements
+of this first client which are reported. Each benchmark run for a particular resolution was
+executed 10 times, and the average and standard deviations of these tests are visualized in
+Fig. 4. The horizontal axis denotes the number of clients in the test, while the vertical axis
+of this figure represents:
+–   The number of frames per second, as received by the client and calculated through the
+    method mentioned in Section 7.2.
+–   The total CPU load on the server.
+–   The total amount of outgoing bandwidth for all clients, as observed by the server.
+–   The interaction delay, indicating the round trip time for operations, and measured as
+    described in Section 7.1.
+   Figure 4a shows the benchmark results for a canvas size of 500 by 500 pixels. It can
+clearly be observed that the server process provides a stable frame rate until about 20 active
+connections. Beyond this number, the CPU load approaches its maximum value (note that
+this can never reach 100 % due to hyperthreading in the CPU), bandwidth increases only
+slightly and the number of frames per second as observed by the clients drops. It is especially
+interesting to note that the breakdown of scalability at server-side – indicated by the CPU
+load – can be correlated to observations made at the client – indicated by the interaction
+delay and number of frames per second. Note that the reported frame rate cannot exceed
+30 fps under any condition, as the server will never generate frames at a higher rate.
+   In Fig. 4b, the tests were repeated at a resolution of 1000x1000 pixels. It is clear from
+these results that breakdown happens sooner in the simulation run (with a smaller number
+of clients); but it is again observable both from server as well as client-side metrics.
+   The test runs have been repeated for several output canvas resolutions. Each time, the
+number of clients at which the server performance degrades was noted (i.e. when a stable
+frame rate to the clients could no longer be supported). This is represented in Fig. 5. In this
+same chart, the maximum frame rate attainable is also provided for each resolution. The
+required frame rate is of course dependent on the application scenario.
+   The application described above aligns with the requirements of the use case description
+for the omni-directional video viewer (Section 3.2), in that it assumes an intrinsic and fixed
+frame update rate – associated with the video being shown, but simulated here through
+continuous simulated interaction – and assumes that users can cope with artifacts introduced
+by lossy video compression.
+4402                                                            Multimed Tools Appl (2016) 75:4383–4410
+
+
+
+
+Fig. 5 Scalability assessment for different output canvas sizes for test setup 1. Both the maximum attainable
+frames per second, as well as the number of supported clients at such frame rates is denoted
+
+
+
+8.2 Setup 2
+
+In a second setup, a different combination of components is proposed:
+–      Client-side: a remote canvas object that sends commands over a WebSocket channel
+       (Section 4.1).
+–      Server-side: an off-the-shelf Chrome process which receives commands and renders
+       output images on-screen and compresses them using JPEG and PNG (Section 5.1).
+–      Return channel: a reliable WebRTC data (side) channel that sends back individual
+       frames for display in the client (Section 6.2.2). The client signals the server to generate
+       new images only after decoding is complete.
+   In Fig. 6 only the frames per second as observed by the clients are noted for different
+output resolutions. This frame rate can easily be determined client-side by calculating the
+amount of updates requested. Remember that in this setup, there is no video being sent
+back, and individual frames can thus easily be identified. In this case, there is no fixed
+upper limit of 30 FPS which was present in the previous scenario that used a video encoder.
+Here, as long as the client is performing a manipulation of its view, the server is asked to
+send updates of the view. When the client-server delay is low and the server can process
+the requests in a swift manner, framerates higher than 30 can be achieved. Note that apart
+from the fact that there will only be a stream of images going from server to client as long
+as the client is changing the view, there is also the simple throttling mechanism that limits
+the client from getting overloaded: the client will only request a new image from the server
+when the previously requested one has been received.
+Multimed Tools Appl (2016) 75:4383–4410                                                                 4403
+
+
+
+
+Fig. 6 The frame rate as perceived by the client for different output canvas sizes and total number of clients
+in the benchmark run for test setup 2
+
+
+
+
+   It is clearly visible from the chart that scalability is severely impacted when compared to
+setup 1. Even for relatively small output canvas sizes, e.g. 400×400 pixels, the composed
+solution fails to deliver frames at an interactive rate (< 15fps) when the server is loaded with
+8 clients. This solution does however have other benefits over setup 1 as far as complexity of
+the programming model and complexity of developing the server-side platform is concerned
+(see the description of relevant technologies earlier in this paper).
+   In this setup, while the client is performing manipulations on the view, lossy compres-
+sion is employed, based on JPEG. To make sure that the exact view is displayed when the
+manipulations are done, a lossless (PNG) image is then sent to avoid details becoming lost.
+The reasoning behind the specific application of both compression types is that, apart from
+the fact that JPEG images are typically much smaller than corresponding PNG images, our
+benchmark results (Fig. 7) have shown that JPEG compression is considerably faster than
+PNG in a typical browser environment. In this figure the speedup of JPEG compression
+compared to PNG is plotted for different quality parameters and over 100 test runs. Timing
+information is based on the JavaScript toDataURL() method, which obtains pixel data from
+a canvas, encodes it in JPEG or PNG and transforms it to a string using Base64. Clearly,
+unless absolute lossless compression is required, JPEG should be the primary choice for
+optimal performance.
+   This setup closely mimics the requirements for the scientific dataset use case description,
+provided in Section 3.1. In fact, it can be considered a worse-case condition, where users
+would continuously be requesting updates by performing interactions. The update rate is
+variable and not intrinsically defined by the application or content type being shown (unlike
+4404                                                            Multimed Tools Appl (2016) 75:4383–4410
+
+
+
+
+Fig. 7 Comparison of JPEG vs. PNG compression in Google Chrome for different quality settings (repre-
+sented by the q parameter, 1 meaning (near-)lossless compression for JPEG). The vertical axis represents the
+speedup factor of JPEG over PNG (i.e. a value of 5 would indicate that the browser compresses the image 5
+times faster in JPEG compared to PNG format for a given quality setting and size
+
+
+
+
+the previous setup). The fact that users of these applications may be sensitive to visual
+artifacts is also taken into account here.
+
+
+9 Discussion and conclusions
+
+In this paper, several technological solutions have been proposed that can be utilized to
+implement a remote rendering system using only standards-compliant Web browsers and
+APIs. This alleviates the need for either native applications or the reliance on (legacy)
+plugins in browser environments.
+   Two example use case scenarios were described that present challenging applications
+to be ported to a remote rendering setup. Based on the requirements identified for each
+of these, two possible architectures were described that are composed of technologies
+described in the paper. These were subsequently benchmarked for their performance and
+scalability.
+   In general, it can be concluded that there is no universally ‘best’ solution to the problem
+of remote rendering. Rather, depending on the type of application to be supported, developer
+preferences and specifics with regards to deployment will be decisive factors. However, a
+few general remarks can be made, based on our experience with developing the proof-of-
+concept demonstrators and subsequent benchmarking.
+Multimed Tools Appl (2016) 75:4383–4410                                                               4405
+
+
+–   For situations where a constant and pre-determined update rate is required, regardless
+    of user input (e.g. for applications that visualize video), the use of the WebRTC
+    video channel is highly encouraged. Not only is it easy to implement; it also supports
+    technologies such as bandwidth adaptation and flow control out-of-the-box.
+–   The trade-off between developing a custom server application to perform rendering and
+    an off-the-shelf browser process should be driven by, among others, the need for access
+    to a low-level (i.e. drawing primitive type) API such as OpenGL. If the latter is indeed
+    required, there is no other option besides using a custom process. Another factor that
+    may play a role is the question whether a native application to perform (local) rendering
+    already exists; if so, it is relatively straightforward to redirect the output towards a Web
+    browser (e.g. using WebRTC). For newly developed applications, both options can be
+    considered, and the choice will likely be driven by the familiarity of developers with
+    programming Web APIs.
+–   The choice for the technology behind the data channel (WebRTC, WebSockets or
+    AJAX) does not impose a restriction on the type of server process (custom or off-
+    the-shelf browser). However, some combinations come with a performance penalty in
+    terms of added delay, e.g., using WebSockets with an off-the-shelf browser requires a
+    mediating Web(Socket) server.
+–   The performance of the solutions described in the benchmark section is clearly highly
+    dependent on the output frame resolution. However, existing technology to distribute
+    load over multiple servers can be applied to alleviate the issues. By provisioning more
+    server resources on-demand, scalability can be ensured.
+–   Obtaining correct performance measurements (vital to control the user’s QoE) is a non-
+    trivial task within the constraints of the Web browser environment, especially when
+    considering interaction delays and data being sent as a generic video stream. However,
+    by applying the methodologies presented in this paper, representative data can clearly
+    be obtained while not impacting the delay and adherence to standards.
+   The implementation of the various solutions proposed is released as open source code
+and includes templates for both server- and client-side elements. It can be referenced at:
+http://research.edm.uhasselt.be/mtap/.
+
+
+Acknowledgements       Part of this work is funded by IWT of Flanders through the R&D project CIRRUS.
+
+
+
+References
+
+ 1. Beznosyk A, Quax P, Coninx K, Lamotte W (2012) The influence of cooperative game design patterns
+    for remote play on player experience. In: APCHI, pp 11–20
+ 2. Boukerche A, Pazzi RWN (2006) Remote rendering and streaming of progressive panoramas for
+    mobile devices. In: Proceedings of the 14th Annual ACM International Conference on Multimedia,
+    MULTIMEDIA ’06. ACM, New York, pp 691–694
+ 3. Ericsson Research (2014) OpenWebRTC. [Online; accessed 5-Dec-2014]. http://www.openwebrtc.io/
+ 4. Evans A, Romeo M, Bahrehmand A, Agenjo J, Blat J (2014) 3d graphics on the web: A survey. Comput
+    Graph 41(0):43–61
+ 5. Glander T, Moreno A, Aristizabal M, Congote J, Posada J, Garcia-Alonso A, Ruiz O (2013) Reweb3d:
+    Enabling desktop 3d applications to run in the web. In: Proceedings of the 18th International Conference
+    on 3D Web Technology, Web3D ’13. ACM, New York, pp 147–155
+ 6. Google (2014) WebRTC Native Code Package. [Online; accessed 5-Dec-2014]. http://www.webrtc.org/
+    webrtc-native-code-package
+4406                                                           Multimed Tools Appl (2016) 75:4383–4410
+
+
+ 7. Hickson I (2012) The websocket API. Candidate recommendation, W3C. http://www.w3.org/TR/2012/
+    CR-websockets-20120920/
+ 8. Jacinto H, Kéchichian R, Desvignes M, Prost R, Valette S (2012) A web interface for 3d visualization
+    and interactive segmentation of medical images. In: Proceedings of the 17th International Conference on
+    3D Web Technology, Web3D’12. ACM, New York, pp 51–58
+ 9. Jourdain S, Ayachit U, Geveci B (2010) Paraviewweb, a web framework for 3d visualization and data
+    processing. In: IADIS International Conference on Web Virtual Reality and Three-Dimensional Worlds,
+    p 07
+10. Kapetanakis K, Panagiotakis S, Malamos AG (2013) Html5 and websockets; challenges in network 3d
+    collaboration. In: Proceedings of the 17th Panhellenic Conference on Informatics, PCI’13. ACM, New
+    York, pp 33–38
+11. Manzano M, Hernandez J, Uruena M, Calle E (2012) An empirical study of cloud gaming. In: 2012 11th
+    Annual Workshop on Network and Systems Support for Games (NetGames), pp 1–2
+12. Marion C, Pouderoux J, Jomier J, Jourdain S, Hanwell M (2013) and U. Ayachit. A hybrid visualiza-
+    tion system for molecular models. In: Proceedings of the 18th International Conference on 3D Web
+    Technology, Web3D ’13. ACM, New York, pp 117–120
+13. Narayanan A, Jennings C, Bergkvist A, Burnett D (2013) WebRTC 1.0: Real-time communication
+    between browsers, W3C working draft, W3C. http://www.w3.org/TR/2013/WD-webrtc-20130910/
+14. OL2 Inc (2014) Onlive. [Online; accessed 5-Dec-2014]. http://www.onlive.com
+15. Quax P, Issaris P, Vanmontfort W, Lamotte W (2012) Evaluation of distribution of panoramic video
+    sequences in the explorative television project. In: Network and Operating System Support for Digital
+    Audio and Video Workshop, NOSSDAV ’12, Toronto, ON, Canada, June 7-8, 2012, pp 45–50
+16. Shi S, Nahrstedt K, Campbell R (2012) A real-time remote rendering system for interactive mobile
+    graphics. ACM Trans Multimedia Comput Commun Appl 8(3s):46:1–46:20
+17. Sony Inc (2014) Playstation Now. [Online; accessed 5-Dec-2014]. https://www.playstation.com/en-us/
+    explore/psnow
+18. Steed A, Oliveira MF (2009) Networked Graphics: Building Networked Games and Virtual Environ-
+    ments. Morgan Kaufmann Publishers Inc., San Francisco
+19. The Guardian Google’s WebM v H.264: who wins and loses in the video codec wars? http://www.
+    theguardian.com/technology/blog/2011/jan/17/google-webm-vp8-video-html5-h264-winners-losers
+20. Wessels A, Purvis M, Jackson J, Rahman SS (2011) Remote data visualization through websockets. In:
+    Proceedings of the 2011 Eighth International Conference on Information Technology: New Generations,
+    ITNG ’11. IEEE Computer Society, Washington, pp 1050–1051
+21. Yoon I (2000) Web-based Remote Rendering with Image-based Rendering Acceleration and Compres-
+    sion, PhD thesis. University of Southern California, Los Angeles, p AAI3041546
+22. Zorrilla M, Martin A, Sanchez JR, Tamayo In, Olaizola IG (2014) Html5-based system for interoperable
+    3d digital home applications. Multimedia Tools Appl 71(2):533–553
+
+
+
+
+Peter Quax is an assistant professor at Hasselt University and a postdoc researcher at the Expertise Cen-
+tre for Digital Media / iMinds. He obtained his MSc in Computer Science in 2000 and his PhD from the
+Transnationale Universiteit Limburg in 2007. His research interests are in networked virtual environments,
+online gaming, scalable multimedia delivery and security. He is a member of both ACM and IEEE.
+Multimed Tools Appl (2016) 75:4383–4410                                                               4407
+
+
+
+
+Jori Liesenborgs is a postdoc researcher at the Expertise Centre for Digital Media / iMinds, with research
+focus on computer networks and computational science. He obtained his MSc in Computer Science in 2000
+at the Transnationale Universiteit Limburg, his MSc in Physics in 2005 at the Ghent University and his PhD
+in Physics in 2010 at the Hasselt University.
+
+
+
+
+Arno Barzan is a PhD student in computer science at the Expertise Centre for Digital Media, a research
+institute of Hasselt University, where he specializes in computer networks. He obtained his MSc in Computer
+Science, specialization Multimedia, from Hasselt University in 2011.
+
+
+
+
+Martijn Croonen studied computer science at Hasselt University, where he built up thorough knowlegde of
+JavaScript and browser technologies. He obtained his multimedia-oriented degree in the summer of 2014,
+after which he went on to work in the private sector.
+4408                                                            Multimed Tools Appl (2016) 75:4383–4410
+
+
+
+
+Wim Lamotte obtained his MSc degree from the Free University of Brussels (1988) and a PhD in computer
+science (1994) at Hasselt University. He is a full professor at Hasselt University, where he leads the Multi-
+media Networking research group. Prof. Lamotte led and participated in numerous iMinds- and EU-funded
+projects on networked multimedia, mobile platforms and Quality of Experience. He is a member of the ACM
+(SIGCOMM and SIGMM) and IEEE (Computer Society and Communications Society).
+
+
+
+
+Bert Vankeirsbilck received his M.Sc degree in computer science from Ghent University in 2007. In July
+2013, he obtained his Ph.D. degree with his dissertation ‘Optimisation of the Quality of Experience for
+Mobile Thin Client Systems’. Since 2007, he has been working at the Department of Information Technology
+(INTEC) of the Faculty of Engineering and Architecture at Ghent University, and is now active as a postdoc-
+toral researcher. His main interests include mobile cloud computing, quality of experience and distribution
+of web applications and intelligence in the Internet of Things.
+Multimed Tools Appl (2016) 75:4383–4410                                                                  4409
+
+
+
+
+Bart Dhoedt received a Masters degree in Electrotechnical Engineering (1990) from Ghent University. His
+research, addressing the use of microoptics to realize parallel free space optical interconnects, resulted in a
+Ph.D. degree in 1995. After a 2-year postdoc in optoelectronics, he became Professor at the Department of
+Information Technology.
+    Bart Dhoedt is responsible for various courses on algorithms, advanced programming, software devel-
+opment and distributed systems. His research interests include software engineering, distributed systems,
+mobile and ubiquitous computing, smart clients, middleware, cloud computing and autonomic systems. He
+is author or co-author of more than 300 publications in international journals or conference proceedings.
+
+
+
+
+Tom Kimpe holds an engineering degree in computer science and a PhD in electrical engineering from
+University of Ghent, Belgium. In 2010 he finalized a Master in Business Administration (MBA) at the Vler-
+ick Management School. Since 2001 Tom has been working in Barco’s Healthcare Division. He has taken
+several positions including development engineer, project manager, innovation manager, VP of Technology
+and Innovation and Chief Technology Officer of Barco’s Healthcare Division. Already for several years,
+Tom is coordinating all research and innovation activities of Barco’s Healthcare Division and is steering an
+international team of engineers in USA, Belgium and Italy. His main topics of expertise are (medical) dis-
+play technology, image and signal processing, image quality modelling, network technology and medical
+regulatory aspects.
+4410                                                          Multimed Tools Appl (2016) 75:4383–4410
+
+
+
+
+Kurt Pattyn holds a master degree in Philosophy and a master degree in Artificial Intelligence from the
+University of Ghent, Belgium. Since 1997 Kurt has been working in Barco’s Healthcare Division where
+he is responsible for software architecture. Kurt has been involved in several Healthcare projects ranging
+from embedded devices to end-user applications. His main interests go to cloud computing and remote
+visualisation. In his free time Kurt contributes to several Open Source projects.
+
+
+
+
+Matthew McLin Since receiving his B.A. in Music and B.S. in Computer Engineering from Washington
+State University in 2003, Matt McLin has served as a software engineer and project manager for Barco’s
+Healthcare Division, where he continues to work with a global team to produce a variety of solutions
+involving graphics and visualization.
+

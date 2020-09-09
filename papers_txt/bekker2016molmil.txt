@@ -1,0 +1,294 @@
+Bekker et al. J Cheminform (2016) 8:42
+DOI 10.1186/s13321-016-0155-1
+
+
+
+
+ SOFTWARE                                                                                                                                        Open Access
+
+Molmil: a molecular viewer for the PDB
+and beyond
+Gert‑Jan Bekker1,2*, Haruki Nakamura1 and Akira R. Kinjo1
+
+
+  Abstract
+  We have developed a new platform-independent web-based molecular viewer using JavaScript and WebGL. The
+  molecular viewer, Molmil, has been integrated into several services offered by Protein Data Bank Japan and can be
+  easily extended with new functionality by third party developers. Furthermore, the viewer can be used to load files in
+  various formats from the user’s local hard drive without uploading the data to a server. Molmil is available for all plat‑
+  forms supporting WebGL (e.g. Windows, Linux, iOS, Android) from http://gjbekker.github.io/molmil/. The source code
+  is available at http://github.com/gjbekker/molmil under the LGPLv3 licence.
+  Keywords: WebGL, Protein structure visualization, Molecular dynamics
+
+
+Background                                                                              Mobile [6] are oriented around HTML5 applications.
+Molecular viewers are a vital tool for our understanding                                Since these advanced web browsers are available on a
+of protein structures and functions. The shift from regu-                               wide range of platforms, it seems to be the perfect plat-
+lar desktop platforms such as Windows, Mac OSX and                                      form to develop a molecular viewer for.
+Linux, to mobile platforms such as iOS and Android in                                     One of the earliest attempts to switch to a Java inde-
+the last half-decade, however, prevents traditional online                              pendent molecular web viewer was done by the develop-
+molecular viewers such as PDBj’s previously developed                                   ers of the popular molecular viewer Jmol who developed
+jV [1] and the popular Jmol [2] from running on these                                   an alternate molecular viewer named JSmol [7] to run
+new platforms as these platforms do not support Java                                    directly within the web browser. They simply used a pro-
+Applets. For mobile platforms a native application (i.e.                                gram known as java2script to convert Jmol’s Java code
+an application specifically designed and optimized for                                  into JavaScript. JSmol however runs noticeably slower
+each of these platforms) can be created and distributed                                 compared to Jmol for relatively small protein structures
+via their respective application stores. However, with new                              and quickly becomes unusable for larger structures.
+platforms on the horizon, or already available, in addition                             Desktop applications such as Chimera [8], VMD [9],
+to the already established desktop platforms, it would be                               PyMol [10] and Yasara [11] make use of GPU based hard-
+a tedious and inefficient job to make a molecular viewer                                ware acceleration using OpenGL [12]. By making use of
+available on all platforms, current and future.                                         OpenGL, one can leverage the immense power of GPUs
+  In the same half-decade however, web browsers have                                    to accelerate these molecular viewers. GPUs have tradi-
+also made significant advances, particularly with their                                 tionally been designed for this purpose; i.e. to accelerate
+JavaScript engines. Further advances in the form of                                     the generation of 3D images, but more recently GPUs
+CSS3 [3] and HTML5 [4] have made the web an interest-                                   have also been re-purposed for general purpose calcula-
+ing platform for developers. Mobile platforms also offer                                tions in e.g. Molecular Dynamics [13, 14]. So wouldn’t it
+these advanced web browsers, while some newer mobile                                    be great if this power were somehow also available inside
+platforms such as Mozilla’s Firefox OS [5] and Ubuntu                                   web browsers?
+                                                                                          Enter WebGL. WebGL was developed by Khronos
+*Correspondence: gertjan.bekker@protein.osaka‑u.ac.jp                                   [15] to allow JavaScript applications running in the web
+1
+  Laboratory of Protein Informatics, Institute for Protein Research, Osaka              browser to take advantage of OpenGL ES 2.0 [16] com-
+University, 3‑2 Yamadaoka, Suita, Osaka 565‑0871, Japan                                 patible GPUs which had been specifically designed for
+Full list of author information is available at the end of the article
+
+                                           © 2016 The Author(s). This article is distributed under the terms of the Creative Commons Attribution 4.0 International License
+                                           (http://creativecommons.org/licenses/by/4.0/), which permits unrestricted use, distribution, and reproduction in any medium,
+                                           provided you give appropriate credit to the original author(s) and the source, provide a link to the Creative Commons license,
+                                           and indicate if changes were made. The Creative Commons Public Domain Dedication waiver (http://creativecommons.org/
+                                           publicdomain/zero/1.0/) applies to the data made available in this article, unless otherwise stated.
+Bekker et al. J Cheminform (2016) 8:42                                                                                       Page 2 of 5
+
+
+
+
+mobile devices. While WebGL has been available for             Displaying large entries
+several years in Chrome [17] and Firefox [18], WebGL           One of the design goals of Molmil was to create a molec-
+support was only recently added to Microsoft’s Inter-          ular viewer which can produce high quality images suit-
+net Explorer and Apple’s Safari, including iOS. We have        able for publications. On the other hand, it should also
+developed a new web based molecular viewer, Molmil,            be able to scale to very large structures available in the
+which can take advantage of GPU hardware acceleration          Protein Data Bank (PDB) consisting of hundreds of thou-
+using WebGL. It runs on a wide range of platforms such         sands to millions of atoms. By default WebGL can only
+as Windows, Linux, Mac OSX, Android and iOS. Finally,          display a limited amount of polygons. However, by using
+we have embedded Molmil within various services                an extension to WebGL (OES_element_index_uint)
+offered by Protein Data Bank Japan [1, 19–21] to demon-        which is available on all modern platforms, it becomes
+strate its capabilities.                                       possible to efficiently render very large or highly detailed
+                                                               structures. Molmil uses this extension to build high qual-
+Implementation and capabilities                                ity geometry for small and medium sized structures and
+Molmil has been designed as a light-weight and full-           dynamically scale down the quality as the size of the
+featured viewer for the PDB. As such, Molmil can load          structure increases to gigantic proportions (such as the
+legacy PDB flat files, PDBx/mmCIF [22] and PDBML               HIV-1 capsid; 3j3q [28], see Fig. 1). Note that to be able
+[23] formatted files. Molmil can also load a custom for-       to load these gigantic structures, an adequate amount of
+mat which we call PDBx/mmJSON, which is a JSON [24]            memory is still required, which is often not available on
+version of the PDBx/mmCIF data. Other formats which            smartphones, tablets and older systems. To enable high
+Molmil supports are GRO, MOL2, MDL, CCP4 [25] (for             quality lighting even when using polygon models of low
+electron density maps and EM data), MyPresto’s trajec-         detail for these gigantic structures, Molmil uses tuned
+tory format [14, 26], Gromacs’ TRR and XTC trajectory          Phong shading [29] which can accurately calculate the
+formats [13] and our own developed MPBF polygon                lighting even for simplistic polygon models.
+format which we are using for our eF-site service [1] for
+large structures. Users can also load these files from their   Rendering and colouring modes
+local hard drive.                                              Molmil supports several rendering and colouring modes
+   The PDBx/mmJSON (mmJSON for short) format was               which can be selected using a point-and-click based
+specifically developed for Molmil. In a nutshell, it is a      menu. In the top-right corner of Molmil’s canvas the
+JSON representation of the mmCIF format, made by               structures menu can be enabled (see also Fig. 2). This
+translating the data structure based on the STAR syntax        structures menu lists all the loaded structures in the
+[27], into a series of associative arrays, standard arrays,    current canvas. Via a hierarchical tree selection sys-
+integers, floats and null values. A major advantage of         tem chains and residues belonging to the structure can
+this format is that it can be directly interpreted by mod-     be explored. Right clicking on the structures, chains or
+ern browsers, that is, a typed data structure is available
+once the JSON data has been parsed by a browser. Such
+is not the case for PDBML (XML) or mmCIF formats. In
+addition, the file size is generally smaller in the mmJSON
+format than in PDBML or mmCIF formats. An analy-
+sis showed that the compressed mmJSON is on average
+approximately 33 or 56 % smaller than a compressed
+mmCIF or PDBML formatted file, respectively, making
+it more suitable for web deployment. For large structures
+another derivative of mmJSON is currently under devel-
+opment to only include the minimal amount of informa-
+tion in the file required to display the backbone structure.
+This mmJSON variant is not yet offered as a service by
+PDBj, but can be previewed by using Molmil: http://
+gjbekker.github.io/molmil/#molmil.loadPDBlite(‘3j3q’).
+Implementation details regarding the parsers used to
+                                                                Fig. 1 Rendering of 3j3q using Molmil. 3j3q [28] is the largest PDB
+load the mmCIF data, as well as information regarding           entry to date (with more than 2.4 million atoms) and can be visual‑
+the mmJSON format and its relation with the mmCIF               ized using Molmil. Left: cartoon rendering with group colouring.
+format is given on its Github page at http://github.com/        Right: rendering of the molecular surface, coloured by electrostatic
+gjbekker/cif-parsers.                                           potential and hydrophobicity generated by eF-site [1]
+Bekker et al. J Cheminform (2016) 8:42                                                                                     Page 3 of 5
+
+
+
+
+                                                                         [26] trajectory format and Gromacs’s [13] TRR and XTC
+                                                                         trajectory formats are supported by Molmil and sup-
+                                                                         port for other formats can be easily added. Although web
+                                                                         browsers can be used to produce PNG images by Mol-
+                                                                         mil, they cannot make MP4 movies. However, by using a
+                                                                         server-side REST service it is possible to stitch the images
+                                                                         of each frame in the trajectory together to build a movie.
+                                                                         For obvious reasons (potential abuse) we have not made
+                                                                         this functionality available as a public REST service, but
+                                                                         users can obtain this application from Molmil’s Github
+                                                                         page which they can then run on their own workstation
+                                                                         so that their own machine will then build the movie.
+                                                                         Using this tool, Molmil can e.g. be used to produce high
+                                                                         quality MP4 videos of molecular simulation trajectories.
+ Fig. 2 Screenshot of Molmil loading the url: http://gjbekker.github.
+ io/molmil/#molmil.loadPDB(‘1crn’). Indicated are the Main menu
+ on the left which can be used to load files, save PNG images, modify    Command‑line interface
+ settings and play animations if available. The structures menu on the   Molmil also has an embedded command line which can
+ right can be shown by clicking on the indicated button. The context     be used to manually perform actions. The command line
+ menu which can be displayed by right clicking on any structures,        is capable of executing arbitrary JavaScript code and has
+ chains or residues/ligands listed within the structures menu. The
+                                                                         access to Molmil’s application program interface (API),
+ command line interface which can be shown by clicking on the
+ indicated button                                                        which can also be used by third party developers to
+                                                                         embed and extend Molmil within their own web page/
+                                                                         app. The command line can also be used to perform sim-
+                                                                         ple tasks such as selecting chains, residues or atoms and
+residues displays a context menu via which users can                     changing the display and colouring of them. Third party
+change the display and colour modes. Double click-                       developers can also add support for their own custom
+ing on the residues causes Molmil to focus and jump to                   file formats, or add additional functionality. The embed-
+the selected residue. Furthermore, right-clicking on the                 ded viewers on the PDBj website have been implemented
+atoms or cartoon rendering within the canvas also ena-                   in this manner. Details and examples of the Molmil API
+bles users to interactively modify the rendering and col-                are described on Molmil’s Github page http://github.
+our mode of the selected atom or the residue/chain the                   com/gjbekker/molmil/wiki. The command line can be
+atom belongs to. These controls are reminiscent from                     accessed via the “<” symbol in the lower left corner of the
+Yasara [11], which uses a similar hierarchical structures                canvas (see also Fig. 2). Finally, the commands can also be
+menu and context menu to modify the display and colour                   embedded within the URL for easy sharing via email, web
+modes of the loaded structures. Molmil currently sup-                    pages and social media (see Fig. 2 for a simple example
+ports VDW, ball-and-stick, stick, Cα-trace, tube, cartoon,               URL).
+rocket and coarse surface representations. Structures
+can be coloured by their secondary structure elements,                   Molmil availability
+CPK, group (blue-to-red gradient), chain, ABEGO [30]                     Molmil has seen several major revisions since its initial
+or custom colour assignments. Views can be outputted as                  release in December 2013. Molmil Beta featured a pro-
+high quality PNG images, suitable for publication with-                  totype WebGL viewer which was implemented directly
+out requiring additional plugins. An overview of Molm-                   into PDBj’s web application. Molmil 0.9 was released in
+il’s various rendering modes can be found in Additional                  September 2014 and had all the basic functionalities a
+file 1: Appendix I.                                                      molecular viewer needs such as reading various formats
+                                                                         and supporting multiple display and colour modes via a
+Playing animations                                                       point-and-click based menu. The latest major version of
+It is also possible to load PDB files with multiple models               Molmil, Molmil 1.0, was released in October 2015 which
+and play them as animations, by using the “Animation”                    focused on optimizations and extending the feature set of
+control panel which is accessible from Molmil’s main                     Molmil and also added a powerful JavaScript based com-
+menu (see Fig. 2). PDBj’s Promode Elastic service [20]                   mand line interface.
+uses this functionality. It is also possible to use this ani-              Molmil has been integrated in many of PDBj’s ser-
+mation functionality using alternative formats to e.g. play              vices [21], including: Mine PDB Explorer Asymmetric
+Molecular Dynamics trajectories. Currently myPresto’s                    Unit viewer; Mine PDB Explorer Biological Unit viewer;
+Bekker et al. J Cheminform (2016) 8:42                                                                                          Page 4 of 5
+
+
+
+
+EDMap viewer (for electron densities); Sequence Navi-        based viewer and PV [31] was developed by SWISS-
+gator; Structure Navigator; Promode Elastic (for viewing     MODEL and is currently also being used by the RCSB-
+protein mobility analysed via Normal Mode Analysis)          PDB. Other WebGL-based molecular viewers are listed
+and Chemie (PDBj’s new chemical component service).          in Additional file 1: Appendix II. Molmil however offers
+More recently, the eF-site [1] service (for viewing the      high quality graphics due to using highly detailed poly-
+electrostatic surface of proteins) was also updated with     gon models when possible, while it can scale up to display
+an integrated Molmil viewer and the Biological Unit          very large structures by dynamically reducing the qual-
+viewer was also upgraded. Furthermore, high quality          ity to render these large structures in combination with a
+PNG images of all the released PDB entries on the PDBj       finely tuned Phong shader for smooth and realistic shad-
+website have also been generated by Molmil in an auto-       ing even for lower detailed models. Furthermore, Molmil
+mated manner. More information regarding Molmil as           can also be used to easily load files from the users’ hard
+well as use-cases and command-line examples can be           drive, including molecular simulation trajectories, and
+found at http://github.com/gjbekker/molmil/wiki.             comes with a readily accessible command line interface,
+                                                             which is also programmable by embedding the com-
+Discussion                                                   mands in the URL, as shown in e.g. Fig. 2.
+Molmil requires the browser to support WebGL. Fur-
+thermore, for optimal use, the OES_element_index_uint        Conclusions
+must also be supported. When loading very large struc-       We have designed a versatile, high performance, high
+tures such as 3j3q, there are additional requirements to     quality molecular viewer for the web. We have also
+the user’s software and hardware. Since Molmil requires      deployed the molecular viewer on the PDBj web appli-
+at least 6 GB of memory to load the structure into mem-      cation as part of various services to aid users as well as
+ory, the user’s device must be equipped with 8 GB of         demonstrate some of the capabilities of Molmil. The
+memory. Furthermore, to enable Molmil to make use of         source code is available on GitHub as well as documenta-
+this large amount of memory, a 64-bit browser and oper-      tion on how to use and/or deploy Molmil on your own
+ating system are required. Finally, due to limitations of    website. Questions or requests can be made either via
+Chrome’s JavaScript engine, even Chrome’s 64-bits ver-       Molmil’s GitHub page or via our contact page http://
+sion is incapable of loading 3j3q. Mozilla’s Firefox and     pdbj.org/contact.
+Apple’s Safari however have no such problem with the
+64-bit versions. Note that it will still take tens of sec-   Availability and requirements
+onds to several minutes depending on the web browser,        Project name: Molmil; Project home page: http://github.
+the user’s hardware such as the processor and the user’s     com/gjbekker/molmil; Operating system(s): Platform
+internet connection since 3j3q’s compressed data file is     independent; Programming language: JavaScript, CSS3,
+still about 40 MB large. The implementation at PDBj’s        HTML5, WebGL, GLSL; Other requirements: WebGL;
+web application will automatically detect the user’s soft-   Licence: GNU LGPLv3; Restrictions for use by non-aca-
+ware and hardware environment and will display a link to     demics: None.
+the entry’s embedded Molmil page if the entry is compat-
+ible with the user’s system. All regular entries and most    Additional file
+large structure entries however have no problems loading
+on low-end devices, as long as WebGL is supported.             Additional file 1. Appendices; Example renderings using Molmil & Over‑
+                                                               view of alternative WebGL based molecular viewers.
+  Although Molmil exposes some of PyMol’s commands
+via Molmil’s command line, support is currently limited
+to a small subset of commands for selection, styling and     Abbreviations
+colouring of structures. Also, although Molmil can be        PDB: Protein Data Bank; PDBj: Protein Data Bank Japan; CSS3: Cascade Style
+                                                             Sheets version 3; HTML5: hyper text markup language version 5; GPU: graphics
+used to load CCP4 files for electron densities and gen-      processing unit; REST: representational state transfer; EM: electron microscopy;
+erate coarse surfaces for proteins, high quality surfaces    MPBF: molmil polygon binary format; API: application programming interface;
+such as MSMS and solvent-accessible surfaces are cur-        VDW: Van Der Waals; PNG: portable network graphics; XML: extendible meta
+                                                             language.
+rently not yet supported, partly because of the high com-
+putational requirements involved in generating highly        Authors’ contributions
+detailed surfaces.                                           HN and GB conceived the idea. GB designed and coded the software, and
+                                                             led the writing of the manuscript. ARK helped write the manuscript and
+  Since Molmil’s initial release in 2013, other WebGL-       conceived the name of the program. HN and ARK contributed to the further
+based molecular viewers have also emerged. E.g. JSmol        development of the idea and in giving suggestions for improvements to the
+(JSmol/WebGL) has been extended with a basic WebGL           program. All authors read and approved the manuscript.
+Bekker et al. J Cheminform (2016) 8:42                                                                                                             Page 5 of 5
+
+
+
+
+Author details                                                                  15. WebGL—OpenGL ES 2.0 for the Web [Internet]. [Cited 2015 Dec 14].
+1
+  Laboratory of Protein Informatics, Institute for Protein Research, Osaka          http://www.khronos.org/webgl/
+University, 3‑2 Yamadaoka, Suita, Osaka 565‑0871, Japan. 2 Graduate School      16. OpenGL ES 2_X—The standard for embedded accelerated 3D graphics
+of Frontier Biosciences, Osaka University, Suita, Osaka 565‑0871, Japan.            [Internet]. [Cited 2016 Mar 14]. http://www.khronos.org/opengles/2_X/
+                                                                                17. Chrome [Internet]. [Cited 2016 Mar 14]. http://www.google.com/
+Competing interests                                                                 chrome/
+The authors declare that they have no competing interests.                      18. Firefox [Internet]. [Cited 2016 Mar 14]. http://www.mozilla.org/en-US/
+                                                                                    firefox/new/
+Received: 13 April 2016 Accepted: 19 August 2016                                19. Protein Data Bank Japan—PDB Japan—PDBj [Internet]. [Cited 2016 Mar
+                                                                                    14]. http://pdbj.org/
+                                                                                20. Wako H, Endo S (2013) Normal mode analysis based on an elastic
+                                                                                    network model for biomolecules in the Protein Data Bank, which uses
+                                                                                    dihedral angles as independent variables. Comput Biol Chem 44:22–30
+                                                                                21. Kinjo AR, Suzuki H, Yamashita R, Ikegawa Y, Kudou T, Igarashi R et al (2012)
+References                                                                          Protein Data Bank Japan (PDBj): maintaining a structural data archive
+1. Kinoshita K, Nakamura H (2004) eF-site and PDBjViewer: database and              and resource description framework format. Nucl Acids Res 40(Database
+    viewer for protein functional sites. Bioinformatics 20(8):1329–1330             issue):D453–D460
+2. Hanson RM (2010) Jmol—a paradigm shift in crystallographic visualiza‑        22. Fitzgerald PMD, Westbrook JD, Bourne PE, McMahon B, Watenpaugh KD,
+    tion. J Appl Crystallogr Int Union Crystallogr 43(5):1250–1260                  Berman HM (2006) The macromolecular dictionary (mmCIF). In: Hall SR,
+3. CSS [Internet]. [Cited 2016 Mar 14]. http://www.w3.org/TR/CSS/                   McMahon B (eds) International tables for crystallography. International
+4. HTML5 [Internet]. [Cited 2016 Mar 14]. http://www.w3.org/TR/html5/               Union of Crystallography, Chester, pp 295–443
+5. Firefox OS [Internet]. [Cited 2016 Mar 14]. http://www.mozilla.org/en-US/    23. Westbrook J, Ito N, Nakamura H, Henrick K, Berman HM (2005) PDBML:
+    firefox/os/                                                                     the representation of archival macromolecular structure data in XML.
+6. Ubuntu on phones [Internet]. [Cited 2016 Mar 14]. http://www.ubuntu.             Bioinformatics 21(7):988–992
+    com/phone                                                                   24. JSON [Internet]. [Cited 2016 Mar 14]. http://www.json.org/
+7. Hanson RM, Prilusky J, Renjian Z, Nakane T, Sussman JL (2013) JSmol and      25. Winn MD, Ballard CC, Cowtan KD, Dodson EJ, Emsley P, Evans PR et al
+    the next-generation Web-based representation of 3D molecular structure          (2011) Overview of the CCP4 suite and current developments. Acta
+    as applied to proteopedia. Isr J Chem 53(3–4):207–216                           Crystallogr D Biol Crystallogr Int Union Crystallogr 67(Pt 4):235–242
+8. Pettersen EF, Goddard TD, Huang CC, Couch GS, Greenblatt DM, Meng EC         26. Morikami K, Nakai T, Kidera A, Saito M, Nakamura H (1992) Presto (protein
+    et al (2004) UCSF Chimera–a visualization system for exploratory research       engineering simulator): a vectorized molecular mechanics program for
+    and analysis. J Comput Chem 25(13):1605–1612                                    biopolymers. Comput Chem 16(3):243–248
+9. Humphrey W, Dalke A, Schulten K (1996) VMD—visual molecular dynam‑           27. Hall SR (1991) The STAR file: a new format for electronic data transfer and
+    ics. J Mol Graph 14:33–38                                                       archiving. J Chem Inf Model 31(2):326–333
+10. Schrödinger L (2010) The PyMOL molecular graphics system, version           28. Zhao G, Perilla JR, Yufenyuy EL, Meng X, Chen B, Ning J et al (2013) Mature
+    ~1.3r1                                                                          HIV-1 capsid structure by cryo-electron microscopy and all-atom molecu‑
+11. Krieger E, Vriend G (2014) YASARA view—molecular graphics for                   lar dynamics. Nature 497(7451):643–646
+    all devices—from smartphones to workstations. Bioinformatics                29. Phong BT (1975) Illumination for computer generated pictures. Commun
+    30(20):2981–2982                                                                ACM 18(6):311–317
+12. OpenGL—The industry standard for high performance graphics [Inter‑          30. Lin Y-R, Koga N, Tatsumi-Koga R, Liu G, Clouser AF, Montelione GT et al
+    net]. [Cited 2016 Mar 14]. http://www.opengl.org/                               (2015) Control over overall shape and size in de novo designed proteins.
+13. Abraham MJ, Murtola T, Schulz R, Páll S, Smith JC, Hess B et al (2015)          Proc Natl Acad Sci 112(40):E5478–E5485
+    GROMACS: high performance molecular simulations through multi-level         31. Biasini M (2015) PV [Internet]. http://github.com/biasmv/pv
+    parallelism from laptops to supercomputers. SoftwareX 1:19–25
+14. Mashimo T, Fukunishi Y, Kamiya N, Takano Y, Fukuda I, Nakamura H (2013)
+    Molecular dynamics simulations accelerated by GPU for biological
+    macromolecules with a non-Ewald scheme for electrostatic interactions.
+    J Chem Theory Comput 9(12):5599–5609
+

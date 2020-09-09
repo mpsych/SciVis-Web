@@ -1,0 +1,556 @@
+        Streaming Compressed 3D Data on the Web using JavaScript and WebGL
+                                Guillaume Lavoué∗                                 Laurent Chevalier†                  Florent Dupont‡
+                             Université de Lyon, CNRS                                VELVET                      Université de Lyon, CNRS
+                                LIRIS, INSA-Lyon                                                                  LIRIS, Université Lyon 1
+
+
+Abstract                                                                                          lable by JavaScript, and norms like HTML 5. The Web3D concept
+                                                                                                  (i.e. communicating 3D content on the web) is seen as the future of
+With the development of Web3D technologies, the delivery and vi-                                  the Web 2.0, and is supported by many organizations like the W3C
+sualization of 3D models on the web is now possible and is bound                                  and the Web3D consortium.
+to increase both in the industry and for the general public. How-
+ever the interactive remote visualization of 3D graphic data in a                                 Numerous application domains are directly concerned by 3D data
+web browser remains a challenging issue. Indeed, most of exist-                                   (some of them are illustrated in figure 1): Mechanical engineer-
+ing systems suffer from latency (due to the data downloading time)                                ing, scientific visualization, digital entertainment (video games, se-
+and lack of adaptation to heterogeneous networks and client devices                               rious games, 3D movies), medical imaging, architecture, cultural
+(i.e. the lack of levels of details); these drawbacks seriously affect                            heritage (e.g. 3D scanning of ancient statues). In most of these
+the quality of user experience. This paper presents a technical solu-                             applications, 3D data are represented by polygonal meshes, which
+tion for streaming and visualization of compressed 3D data on the                                 modelize the surface of the 3D objects by a set of vertices and facets
+web. Our approach leans upon three strong features: (1) a dedicated                               (see the zoomed part on the right in figure 1).
+progressive compression algorithm for 3D graphic data with colors                                 This type of data is more complex to handle than other media such
+producing a binary compressed format which allows a progressive                                   as audio signals, images or videos, and thus it has brought new
+decompression with several levels of details; (2) the introduction                                challenges to the scientific community. In particular, the interactive
+of a JavaScript halfedge data structure allowing complex geometri-                                remote visualization of 3D graphic data in a web browser remains
+cal and topological operations on a 3D mesh; (3) the multi-thread                                 a challenging issue. As observed by Di Benedetto et al. [2010], the
+JavaScript / WebGL implementation of the decompression scheme                                     delivery and visualization of 3D content through the web has came
+allowing 3D data streaming in a web browser. Experiments and                                      with a considerable delay with respect to other digital media such
+comparison with existing solutions show promising results in terms                                as images and videos, mainly because of the higher requirements
+of latency, adaptability and quality of user experience.                                          of 3D graphics in terms of computational power. First systems
+                                                                                                  used Java Applets or ActiveX controls to expose 3D data on a
+CR Categories: I.3.2 [Computer Graphics]: Graphics systems—                                       web browser, however recently the WebGL specification has been
+Remote systems I.3.6 [Computer Graphics]: Methodology and                                         introduced [Khronos 2009] and will probably boost the use of 3D
+Techniques—Graphics data structures and data types                                                data on the web. A lot of industries have interest in providing
+                                                                                                  3D content through the web, including online video games (to
+Keywords: 3D Graphics, Web3D, WebGL, Progressive Compres-                                         represent virtual worlds), 3D design or e-business companies.
+sion, Level-of-Details, JavaScript.                                                               Moreover like existing huge repositories of pictures (e.g. Flikr)
+                                                                                                  or videos (e.g. YouTube), community web 3D model repositories
+                                                                                                  are now appearing, such as Google 3D Warehouse. Like stated
+1     Introduction                                                                                in the recent study from Mouton et al. [2011], web applications
+                                                                                                  have major benefits compared to desktop applications: firstly,
+Technological advances in the fields of telecommunication, com-                                   web browsers are available for all mainstream platforms including
+puter graphics, and hardware design during the two last decades                                   mobile devices, and secondly the deployment of web applications
+have contributed to the development of a new type of multimedia:                                  is straightforward and does not require the user to install or update
+three-dimensional (3D) graphic data. This growing 3D activity was                                 softwares or libraries other than the browser. All these reasons
+possible thanks to the development of hardware and software for                                   argue for a high increase of the use of 3D remote graphics on the
+both professionals (especially 3D modeling tools for creation and                                 web in the near future.
+manipulation) and for end-users (3D graphic accelerated hardware,
+new generation of mobile phones able to visualize 3D models).
+Moreover, the visualization of 3D content through the web is now                                  An efficient system for interactive remote visualization of large 3D
+possible thanks to specific formats like X3D, technologies like the                               datasets needs to tackle the following technical issues:
+very recent WebGL specification, which makes the GPU control-
+                                                                                                    1. Removing the latency; in most of existing systems, 3D data
+    ∗ e-mail:glavoue@liris.cnrs.fr                                                                     are fully loaded in an uncompressed form. Therefore, there is
+    † e-mail:laurent.chevalier@velvet.eu.com                                                           latency before visualization. This latency is particularly criti-
+    ‡ e-mail:fdupont@liris.cnrs.fr                                                                     cal for web applications.
+                                                                                                    2. Allowing the adaptation of the levels of details to different
+                                                                                                       transmission networks and client hardwares, in order to allow
+                                                                                                       a good frame-rate even in case of low-power devices such as
+                                                                                                       smartphones.
+
+Permission to make digital or hard copies of part or all of this work for personal or
+                                                                                                  These issues can be resolved by the use of progressive compression
+classroom use is granted without fee provided that copies are not made or distributed             techniques [Peng et al. 2005]. Indeed, progressive compression al-
+for commercial advantage and that copies bear this notice and the full citation on the            lows to achieve high compression ratio (and thus fast transmission)
+first page. Copyrights for components of this work owned by others than ACM must be               and also to produce different levels of details (LoD), allowing to
+honored. Abstracting with credit is permitted. To copy otherwise, to republish, to post on
+servers, or to redistribute to lists, requires prior specific permission and/or a fee.
+                                                                                                  adapt the complexity of the data to the remote device by stopping
+Request permissions from permissions@acm.org.                                                     the transmission when a sufficient LoD is reached. Moreover, users
+Web3D 2013, June 20 – 22, 2013, San Sebastian, Spain.
+Copyright © ACM 978-1-4503-2133-4/13/06 $15.00
+
+
+                                                                                             19
+Figure 1: Several 3D graphical models illustrating different application domains. From left to right: Neptune (250k vertices - cultural
+heritage) , Venus (100k vertices - cultural heritage), Casting (5k vertices - mechanical engineering), Monkey (50k vertices - digital entertain-
+ment) and Tank (160k vertices - scientific visualization) which represents a nuclear power plant tank with temperature information (provided
+by R&D division of EDF).
+
+
+are able to quickly visualize a coarse version of the 3D data first,          of details to the capacity of the visualization device, the network
+instead of waiting for full objects to be downloaded before they can          bandwidth and the user needs.
+be displayed. Figure 2 illustrates different levels of details for the        Most of existing approaches consist of decimating the 3D mesh
+power plant tank 3D model. These functionalities are able to neu-             (vertex/edge suppressions) while storing the information necessary
+tralize the time latency even for huge data and make possible real-           for the process inversion, i.e. the refinement (vertex/edge inser-
+time interactions (i.e. high frame rate) even for mobile devices.             tions during the decoding). The existing approaches differ in the
+                                                                              way they decimate the mesh and store the refinement information
+We introduce a technical solution for web-based remote 3D stream-             (where and how to refine?).
+ing and visualization, which tackles the two issues mentioned                 Since the pioneer work of Hoppe [1996], a lot of methods have been
+above. Our system runs natively in a web browser without any                  introduced [Taubin and Rossignac 1998; Pajarola and Rossignac
+plug-in installation and leans upon three strong features: (1) a dedi-        2000; Alliez and Desbrun 2001; Gandoin and Devillers 2002; Peng
+cated progressive compression algorithm for 3D graphics data with             and Kuo 2005; Valette et al. 2009; Peng et al. 2010; Lee et al. 2012],
+colors, producing a binary compressed .P3DW file which allows                 however most of them are not adapted for remote visualization, in-
+a progressive decompression with several levels of details; (2) the           deed some critical issues have been almost totally ignored by the
+introduction of Polyhedron HalfEdge.js, a JavaScript halfedge data            scientific community:
+structure allowing geometrical and topological operations on a 3D
+mesh; (3) the multi-thread JavaScript implementation of the asso-                • Most of existing progressive compression techniques have
+ciated decompression scheme, using Polyhedron HalfEdge.js and                      concentrated their efforts on optimizing the compression ra-
+WebGL, allowing 3D data streaming in a web browser. The next                       tio; however in a remote visualization scenario, improving the
+section details the state of the art about 3D object compression and               quality of the levels of details (see figure 2) is more important
+web-based 3D data delivery and visualization; then section 3 details               than gaining a few bits on the size of the whole compressed
+our progressive compression algorithm while section 4 presents our                 stream. Only some very recent methods have tried to focus
+JavaScript halfedge data structure and the implementation of the de-               on the quality of the levels of details [Tian and AlRegib 2008;
+compression. Finally section 5 illustrates several compression and                 Peng et al. 2010; Lee et al. 2012].
+streaming experiments and comparisons with state of the art, while
+section 6 concludes the paper.                                                   • Only few existing techniques [Tian and AlRegib 2008; Lee
+                                                                                   et al. 2012] allow the progressive compression of attributes
+                                                                                   like color, texture or other information attached to the 3D
+2     State of the art                                                             data. The level of details management of these attributes is
+                                                                                   particularly important with regards to their influence on the
+2.1   Progressive compression                                                      perceptual quality of the visualized object.
+
+The main idea of progressive (or multi-resolution) compression is                • One of the main objectives of progressive compression is to
+to represent the 3D data by a simple coarse model (low resolution)                 speed up the transmission of the 3D data by decreasing the
+followed by a refinement sequence permitting an incremental re-                    size of the content to transmit. However if the decompression
+finement of the 3D model until the highest resolution (see figure                  time is too long, then the user has lost all the benefit of the
+2, from left to right). This functionality is particularly useful in               compression since even if the transmission is fast, a long de-
+the case of remote visualization since it allows adapting the level                compression time will induce a latency for the user. Therefore
+
+
+                                                                         20
+Figure 2: Progressive decoding of the compressed P3DW file corresponding to the Tank model (with and without wireframe). From left
+to right : 12%, 28%, 56% and 100% of the stream are respectively decoded. Such progressive decoding allows to stream the data in order
+to obtain very quickly a good approximation of the model. Moreover, it allows an adaptation to the client device hardware (for a high
+performance workstation the full resolution model can be loaded and visualized interactively but in case of a smartphone, a low resolution
+version has to be preferred). The original ASCII OFF file size is 12762 kB.
+
+
+      a critical issue for a compression scheme is to optimize the de-        the client. However we focus this state-of-the-art on client side
+      compression time by relying on simple yet efficient schemes.            rendering solutions where the full 3D data are transmitted.
+      However at present very few progressive compression algo-               Many works on web-based remote visualization of 3D data have
+      rithms have focused on optimizing and simplifying this step.            been conducted for remote collaborative scientific visualization for
+      Our objective is to focus on that point to take full advantage          which an overview has recently been conducted by Mouton et al.
+      of the gain in transmission time provided by the small size             [2011]. ShareX3D [Jourdain et al. 2008] provides a web-based
+      of the compressed stream. Such a simplified decoding algo-              remote visualization of 3D data; the web rendering is based on
+      rithm would also make possible its transcription in JavaScript          Java. The COVISE (COllaborative VIsualization and Simulation
+      for a full web integration using WebGL. This time issue is of           Environment) platform, in its last version [Niebling and Kopecki
+      major importance for a realistic industrial use of progressive          2010], offers a web client implemented using JavaScript and
+      compression.                                                            WebGL. However these systems, like most of existing ones, make
+                                                                              use of XML-based ASCII format such as VRML or X3D [Jourdain
+In our system, we propose an adaptation of the recent progres-                et al. 2008] or JavaScript vertex arrays [Niebling and Kopecki
+sive compression algorithm from Lee et al. [2012] which ful-                  2010] to exchange the 3D data, which involves a significant latency
+fills these requirements (quality of the LoD, color handling, de-             due to the large file size.
+compression simplicity). Our algorithm produces a binary com-                 To resolve this latency issue, some compression methods have been
+pressed file (.P3DW) that allows a fast and simple progressive                proposed. A simple binary encoder (X3Db) has been introduced
+decompression. We have selected the algorithm from Lee et al.                 for the X3D format, however it produces poor compression rates
+[2012] since it produces among the best state of the art results              (around 1:5 regarding the original ASCII X3D size). Isenburg
+regarding rate-distortion performance and it is publicly available            and Snoeyink [2003] propose a compression method integrated
+in the MEsh Processing Platform (MEPP) [Lavoué et al. 2012]                  to the VRML/X3D format however the decompression needs a
+(http://liris.cnrs.fr/mepp/).                                                 dedicated Java client. Recently, several interesting compression
+                                                                              methods, allowing decompression in the web browser, have
+2.2   Remote 3D visualization on the web                                      been proposed: Google introduces webgl-loader [Chun 2012]
+                                                                              (http://code.google.com/p/webgl-loader/), a WebGL-based com-
+                                                                              pression algorithm for 3D meshes in the context of the Google
+Like stated in the introduction, the delivery and visualization of 3D         Body project [Blume et al. 2011]; it is based on UTF-8 coding,
+content through the web has came with a huge delay with respect to            delta prediction and GZIP and produces compression ratio around
+other digital media, mainly because of the higher requirements of             5 bytes/triangle (for encoding coordinates, connectivity and
+3D graphics in terms of computational power. Some web solutions               normals). Behr et al. [2012] propose to use images as binary
+exist, like ParaViewWeb [Jomier et al. 2011], that compute the 3D             containers for mesh geometry within the X3DOM framework;
+rendering on the server side and then transmit only 2D images to
+
+
+                                                                         21
+                                                                                                                                                 √
+they obtain compression ratio around 6 bytes/triangle in the best              the combination of these two conquests performs the inverse 3
+configuration. These two latter approaches produce interesting                 subdivision. For non-regular meshes, the retriangulation follows a
+compression ratio and a fast decoding mostly on the GPU. However               deterministic rule so that the mesh connectivity is kept as regular as
+they are single-resolution hence they do not allow streaming or                possible during the simplification process. These iterative simplifi-
+level of details selection.                                                    cation steps are applied until reaching a coarse base mesh.
+Some authors have proposed solutions for 3D data streaming;
+Di Benedetto et al. [2010], in their JavaScript library SpiderGL
+(which leans upon WebGL), propose a structure for managing
+levels of details however it is only suited for adaptive rendering
+since no streaming or compressed format is associated. In the
+context of remote scientific visualization, Maglo et al. [2010]
+propose a remote 3D data streaming framework based on a
+progressive compression algorithm; however they need a dedicated
+desktop client (Java and C++) to decompress the binary stream. A
+similar early version of this latter work was proposed by Chen and
+Nishita [2002] who consider an older and less efficient progressive            Figure 3: One iteration of the progressive encoding algorithm. (a)
+compression scheme. Some works on 3D streaming have also                       Original mesh, (b) intermediate result after decimation (red ver-
+been conducted in the context of online gaming and virtual world,              tices are removed) and (c) final result after cleansing (blue vertices
+Marvie et al. [2011] present a streaming scheme for 3D data                    are removed).
+based on a X3D extension. Their work is based on the progressive
+mesh representation introduced by Hoppe [1996] and thus allows
+streaming and level of details selection. However this progressive             3.2   Encoded information
+representation is not really compressed, moreover once again a
+dedicated desktop client is needed to visualize the data (no web
+integration). Finally, very recently, Gobbetti et al. [2012] propose a         As presented above, during the encoding the mesh is iteratively
+nice multi-resolution structure dedicated to the rapid visualization           simplified (decimation + cleansing). At each simplification step,
+of large 3D objects on the web, however it requires complex                    the connectivity, geometry and color information of each removed
+preprocessing steps (parameterization and remeshing) and cannot                vertex are written in the compressed stream, to allow the refinement
+handle arbitrary meshes.                                                       at the decoding.
+
+
+In our system, we consider a compressed representation of the 3D               For the connectivity, like proposed in [Alliez and Desbrun 2001],
+data (in the form of a P3DW file) which provides good compression              our algorithm only encodes the valences of the removed vertices,
+ratio: around 1:10 equivalent to roughly 3 bytes/triangle, when                plus some null patch codes when vertices were not able to
+encoding coordinates and connectivity. This compressed format                  be simplified for irregular connectivity reasons. This valence
+allows a progressive decompression and streaming. The whole                    information is sufficient for the connectivity refinement at the
+decompression process is implemented in JavaScript and WebGL                   decoding. In [Alliez and Desbrun 2001] the valence values are
+hence the 3D streaming works directly on a web browser without                 fed to an arithmetic coder. In our algorithm, we wish to avoid a
+need of plug-in.                                                               complex arithmetic decoding in JavaScript, hence we consider a
+                                                                               straightforward binary encoding. We use 3 bits per valence value
+                                                                               and null patch code, this gives an average of 10 bits/vertex for
+                                                                               the connectivity.
+3     Web-based progressive compression
+Like stated above, we need a simple decompression scheme to                    For the geometry, Alliez and Desbrun [2001] first apply a global
+make possible a JavaScript/WebGL implementation providing rea-                 and uniform quantization to the mesh vertex coordinates. When
+sonable processing time. For this purpose we have made a web-                  a vertex is removed, its position is predicted from the average
+based adaptation of the progressive algorithm from Lee et al. [2012]           position of its 1-ring neighboring vertices and only the prediction
+which is based on the valence-driven progressive connectivity en-              residue is encoded (once again using arithmetic coding). Lee et
+coding proposed by Alliez and Desbrun [2001]. During the en-                   al. [2012] improve this geometry encoding by introducing an
+coding, the mesh is iteratively simplified into several levels of de-          optimal adaptation of the quantization precision for each level of
+tails until reaching a base mesh (around a hundred vertices). At               details. In our web-based algorithm, we consider a global uniform
+each simplification iteration, the information necessary for the re-           quantization (on Q bits) of the (x,y,z) coordinates and then we
+finement is recorded; it contains connectivity, geometry and color             simply binary encode them (without any prediction nor entropy
+data. The encoding process and data are presented below.                       coding).
+
+3.1   Iterative simplification                                                 For the color, Lee et al. [2012] first transform the RGB color
+                                                                               components into the CIE L*a*b* representation which is more
+The encoding process is based on the iterative simplification algo-            decorrelated than the RGB space; thus it is more appropriate for
+rithm introduced by Alliez and Desbrun [2001]. At each iteration,              data compression. In [Lee et al. 2012], the L*a*b* components
+the algorithm decimates a set of vertices by combining decimation              are then quantized adaptively according to the level of details, and
+and cleansing conquests to get different levels of details (these two          predicted using a color-specific rule. The authors also introduce a
+steps are illustrated in figure 3). The decimation conquest con-               color metric to prevent the removal of visually important vertices
+sists in removing a set of independent vertices using a patch-based            during the simplification. In our algorithm we also use this metric.
+traversal, and then retriangulating the holes left (see fig.3.b). Then,        However, like for connectivity and geometry, the color encoding
+the cleansing conquest removes vertices of valence 3 in order to               is simplified: we apply a 8 bits quantization and a simple binary
+regularize the simplified mesh (see fig.3.c). For regular meshes,              encoding of the L*a*b* components (no prediction, nor entropy
+
+
+                                                                          22
+coding).
+
+In practice, for Q = 12 bits of geometric quantization, without
+color information, a 3D model is compressed using 46 bits/vertex
+(≈ 2.9 bytes/triangle). Basically we have made the choice of losing
+a part of the compression performance to decrease the complexity
+and the decompression time.
+
+Figure 4 presents the compressed stream. This stream is naturally
+decomposed into several parts, each standing for a certain level of
+detail and each containing connectivity (C), geometry (G) and color
+(Cl) information. The first part is the base mesh (usually around a
+hundred vertices) which is encoded in a simple binary form. Then,                Figure 5: The halfedge data structure. Reprinted from [Kettner
+each part of the stream, together with the already decompressed                  1999].
+level, allows building the next level of details. At the end of the
+stream decoding, the original object is retrieved (lossless compres-
+sion).                                                                           Our       library     relies     on     the     Three.js     library
+                                                                                 (https://github.com/mrdoob/three.js)                     for     the
+                                                                                 representation of basic geometrical primitives (vertex, faces, 3D
+                                                                                 positions); Three.js is actually one of the most popular JavaScript
+                                                                                 libraries for WebGL.
+
+                                                                                 4.2   Implementation of the decompression
+Figure 4: Format of the encoded stream. Each part of the stream
+contains geometry (G), connectivity (C) and color (Cl) data needed               Basically five main components have been implemented in
+for mesh refinement.                                                             JavaScript to allow the 3D data streaming:
+                                                                                   • A binary reader which decodes the connectivity, geome-
+                                                                                     try and color information from the binary P3DW file, in a
+4     Web integration                using         WebGL           and               streamed way (i.e. level by level). For the streaming, noth-
+      JavaScript                                                                     ing is implemented in the server side; we just make one single
+                                                                                     XMLHttpRequest. We use the responseText property of the
+4.1   An halfedge data structure in JavaScript                                       XHR to read the stream progressively. The maximum size
+                                                                                     of a level (see figure 4) is estimated using the number of al-
+The decompression mechanism is basically the following: first the                    ready decompressed vertices. The corresponding refinement
+base mesh is decoded, and then each layer of the compressed stream                   is launched as soon as enough data are available. In future im-
+provides connectivity, geometry and color information to construct                   plementations, we plan to add a header at the beginning of the
+the next level of details. This mesh refinement corresponds to                       compressed stream with the sizes of all levels, to read exactly
+steps (c) → (b) and (b) → (a) from figure 3 and thus needs                           the necessary numbers of bytes. A minimal implementation
+quite complex topological operations on the current 3D mesh like                     on the server side could also bring some interesting features;
+vertex insertion, face merging, etc. These topological operations                    for instance we could imagine authorizing the transmission of
+need an efficient data structure for representing the mesh and al-                   the first levels of details in a free basis, and authorizing the
+lowing fast adjacency queries. In classical compiled C++ Com-                        next ones after payment (like in online image libraries).
+puter Graphics applications, the most widespread structure is the
+halfedge data structure (see figure 5), like used in the CGAL library              • The base mesh initializer which constructs the base mesh
+(http://www.cgal.org). It is an edge-centered data structure                         (usually several dozens of vertices).
+capable of maintaining incidence information of vertices, edges and                • The LoD decompressor which constructs the next level of
+faces. As illustrated in figure 5, each edge is decomposed into two                  details, starting from an already decompressed level of de-
+halfedges with opposite orientations. The halfedges that border a                    tails and using the decoded connectivity, geometry and color
+face form a circular linked list around it. Each halfedge stores point-              information. This component computes the necessary geo-
+ers to its incident face, its incident vertex and it’s previous, next and            metrical and topological operations (steps (c) → (b) and
+opposite halfedges. Every faces and vertices store a pointer to their                (b) → (a) from figure 3). It is mostly based on our Poly-
+incident halfedge. This data structure is able to answer local adja-                 hedron HalfEdge.js library presented above.
+cency queries in constant time.
+                                                                                   • The rendering and user interaction management, which are
+We have implemented the Polyhedron HalfEdge.js library which                         mostly based on functions from the Three.js library.
+describes a complete halfedge data structure in JavaScript. This
+library allows to represent vertices, edges, faces and color attributes            • An efficient multi-thread implementation which enables user
+and it provides access to all incidence relations of these primitives                interactions while decompressing the levels of details, hence
+(e.g. all incident faces from a given vertex). Moreover some                         yielding an improved quality of user experience. JavaScript
+complex topological operations have been implemented like                            owns the important limitation of being executable only in one
+create center vertex which adds a vertex to the barycenter                           single thread. HTML5 has very recently provided a solu-
+of a face and connect it with its neighbors (see step (c) → (b)                      tion, the Web Workers, which allow to run scripts in back-
+in figure 3), join facets which merges two facets into a                             ground threads. The problem is that these Workers do not
+single one of higher degree, split face , split vertex,                              have access to the DOM (Document Object Model) hence
+fill hole, etc.                                                                      they have to constantly communicate their data to the main
+
+
+                                                                            23
+      thread. Fortunately the Array Buffers have been very recently                 Name (#vertices)    OFF          ZIP           P3DW
+      introduced (September 2011) and allow a zero-copy transfer                    Neptune (250k)     19,184     6,788 (2.8)   1,509 (12.7)
+      between threads (like a pass-by-reference). In our implemen-                  Tank (160k)        12,762     2,980 (4,3)    1,390 (9.2)
+      tation the decompression runs as background thread and we                     Venus (100k)        7,182     2,701 (2.7)    609 (11.8)
+      use this brand new Array Buffer technology to quickly send                    Monkey (50k)        5,105     1,856 (2.8)    430 (11.9)
+      the decoded information to the main thread.                                   Casting (5k)         332        112 (3)       28 (11.9)
+Note that an important effort of implementation was dedicated to
+                                                                              Table 1: Baseline evaluation of the compression rates: file size
+the minimization of the garbage collection. Indeed the garbage
+                                                                              (kB) and associated reduction factor (in parenthesis) of our com-
+collector is particularly harmful in JavaScript applications. It may
+                                                                              pressed format (P3DW) against standard ASCII format (OFF) and
+induce very visible pauses (half second or more). This fact is
+                                                                              ZIP compression (ZIP), for the test models from figure 1.
+particularly true for our refinement algorithms which allocate and
+destroy of lot of elements (vertices, faces, halfedges) during the
+topological operations with a naive implementation. Therefore we
+have optimized the object recycling; no object is destroyed in our            considered by these methods and we have reproduced exactly the
+current implementation.                                                       parameters: 16 bits quantization (for position and normals) for
+                                                                              the Bunny (as the X3DOM’s approach), and 11 bits for position
+All the features presented above are integrated into a web platform           and 8 bits for normal for the Happy Buddha (as the webgl-loader
+illustrated in figure 6. Once the user has chosen a remote P3DW               approach). We usually not consider the compression of normals in
+file, the levels of details are streamed and visualized interactively,        our approach, but we have included them for these comparisons.
+as illustrated in the accompanying video that shows a live recording          For the X3DOM SIG approach we have selected the best setting
+of the streaming.                                                             (SIG with PNG compression). We also include results from the
+                                                                              X3Db codec provided in [Behr et al. 2012]. We can observe
+                                                                              that our compression rate is quite similar to these two recent
+                                                                              concurrent approaches. Such compression factor will obviously
+                                                                              fasten the transmission time and thus reduce the latency for remote
+                                                                              visualization. However the main feature of our compressed P3DW
+                                                                              format is that it allows a progressive decoding and therefore yields
+                                                                              to very quickly visualize a coarse version of the 3D data (then
+                                                                              progressively refined) instead of waiting for the full object to be
+                                                                              downloaded before it can be displayed.
+
+
+
+                                                                              5.2    Quality of the levels of details
+
+                                                                              Figure 7 illustrates the geometric error associated with the differ-
+                                                                              ent levels of details according to the percentage of decoded ver-
+                                                                              tices/facets, for the Venus model. We can easily see than the visual
+                                                                              appearance of the decoded model becomes very quickly correct. In-
+                                                                              deed, after decoding only 10% of the elements (this corresponds ba-
+                                                                              sically to decoding 10% of the P3DW file, which represents around
+                                                                              1% of the original ASCII file size) we already have a nice approxi-
+Figure 6: Illustration of our web page for streaming compressed               mation of the object.
+3D data.
+
+
+
+5     Experiments and comparisons
+
+5.1   Compression ratio
+
+We have conducted experiments using the objects presented in fig-
+ure 1. Table 1 presents respectively the original sizes of the 3D
+models (OFF ASCII file format) and the sizes of the compressed
+streams corresponding to a lossless compression (all levels of de-
+tails). The geometry quantization precision Q was fixed between
+11 bits and 13 bits according to the model, so as to obtain no per-
+ceptible difference with the uncompressed version. We can observe
+that the compression ratios are very good (around 1:10), which is
+between 2 and 3 times better than a ZIP compression.
+
+Table 2 illustrates a comparison with concurrent state of the                 Figure 7: Maximum Root Mean Squared error vs percentage of
+art methods: Google webgl-loader [Chun 2012] (UTF8 codec)                     decoded elements for the Venus model.
+and the X3DOM’s image geometry approach [Behr et al. 2012]
+(SIG codec). For a fair comparison, we have taken two models
+
+
+                                                                         24
+                     Name (#vert.)               OFF        ZIP        P3DW       X3Db     X3DOM        UTF8     GZIP UTF8
+                     Bunny (35k)                2,448       860         462        937       406         NA         NA
+                     Happy Buddha (540k)        41,623     10,132      4,523       NA        NA         6.789      2.849
+
+Table 2: Comparison with X3Db, Google webgl-loader [Chun 2012] (UTF8 codec) and the X3DOM’s image geometry approach [Behr
+et al. 2012] (SIG PNG codec). File sizes are given in kB.
+
+
+5.3     Decompression time                                                     already very good approximations. Figure 8 and 9 illustrate the per-
+                                                                               centage of decoded elements in function of the time the user wait.
+Like stated in the introduction, the decompression time is of great            The levels of details corresponding to 10% elements are illustrated.
+importance for the usability of the method. Table 3 illustrates the            The curves corresponding to uncompressed representation and ZIP
+decompression times for our web platform using the Mozilla Fire-               compression are also shown.
+fox browser on a 2GHz laptop. The data are downloaded/streamed                 The accompanying video shows the live results for these two mod-
+from a remote server using a high speed connection in order to                 els.
+make the downloading time negligible. The table shows that
+the decoding time has a linear behavior regarding the number of
+decoded elements. On average our platform is able to decode
+between 20k and 30k vertices per second. This timing is very
+good for a JavaScript implementation and allows bringing a very
+significant gain in a remote visualization scenario, in term of
+quality of experience. Even if the whole decompression may take
+several seconds for large objects, it is interesting to see that what-
+ever the original size of the data, we obtain very quickly several
+thousands of vertices, hence a very nice approximation. Note that
+these results correspond to the multi-thread implementation, the
+mono-thread version is around 25% faster (but the user cannot
+interact with the object until it is fully decompressed).
+
+
+ Name            10%          20%           50%             100%
+ Neptune      1.0 (25k)    1.8 (50k)    4.6 (125k))      11.2 (250k)           Figure 8: Percentage of decoded elements according to the time
+ Tank         1.1 (16k)    1.6 (32k)     4.0 (80k)        8.8 (160k)           latency starting from the selection of the Venus model on the
+ Venus        0.4 (10k)    0.8 (20k)     1.5 (50k))       3.2 (100k)           web page. The dotted lines represent the scenarios of transmis-
+ Monkey        0.3 (5k)    0.4 (10k)    0.9 (25k))        1.8 (50k)            sion/visualization in uncompressed ASCII form (red) and ZIP for-
+ Casting      0.1 (0.5k)    0.1 (1k)    0.1 (2.5K))        0.2 (5k)            mat (green).
+
+Table 3: Decompression time (in seconds, for a 2GHz laptop) and
+associated numbers of vertices (in parenthesis) according to the
+percentage of decoded elements, for the test models from figure 1.
+
+
+5.4     Remote 3D streaming results
+
+We have conducted some experiments and comparisons in order to
+evaluate the gain, in term of quality of experience, of our web 3D
+streaming technical solution compared with concurrent approaches.
+
+5.4.1   Baseline results
+
+In this first experiment, we have considered the remote visualiza-
+tion of the Neptune and Venus 3D models through a good ADSL
+Internet access (10 Mbit/s), and have compared our results with the
+transmission in uncompressed form and the transmission after ZIP               Figure 9: Percentage of decoded elements according to the time
+compression.                                                                   latency starting from the selection of the Neptune model on the
+The latency (i.e. the time the user will wait before seeing anything)          web page. The dotted lines represent the scenarios of transmis-
+in the case of the transmission/visualization in uncompressed form             sion/visualization in uncompressed ASCII form (red) and ZIP for-
+is respectively 6.7 seconds for Venus (5.9s for transmission and 0.8s          mat (green).
+for loading the .OBJ file) and 18.5 seconds for Neptune (15.7s for
+transmission and 2.8s for loading the .OBJ file). If we consider the
+transmission of ZIP files, the latency is then 3s and 8.3s for Venus           5.4.2   Comparison with concurrent state of the art
+and Neptune respectively. In comparison, with our system, the user
+immediately (0.3s) starts to see coarse versions of the models. After          We have tested our web platform for the remote visualization of
+0.5s he visualizes the Neptune and Venus models with respectively              the Happy Buddha model (500K vertices) using a 5 Mbit/s Internet
+5% and 10% of elements (around 10K vertices), which constitute                 access (a typical 3G+ bandwidth). We have compared the results
+
+
+                                                                         25
+against the Google webgl-loader (Happy Buddha available here1 )               References
+and the X3DOM’s image geometry approach (Happy Buddha avail-
+able here2 ), under the same conditions (same PC, same bandwidth,             A LLIEZ , P., AND D ESBRUN , M. 2001. Progressive encoding for
+same browser). Of course the servers are not the same, since we                  lossless transmission of 3D meshes. In ACM Siggraph, 198–205.
+used the servers from the owners of the solutions. However the
+server owns a tiny influence on the results which mostly depend on            B EHR , J., J UNG , Y., F RANKE , T., AND S TURM , T. 2012. Using
+the PC and bandwidth. Figure 10 illustrates some screenshots of the              images and explicit binary container for efficient and incremental
+visualization for these three approaches, after respectively 800ms,              delivery of declarative 3D scenes on the web. In ACM Web3D,
+1.5s, 3s and 6s after launching the loading of the web pages. The                17–26.
+live results are available in the accompanying video.
+                                                                              B LUME , A., C HUN , W., KOGAN , D., KOKKEVIS , V., W EBER ,
+We can easily see the benefit of our streaming approach in this low
+                                                                                 N., P ETTERSON , R. W., AND Z EIGER , R. 2011. Google Body:
+bandwidth case. Indeed, after 800ms, we already have a coarse
+                                                                                 3D human anatomy in the browser. In ACM Siggraph Talks.
+but illustrative model (1.5K vertices) which is then refined progres-
+sively: 16k vertices after 1.5s, 38K vertices after 3s and 92K ver-           C HEN , B., AND N ISHITA , T. 2002. Multiresolution streaming
+tices after 6s. On the other hand, for the single rate approaches, the           mesh with shape preserving and QoS-like controlling. In ACM
+user has to wait around 10s to see the whole 3D model. Our ap-                   Web3D, 35–42.
+proach is particularly suited for medium and low bandwidth chan-
+nels; indeed, in case of very high speed connections (50 Mbit/s),             C HUN , W. 2012. WebGL Models: End-to-End. In OpenGL In-
+Google webgl-loader and X3DOM’s approach are very efficient.                     sights, P. Cozzi and C. Riccio, Eds. CRC Press, 431–454.
+We have not tested our platform on a mobile device. However, the              D I B ENEDETTO , M., P ONCHIO , F., G ANOVELLI , F., AND
+management of the levels of details is a very interesting feature for            S COPIGNO , R. 2010. SpiderGL: a JavaScript 3D graphics li-
+this kind of lightweight device. For instance, we could decide to                brary for next-generation WWW. In ACM Web3D, 165–174.
+interrupt the stream when a certain number of vertices are reached
+or when the frame-rate decreases under a threshold.                           G ANDOIN , P.-M., AND D EVILLERS , O. 2002. Progressive loss-
+                                                                                 less compression of arbitrary simplicial complexes. In ACM Sig-
+                                                                                 graph, 372–379.
+6    Conclusion
+                                                                              G OBBETTI , E., M ARTON , F., RODRIGUEZ , M. B., G ANOVELLI ,
+We have presented a technical solution for the remote streaming                  F., AND D I B ENEDETTO , M. 2012. Adaptive quad patches. In
+and visualization of compressed 3D content on the web. Our                       ACM Web3D, 9.
+approach relies on a dedicated progressive compression algorithm,             H OPPE , H. 1996. Progressive meshes. ACM Siggraph.
+a new halfedge JavaScript structure and a fast and multi-thread
+JavaScript implementation of the streaming and decompression                  I SENBURG , M., AND S NOEYINK , J. 2003. Binary compression
+into levels of details. Our approach brings a clear gain in term of              rates for ASCII formats. In ACM Web3D, 6–11.
+quality of user experience by removing the latency and providing
+very quickly a good approximation of the 3D model even for huge               J OMIER , J., J OURDAIN , S., AND M ARION , C. 2011. Remote
+data.                                                                            Visualization of Large Datasets with MIDAS and ParaViewWeb.
+Our approach is one of the first attempts to implement complex                   In ACM Web3D.
+geometry processing operations directly in JavaScript; hence it
+                                                                              J OURDAIN , S., F OREST, J., M OUTON , C., N OUAILHAS , B., M O -
+provides useful insights on the benefits and limitations of this
+                                                                                 NIOT, G., KOLB , F., C HABRIDON , S., S IMATIC , M., A BID , Z.,
+scripting language. JavaScript has shown unexpected impressive
+                                                                                 AND M ALLET, L. 2008. ShareX3D, a scientific collaborative 3D
+performances in our case. Of course, the main weakness of our
+                                                                                 viewer over HTTP. In ACM Web3D.
+approach is to make an intensive use of the CPU. We plan to
+investigate parallel decoding algorithms in order to overcome this            K ETTNER , L. 1999. Using generic programming for designing a
+limitation.                                                                      data structure for polyhedral surfaces. Computational Geometry
+                                                                                 13, 21957, 65–90.
+One remaining critical issue for the practical industrial use of web          K HRONOS, 2009. WebGL - OpenGL ES 2.0 for the Web.
+3D data streaming is the question of the intellectual property protec-
+tion. Indeed, during its transmission or visualization the 3D content         L AVOU É , G., T OLA , M., AND D UPONT, F. 2012. MEPP - 3D
+can be duplicated and redistributed by a pirate. This issue can be               Mesh Processing Platform. In International Conference on Com-
+resolved with the use of watermarking techniques. Such technique                 puter Graphics Theory and Applications.
+hides secret information in the functional part of the cover content
+(usually the geometry in case of 3D data). We plan to integrate such          L EE , H., L AVOU É , G., AND D UPONT, F. 2012. Rate-distortion
+watermarking algorithm in the next version of our web platform                   optimization for progressive compression of 3D mesh with color
+however this algorithm has to be embedded within the compression                 attributes. The Visual Computer 28, 2 (May), 137–153.
+and this constitutes a quite complex issue.                                   M AGLO , A., L EE , H., L AVOU É , G., M OUTON , C., H UDELOT,
+                                                                                C., AND D UPONT, F. 2010. Remote scientific visualization of
+Acknowledgment                                                                  progressive 3D meshes with X3D. In ACM Web3D.
+                                                                              M ARVIE , J.- E ., G AUTRON , P., L ECOCQ , P., M OCQUARD , O.,
+We thank the anonymous reviewers for helping us to improve this                 AND G ÉRARD , F. 2011. Streaming and Synchronization of
+paper. This work is supported by Lyon Science Transfert through                 Multi-User Worlds Through HTTP/1.1. In ACM Web3D.
+the project Web 3D Streaming.
+                                                                              M OUTON , C., S ONS , K., AND I AN G RIMSTEAD. 2011. Collabo-
+    1 http://webgl-loader.googlecode.com/svn/trunk/samples/happy/happy.html     rative visualization: current systems and future trends. In ACM
+    2 http://x3dom.org/x3dom/example/x3dom   imageGeometry.html                 Web3D.
+
+
+                                                                         26
+N IEBLING , F., AND KOPECKI , A. 2010. Collaborative steering
+   and post-processing of simulations on HPC resources: Everyone,
+   anytime, anywhere. In ACM Web3D.
+PAJAROLA , R., AND ROSSIGNAC , J. 2000. Compressed progres-
+  sive meshes. IEEE Visualization and Computer Graphics 6, 1,
+  79–93.
+P ENG , J., AND K UO , C.-C. J. 2005. Geometry-guided progressive
+   lossless 3D mesh coding with octree (OT) decomposition. ACM
+   Transactions on Graphics (TOG) 24, 3.
+P ENG , J., K IM , C.-S., AND K UO , C.-C. J. 2005. Technologies
+   for 3D mesh compression: A survey. Journal of Visual Commu-
+   nication and Image Representation 16, 6, 688–733.
+P ENG , J., K UO , Y., E CKSTEIN , I., AND G OPI , M. 2010. Feature
+   Oriented Progressive Lossless Mesh Coding. Computer Graph-
+   ics Forum 29, 7, 2029–2038.
+TAUBIN , G., AND ROSSIGNAC , J. 1998. Geometric compression
+  through topological surgery. ACM Transactions on Graphics 17,
+  2, 84–115.
+T IAN , D., AND A L R EGIB , G. 2008. Batex3: Bit allocation for
+   progressive transmission of textured 3-d models. IEEE Transac-
+   tions on Circuits and Systems for Video Technology 18, 1, 23–35.
+VALETTE , S., C HAINE , R., AND P ROST, R. 2009. Progressive
+  lossless mesh compression via incremental parametric refine-
+  ment. Computer Graphics Forum 28, 5 (July), 1301–1310.
+
+
+
+
+                                                                           Figure 10: Some screenshots illustrating the remote visualization
+                                                                           of the Happy Buddha (1 million triangles) on a 5 Mbit/s Internet ac-
+                                                                           cess, using our approach (left column), webgl-loader [Chun 2012]
+                                                                           (middle column) and X3DOM’s image geometry [Behr et al. 2012]
+                                                                           (right column). From top to bottom, screenshots are taken respec-
+                                                                           tively at 800ms, 1.5s, 3s and 6s after loading the web page.
+
+
+
+
+                                                                      27
+28
+

@@ -1,0 +1,894 @@
+Eurographics Symposium on Parallel Graphics and Visualization (2016)
+W. Bethel, E. Gobbetti (Editors)
+
+
+
+
+              Web-enabled server-based and distributed real-time
+                                Ray-Tracing
+
+                                                  G. Tamm1,2 and P. Slusallek1,2
+
+                                                    1 DFKI   Saarbrücken, Germany
+                                                    2 Saarland University, Germany
+
+
+
+
+         Abstract
+
+         As browsers expand their functionality, they continuously act as a platform for portable application develop-
+         ment within a web page. To bring interactive 3D graphics closer to the web developer, frameworks allowing a
+         declarative scene description in line with the HTML markup exist. However, these approaches utilize client-side
+         rendering and are thus limited in the scene complexity and rendering algorithms they can provide on a given
+         device. We present the extension of the declarative 3D framework XML3D to support server-based rendering.
+         The server back-end enables distributed rendering with an arbitrary hierarchy of cluster nodes. In the back-end,
+         we deploy a custom real-time ray-tracer. To distribute the ray-tracer, we present a load balancing method which
+         exploits frame-to-frame coherence in a real-time context. The load balancer achieves strong scalability without
+         inducing communication overhead during rendering to coordinate the workers.
+         Categories and Subject Descriptors (according to ACM CCS): C.2.4 [Computer-Communication Networks]: Dis-
+         tributed Systems—Client/Server; I.3.2 [Computer Graphics]: Graphic Systems—Distributed/Network Graph-
+         ics, Load Balancing; I.3.6 [Computer Graphics]: Methodology and Techniques—Interaction Techniques, Web-
+         based/Browser Interaction; I.3.7 [Computer Graphics]: Three-dimensional Graphics and Realism—Ray-Tracing,
+         Real-time
+
+
+
+
+1. Introduction                                                        graphics or library-specific programming knowledge is re-
+                                                                       quired to develop proprietary WebGL applications.
+Modern browsers continuously expand the functionality they
+provide, and thus establish themselves as a platform for a
+                                                                          To make graphics content creation more accessible for the
+wide range of applications. The tendency is further reflected
+                                                                       web developer, approaches for the declarative description of
+in the restriction and ultimately removal of plugin-based ap-
+                                                                       3D scenes, tightly coupled with the web page, have been de-
+proaches in recent and upcoming browser versions. These
+                                                                       veloped [BEJZ09] [SKR∗ 10]. Especially XML3D has been
+plugins are a stability risk as they run with full privileges
+                                                                       designed as a HTML5 extension, and utilizes the DOM di-
+on the client system, may contain platform- and OS specific
+                                                                       rectly for scene hierarchy building and manipulation.
+code, and therefore require a user dialog for installation. In
+contrast, an application within the browser’s bounds enables
+                                                                          An aspect not addressed by above client-side WebGL li-
+cross-platform development, and user access via a open web
+                                                                       braries is server-based rendering. Not every device may have
+page on any capable device.
+                                                                       the capabilities required to store and interactively render a
+   One application area in the browser is interactive graph-           scene at the desired frame rate. Specific to the browser envi-
+ics. The widely adopted WebGL allows the development of                ronment, persistent storage for large binary data is limited,
+GPU-accelerated 3D applications within a web page. How-                and only a subset of the OpenGL features is available in
+ever, WebGL is a low-level API. While higher level libraries           WebGL. Implementations are further limited by the reduced
+like three.js exist, they are still separate from HTML5 and            features and performance of JavaScript (JS) compared to na-
+the Document Object Model (DOM), apart from the integra-               tive code. Moving the rendering workload to a dedicated
+tion with the HTML5 canvas element for display. Therefore,             server back-end can overcome these restrictions.
+
+ c The Eurographics Association 2016.
+
+
+
+
+DOI: 10.2312/pgv.20161182
+56                      G. Tamm & P. Slusallek / Web-enabled server-based and distributed real-time Ray-Tracing
+
+   In this paper, we present the extension of XML3D to sup-           and can be manipulated using the existing JS API developers
+port server-based rendering. We decided to use XML3D on               are accustomed to.
+the client-side due to its HTML5-embedded, generic ap-                   Tamm et al. [TS15] describe the state-of-the-art methods
+proach for 3D content creation accessible for the common              for plugin free server-based rendering in the browser. One
+web developer. Further, XML3D is an established frame-                approach is to receive images via a WebSocket (WS) con-
+work. This allows us to make the server back-end available            nection [WPJR11] [MPJ∗ 13]. Motion JPEG (MJPG) over
+to a range of already existing and upcoming applications.             HTTP is another widely supported technique used by sev-
+   The server back-end currently provides a rasterizer and a          eral systems [KPS10] [JBDW12]. Cloud gaming providers
+real-time ray-tracer, which supports additional features and          prominently use more bandwidth-efficient video streaming.
+material properties. Real-time ray-tracing has been a topic           To date, there are two options for plugin free real-time video
+of research for over a decade [PMS∗ 99]. Being an embar-              streaming. In Chrome, a video receiver can be implemented
+rassingly parallel problem, the key for high performance is a         with NativeClient (NaCl) [YSD∗ 09], which allows to run na-
+careful utilization of parallelism on modern processors.Still,        tive code within the browser’s secured sandbox environment.
+enabling advanced diffuse effects like ambient occlusion or           Further, WebRTC [LR12] can be exploited to display a video
+area lights in real-time at a high resolution is barely possible      stream of rendered data in the browser.
+on a single commodity machine. Therefore, running a ray-                 Behr et al. [BMP∗ 15] describe a service infrastructure for
+tracer distributed on multiple machines is the consequence.           visualization applications in the browser. The framework in-
+   Our server back-end can operate in a distributed fashion,          cludes client-side rendering with hare3d [SLTB15] in addi-
+allowing an arbitrary hierarchy of servers in a standard or           tion to a server-side rendering component.
+InfiniBand network. How well a ray-tracer scales on such                 The above server-based rendering solutions are domain-
+an architecture is determined by the load balancing process.          specific and require proprietary libraries to operate from a
+Ray-tracing workload can be highly heterogeneous. Some                web page. Further, there is no specific support for a dis-
+areas in an image may be more expensive to compute than               tributed server back-end to facilitate high quality and per-
+others. To achieve optimal scaling, work must be balanced             formance rendering. In contrast, we enable server-based ren-
+to keep all processing units busy until the frame concludes.          dering in the declarative 3D library XML3D, which allows
+                                                                      to specify generic 3D content in actual HTML5. Custom ap-
+   We present a load balancing approach that exploits frame-
+                                                                      plication logic can be built on top of XML3D with JS. Using
+to-frame coherence in a real-time scenario. Based on cost
+                                                                      this approach, we make the distributed rendering back-end
+measurements for the previous frame, we demonstrate that
+                                                                      available to a wide array of potential applications.
+an accurate balance can be achieved for the next frame with
+negligible overhead. There is no communication between the
+master node, which accumulates the final rendering result,            2.2. Real-time Ray-Tracing and Load Balancing
+and the rendering nodes during a frame, and no communi-               With the advances in parallel computing architectures, real-
+cation between the rendering nodes at all. The approach is            time ray-tracing is a topic of increasing interest. Today, such
+thus especially suitable when the connection between some             parallelism is available even on commodity multi-processor
+nodes can be a bottleneck or is not possible.                         machines. We give a brief overview of real-time ray-tracing,
+   The following section outlines related work for server-            and then focus on load balancing.
+based rendering in the browser, real-time ray-tracing and                Parker et al. [PMS∗ 99] describe an early interactive ray-
+load balancing. The paper next focuses on the client-side ex-         tracer. Wald et al. [WS01] thoroughly outline the research
+tension of XML3D to support server-based rendering. It then           area and its challenges, and present their own distributed
+describes the server back-end and the load balancing method           ray-tracer. A generic, template-based interactive ray-tracing
+for distributed ray-tracing. The results section provides mea-        framework is presented by Georgiev et al. [GS08]. Op-
+surements and an analysis of the distributed ray-tracer.              tiX [PBD∗ 10], a ray-tracing framework running on the GPU,
+                                                                      enables a range of applications including real-time usage.
+                                                                      More recently, a collection of optimized CPU kernels has
+2. Related Work
+                                                                      been made available with Embree [WWB∗ 14].
+2.1. Web3D and server-based Rendering                                    Load balancing is the process to distribute the potentially
+There are two initiatives to embed declarative 3D content             heterogeneous ray-tracing tasks to the processing units, with
+into a web page, and thus make it accessible for the web de-          the goal to achieve maximum utilization. We distinguish be-
+veloper without requiring domain-specific or graphics pro-            tween dynamic and static load balancing [CDR02].
+gramming knowledge. X3DOM [BEJZ09] [JRS∗ 13] utilizes
+the XML-based X3D format to describe 3D content within                2.2.1. Dynamic Load Balancing
+a web page. In contrast, XML3D [SKR∗ 10] [KSSS14] is an               A dynamic load balancer assigns initial tasks of potentially
+extension of HTML5. A XML3D scene is part of the DOM,                 varying cost to the workers. If a worker becomes idle, it is as-
+
+                                                                                                           c The Eurographics Association 2016.
+                              G. Tamm & P. Slusallek / Web-enabled server-based and distributed real-time Ray-Tracing                     57
+
+signed still outstanding tasks on demand. The first approach                 culate a per-pixel cost estimate for their direct volume ren-
+is to manage a central task queue. Workers request new tasks                 dering system. Gillibrand et al. [GDC05] propose to time
+from the queue as they finish their current work [Pla02].                    profiling rays at a lower resolution, and then applying the re-
+Ize et al. [IBH11] describe an out-of-core ray-tracing system                sulting cost map to the full resolution image. They tested the
+which uses a queue both locally to schedule tasks on threads,                approach only with primary rays. Though, producing a rep-
+and globally for the nodes in a cluster. The queue manager                   resentative cost map by profiling can cause major overhead,
+described by Wald et al. [WS01] attempts to assign previ-                    especially when considering secondary rays.
+ously rendered tasks to nodes, facilitating good cache local-
+                                                                                 Similar to our approach, Cosenza et al. [CCDC∗ 08] as-
+ity assuming temporal coherence in interactive ray-tracing.
+                                                                             sume temporal coherence in a real-time ray-tracing system.
+   The second approach is work stealing [BL99]. Workers                      Timings obtained for the previous frame are considered rep-
+attempt to steal tasks from others instead of relying on a cen-              resentative for the next one. However, along with Gillibrand
+tral queue. This effectively removes the queue manager as a                  et al. [GDC05], their approach suffers from inaccuracy as
+possible communication bottleneck, as different node pairs                   timings are obtained in a lower resolution than the one of
+can communicate in parallel. Tzeng et al. [TPO10] use work                   the renderer. Each node only measures each task assigned to
+stealing to assign irregular workload to the GPU, giving ray-                it. Cost differences within a task can cause the average to be
+tracing as one application. DeMarle et al. [DGP04] initially                 largely off for contained rays or ray packets, which can lead
+assign previously rendered tasks to exploit temporal coher-                  to unbalanced scheduling decisions. Consequently, they use
+ence in their distributed, shared-memory ray-tracing system.                 a task queue in addition to account for possible imbalance.
+This is crucial to minimize fetching missing data from an-
+                                                                                Cosenza et al. [CDE13] approximate the cost map for the
+other node. After the initial assignment, work stealing is
+                                                                             next frame by rendering a rasterized preview on the GPU.
+used.
+                                                                             The load balancer uses a summed area table based tiling al-
+   Dynamic load balancers are generically applicable to par-                 gorithm to derive tasks of equal cost from the map. Though,
+allel problems, and naturally scale well even with heteroge-                 there is a substantial loss in accuracy which prevents scaling
+neous computing resources. However, they can suffer from                     similar to a dynamic approach. Therefore, they ultimately
+communication overhead which increases with the number                       propose a work stealer which is optimized through sorting
+of workers. A low-latency connection between the master                      of the initial tasks by the approximated cost.
+and the workers, or in case of work stealing between all
+                                                                                In our method, each node obtains a cost map for its task
+workers, is mandatory.
+                                                                             in the packet space of the renderer using high-resolution
+                                                                             timings. The load balancer can thus achieve a strong ac-
+2.2.2. Static Load Balancing                                                 curacy while still only generating one static task per node
+                                                                             and frame, effectively minimizing communication and tiling
+A static load balancer determines fixed tasks before render-
+                                                                             overhead. In contrast, Cosenza et al. [CCDC∗ 08] [CDE13]
+ing a frame, and thus avoids task management and communi-
+cation overhead during rendering. Our distributed rendering                  end up with variants of existing dynamic approaches due to
+back-end supports any hierarchy of nodes, and a dedicated                    the limitation of their static attempts, nullifying the advan-
+network setup is not mandatory. We do not assume a fast or                   tage of not requiring communication during rendering. They
+any link between the rendering nodes. Not even the master                    do not consider non power of two node counts and heteroge-
+is necessarily directly connected to a rendering node. There-                neous nodes. We extend the tiling of Cosenza et al. [CDE13]
+fore, we employ static load balancing. However, a static ap-                 to support any amount of and heterogeneous workers.
+proach can not react to imbalance by shifting tasks to work-
+ers which become idle. Thus, determining a task distribution                 3. System Architecture
+to accurately equalize the rendering cost on the workers de-
+cides about the effectiveness.                                               Figure 1 introduces the system architecture on a high level.
+                                                                             From the user’s perspective, accessing an application is as
+   Heirich et al. [HA98] discuss several load balancing                      simple as opening a standard web page. Embedded into the
+strategies for ray-tracing, including a randomized static as-                page is a XML3D scene, as well as the application logic on
+signment of pixels among workers. While such highly gran-                    top of XML3D. If feasible and desirable, the client-side We-
+ular scattering can achieve an even cost distribution, it facil-             bGL renderer can process the scene.
+itates bad cache locality since each worker operates across
+                                                                                In addition, XML3D may offload rendering to a native
+the whole image [WPSB03]. Scattering pixels does further
+                                                                             server back-end. There are two independent connections be-
+not fare well with a modern ray-tracer which traces packets
+                                                                             tween the client and the master node, and between each pair
+of coherent rays.
+                                                                             of connected nodes in the cluster. The first transfers the scene
+   More recent approaches attempt an estimation of the cost                  updates from the client to the master. Each node forwards the
+distribution. From the cost predicate, a tiling into tasks of                data to its child nodes. The second transfers the output from
+equal cost can be derived. Moloney et al. [MWMS07] cal-                      the resident renderer and the child nodes down the pipeline.
+
+c The Eurographics Association 2016.
+58                       G. Tamm & P. Slusallek / Web-enabled server-based and distributed real-time Ray-Tracing
+
+
+                                                   Cluster
+                                                                       4.1. Connection Setup
+                                                  InfiniBand
+                                                                       To enable server-based rendering, the xml3d HTML5 ele-
+                                                                       ment must contain a server attribute pointing to the address
+                                                                       and port of a rendering server. Otherwise, the scene will be
+                                                                       processed by the client-side WebGL renderer. The client first
+                                                                       establishes a WS connection to synchronize the scene data.
+      Web page                                               Raw
+                                                             images    This synchronization channel is also used to send a hand-
+                        Scene
+                                                                       shake to the server.
+         XML3D                         Renderer        Master node        The handshake tells the method to encode and transfer the
+                        Encoded                                        image data. According to the selection, XML3D creates the
+                        images
+                                                                       display channel which establishes the connection for incom-
+                                                                       ing images, and provides the HTML5 element to display the
+Figure 1: Exemplary architecture of the distributed render-            images in the web page. The client places the display ele-
+ing system. XML3D clients connect to a rendering cluster               ment behind the transparent canvas element otherwise used
+with a hierarchy of nodes connected via InfiniBand.                    for local rendering. The canvas is still required to capture
+                                                                       user input, e.g. to select objects or move the camera. The ar-
+                                                                       chitecture is modular and enables to integrate several display
+                                                                       channel types (Section 4.3).
+As there may be bandwidth restrictions between client and
+master, this includes an encoding step on the master. Within
+the cluster, the nodes send raw pixel data. Therefore, we sup-         4.2. Synchronization
+port InfiniBand in addition to a standard network. The sepa-           The data to be sent over the synchronization channel in-
+rate connections enable an asynchronous pipeline where the             cludes the resolution, camera and the lights. It also includes a
+client already prepares and synchronizes the updates for the           collection of meshes. A mesh does not store data other than
+next frame, while the current one is still in progress of ren-         a transformation, but references buffers, textures, samplers
+dering or transfer to the client.                                      and material properties. Meshes may share references, en-
+                                                                       abling the reuse of data (e.g. for geometry instancing). The
+                                                                       separation offers a lot of flexibility to compile meshes. The
+4. Client Side                                                         client can compress buffers with the deflate algorithm.
+A web page may contain a statically embedded XML3D                        XML3D loads resources asynchronously and progres-
+scene. However, the web developer can build application                sively. An event notifying the initialization, change or dele-
+logic on top of XML3D, manipulating the existing scene                 tion of a data entry can be generated anytime. Instead of syn-
+or adding new elements or the entire scene dynamically.                chronizing in-place with the event callback, the client sched-
+With the server-based rendering extension, we want to keep             ules the update on the main run loop. This loop runs at a
+and utilize this flexibility to create arbitrary applications. We      selectable rate to pass outstanding updates to the synchro-
+therefore followed a minimal invasive approach, which ex-              nization channel. If at least one update occurred during an
+poses the server-side functionality with a manageable set of           iteration, the client sends a special message to the server re-
+attributes. The attributes are an optional addition to existing        questing the rendering of a new frame.
+XML3D elements. There are no new elements the developer                   The scheduling allows the client to postpone updates to
+needs to get accustomed to.                                            prevent a WS send buffer overflow. Especially the initial
+   Consequently, existing applications can immediately be              loading of the scene may trigger heavy traffic for buffers and
+used, and new ones created as before. The approach enables             textures, making a rate control necessary. Also, updates may
+a hybrid architecture where the client executes the applica-           be triggered by the application logic at a higher rate than
+tion logic in parallel to the server-side rendering. The server        the one of the run loop. The scheduling prevents excessive
+does not need to adopt XML3D-specific features, which                  rendering requests or redundant updates between requests.
+avoids maintaining redundant functionality and makes the
+server easily portable to another client.                              4.3. Display
+   The disadvantage is that the client still needs access to the       Independent of sending scene updates to the server, render-
+scene as XML3D allows the manipulation of resources like               ing results may arrive. We support several plugin free meth-
+buffers and textures. Also, there is overhead in synchroniz-           ods for transfer and display, which allows the application to
+ing resources with the server. Though, the procedure is pro-           choose the most appropriate one given the conditions and re-
+gressive, so rendering can already commence and provide                quirements. In a closed scenario, the focus may be on max-
+the user with intermediate results quickly while part of the           imum en- and decoding performance. In a best-effort net-
+scene is still loading.                                                work, bandwidth-efficiency may be of more concern.
+
+                                                                                                            c The Eurographics Association 2016.
+                                       G. Tamm & P. Slusallek / Web-enabled server-based and distributed real-time Ray-Tracing                                        59
+
+   The server can transfer JPEG images over WS, and MJPG                              5. Server Side
+over HTTP. To trade compression-ratio for more en- and de-
+                                                                                      Figure 3 illustrates the main components of the server back-
+coding speed, there is support for S3 texture compression
+                                                                                      end. Analogous to the client, the server manages a synchro-
+(S3TC). S3TC enables fast parallel encoding. Using a com-
+                                                                                      nization and a display channel. The display channel is re-
+monly supported WebGL extension, the client can decode
+                                                                                      sponsible for sending the rendering output to the client, and
+S3TC images directly on the GPU. For more bandwidth-
+                                                                                      thus interfaces with the local renderer. It applies scene up-
+efficiency, we further implemented a NaCl module to receive
+                                                                                      dates from the synchronization channel directly, or caches
+H.264 video. Tamm et al. [TS15] present measurements re-
+                                                                                      them if the renderer is active. We call the last receiver in
+garding latency and bandwidth for all methods.
+                                                                                      the pipeline the display client. The master encodes the final
+                                                                                      image to be sent to the display client.
+4.4. DOM Integration
+We expose server-based rendering to the developer with a
+                                                                                                                                     Rendering Nodes
+set of attributes which can be added to the xml3d HTML5
+element. With the exception of the server attribute, the at-
+tributes are optional.
+• server: Address and port of a rendering server.                                                  Cluster Network                     Raw
+• renderer: The renderer to use, currently supporting the                                                                              images
+
+  reference rasterizer and the real-time ray-tracer (defaults
+                                                                                                                                                             Master
+  to the rasterizer).                                                                                                                                        Node
+                                                                                            Renderer                 Child Display
+• display: Method to transfer and display images, currently                                                          Channels
+  supporting JPG and S3TC via WS, MJPG via HTTP, and
+  H.264 via NaCl (defaults to JPG).                                                         Encoder                                     Updates
+• nodes: The maximum number of nodes to use for dis-
+                                                                                                                                                   Synchronization
+                                                                                                                Display Channel
+  tributed rendering. It may be desirable to only use a subset                                                                                     Channel
+  or single node to increase the back-ends client capacity. A                               Load                                       Rendering
+                                                                                            Balancer                                   Tasks
+  renderer may not require or benefit from several nodes.
+   Further, we extended XML3D with a set of new mate-                                                       Encoded
+                                                                                                                                 Best-effort Network      Updates
+                                                                                                            images
+rial properties to reflect the capability of the server-side ray-
+tracer. Refraction and reflection coefficients and the refrac-
+tion index can now be specified for any material.                                     Figure 3: The components running a distributed rendering
+                                                                                      session in the server back-end.
+   Figure 2 demonstrates the simple changes to port a scene
+to server-based rendering. By simply removing or renaming
+the server attribute, XML3D will fall back to the WebGL                                  For distributed rendering, synchronization and display
+renderer which silently ignores unsupported features.                                 channel also act as a client by establishing a connection
+                                                                                      to each of the participating child nodes. The corresponding
+                                                       Client-side rasterizer         handshake requests a dedicated display channel for raw pixel
+<xml3d …>                                                                             transport in the cluster network. The child nodes receive up-
+  <lightshader …>
+    <float3 name=“intensity>…                                                         dates from, and send their rendering output to their parents.
+    …
+  ….                                                                                  The master runs a renderer-specific load balancer to deter-
+  <shader id=“water”>
+    <texture name=“diffuseTexture” …>…                                                mine the rendering tasks for the next frame (Section 5.2). Ev-
+    ….
+</xml3d>                                                                              ery node has the same capabilities, and can assume the role
+                                                                                      of the master. This results in a flexible architecture, which
+<xml3d server=“localhost:8080”
+                                                       Server-side ray-tracer         allows to chain an arbitrary hierarchy of nodes.
+renderer=“ray-tracer” ...>
+  <lightshader …>
+    <float3 name=“intensity>…
+                                                                                         The server facilitates asynchronous execution through its
+    <bool name=“castShadow”>true
+    …
+                                                                                      pipeline. The components in Figure 3 run in separate threads.
+  ….
+  <shader id=“water”>
+                                                                                      While the local renderer executes, rendering results from the
+    <texture name=“diffuseTexture” …>…
+    <float3 name=“refractionCoefficients”>1 1 1
+                                                                                      child nodes may arrive and be forwarded to the parent. Con-
+    <float name=“refractionIndex”>1.333
+    ….
+                                                                                      currently, scene updates for the next frame may arrive to be
+</xml3d>                                                                              cached and forwarded to the child nodes. The server can im-
+                                                                                      mediately issue a new frame from cached updates, keeping
+Figure 2: The simplified original version of a scene (top)                            the renderer occupied. The encoder can run in parallel to the
+and the adapted declaration for the server-side ray-tracer.                           rendering of the next frame. Therefore, we achieve strong
+                                                                                      parallel utilization of the computing and network resources.
+
+c The Eurographics Association 2016.
+60                      G. Tamm & P. Slusallek / Web-enabled server-based and distributed real-time Ray-Tracing
+
+5.1. Renderers                                                        balancer to generate the task distribution. The load balancer
+                                                                      may also consider the renderer coefficients to weigh nodes.
+The server provides an abstract API which developers can
+implement to plug in their renderers. So far, we have in-                Concluding, our architecture enables a flexible setup of
+tegrated two renderers. The first is the reference rasterizer         possibly heterogeneous nodes with different roles. Nodes not
+which mimics the functionality of the client-side WebGL               suitable for rendering may still contribute as a master dedi-
+renderer. The second is a custom CPU ray-tracer on top                cated for encoding, or as a network hub giving access to a set
+of the Embree [WWB∗ 14] ray-tracing kernels. The ray-                 of rendering nodes otherwise not reachable. Since each node
+tracer is optimized for real-time performance. It operates            can be the master, the definition of sub-clusters is possible,
+on packets of rays for both tracing and shading, capable              allowing different kinds of clients access at a certain level. A
+to utilize the SSE, AVX and AVX2 instruction sets. To run             ray-tracing client may access the whole hierarchy, while it is
+the renderer locally on multiple cores, we utilize the Cilk-          enough to restrict rasterization to a small branch. Due to the
+Plus multi-threading language (originating from Blumofe et            static nature of the load balancing, rendering nodes must not
+al. [BJK∗ 95]) and its internal work stealer.                         be connected with low-latency to each other.
+   The ray-tracer supports ambient occlusion, which is a
+monte-carlo technique requiring a good amount of sample
+                                                                      6. Load Balancing
+rays to avoid noisy results. The cost can snowball quickly
+with more samples, especially considering materials trig-             This section describes the static load balancing for the dis-
+gering secondary rays. The feature is barely adequate for a           tributed real-time ray-tracer. The foundation is the obser-
+single commodity machine in real-time, thus motivating the            vation that in a real-time scenario, view changes between
+scaling in a rendering cluster.                                       frames are likely small. Thus, timings for one frame are rep-
+                                                                      resentative for the following frame. This maps to our server
+5.2. Distributed Rendering                                            back-end and the ray-tracer, which are explicitly designed
+                                                                      for real-time operation.
+Nodes participating in rendering, which may include the
+master, are called rendering nodes. For each type of renderer,           The ray-tracer operates in packets of neighboring pix-
+a rendering node stores a coefficient indicating its perfor-          els. During rendering, it measures the cost to determine the
+mance relative to the other nodes in the cluster. In a cluster        colors for each packet, effectively producing a cost map in
+of homogenous machines, all nodes have the same coeffi-               packet space. The renderer transforms the cost map into a
+cient. It is up to the operator to determine coefficients re-         summed area table (SAT), which the display channel trans-
+flecting the heterogeneous nodes in the cluster, for example          fers to the master in addition to the pixel space image pro-
+with benchmark tests. Section 6.3 describes our calculation           duced for the current task. The SAT allows to determine the
+for the ray-tracer.                                                   cost of any rectangular region in constant time. Once the
+                                                                      SATs from the rendering nodes have been accumulated, the
+   When the display client connects, the master requests the
+                                                                      load balancer uses them as input to determine a tiling into
+coefficients of the renderers available in each child’s sub-
+                                                                      tasks of balanced rendering cost. Figure 4 outlines the steps
+hierarchy. A child node will add its own renderer to the list,
+                                                                      to acquire the task distribution for the upcoming frame.
+and further traverse the tree by requesting the renderer list
+from its children. Effectively, this process flattens the node
+                                                                                      Rendering Nodes
+hierarchy, and the master ends up with the complete list of            Task frame N
+coefficients. The master then selects the renderers to use in           Pixel space
+                                                                                         Cost Map       SAT
+this session, prioritizing stronger nodes if only a subset of            Node 1
+                                                                                             Packet space     Network
+the available nodes should take part.
+                                                                                                                                                Tasks Frame N+1
+                                                                                                                                              Expanded to pixel space
+   For the communication between two nodes, we support                    Node 2
+                                                                                                                          SAT array
+TCP over Ethernet and InfiniBand. TCP enables the deploy-                                                                                     Node 1
+                                                                                                                                                            Node 3
+
+ment in a commodity setup, but may be limited in band-
+                                                                         Node 3                                                                             Node 4
+width. Since there is raw pixel data transport, we recommend                                                            Packet Space
+                                                                                                                                              Node 2
+
+the use of at least a 10 Gigabit network to minimize delay.
+                                                                                                                                Master Node
+                                                                         Node 4
+   To determine the screen-space rendering task for each
+node in the upcoming frame, the master asks a renderer-
+specific load balancer. The server provides an abstract API           Figure 4: The static load balancing for real-time ray-
+for static load balancing, which a renderer implements to             tracing. In this example, the ray-tracer measures the cost for
+benefit from distributed execution. A renderer may gener-             packets of 2x2 pixels. Each node outputs a SAT to the mas-
+ate custom cost data for the current frame, which the node            ter, which runs the tiling algorithm on the array of SATs to
+transports to its parent along with the pixel data. The mas-          generate tasks of balanced cost for the next frame.
+ter gathers the data from all nodes, and passes it to the load
+
+                                                                                                                           c The Eurographics Association 2016.
+                              G. Tamm & P. Slusallek / Web-enabled server-based and distributed real-time Ray-Tracing                    61
+
+   Due to the high timing granularity in the packet space                    implemented a multi-threaded CPU version which induces
+of the ray-tracer and the frame-to-frame coherence present                   minimal overhead (Section 7). Part of the overhead is hid-
+in our real-time system, the load balancer can achieve a                     den by parallel execution as a rendering node sends its im-
+strong accuracy and thus scalability (Section 7). There is no                age data asynchronously to the SAT generation. Also, this
+communication during rendering, and no communication be-                     enables the master to start the encoding of the accumulated
+tween the rendering nodes at all, making a basic deployment                  image while the SAT array is still incomplete.
+with any setup of machines and network possible.
+                                                                                Cost map and SAT store 32-bit values. In a bandwidth
+   The load balancer requires each node to generate a cost                   setup of 10 GBit/s, this only accounts for around 0.737 ms
+map during rendering, convert it to a SAT, and send the SAT                  of constant transfer overhead for a 720p image and packets
+to the master. The overall overhead is constant, and depends                 of four pixels. The overhead is further mitigated through the
+on the packet space resolution of the image. More nodes                      distributed sending, the master participating in the rendering
+effectively reduce the impact as they process continuously                   and possibly already ongoing encoding.
+smaller parts of the image in parallel. In contrast, the com-
+munication overhead of a dynamic load balancer increases                     6.3. Tiling
+with the number of nodes and tasks. More cores on a node
+reduce the cost map generation overhead as they acquire tim-                 The master gathers the SATs from the rendering nodes in the
+ings in parallel. As rendering cost increases, the overhead                  SAT array data structure. The array is the input to the tiling
+becomes increasingly negligible. In contrast, a dynamic ap-                  algorithm, which determines the tasks for the next frame.
+proach may require a finer task granularity in response to a                 The tiling executes asynchronously to possibly still ongoing
+high rendering time of individual tasks to avoid stalling on                 encoding, mitigating the already low overhead of the algo-
+a single worker and task in the end, in return increasing the                rithm. The array behaves like a single SAT in the overall
+communication overhead.                                                      packet space resolution, providing the accumulated cost for
+                                                                             a rectangular region from the origin to any packet. Several
+                                                                             SATs may contribute to the cost, which Figure 5 illustrates.
+6.1. Cost Map                                                                The load balancer first sorts all SATs by their offset on the
+                                                                             x-axis, which then allows to quickly reject SATs, which start
+The mechanism to measure the cost for the pixel packets
+                                                                             beyond the requested region, with a binary search.
+must be fine-grained and induce little overhead. We sup-
+port two techniques reflecting the requirements. The proces-
+sor time stamp counter (TSC) register stores the number of                                         SAT 1           SAT 3
+clock cycles since the last reset. To acquire values which are
+consistent across heterogeneous nodes, the ray-tracer divides                                     A
+by the maximum core frequency in Kilohertz, assuming all
+cores on a node run at this rate under the ray-tracing load.                                       B
+   In our tests, the TSC produced reliable results. Still, it may                                      Area cost
+suffer from issues which can reduce the timing accuracy. The                                           =A+B
+counters on different cores may not be tightly synchronized.
+                                                                                                  SAT 2            SAT 4
+While the OS may attempt the synchronization on booting,
+there is no guarantee. A thread switching the core between
+two measurements can thus result in distorted values. Also,                  Figure 5: Sampling two SATs in the SAT array to obtain the
+processors with out-of-order execution support may shift the                 rendering cost for the pixel packets in an area.
+execution order of instructions, which can cause a slightly
+misplaced read of the counter. The processor switching its                      The load balancer starts with a packet space resolution tile
+frequency can cause further inconsistencies.                                 with all the nodes attributed to it. Consulting the SAT array,
+   To account for the potential issues with the TSC, we al-                  the balancer uses a binary search to split the tile into two
+ternatively support the performance counter provided by the                  child sides with the cost balanced according to the nodes at-
+Windows OS. If possible, the performance counter relies on                   tributed to each side. It will recursively split the children,
+the TSC internally, thus also providing high precision and                   switching the axis on each level, until a leaf tile represent-
+speed. It adds logic to handle the TSC issues, and can be                    ing the task for a single node has been reached. For an even
+considered as portable and reliable across recent systems.                   count of homogeneous nodes, balancing means finding the
+                                                                             split which evens out the cost on both sides. However, the
+                                                                             load balancer also considers an uneven node count attributed
+6.2. Summed Area Table Generation                                            to a tile, and the presence of heterogeneous nodes. It weighs
+                                                                             nodes according to their renderer coefficient (Section 5.2).
+Hensley et al. [HSC∗ 05] describe fast SAT generation on the
+GPU. However, since our cost map resides on the CPU, we                        A timing represents the cost to render a packet of pixels
+
+c The Eurographics Association 2016.
+62                       G. Tamm & P. Slusallek / Web-enabled server-based and distributed real-time Ray-Tracing
+
+on a single core. But the performance may vary on hetero-              hacienda with refraction for the glasses and the fountain, and
+geneous nodes. We therefore statically assign a performance            a large amount of alpha mapped leafs. Each scene has a sin-
+coefficient to each node, which indicates the performance in-          gle light. There are 16 ambient occlusion rays per hit for the
+crease for a single core relative to the node with the weakest         city and eight for the tavern and hacienda scene.
+cores. The load balancer normalizes the cost values retrieved
+                                                                          For reproducible results, the master automatically replays
+from a SAT by multiplying with the performance coefficient
+                                                                       a recorded camera interaction loop for each scene. The view
+of the originating node. The coefficient is an empirical factor
+                                                                       changes between frames are small as expected in a real-time
+which has to be chosen by the cluster operator. If all nodes
+                                                                       scenario. The camera creates different viewing angles, ef-
+share the same processor family, we set the values propor-
+                                                                       fectively shifting the rendering cost distribution. The results
+tional to the node’s core frequencies.
+                                                                       build on the following per-frame measurements.
+   Each node locally distributes the renderer to the num-
+                                                                       Rendering node
+ber of logical cores with a work stealing load balancer. The
+                                                                       • Kernel: The total cost spent in the ray-tracing kernel
+static balancer in the cluster thus assumes a linear scaling of
+                                                                         across all threads to determine the colors for the pixel
+the ray-tracing performance to the number of cores on each
+                                                                         packets. This is equivalent to the bottom-right entry of the
+node. It therefore calculates a node’s renderer coefficient as
+                                                                         SAT generated from the cost map. The load balancer aims
+the product of the number of logical cores and the single-
+                                                                         to equalize the kernel cost on the nodes. Therefore, this is
+core performance coefficient.
+                                                                         the core measurement to show the scalability.
+   When splitting a tile, the algorithm balances the normal-           • Rendering: The time to determine the colors for the pixel
+ized cost based on the ratio between the sum of renderer co-             packets in the multi-threaded setup. The kernel executes
+efficients attributed to the first and the second child, thus ac-        on the logical cores using a work stealing scheduler. This
+counting for any node count and heterogeneous nodes. For                 value includes the threading and timing overhead.
+an uneven count, the balancer assigns the additional node to           • SAT Generation: The time to generate the SAT for the
+the side which brings the sums on both sides closest together.           rendering task from the cost map.
+This facilitates producing child tiles of similar cost.                Master node
+                                                                       • Tiling: The time to determine the tasks for the next frame.
+   The balancer assigns tasks in a fixed order using a depth-          • Pipeline: The time spent in addition to the rendering to
+first traversal of the tile tree, resulting in each node sticking        send the final image to the display client, which includes
+to roughly the same image area. This facilitates good cache              the encoding and in case of distributed execution, SAT
+locality, which can improve the rendering performance.                   generation, image and SAT transfer, and the tiling.
+
+7. Results                                                             7.1. Scalability
+This section demonstrates the performance of the server                Table 1 outlines the single node performance for each scene
+back-end and the distributed real-time ray-tracer. The cluster         to set the benchmark. For the kernel and rendering measure-
+consists of 20 rendering nodes. Each node is equipped with             ments, the table showcases the strong scaling efficiency in
+two Intel Xeon X5650 six-core processors running at 2.66               the cluster. The values are the averages across all frames.
+GHz. The processors do not support AVX instructions. Con-              Figure 7 illustrates the performance increase as nodes are
+sequently, the ray-tracer falls back to SSE with packets of            added.
+2x2 pixels. We compared the performance of the ray-tracer
+                                                                          The kernel cost exhibits a super linear scalability. With
+in SSE and AVX mode on a modern machine, and measured
+                                                                       more nodes, the load balancer assigns increasingly smaller
+an average performance increase of 88.8% with AVX.
+                                                                       tasks to the nodes in a fixed order. This can result in an in-
+   The nodes are connected with 1 GBit/s Ethernet. More-               creased cache locality, which we attribute the super linear
+over, there is a 10 GBit/s InfiniBand link between ten of the          effect to. Also, the foundation is the accurate rendering cost
+nodes. The rendering nodes send RGBA output with 32 bits               balance which the algorithm can derive from the SAT ar-
+per pixel. The master uses the S3TC encoder. The image res-            ray generated for the previous frame. The scalability remains
+olution is 1280x720.                                                   stable over time with occasional minor fluctuation and out-
+                                                                       liers as Figure 8 illustrates.
+   We used the example scenes shown in Figure 6 to produce
+the results. The scenes are textured with diffuse and specu-              Along with the kernel, we observe a strong scalability
+lar maps. The city has 65960, the tavern 1382164 and the               of the rendering time. The rendering includes the threading
+hacienda 7691995 triangles. All scenes contain parts where             and work stealing overhead, which stays about constant with
+there is heterogeneity in the rendering cost. The background           more nodes. There is also the per-thread overhead to iterate
+is the cheapest area. In addition, the city contains a river           over and time the assigned pixel packets. This overhead de-
+causing secondary rays due to refraction. The tavern con-              pends on the task size and does thus not necessarily decrease
+tains a wet reflective table. The most demanding scene is the          comparatively to the kernel cost with more nodes. Therefore,
+
+                                                                                                            c The Eurographics Association 2016.
+                                                     G. Tamm & P. Slusallek / Web-enabled server-based and distributed real-time Ray-Tracing                                                    63
+
+
+
+
+Figure 6: The city (left), the tavern (middle) and the San Miguel hacienda scene. For the city, the tiling into rendering node
+tasks is visualized.
+
+
+                         20                                                       20                                                          20
+                                     Kernel                                                    Kernel                                                     Kernel
+                         18       Rendering                                       18        Rendering                                         18       Rendering
+                         16                                                       16                                                          16
+Performance Multiplier
+
+
+
+
+                         14                                                       14                                                          14
+
+                         12                                                       12                                                          12
+
+                         10                                                       10                                                          10
+
+                          8                                                        8                                                           8
+
+                          6                                                        6                                                           6
+
+                          4                                                        4                                                           4
+
+                          2                                                        2                                                           2
+
+                              2     4    6     8   10    12   14   16   18   20         2     4     6   8     10   12     14   16   18   20        2     4     6   8   10   12   14   16   18   20
+
+                                               City                                                         Tavern                                                 Hacienda
+
+                                              Figure 7: The kernel and rendering performance increase as a function of the node count.
+
+
+
+100                                                                                                                which can cause the efficiency gradually falling as nodes are
+ 96                                                                                                                added. We observed an almost identical single node render-
+ 92                                                                                                                ing time with en- and disabled cost map generation. This
+                                                                                                                   shows the timing overhead is minimal, and fades into obscu-
+                         0        200    400       600     800 1000 1200 1400 1600                                 rity with increasing per-packet cost.
+                                                          City
+                                                                                                                      In addition, due to the execution on multiple cores, the
+100                                                                                                                rendering time is more susceptible to fluctuation and out-
+ 96                                                                                                                liers caused by outside interference, like the OS occupying
+ 92                                                                                                                a core for a different task. Such occurrences can temporary
+                                                                                                                   reduce the scaling efficiency of the local work stealer. The
+                         0         100         200       300    400               500         600                  more nodes, the more likely a disruption on any node oc-
+                                                         Tavern                                                    curs. Also, the efficiency of the work stealer can fluctuate by
+                                                                                                                   itself. Local imbalance negatively reflects on our top level
+100
+                                                                                                                   load balancer in the cluster, which must assume a consis-
+ 96
+                                                                                                                   tent scaling to the number of cores across the nodes. There-
+ 92
+                                                                                                                   fore, we increased the process and rendering thread priority,
+                         0    100 200 300 400 500 600 700 800 900                                                  which substantially reduced the appearance of outliers.
+                                          Hacienda
+
+Figure 8: The kernel scaling efficiency for eight nodes as a                                                       7.2. Pipeline Time
+function of the frame number.                                                                                      The tendency is the increase of the pipeline time with more
+                                                                                                                   nodes. Since the master participates in the rendering, the net-
+                                                                                                                   work load is reduced proportional to the task size assigned
+                                                                                                                   to the master. The transfer speed for 20 nodes drops greatly
+the rendering time efficiency is naturally below the kernel ef-
+                                                                                                                   as we switched from InfiniBand to Ethernet.
+ficiency. Further, as the per-node ray-tracing cost decreases
+with more nodes, the constant overhead has a higher impact,                                                             We observe a higher pipeline time for the city than for the
+
+         c The Eurographics Association 2016.
+64                         G. Tamm & P. Slusallek / Web-enabled server-based and distributed real-time Ray-Tracing
+
+Table 1: The scaling efficiency and pipeline time for differ-               The tiling time increases with more nodes as the master
+ent node counts given the single node (SN) performance.                  must split more tiles to find a task for each node. Most cru-
+                                                                         cially, the sampling of the SAT array becomes increasingly
+                                                                         expensive. However, the cost stays low with around 0.236 ms
+           City (SN Rendering: 384.1 ms, Pipeline: 0.884 ms)             across the 20 node runs. For much higher node counts, we
+                  2          3          4         5         6            plan to extend the pipeline so that the master can also accu-
+     Kernel       100.8%     100.9%     100.5%    100.7%    100.4%       mulate cost maps to generate one overall SAT on its own. For
+     Rendering    100%       99.6%      99.1%     98.7%     98.6%        test purposes, we extended the tiling with multi-threading,
+     Pipeline     2.645      2.275      2.393     2.801     3.358        and ran it with 50000 tasks on one SAT. The average time is
+                  7          8          9         10        20           0.67 ms. For high node counts, the heavily accelerated tiling
+     Kernel       100.3%     100.4%     100.4%    100.6%    100.8%       outweighs the distributed SAT generation benefit.
+     Rendering    98.1%      97.7%      97.4%     97.3%     95.1%
+     Pipeline     3.714      4.022      4.29      4.495     36.98        7.3. Comparison
+                                                                         We observe a similar scaling efficiency compared to Cosenza
+          Tavern (SN Rendering: 823.5 ms, Pipeline: 0.862 ms)
+                                                                         et al. [CDE13]. They utilize a cluster-level work stealing
+                  2          3          4         5         6
+                                                                         scheduler, which makes a low-latency network between the
+     Kernel       100.9%     101.3%     100.9%    101%      100.7%       rendering nodes mandatory. In contrast, we achieve the re-
+     Rendering    97.9%      98.2%      97.8%     97.9%     97.9%        sults with a static load balancer allowing a flexible network
+     Pipeline     1.376      1.979      1.615     2.033     2.046        setup. Further, we repeated the run for the city and eight
+                  7          8          9         10        20           nodes, but this time only measured the overall cost of a task
+     Kernel       100.8%     100.9%     101%      101.2%    101.5%       like Cosenza et al. [CCDC∗ 08]. The scaling efficiency of the
+     Rendering    98%        98%        98.1%     98%       95.9%        kernel drops substantially to 49.8%. To achieve competitive
+     Pipeline     2.315      2.637      2.363     2.892     35.23        scalability, they incorporate a task queue to compensate the
+                                                                         inaccuracy. In contrast, our method remains static by relying
+        Hacienda (SN Rendering: 818.7 ms, Pipeline: 0.861 ms)            on the fine-grained timing mechanism.
+                  2          3          4         5         6               We further performed a comparison with prevalent dy-
+     Kernel       101.9%     102%       101.7%    101.5%    101.5%       namic approaches on the thread-level. We repeated the runs
+     Rendering    100.7%     99.1%      99.4%     99.2%     96.1%        on a single node with disabled ambient occlusion, and used
+     Pipeline     2.4        2.259      2.098     2.307     2.187        three different load balancing methods to distribute the tasks
+                  7          8          9         10        20           among the threads: our static load balancer, a task queue, and
+     Kernel       101.2%     101.1%     101.3%    101.5%    101.5%
+                                                                         work stealing. Table 2 shows the rendering performance of
+                                                                         the static method in competition with the dynamic ones.
+     Rendering    96.3%      94.8%      95.3%     95.5%     92.9%
+     Pipeline     2.266      2.112      2.322     2.331     33.5            The static method performs almost on a par with the
+                                                                         dynamic schedulers. Dynamic load balancers are ideally
+                                                                         suitable locally due to the direct link between a moderate
+                                                                         amount of cores. However, within a cluster, network com-
+other scenes in Table 1. All scenes show a strong scaling effi-
+                                                                         munication and the coordination of many nodes can de-
+ciency of the renderer. However, the tavern’s and hacienda’s
+                                                                         crease the efficiency of these approaches. The task queue
+higher rendering cost causes the nodes to send their results
+                                                                         on the master can become a synchronization bottleneck if
+with a higher absolute time offset to each other. Therefore,
+                                                                         there are many simultaneous requests. A low-latency net-
+when the last node finishes its task, a larger part of the overall
+                                                                         work is mandatory, and must be available between all nodes
+transfer already happened. This effectively relieves the net-
+                                                                         in case of work stealing. In contrast, our method can scale
+work interface on the master, since there is less overlap of the
+                                                                         independent of the latency, and utilize nodes which are not
+incoming results. The hacienda shows a slightly reduced ren-
+                                                                         connected. Only the tiling overhead increases with the num-
+dering scaling efficiency compared to the tavern from node
+                                                                         ber of nodes, but stays at a negligible level.
+count six onwards. Once more, the result is a higher offset
+between transfer operations, which avoids a pipeline time
+increase like in the other scenes.                                       7.4. Reduced Frame-to-Frame Coherence
+   The SAT generation overhead is low even on a single node              The load balancer relies on a strong coherence between con-
+with around 0.244 ms across all runs. Due to the distributed             secutive frames in real-time rendering. To test the method
+SAT array generation, we measured an additional average                  under restricted conditions, we repeated the runs with the
+performance gain of up to 34.2% with 20 nodes. As the gen-               city scene, but used a new interaction loop with coarser
+eration of each SAT is multi-threaded, the threading over-               view changes this time. The new loop contains only every
+head naturally prevents a higher gain percentage-wise.                   fourth view of the original loop. As expected, the accuracy of
+
+                                                                                                              c The Eurographics Association 2016.
+                                              G. Tamm & P. Slusallek / Web-enabled server-based and distributed real-time Ray-Tracing                      65
+
+Table 2: The rendering performance of the static load bal-                                   8. Conclusion and Future Work
+ancer on the thread-level relative to prevalent dynamic ap-                                  The contribution in this paper is twofold. We presented the
+proaches: a task queue using OpenMP’s dynamic scheduler,                                     extension of the XML3D framework, which enables declara-
+and work stealing using CilkPlus (Section 5.1).                                              tive 3D content in the web, with server-based rendering. The
+                                                                                             minimally invasive integration keeps the application logic
+                                                  City        Tavern    Hacienda
+                                                                                             untouched in the XML3D front-end, enabling arbitrary ex-
+                            Task Queue            -3.6%       -3.4%     -1.4%                isting and upcoming applications to harness the back-end’s
+                            Work Stealing         -0.9%       -2.1%     -1.4%                power. The back-end is capable to run different renderers
+                                                                                             in a cluster hierarchy. We presented a static load balancing
+                                                                                             method to distribute a real-time ray-tracer in this architec-
+the load balancer drops with the larger discrepancy between                                  ture. The load balancer exploits temporal coherence between
+frames, which Figure 9 illustrates. Though, the scaling effi-                                adjacent frames in the real-time scenario. Based on high-
+ciency is still strong. While the load balancer will break if                                resolution timings gathered for the previous frame, it derives
+view changes become arbitrary, the results demonstrate the                                   rendering tasks of balanced cost for the potentially hetero-
+method is feasible in an interactive environment with con-                                   geneous nodes in the cluster. We demonstrated the strong
+tinuous camera movement.                                                                     scalability and low overhead the approach can achieve.
+
+                            20
+                                                                                                The combination of XML3D, which enables generic and
+                                                  Kernel                                     portable graphics applications in the browser, and the dedi-
+                            18       Kernel (coarse loop)                                    cated server back-end, which gives these applications access
+                            16                                                               to a selection of high-performance and possibly distributed
+   Performance Multiplier
+
+
+
+
+                            14                                                               renderers, makes our architecture accessible to both the com-
+                            12                                                               mon web developer and the expert user in a closed scenario.
+                            10                                                                  The main limitation of the current architecture is the ne-
+                             8                                                               cessity to synchronize the scene data, which the client-side
+                             6                                                               application logic may change at any time. We therefore plan
+                             4
+                                                                                             to investigate the execution of the XML3D page in a head-
+                                                                                             less, server-side browser environment. This would enable us
+                             2
+                                                                                             to interface with the rendering back-end directly, and also re-
+                                 2      4     6    8     10   12   14   16   18   20         move potentially expensive XML3D features like data pro-
+                                                                                             cessing and animations from a less capable client.
+Figure 9: The city scene kernel performance increase as a
+function of the node count for the original and the coarser
+interaction loop.                                                                            Acknowledgments
+                                                                                             This work was supported by the European Union funded
+                                                                                             "Dreamspace" project.
+7.5. Multiple Clients
+To test the system under more pressure, we repeated the run                                  References
+with the city and eight nodes. This time, we connected three                                 [BEJZ09] B EHR J., E SCHLER P., J UNG Y., Z ÖLLNER M.:
+clients simultaneously. For each client, we measured a ren-                                    X3dom: A dom-based html5/x3d integration model. In Proceed-
+dering time comparable to a single client using three nodes.                                   ings of the 14th International Conference on 3D Web Technology
+Due to a minor offset between the connections, there is a                                      (New York, NY, USA, 2009), Web3D ’09, ACM, pp. 127–135.
+short span in the beginning and end where not all renderers                                    doi:10.1145/1559764.1559784. 1, 2
+are active. This brings the performance closer to what we                                    [BJK∗ 95] B LUMOFE R. D., J OERG C. F., K USZMAUL B. C.,
+would expect from using nine nodes.                                                            L EISERSON C. E., R ANDALL K. H., Z HOU Y.: Cilk: An effi-
+                                                                                               cient multithreaded runtime system. In Proceedings of the Fifth
+   For each client, the load balancer still achieves a strong                                  ACM SIGPLAN Symposium on Principles and Practice of Par-
+kernel scalability which only drops by around 2.6 percent                                      allel Programming (New York, NY, USA, 1995), PPOPP ’95,
+                                                                                               ACM, pp. 207–216. doi:10.1145/209936.209958. 6
+compared to a single client. Due to the fine-grained timing
+mechanism in packet space, the OS unlikely switches to an-                                   [BL99] B LUMOFE R. D., L EISERSON C. E.: Scheduling mul-
+                                                                                               tithreaded computations by work stealing. J. ACM 46, 5 (Sept.
+other thread during a measurement. Therefore, the measure-                                     1999), 720–748. doi:10.1145/324133.324234. 3
+ments within a rendering session are mostly unaffected by
+                                                                                             [BMP∗ 15] B EHR J., M OUTON C., PARFOURU S., C HAM -
+the other clients, and remain stable. This allows the load bal-                                PEAU J., J EULIN C., T HÖNER M., S TEIN C., S CHMITT M.,
+ancer to operate each session accurately, which ultimately                                     L IMPER M., DE S OUSA M., F RANKE T. A., VOSS G.: we-
+results in an equally smooth execution for all clients.                                        bvis/instant3dhub: Visual computing as a service infrastructure
+
+c The Eurographics Association 2016.
+66                          G. Tamm & P. Slusallek / Web-enabled server-based and distributed real-time Ray-Tracing
+
+     to deliver adaptive, secure and scalable user centric data visual-      visualization among browsers with no added software. In Pro-
+     isation. In Proceedings of the 20th International Conference on         ceedings of the 1st ACM International Health Informatics Sym-
+     3D Web Technology (New York, NY, USA, 2015), Web3D ’15,                 posium (New York, NY, USA, 2010), IHI ’10, ACM, pp. 809–
+     ACM, pp. 39–47. doi:10.1145/2775292.2775299. 2                          816. doi:10.1145/1882992.1883113. 2
+[CCDC∗ 08] C OSENZA B., C ORDASCO G., D E C HIARA R.,                     [KSSS14] K LEIN F., S PIELDENNER T., S ONS K., S LUSALLEK
+  E RRA U., S CARANO V.: Load balancing in mesh-like compu-                 P.: Configurable instances of 3d models for declarative 3d in the
+  tations using prediction binary trees. In Parallel and Distributed        web. In Proceedings of the 19th International ACM Conference
+  Computing, 2008. ISPDC ’08. International Symposium on (July              on 3D Web Technologies (New York, NY, USA, 2014), Web3D
+  2008), pp. 139–146. doi:10.1109/ISPDC.2008.24. 3, 10                      ’14, ACM, pp. 71–79. doi:10.1145/2628588.2628594.
+[CDE13] C OSENZA B., DACHSBACHER C., E RRA U.: Gpu cost                     2
+  estimation for load balancing in parallel ray tracing. In Inter-        [LR12] L ORETO S., ROMANO S. P.: Real-time communications
+  national Conference on Computer Graphics Theory and Appli-                in the web: Issues, achievements, and ongoing standardization
+  cations (GRAPP) (2013), pp. 139–151. URL: http://www.                     efforts. Internet Computing, IEEE 16, 5 (2012), 68–73. doi:
+  dps.uibk.ac.at/~cosenza/papers/CostMap. 3, 10                             10.1109/MIC.2012.115. 2
+[CDR02] C HALMERS A., DAVIS T., R EINHARD E. (Eds.): Prac-                [MPJ∗ 13] M ARION C., P OUDEROUX J., J OMIER J., J OURDAIN
+  tical Parallel Rendering. A. K. Peters, Ltd., Natick, MA, USA,            S., H ANWELL M., AYACHIT U.: A hybrid visualization system
+  2002. 2                                                                   for molecular models. In Proceedings of the 18th International
+[DGP04] D E M ARLE D. E., G RIBBLE C. P., PARKER S. G.:                     Conference on 3D Web Technology (New York, NY, USA, 2013),
+  Memory-savvy distributed interactive ray tracing. In Proceed-             Web3D ’13, ACM, pp. 117–120. doi:10.1145/2466533.
+  ings of the 5th Eurographics Conference on Parallel Graph-                2466558. 2
+  ics and Visualization (Aire-la-Ville, Switzerland, Switzerland,         [MWMS07] M OLONEY B., W EISKOPF D., M ÖLLER T.,
+  2004), EGPGV ’04, Eurographics Association, pp. 93–100.                   S TRENGERT M.: Scalable sort-first parallel direct volume ren-
+  doi:10.2312/EGPGV/EGPGV04/093-100. 3                                      dering with dynamic load balancing. In Proceedings of the 7th
+[GDC05] G ILLIBRAND R., D EBATTISTA K., C HALMERS A.:                       Eurographics Conference on Parallel Graphics and Visualization
+  Cost Prediction Maps for Global Illumination.    In EG                    (Aire-la-Ville, Switzerland, Switzerland, 2007), EGPGV ’07, Eu-
+  UK Theory and Practice of Computer Graphics (2005),                       rographics Association, pp. 45–52. doi:10.2312/EGPGV/
+  Lever L. M., McDerby M., (Eds.), The Eurographics Asso-                   EGPGV07/045-052. 3
+  ciation. doi:10.2312/LocalChapterEvents/TPCG/                           [PBD∗ 10] PARKER S. G., B IGLER J., D IETRICH A.,
+  TPCGUK05/097-104. 3                                                       F RIEDRICH H., H OBEROCK J., L UEBKE D., M C A LLISTER D.,
+[GS08] G EORGIEV I., S LUSALLEK P.: Rtfact: Generic concepts                M C G UIRE M., M ORLEY K., ROBISON A., S TICH M.: Optix:
+  for flexible and high performance ray tracing. In Interactive             A general purpose ray tracing engine. In ACM SIGGRAPH 2010
+  Ray Tracing, 2008. RT 2008. IEEE Symposium on (Aug 2008),                 Papers (New York, NY, USA, 2010), SIGGRAPH ’10, ACM,
+  pp. 115–122. doi:10.1109/RT.2008.4634631. 2                               pp. 66:1–66:13. doi:10.1145/1833349.1778803. 2
+[HA98] H EIRICH A., A RVO J.: A competitive analysis of load              [Pla02] P LACHETKA T.: Perfect load balancing for demand-
+  balancing strategies for parallel ray tracing. The Journal of              driven parallel ray tracing. In Proceedings of the 8th In-
+  Supercomputing 12, 1-2 (1998), 57–68. doi:10.1023/A:                       ternational Euro-Par Conference on Parallel Processing (Lon-
+  1007977326603. 3                                                           don, UK, UK, 2002), Euro-Par ’02, Springer-Verlag, pp. 410–
+                                                                             419. URL: http://dl.acm.org/citation.cfm?id=
+[HSC∗ 05] H ENSLEY J., S CHEUERMANN T., C OOMBE G.,                          646667.700319. 3
+  S INGH M., L ASTRA A.: Fast summed-area table gener-
+  ation and its applications. Computer Graphics Forum 24                  [PMS∗ 99] PARKER S., M ARTIN W., S LOAN P.-P. J., S HIRLEY
+  (2005), 547–555. URL: http://citeseer.ist.psu.                            P., S MITS B., H ANSEN C.: Interactive ray tracing. In Pro-
+  edu/viewdoc/summary?doi=10.1.1.90.8836. 7                                 ceedings of the 1999 Symposium on Interactive 3D Graphics
+                                                                            (New York, NY, USA, 1999), I3D ’99, ACM, pp. 119–126.
+[IBH11] I ZE T., B ROWNLEE C., H ANSEN C. D.: Real-time ray                 doi:10.1145/300523.300537. 2
+   tracer for visualizing massive models on a cluster. In Proceed-
+   ings of the 11th Eurographics Conference on Parallel Graph-            [SKR∗ 10] S ONS K., K LEIN F., RUBINSTEIN D., B YELOZY-
+   ics and Visualization (Aire-la-Ville, Switzerland, Switzerland,          OROV S., S LUSALLEK P.: Xml3d: Interactive 3d graphics for
+   2011), EGPGV ’11, Eurographics Association, pp. 61–69. doi:              the web. In Proceedings of the 15th International Conference on
+   10.2312/EGPGV/EGPGV11/061-069. 3                                         Web 3D Technology (New York, NY, USA, 2010), Web3D ’10,
+                                                                            ACM, pp. 175–184. doi:10.1145/1836049.1836076. 1,
+[JBDW12] J UNG Y., B EHR J., D REVENSEK T., WAGNER S.:
+                                                                            2
+   Declarative 3d approaches for distributed web-based scientific vi-
+   sualization services. In Dec3D (2012), Behr J., Brutzman D. P.,        [SLTB15] S TEIN C., L IMPER M., T HÖNER M., B EHR J.: hare3d
+   Herman I., Jankowski J., Sons K., (Eds.), vol. 869 of CEUR                - rendering large models in the browser. WebGL Insights (2015),
+   Workshop Proceedings, CEUR-WS.org. URL: http://dblp.                      317–332. doi:10.1201/b18564-27. 2
+   uni-trier.de/db/conf/www/dec3d2012.html. 2                             [TPO10] T ZENG S., PATNEY A., OWENS J. D.: Task manage-
+[JRS∗ 13] JANKOWSKI J., R ESSLER S., S ONS K., J UNG Y.,                    ment for irregular-parallel workloads on the gpu. In Proceedings
+   B EHR J., S LUSALLEK P.: Declarative integration of interac-             of the Conference on High Performance Graphics (Aire-la-Ville,
+   tive 3d graphics into the world-wide web: Principles, current ap-        Switzerland, Switzerland, 2010), HPG ’10, Eurographics Associ-
+   proaches, and research agenda. In Proceedings of the 18th In-            ation, pp. 29–37. URL: http://dl.acm.org/citation.
+   ternational Conference on 3D Web Technology (New York, NY,               cfm?id=1921479.1921485. 3
+   USA, 2013), Web3D ’13, ACM, pp. 39–45. doi:10.1145/                    [TS15] TAMM G., S LUSALLEK P.: Plugin free remote visual-
+   2466533.2466547. 2                                                       ization in the browser. In Proc. SPIE, Visualization and Data
+[KPS10] K ASPAR M., PARSAD N. M., S ILVERSTEIN J. C.:                       Analysis (2015), vol. 9397. doi:10.1117/12.2077761. 2,
+  Cowebviz: interactive collaborative sharing of 3d stereoscopic            5
+
+                                                                                                               c The Eurographics Association 2016.
+                              G. Tamm & P. Slusallek / Web-enabled server-based and distributed real-time Ray-Tracing   67
+
+[WPJR11] W ESSELS A., P URVIS M., JACKSON J., R AHMAN
+  S. S.: Remote data visualization through websockets. In
+  Proceedings of the 2011 Eighth International Conference on
+  Information Technology: New Generations (Washington, DC,
+  USA, 2011), ITNG ’11, IEEE Computer Society, pp. 1050–1051.
+  doi:10.1109/ITNG.2011.182. 2
+[WPSB03] WALD I., P URCELL T. J., S CHMITTLER J., B EN -
+  THIN C.:     Realtime ray tracing and its use for interactive
+  global illumination. In In Eurographics State of the Art Re-
+  ports (2003). URL: http://citeseerx.ist.psu.edu/
+  viewdoc/summary?doi=10.1.1.500.8528. 3
+[WS01] WALD I., S LUSALLEK P.: State of the art in in-
+  teractive ray tracing. In Eurographics (2001), pp. 21–42.
+  URL: http://citeseerx.ist.psu.edu/viewdoc/
+  summary?doi=10.1.1.23.6266. 2, 3
+[WWB∗ 14] WALD I., W OOP S., B ENTHIN C., J OHNSON G. S.,
+  E RNST M.: Embree: A kernel framework for efficient cpu ray
+  tracing. ACM Trans. Graph. 33, 4 (July 2014), 143:1–143:8.
+  doi:10.1145/2601097.2601199. 2, 6
+[YSD∗ 09] Y EE B., S EHR D., DARDYK G., C HEN J., M UTH R.,
+  O RMANDY T., O KASAKA S., NARULA N., F ULLAGAR N.: Na-
+  tive client: A sandbox for portable, untrusted x86 native code.
+  In Security and Privacy, 2009 30th IEEE Symposium on (2009),
+  pp. 79–93. doi:10.1109/SP.2009.25. 2
+
+
+
+
+c The Eurographics Association 2016.
+

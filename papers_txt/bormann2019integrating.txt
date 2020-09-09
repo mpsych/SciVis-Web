@@ -1,0 +1,299 @@
+EUROGRAPHICS 2019/ P. Cignoni and E. Miguel                                                                                                    Short Paper
+
+
+
+
+                      Integrating server-based simulations into web-based
+                                        geo-applications
+
+                                                 Pascal Bormann, Ralf Gutbell, Johannes Sebastian Mueller-Roemer
+
+                                                                TU Darmstadt & Fraunhofer IGD, Germany
+
+
+
+
+         Abstract
+         In this work, we present a novel approach for combining fluid simulations running on a GPU server with terrain rendered
+         by a web-based 3D GIS system. We introduce a hybrid rendering approach, combining server-side and client-side rendering,
+         to interactively display the results of a shallow water simulation on client devices using web technology. To display water and
+         terrain in unison, we utilize image merging based on depth values. We extend it to deal with numerical and compression artifacts
+         as well as Level-of-detail rendering and use Depth Image Based Rendering to counteract network latency.
+
+
+
+
+1. Introduction                                                                      • Mixing Level-of-detail-based (LOD) rendering of terrain with a
+                                                                                       rendering of simulated data with full detail.
+Nowadays, the simulation of flood scenarios becomes increasingly
+                                                                                     • Dynamic scaling of projected pixels to fill gaps between neigh-
+important due to the rising number of weather phenomena, in par-
+                                                                                       boring pixels after DIBR.
+ticular intense rainfall. To aid in high water analysis and the cre-
+ation of strategies for preemptive actions, these simulations should                    In Section 2, we cover the architecture of the system and intro-
+run interactively and be visualized in a 3D Geographic Informa-                      duce client and server implementations. Section 3 introduces the
+tion System (GIS) rendering terrain data. Interactive fluid simula-                  necessary algorithms for our image merging approach. Our results
+tions are possible using GPGPU (general-purpose computing on                         are evaluated in Section 4. Finally, Section 5 gives a conclusion and
+the GPU) approaches. This conflicts with the combined visualiza-                     an outlook on future work.
+tion of the simulation and terrain data, as GIS systems are more
+and more web-based and lightweight. While there has been valu-
+able research in both areas - fluid simulation [BSA12] as well as                    2. Approach
+geodata visualization [KG15] - to the best of our knowledge the
+two areas have seen no significant overlap. To alleviate this prob-
+lem, we introduce an approach for combining fluid simulations and
+3D GIS systems into a single web-application based on the smallest
+denominator of visual applications: pixels.
+   Our contributions are as follows: We present a novel hybrid-
+rendering approach for the combination of interactive server-
+based simulations with web-based rendering applications. This is
+achieved through a combination of server-side and client-side ren-
+dering. We demonstrate a showcase application that utilizes hybrid
+rendering to interactively display results of a GPU-based fluid sim-                           Figure 1: Overview of the system architecture
+ulation within a web-based 3D visualization of static terrain data.
+                                                                                        Our system is built upon a typical server-client architecture as
+Our approach allows access to sophisticated simulations on ordi-
+                                                                                     depicted in Fig. 1. There are two server instances running in the
+nary client devices, utilizing the benefits of server-side rendering,
+                                                                                     cloud, a GPU instance running the shallow water simulation and
+while providing full interactivity through usage of Depth Image
+                                                                                     a database that hosts GeoTIFF [RRG∗ 00] files and correspond-
+Based Rendering (DIBR) and perspectively correct integration of
+                                                                                     ing terrain meshes. On the client side, two separate rendering sys-
+simulation data into the client visualization. We overcome a series
+                                                                                     tems are running in the same web-application: A globe-rendering-
+of technical hurdles in this process:
+                                                                                     component built upon CesiumJS [CES] and a three.js-based [THR]
+• Correct image compositing based on depth values while dealing                      rendering component responsible for rendering the data received
+  with numerical inaccuracies.                                                       from the simulation server. The workflow is as follows:
+
+ c 2019 The Author(s)
+Eurographics Proceedings c 2019 The Eurographics Association.
+
+
+
+
+                                                                                                                        https://www.eg.org           https://diglib.eg.org
+DOI: 10.2312/egs.20191012
+50      Pascal Bormann, Ralf Gutbell, Johannes Sebastian Mueller-Roemer / Integrating server-based simulations into web-based geo-applications
+
+1. The client application connects to the simulation server.                  rendered by CesiumJS and a water area rendered remotely by the
+2. The client application loads a GeoTIFF file from the database              server—into a coherent and correct final image. The combina-
+   and sends a message to the server instructing it to load the same          tion of both render-sources is motivated by the depth-merging ap-
+   GeoTIFF file.                                                              proach presented in [GPCK16] and is extended to support a con-
+3. The client application sends simulation-specific parameters,               stant stream of portrayals. In its most basic form, our algorithm
+   such as water height and the water starting area, to the simu-             utilizes depth values in image space to merge the renderings of ter-
+   lation server.                                                             rain and water body. Given two color/depth image pairs I1 , D1 and
+4. The server starts running the simulation and periodically sends            I2 , D2 taken from the same vantage point, a merged image satis-
+   new data to the client, while simultaneously receiving camera              fying all occlusions can be computed using regular depth-testing:
+   matrices from the client.
+5. The simulation data is continuously integrated into the client                                        
+                                                                                                             I1 (x, y)     : D1 (x, y) < D2 (x, y)
+   visualization using our image merging algorithm.                                    Ifinal (x, y) =                                                            (1)
+                                                                                                             I2 (x, y)     : D1 (x, y) ≥ D2 (x, y)
+The next two sections first cover the server and client implementa-
+tions before the image merging algorithm is explained in Section 3.              This so called “sort-last” method was historically used for par-
+                                                                              allelizing graphical computation [Mol91, BS01], we use the ap-
+2.1. Simulation engine and data transmission                                  proach to mix distributed rendering setups. Implementation-wise,
+                                                                              this assumes that both image pairs were generated using the same
+For the simulation server, a GPU-based shallow water solver
+                                                                              view and projection matrices, so that pixels with the same depth
+was implemented based on the work introduced in [BSA12] and
+                                                                              value coincide in world space. To guarantee that the merging pro-
+[VPM14] . We use a second order in time and space discretization
+                                                                              cess yields correct images, it is imperative that the CesiumJS client
+on a regular grid, using an explicit, adaptive time step integration
+                                                                              renderer and the simulation server use an identical terrain model.
+method. While the state vector and all intermediates are allocated
+                                                                              We guarantee this by generating terrain models directly from the
+at the full size of the domain, only a small percentage of the do-
+                                                                              GeoTIFF files upfront. However, some challenges remain that are
+main contains water at any point in time. As an optimization, only
+                                                                              explained in Section 3.3.
+16 × 16 subdomains that contain water, or are adjacent to cells that
+contain water, are considered in the simulation kernels. Combined                Instead of directly merging each newly received frame on the
+with the fast, GPU-parallelized solver, this allows us to achieve             client, we use a DIBR algorithm to enable interactive viewing of
+simulation rates well beyond real time suitable for prediction.               the simulated water body. As mentioned in Section 2.1, the simula-
+   While the shallow water simulation is implemented in CUDA                  tion data for each frame is sent as a set of rixels, with empty rixels
+[NVI18], the server-side hybrid rendering component is imple-                 being discarded, which can be reconstructed into D, the depth im-
+mented in OpenGL. However, CUDA offers OpenGL interoperabil-                  age, as well as an additional image containing simulation-specific
+ity functions, therefore the results of the simulation can be used for        values, such as velocity or water height. For each pixel, its posi-
+rendering without copying data.                                               tion in normalized device coordinates is reconstructed by combin-
+                                                                              ing its image-space position and its depth value in image space and
+  For data transmission, we build on the rich pixels (rixels) ap-             then applying an inverse viewport transformation as illustrated in
+proach of [ADSF15] and add several enhancements:                              Eq. (2).
+• Instead of transmitting positions (96 bit per rixel), we only trans-                                                                
+  mit post-projection z (32 bit per rixel) and a visibility mask (1 bit                              2 ∗ ((x + 0.5)/screenwidth) − 1
+  per viewport pixel). Besides reducing message size, renderer fill-                     ~vNDCs = 2 ∗ ((y + 0.5)/screenheight) − 1             (2)
+  rate requirements are reduced, as depth testing is always required                                          2 ∗ D(x, y) − 1
+  but the additional render target can be omitted.                            The converted positions are then uploaded to the GPU as a point-
+• Instead of transmitting colors after color mapping (24 bit per              cloud geometry. Inside the vertex shader, the points are reprojected
+  rixel), we transmit 16 bit fixed point values along with a 32 bit           using the following DIBR equation, adapted from [MB16]:
+  floating point minimum and maximum for the entire domain. In
+  addition to further reducing message size, this approach allows                             ~vt = MPt ∗ MVt ∗ MV−1
+                                                                                                                   s
+                                                                                                                     ∗ MP−1
+                                                                                                                          s
+                                                                                                                            ∗~vNDCs                               (3)
+  for zero latency client-side changes to color mapping.
+                                                                              The simulation values are uploaded as vertex attributes, which are
+• Mask computation, stream compaction (removal of “empty”
+                                                                              colored using a color lookup table. The resulting image of this
+  viewport pixels), and minimum/maximum computation are per-
+                                                                              DIBR process is then merged with the terrain image rendered by
+  formed on the GPU to reduce PCIe bandwidth and latency to a
+                                                                              CesiumJS into the final client-side visualization (see Fig. 2).
+  minimum using CUDA and Thrust [BH15]. The CPU only adds
+  a message ID and WebSocket framing.
+A detailed description and analysis of the simulation server and              3. Image merging
+rixel enhancements are out of the scope of this paper.
+                                                                              The introduction of DIBR complicates the trivial depth merging
+                                                                              process as it was introduced in Section 2.2. The usage of DIBR
+2.2. Client rendering implementation                                          in our implementation can be seen as a means for geometry com-
+One of the main challenges with our approach is the correct vi-               pression: Geometry is compressed on the server by the process
+sual integration of two different render-sources—a terrain model              of rendering and sent to the client as a color/depth image pair. It
+
+                                                                                                                                                c 2019 The Author(s)
+                                                                                                         Eurographics Proceedings c 2019 The Eurographics Association.
+          Pascal Bormann, Ralf Gutbell, Johannes Sebastian Mueller-Roemer / Integrating server-based simulations into web-based geo-applications              51
+
+                                                                                         information gaps in the visualization [MB16]. As a result of these
+                                                                                         gaps, the viewport quantization errors become less noticeable due
+                                                                                         to a lack of visual cohesion in the geometry (Fig. 3, left). Scaling
+                                                                                         points dynamically based on the ratio between source viewspace
+                                                                                         distance and reprojected viewspace distance fixes most holes while
+                                                                                         also covering up the quantization errors (Fig. 3, right).
+
+
+                                                                                         3.2. Dealing with depth imprecision
+                                                                                         Depth buffer precision is a common problem in computer graphics,
+                                                                                         which is particularly relevant when rendering scenes covering very
+        Figure 2: Water body integrated into terrain rendering
+                                                                                         large areas, like in our use case. Adjusting of the clipping planes
+                                                                                         is not effective as the scenes in 3D GIS applications easily span
+is then decompressed to yield geometry again, which can be ren-                          dozens of kilometers. On these large scales, having less than 32 bit
+dered interactively. For a given vertex~v on the server, the following                   of precision in the depth buffer results in noticeable artifacts. Stan-
+equation—an extension to Eq. (3)—defines the chain of transfor-                          dard techniques for precision improvement, such as inverting the Z-
+mations applied to ~v resulting in a position in normalized device                       values or using a logarithmic depth buffer, cannot be realized in our
+coordinates on the client device:                                                        setting, both due to missing APIs in WebGL [Mar11] and because
+                                                                                         the DIBR Equation (3) requires linear depth values. Instead, as a
+        ~vt = MPt ∗ MVt ∗ MV−1  ∗ MP−1 ∗ vt −1 ◦ vt ◦ MPs ∗ MVs ∗~v                (4)
+              |              s
+                             {z      s
+                                               }|        {z       }                      general optimization to reduce numerical errors, we utilize the two-
+                            client-side DIBR               server-side rendering         step vertex transform approach by Upchurch and Desbrun [UD12]
+The application of this equation introduces several sources of nu-                       when applying Eq. (3). We found that, given 32 bit depth values,
+merical errors, which can lead to incorrect depth merging:                               the visualizations in our scenario work decently well, especially in
+                                                                                         conjunction with the depth probing algorithm of Section 3.3.
+• The viewport transformation vt quantizes continuous normalized
+  device coordinates into discrete pixel coordinates, applying vt −1
+  thus can yield incorrect positions.                                                    3.3. Dealing with terrain LOD
+• Depth precision is limited and non-uniform, leading to increas-
+  ing quantization errors as camera distance increases.
+• Calculation of inverse matrices as well as long multiplication
+  chains exhibit numerical instabilities.
+Apart from these numerical errors, depth merging may also fail due
+to the way terrain is rendered in 3D web-GIS applications. To en-
+able rendering of large scale terrain in realtime, it is often rendered
+with Level-of-detail (LOD), which simplifies the terrain geometry
+the further away from the camera it is displayed. Our water simula-                      Figure 4: No depth test (left, falsely visible regions in red), depth
+tion does not employ LOD but instead always operates on the most                         test using Eq. (1) (middle, falsely clipped regions in red), depth test
+detailed terrain geometry level. This leads to a mismatch between                        using depth probing (right)
+server and client topologies and consequently to incorrect depth
+merging (see Fig. 5). The next three sections discuss our contribu-                         Correctly integrating water and terrain is crucial for our use case,
+tions to solve these depth merging errors.                                               as occlusions enable correct localization of the water body within
+                                                                                         the terrain (compare Fig. 4, left and middle). In the presence of
+                                                                                         LOD, there is no trivially correct approach for this integration.
+3.1. Dealing with viewport quantization
+                                                                                         When a coarse-grained LOD terrain segment occludes the fine-
+                                                                                         grained simulation geometry (like in Fig. 5, bottom left), clipping
+                                                                                         the simulated geometry is logically correct but does not yield sat-
+                                                                                         isfactory visual results. Users can get confused by the water body
+                                                                                         suddenly disappearing when zooming out. As such, any approach
+                                                                                         that fixes this issue will trade correctness for visual quality and will
+                                                                                         be prone to false positives—showing water where it should actu-
+                                                                                         ally be occluded. Switching off LOD altogether is not feasible due
+Figure 3: Holes due to DIBR (left) fixed with adaptive point scaling                     to performance considerations. For the use-case presented herein,
+(right)                                                                                  we found the following depth probing approach to work sufficiently
+                                                                                         well to solve incorrect, LOD-induced occlusion.
+   Viewport quantization introduces a maximum error of half the
+pixel size in world space. This error only becomes visible when                            Let I1 , D1 be the terrain image pair and I2 , D2 the water im-
+applying DIBR to magnify the source geometry. Given the DIBR                             age pair. For each pixel (x, y), if D2 (x, y) ≤ D1 (x, y), let I2 (x, y)
+algorithm of Eq. (3), magnifying the source geometry introduces                          be visible. Otherwise, let zvi be the viewspace distance of Di (x, y).
+
+ c 2019 The Author(s)
+Eurographics Proceedings c 2019 The Eurographics Association.
+52      Pascal Bormann, Ralf Gutbell, Johannes Sebastian Mueller-Roemer / Integrating server-based simulations into web-based geo-applications
+
+Set I1 (x, y) visible only if (zv2 − zv1 ) ≥ T , where T is an empir-         how predicting camera motion in combination with depth buffer
+ical threshold value set to 10 units in our implementation. Fig. 5            compression can help mitigate the visualization delay introduced
+(right) illustrates this algorithm visually, Fig. 4 shows the result of       by these issues. Additionally, we want to further reduce the ef-
+the algorithm as compared to the trivial depth merging approach.              fects of LOD on the depth merge by utilizing screen-space error
+                                                                              metrics. If the simulation is extended to support fields other than
+                                                                              water height and velocity, the JIT-accelerated streaming queries in-
+                                                                              troduced in [MA16] could be used to efficiently compute derived
+                                                                              fields on the GPU before hybrid rendering.
+
+
+                                                                              References
+                                                                              [ADSF15] A LTENHOFEN C., D IETRICH A., S TORK A., F ELLNER D.:
+Figure 5: Faulty depth merging due to terrain LOD (left, terrain                Rixels: Towards secure interactive 3d graphics in engineering clouds.
+in black, water in blue, wrong occlusion in red) solved with depth              The IPSI BgD Transactions on Internet Research 31 (2015). 2, 4
+probing (right)                                                               [BH15] B ELL N., H OBEROCK J.: Thrust 1.8.1, 2015. URL: https:
+                                                                                //thrust.github.io/. 2
+                                                                              [BS01] BARTZ D., S ILVA C.: Rendering and Visualization in Parallel
+4. Results                                                                      Environments. In Eurographics 2001 - Tutorials (2001), Eurographics
+                                                                                Association. doi:10.2312/egt.20011052. 2
+                                                                              [BSA12] B RODTKORB A. R., S ÆTRA M. L., A LTINAKAR M.: Effi-
+                                                                                cient shallow water simulations on GPUs: Implementation, visualiza-
+                                                                                tion, verification, and validation. Computers & Fluids 55 (2012), 1–12.
+                                                                                doi:10.1016/j.compfluid.2011.10.012. 1, 2
+                                                                              [CES] Cesium - WebGL Virtual Globe and Map Engine. https://
+                                                                                cesiumjs.org. 1
+Figure 6: Overview of the combined application. From left to right:
+Selection of water origin; water spread after some time; integration          [GPCK16] G UTBELL R., PANDIKOW L., C OORS V., K AMMEYER Y.: A
+                                                                                framework for server side rendering using ogc’s 3d portrayal service. In
+of water body into terrain
+                                                                                Proceedings of the 21st International Conference on Web3D Technology
+                                                                                (2016), ACM, pp. 137–146. 2, 4
+   Fig. 6 gives an overview of an exemplary use of our system. The
+combined visualization of terrain data and simulated water makes              [KG15] K RÄMER M., G UTBELL R.: A case study on 3d geospatial ap-
+                                                                                plications in the web using state-of-the-art webgl frameworks. In Pro-
+the simulation results easy to understand and interact with. Through            ceedings of the 20th International Conference on 3D Web Technology
+the usage of DIBR, interactive viewing of the water spread within               (2015), ACM, pp. 189–197. 1
+the browser is possible. A demonstration of the system is shown in            [MA16] M UELLER -ROEMER J. S., A LTENHOFEN C.: JIT-compilation
+the supplementary video. A limiting factor of our system is the size            for interactive scientific visualization. In Short Papers Proceedings: 24th
+of the transmitted rixels. The larger the visible area of the water             International Conference in Central Europe on Computer Graphics, Vi-
+body, the more rixels have to be transmitted, which reduces the                 sualization and Computer Vision (2016), WSCG ’16, pp. 197–206. 4
+perceived update rate of the simulation on the client depending on            [Mar11] M ARRIN C.: Webgl specification. Khronos WebGL Working
+the network throughput. On less capable client devices, we found                Group (2011). 3
+that the processing of the rixel data — decoding and uploading to             [MB16] M EDER J., B RÜDERLIN B.: Fast depth image based rendering
+the GPU — can also reduce the interactivity of the system.                      for synthetic frame extrapolation. Journal of Theoretical and Applied
+                                                                                Computer Science 10, 3 (2016), 3–18. 2, 3
+                                                                              [Mol91] M OLNAR S.: Combining z-buffer engines for higher-speed ren-
+5. Conclusion and future work                                                   dering. In Proceedings of the Third Eurographics Conference on Ad-
+                                                                                vances in Computer Graphics Hardware (Aire-la-Ville, Switzerland,
+We presented an architecture and reference implementation                       Switzerland, 1991), EGGH’88, Eurographics Association, pp. 171–
+which combines a web-based 3D-GIS application with a server-                    182. URL: http://dx.doi.org/10.2312/EGGH/EGGH88/
+based fluid simulation. By utilizing the rich-pixels approach of                171-182, doi:10.2312/EGGH/EGGH88/171-182. 2, 4
+[ADSF15], combining the concepts of [GPCK16] and [Mol91] and                  [NVI18] NVIDIA C ORPORATION: CUDA C Programming Guide. Man-
+applying a DIBR algorithm, the simulation data can be displayed                 ual PG-02829-001_v10.0, 2018. URL: https://docs.nvidia.
+                                                                                com/pdf/CUDA_C_Programming_Guide.pdf. 2
+interactively within the browser. We illustrated problems with the
+depth merging process that is required to combine images gener-               [RRG∗ 00] R ITTER N., RUTH M., G RISSOM B. B., G ALANG G.,
+                                                                                H ALLER J., S TEPHENSON G., C OVINGTON S., NAGY T., M OYERS
+ated through client-side and server-side rendering and proposed                 J., S TICKLEY J., ET AL .: Geotiff format specification geotiff revision
+different mechanisms to mitigate these problems. We believe the                 1.0. SPOT Image Corp (2000). 1
+approach illustrated in this paper is not limited to fluid simulations        [THR]    three.js - Javascript 3D library. https://threejs.org/. 1
+and extensible to other computational expensive domains. In the
+                                                                              [UD12] U PCHURCH P., D ESBRUN M.: Tightening the precision of per-
+future, we aim to integrate different types of simulations using the            spective rendering. Journal of Graphics Tools 16, 1 (2012), 40–56. 3
+proposed architecture to enable easy access to sophisticated simula-
+                                                                              [VPM14] VACONDIO R., PALÙ A. D., M IGNOSA P.: GPU-enhanced
+tions from within the browser. The limitations of this approach are             finite volume shallow water solver for fast flood simulations. Environ-
+those shared by most systems that use a form of server-side render-             mental Modelling & Software 57 (2014), 60–75. doi:10.1016/j.
+ing, namely latency and throughput problems. We aim to analyze                  envsoft.2014.02.003. 2
+
+
+                                                                                                                                              c 2019 The Author(s)
+                                                                                                       Eurographics Proceedings c 2019 The Eurographics Association.
+

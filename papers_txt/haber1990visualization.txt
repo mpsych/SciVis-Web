@@ -1,0 +1,824 @@
+                                        ldioms:A ConceptualModel
+                            Visualization
+                               for ScientilicVisualization
+                                                         Systems
+
+                                 RobertB. Haber and DavidA. McNabb
+                                Universityof lllinois at Urbana-Champaign
+
+                                                               by simulation or physicalmeasurement.Visualizationtech-
+                       Introduction
+                                                               nology dependson the integration of older technologies,
+   The rapid growth of large-scalecomputing in the basic       including computer graphics,image processing,computer
+sciencesand the steady accumulation of high-bandwidth          vision, computer-aided design, geometric modeling, ap-
+data sources(radio telescopes,medical scanners,etc.) are       proximation theory, perceptualpsychology,and userinter-
+largelyresponsiblefor the recentinterestin scientificvisual-   facestudies.A recentoverviewofthe field is presentedin the
+ization as a computational technology.The origins of the       ACM report "Visualizationin ScientificComputing."r
+field lie in the applied sciences(engineering).The use of         The ACM report attributesthe quotation,"The purpose
+computer visualizationin computer-aideddesign and en-          of computingis insight,not numbers,"to Richard Hamm-
+gineeringanalysiswas the primary force driving the devel-      ing. This is certainly an overstatement(scientistsand engi-
+opment of computer graphicstechnologyin the late 1970s         neersneedto be concernedwith numbersas well as insights
+and early 1980s.The problem of interpretingand under-          in most circumstances).But Hamming's point is an ap-
+standinglarge,complex data setswas the samethen as it is       propriatereactionto the tendencyto overemphasize   numeri-
+now. The requirementto deal with realisticcomplexity in        cal output asthe product of computation.Computer visual-
+designled engineersto the earlyuseof computersimulations       ization methodshaveemergedas the most effectivetool for
+and computergraphics.Early effortsin scienceapplications       rapidly communicating large amounts of information to
+could also be cited.                                           scientistsand engineersin a format that enhancescompre-
+                                                               hensionand deepensinsight.
+   Entertainment-movie specialeffects,computer anima-
+tions for televisionadvertising,corporatevideo logos, and          This paperpresentsa model of scientificvisualizationasa
+the like-became the main focus of computer graphics            complex of generalizedmappings of data obtained from
+developmentduring the middle 1980s.The visualvocabu-           si mul ati on,observati on,or experim ent .The m appings
+lary of computer graphics was extended in breadth and          transform raw data into a geometric abstraction of the
+depth to meetthe requirementsin commercialapplications         scientificinformation content, which can then be rendered
+for realism,visualrichness,and motion (animation).During       to a displayableimage using computer graphics or image
+this period, significantgrowth also occurred in the power      processing.Any specificsequenceof mappingsconstitutesa
+and sophisticationof computergraphicshardwareand soft-         visualizationidiom. We review recentwork in the develop-
+ware systems.                                                  ment of hardwareand softwaresystemsfor interactivescien-
+                                                               tific visualization,basedon the visualizationidiom model in
+   Scientificvisualizationis now a major focus of computer
+                                                               the National Center for SupercomputingApplication's
+ graphicsdevelopment.As numericalsimulationbecomesan
+                                                               (NCSA) RIVERS project.
+ acceptedtool for researchin basic science,scientistsmust
+ facethe problem of understandingcomplexityin their nu-
+ numerical simulationsof nature,just as engineershave for                         YisualizationIdioms
+ sometime. Enrichedby the advancesassociatedwith enter-           Visualizationin computationalscienceand engineering.
+tainment, computer graphicstechnologyand visualization         In most instances,parallelscan be drawn betweenthe vari-
+ have becomeessentialtools in the developingfield of com-      ous stagesof numerical simulation and the correspondine
+ putational scienceand engineering.Computer imaging is         phasesin scientificobservationor experiment.We divide
+not new, but the new term, "scientific visualization," is      simulation into three main phases;modeling,solution, and
+justified as an indicator of an important new phase of         interpretationand evaluation. Multiple stepsoccur within
+developmentand a novel alignment of severalcomputa-            eachphase.We will outlinethesephasesto providea conte\r
+tional technologies.                                           and motivation for the use of visualization. It is u'orth
+  Visualizationcan be definedas the useof computerimag-        noting that error can ariseduring eachstep of each phase.
+ing technologyas a tool for comprehendingdata obtained         and that the reliability of the information in the final r isu-
+
+
+
+
+EH0307-9/90/0000ta074$01
+                    .00@1990 tEEE
+alization images depends on error control in all earlier         identify and terminate unstable or divergent solutions to
+stages.                                                          avoid unnecessary wasteof time and computerresources,or
+    Modeling phase. This phase involves transforming a           we can adjustsolution parametersto maintain accuracyand
+ loosely stated problem, such as "simulate the first micro-      stability.
+ secondofthe universe"or "analyzethe crash-worthinessof             The direct product of the numerical solution is a field
+ this automobile frame," into a well-posed mathematical          solutionfor the primary unknown field quantities.Often,we
+ problem.This is one of the most crucialstagesin simulation,     must compute secondaryquantitiesfrom the primary solu-
+ becausethe scientistmust decidewhich parts of the physics       tion. We must exerciseco4siderablecare to get reliable
+to include(and exclude)in the simulationmodel.If we make         resultsin data extractionor postprocessing.2 The postpro-
+improper decisionsat this stage,the game is lost no matter       cessingcalculations'results
+                                                                                           areessentialfor interpretingand
+the quality of the subsequentsteps.                              evaluatingthe simulation results.
+   The first step in the modeling phase is to develop the           Until recently,the analyst had to determinewhether the
+physicalmodel.This includesselectingthe domain of analy-         accuracyof the approximate solution was satisfactoryand
+sis in spaceand time and the relevantphysicallaws to be          whetherto takecorrectiveaction-say, through meshrefine-
+included and excluded. This step should include a clear          ment-to achievethe desiredlevelof accuracy.This process
+statement of the simulation's goals. The next step is to         is automated in the latest generationof analysissystems.l
+generatea mathematicalidealizationof the physicalmodel.          We should note that the concept of reliability in these
+This might involve forming governingequations,boundary           systemsonly limits the discrepancybetweenthe solutionsto
+and initial conditions,and a mathematicalrepresentationof        the "exact" and approximate mathematicalmodels.Errors
+the domain and the analysisgoals.It is only at this stagethat    of idealizationand modelingare not addressed.The needto
+the analysthasavailablea well-posedmathematicalproblem           visualizethe distribution of error and to monitor the adap-
+for solution. Although we can speakof the "exact" solution       tive solution offers opportunities for new applicationsof
+to this mathematicalproblem,it is important to recallthat it     visualization.
+is still an idealizationof the real system.                         Interpretationand evaluationphase. Learning occursin
+   Solutionphase.Often,we cancalculateonly approximate           this phaseof the simulation.The analystmust interpret the
+solutions to the mathematical idealization. The solution         solution(that is, establishan explanationbasedon causality
+phase'sgoal is to generatea reliableapproximatesolutionto        for the solutionresultsand distill usefulconclusions).Often.
+the mathematicalproblem responsiveto the mathematical            the analyst will determine that improvementsare needed
+statementof the goals of the analysis.The first step in the      either in the physicalmodel or in the mathematicalidealiza-
+solution is to form an approximate mathematical model            tion. In such cases,the overall simulation is repeated,with
+basedon the "exact" mathematicalmodel. For example in            the appropriate modifications to the model. Visualization
+continuum models,this might be a finite-differenceor finite-     playsan important role in interpretationand evaluation.In
+elementmodel. The next stepinvolvesgeometricmodeling             fact, severalopen challengesoccur in postsolutionvisuali-
+and geometricdiscretizationof the problem domain (e.g.,          zatton. For example,the problem of producing graphical
+mesh generation in the finite-elementmethod). We use             abstractionsof continuum tensorheldsin threedimensions
+visualization and graphics input techniquesto construct          hasonly recentlybeeninvestigated.If we usevisualizationas
+geometry models, to evaluatethe results of geometric             a primary medium for interpreting scientific simulations,
+modeling operations,to detect errors, and to control and         then the same standards of reliability we applied to the
+monitor mesh generation. Numerical solutions generally           modeling and solution phasesmust also be applied to the
+involve discreterepresentationsof the field variablesand         visual postprocessing.
+approximatestatementsof the boundaryl initial valueprob-            Visualization and visualization idioms. The previous dis-
+lem. The resultis that the governingequationsand boundary        cussion is based on a view of computational scienceand
+conditions are only approximately satisfied,and another          engineeringas an extendedsequenceofabstractionsimple-
+sourceof error is introduced.Visual displaysare important        mentedas generalizeddata transformations.Choosingthe
+tools for describingand assessing  the adequacyof discrete       abstractions and specifying the transformations can be
+models to the computer.                                          critical-the careand precisiondefiningthem can determine
+   At this stage,the "exact" mathematicalproblem hasbeen         whether the scientific conclusionsderived from a given
+transformedto an approximatemathematicalproblem that             simulation correspondto truth or fiction. Next, we extend
+we can solve on the computer using a numerical method.           this model of sequentialabstraction/transformationopera-
+Solving the approximate problem is often automatic and           tions to encompassvisualization.Figure I showsa concep-
+can proceedwithout userintervention.In nonlinearor tran-         tual diagramof visualization.We can view visualizationasa
+sient solutions,using visualizationto monitor the progress       seriesof transformationsthat convert raw simulation data
+of the simulation is still worthwhile. In this wav. we can       into a displayableimage.The goal of thesetransformations
+
+
+
+
+                                                            IJ
+                                          Figure 1. The visualizalionprocess.
+
+
+is to convert the information to a format amenableto              The next transformation,visualizationmapping, con-
+understanding   by the humanperceptualsystemwhilemain-         structsan imaginary objectcalledan "abstractvisualization
+taining the integrity of the information. Three major trans-   object"(AVO) from the deriveddataproducedby enhance-
+formations occur in most visualizationprocedures.              ment and enrichment.Typically,this involvesmappingthe
+                                                               simulation data into the attribute fields that describethe
+   Data enrichment and enhancementis the first trans-
+                                                               AVO. We canthink of an AVO asan imaginaryobjectwith
+formation. It operateson the raw data provided by the
+                                                               some extent in spaceand time. The attribute fields of an
+simulationand modifiesit in one or more ways to derive
+                                                               AVO might includegeometry,time, color, transparency,
+data for subsequent  visualizationoperations.For example,
+                                                               luminosity, reflectance,and surfacetexture.Transfer func-
+numerical simulations often provide data values only at
+                                                               tions definesimplemappingsbetweenthe simulationdata
+certaindiscretelocationswithin the domainof a continuum
+                                                               and the AVO fields.The transferfunctionscan vary widely
+solution. Thesemight not be convenientlocationsfor sub-
+                                                               in complexity.An exampleof a more generalmapping is the
+sequentoperations,or a continuousrepresentation      of the
+                                                               extractionof an isopotentialsurfacefrom a three-dimen-
+field data might be required.We commonly usesomeform
+                                                               sional field representation(surfacecontouring).
+of interpolationbetweenthe raw data points to obtain data
+at the desiredlocationsor an approximatecontinuousdis-            The time and geometryfields in the AVO need not cor-
+tribution. Variousforms of noisemight be encounteredin         respondto similarquantitiesin the simulationdomain.For
+the raw data. Often, applying filtering or smoothingopera-     example,we can map the simulationz coordinateto time in
+tors to producewell-behaveddata setsis desirable.Some-         the AVO model to produce an animation of sequential,
+times we needto derivenew field quantitiesfrom the raw         horizontalslicesthrougha volumetricdomain.Linearmap-
+data. For example, the display of a shadedsurfacerepre-        pings are useful for preservingquantitativeinformation
+sentinga potentialovera two-dimensional     domainrequires     (temperaturemappedto a perceptuallylinear color space,
+surfacenormal-informationat eachpoint,in additionto the        for example),but suitablenonlinearmappingscan be more
+value of the potential. Calculatingthe normals is generally    effectivein revealingsubtleties
+                                                                                             of structure.Histogramming
+based,directlyor indirectly,on directionalderivativesofthe     techniquesborrowed from image-processing      technology,o
+raw data describinsthe ootential function.                     can construct effective transfer functions. No fool-oroof
+
+
+
+
+                                                                                                                            #
+method existsto deriveeffectivetransferfunctions,so inter-     familiar objectsand the physical abstractionsused in the
+active systemsfor real-time modification of the transfer       simulation.We should give due regardto the str€ngthsand
+functions are effectivetools for exploring computational       weaknesses of the human perceptualsystem.The amount of
+data sets.5                                                    information displayedat onetime for multivariateproblems
+   Renderingis the lasttransformation.Renderingmapping         should be carefullycontrolledto detectmeaningfulcorrela-
+operateson the AVO to producea displayableimage.Ren-           tions without overloadingthe viewer'scognition.
+dering can involve familiar operations from computer              Figures2 through 5 illustratea hypotheticalvisualization
+graphicsand image processingbut might also involve new         idiom for representingtransient temperatureand pressure
+algorithms that respond to new requirementsof scientific       fields on the nose cone of a rocket. Spline surfacepatches
+and engineeringvisualization.Typical renderingoperations       definethe simulationdomain, and the solution data include
+would include view transformations(rotation, translation,      temperature and pressure values at discrete, randomly
+scaling,perspectivemapping, and clipping) and optical          spacedlocationsmeasuredat irregulartime intervals(Figure
+models(hidden surfaceremoval,shading,shadowing,anti-           2-).In data enrichmentand enhancement,we manipulatethe
+aliasing,and so forth). Volumetricrenderingis an important     geometryand solution data to facilitatesubsequentopera-
+new developmentfor visualizingthree-dimensionalsys-            tions. We replacethe splinegeometrymodel with a regular
+tems.6-8 Reliability needsto be maintainedthroughout visu-     grid of polygonal patches,and we interpolatethe solution
+alization, so we must balancethe accuracyof alternative        data from the randomly spaced sampling points to the
+rendering methods against their other qualities, such as       verticesof the polygon grid. The simulation data are also
+efficiency.                                                    interpolatedin time to regularintervals.Figure 3 showsthe
+   Unlike previouscomputergraphicsapplications,accuracy        derived data.
+doesnot necessarilyimply photorealismin visualization.It          Visualizationmapping involvesseveralchannelsof data.
+is a crudeapproximationof real-worldoptics,but Lambert's       We definethe AVO (Figure 4) as a surfacecharacterizedby
+cosinelaw ofdiffuse reflectioncan serveperfectlywell asthe     polygonal patcheswhereeachpolygon vertex has specified
+"exact" model for defining a visualizationrendering map-       three-dimensional coordinates,a normal vector,and a color.
+ping. In fact, such simple models have some appeal in          We assumespecifrcinterpolationfunctionswithin eachpoly-
+visualization applications becausethey make it easierto        gonal patch for the vertex data. The three-dimensionalsur-
+interpret the underlyingscientificdata and to control accu-    face of the nose cone is mapped to a flat disk in polar
+racy than do more elaboratealgorithms,suchasradiosityor        coordinates,wherethe radiuson the disk correspondsto the
+ray tracing.                                                   meridional arc length measuredfrom the tip of the nose
+   Webster'sdictionarydefinesidiom as"an acceptedphrase,       cone. This providesa map from the three-dimensionalco-
+construction,or expression. . . having a meaningdifferent      ordinatesof the polygon verticesin the deriveddata to the
+from the literal." By analogy,we can definea visualization     x-y coordinatesof the AVO patch vertices,releasingthe
+idiom as any specific sequenceof data enrichment and           third dimensionto be used for displayingsolution data.
+enhancementtransformations,visualizationmappings,and              In this example,we map the pressureat eachvertex of the
+renderingtransformationsthat producean abstractdisplay         deriveddatato the z coordinateof the AVO polygon vertices
+ofa scientificdata set.Just asa listenerhasdifficulty under-   and map the vertex temperaturevaluesto color at the AVO
+standing a verbal idiom in a foreign language,a viewer is      vertices.We can use independentnonlinear transfer func-
+unableto interpreta visualizationdisplayscientificallywith-    tions for the pressureand temperaturemappings.We apply
+out an explicit understandingofthe stepsin the visualization   an identity mappingbetweenthe time intervalsof the derived
+idiom usedto generateit. This doesnot meanthat visualiza-      data and the AVO.
+tion displaysshould or must be difficult to interpret. But a      The AVO vertex normals play an important role in the
+careful scientistwill insist on knowing whether the data is    subsequentrendering mapping: They control the shading
+presentedin its raw form or is smoothed,whetherthe data is     calculationsthat provide a major perceptualcue for under-
+plotted to a linear or logarithmic scale,what lighting model   standing the three-dimensionalform of the AVO. Ideally,
+is used, and so'forth. Such information is crucial for an      we should computethe vertex normalsfrom the directional
+accuratequantitativeinterpretation.Therefore,propertech-       derivativesof the pressurefield in the simulationdata,modi-
+nical documentation and visual aids-such as on-screen          fied by the nonlinear transferfunction usedin the pressure
+graphical representationsof the transfer functions-are         mapping. This would require that secondaryderivativein-
+important componentsof scientificand engineeringvisuali-       formation be calculated consistent with the simulation
+zation systems.                                                model and be passedalong to the derived data set. The
+  Yet an effectivevisualization idiom should not require       derivativeinformation would then be modified by the visu-
+excessiveeffort or explanation for qualitative understand-     alizationmappingto determinethe AVO normal directions.
+ing. AVOs should be basedon intuitive analogiesbetween         If the simulation does not provide gradient information,
+Figure 2. Visualizationstages:simulation data.
+
+
+
+
+ Figure 3. Visualizationstages:deriveddata.
+                             Flgure 4. Visualizationslages:abstractvisualizationobJect.
+
+
+then we can generateapproximate normals as part of the        depicting the evolution of the transient pressureand tem-
+visualization mapping by averaging the normals of the         perature distributions on the nose-conesurface. For ef-
+patchesadjacentto each vertex in the AVO surface.This         ficiency,we can introduceapproximationsin the rendering
+operation will produce some error, which might lead to        mapping.For example,if a Phong shadingmodel defines
+undesirablevisible artifacts in the renderedimaee.            the "exact" rendering mapping, a Gouraud interpolation
+                                                              would introducesomelevelof error. The Phongalgorithm is
+   Figure 5 shows the rendering mapping. We generatea         an approximate method in realisticrendering,but we can
+mapping betweenthe AVO time and animation time to             useit asan "exact" model for defininga renderingmapping.
+control the variablespeedand directionof the animation.
+                                                                 The preceding description might at first seem overly
+In-betweenframesare interpolatedbetweenthe key frames
+                                                              formal. But the authors'experience indicatesthat this model
+of the AVO data setto match the frame updaterate of the
+                                                              is useful in defining well-structuredsoftware architectures
+animation system. We define a perspectiveview, model
+                                                              responsiveto diverse visualization applications.(We de-
+rotations and translations,and a lighting model throughout
+                                                              scribe one such architecturelater in this paper.)
+the rendering interval. Spline techniques,as in computer
+animation choreography,can specifytheseparts ofthe ren-          Examplesof visualizationidioms. We selectedexamples
+dering mapping, or they can be generatedinteractively         of visualization idioms from a variety of scienceand engi-
+through a userinterface.Algorithms for hidden surfaceand      neeringdisciplinesto indicatehow to apply structuredvisu-
+shadingcalculationscompletethe definitionof the rendering     alization and to demonstratehow subtle alterationsof the
+mapping. Executing the rendering mapping produces a           mapping transformationscan lead to dramatic changesin
+seriesof displayableimagesthat generatesan animation          the final images.
+
+
+
+
+                                                         79
+   Figure 6 shows a relativelysimple visualizationof two-     and B valuesin the renderingstep.This nonlinearmapping
+dimensionalcomputationalfluid dynamics.It involveskink        revealsmore of the shock-wavepatterns,demonstratingthe
+ instabilitiesin a supersonicjetfrom astrophysics.We define   sensitivityof visualizationidioms to subtlevariationsin the
+ the simulationdomain by a finite-differencegrid mappedto     mappings.We want to have interactivesystemsfor fine-
+an identical grid in the AVO. We map the AVO grid to a        tuningthe mappings,becauseof the difficulty of determining
+rectangulararray of pixels in the renderingmapping. The       in advancewhich mappingswill bestrevealthe physicsof a
+pressureat each numerical grid point is mapped to an          given simulation.
+eight-bit pseudocolorvalue in the AVO. In the rendering          Figure 7 shows imagesfrom researchin computational
+mapping, we use a look-up table to map the AVO color
+                                                              dynamic fracturemechanics.'Weperformedthe simulation
+values to 24-btt red, green, blue (RGB) pixel values.The
+                                                              with a specialtwo-dimensionalmoving finite-elementcode.
+images are still frames from an animation with constant       The mapping of the finite-elementgrid to the problem
+scalingapplied betweenthe time coordinatesof the simula-
+                                                              domain changesat everytime step.The displacementvector
+tion and the AVO.
+                                                              field is the primary simulation output data as defined by
+   The imagein Figure6a usesa color mappingconsistingof       node valuesand elementinterpolationfunctions.The AVO
+two linear sections.The two-part mapping separatesthe         in this exampleis a surfacetesselatedwith polygons.At any
+regionsof high and low pressureand revealsthe turbulent       time step,we map the finite-element mesh   and node coordi-
+flow. Figure6b showsthe sameframe usinga differentcolor       nates to the  polygons  and x-.y,vertex coordinates  of the
+mappingsuggested  by the artist, Donna Cox.5The mapping       AVO. Secondarydata fields,computed      in a postprocessing
+is generatedfrom a set of periodic functions defining the     stepfrom the displacement data,includestrain,stress,strain-
+mapping of the AVO eight-bit valuesinto eachof the R, G,      energydensity,material  velocity,
+                                                                                              and kinetic-energydensity.
+
+
+
+
+                                   Figure 5. Visualizationstages:displayableimage.
+                                                                                         periodic functions'
+Flgure 6. Kink instabilityin a supersoniciet: (a) linear map; (b) nonlinearmap basedon
+From MichaelNorman,Departmentof Astronomy,University              of lllinoisat Urbana-Champaign'
+
+
+
+
+                                                     8l
+                                                                                                                                                       (a)
+
+
+
+
+Fig ure 7. Vis ualiz at ionof elas t ody nam i c f r a c t u r e m e c h a n i c s : ( a ) s p l i t - s c r e e n .t w o - d i m e n s i o n a l s c a l a r co l o r
+map s; ( b) t hr ee- dim ens ionaldis play of s t r a i n - e n e r g yd e n s i t y a n d k i n e t i c - e n e r g y d e n s i t y f i e l d s . F r o m Hyu n
+Koh ,Hae- SungLee, andRober t Haber , D e p a r t m e n t s o f T b e o r e t r c a l & A p p r e d M e c h a n r c s a l d C i v r E n g ne e r -
+rng . Un v er s it y of lll nois at Ur bana- Ch a m p a i g n
+We computethesequantitiesat theGaussintegrationpoints        3 array. An independentarray existsat every point in the
+of eachelement.Node valuesof the kineticand strain-energy    domain for a tensorfield. A doublecontraction of the strain
+densitiesarecomputedby extrapolationof the Gausspoint        tensorwith the fourth-orderelasticitytensoryieldsthe scalar
+valuesduring the data-enhancementstep.                       strain-energydensity.This mappingis one of the key stepsin
+   In Figure 7a,the strain-energydensityis passedthrough a   the data-enhancementstageof the precedingidiom. It re-
+logarithmic transferfunction to produce an eight-bit color   duces the difficult problem of displaying a second-order
+value at each vertex of the AVO. The square root of the      tensor field to the more familiar problem of displaying a
+kinetic-energydensityis mappedto a secondeight-bit color     scalar field. But we lose considerableinformation in the
+at eachAVO vertex. We assumea bilinear variation of the      process.   The six independentcomponentsof the symmetric
+color fieldswithin eachAVO polygon. In the renderingstep,    straintensorarecombinedinto a singlenumber,eliminating
+we apply dual two-dimensional scaling and translation        all directionalinformation from the display.Another posst-
+transformations to generatea split-screendisplay of the      bility is to contracta second-ordertensorfield with a vector
+AVO. ln the top image,a step-functioncolor transferfunc-     field (for example,contract the stresstensor with a normal
+tion is applied to the AVO strain-energycolor values.The     vectorto obtain a surfacetraction vector)to obtain another
+stepfunction emphasizes   the shapeof isopotentialcontours   vector field. We can then use familiar vector field display
+in the renderedimage.   We  apply the sametransferfunction   methods,such as arrow plots.
+to the kinetic-energyvertex colors in the bottom image. A       We haveknown about direct graphicalrepresentations    of
+Gouraud interpolation schemecalculatespixel color values     second-ordertensors,suchas the    Lame  stressellipsoid and
+within eachpolygon.This idiom providessomeinformation        the Cauchy stressquadric,for sometime.I0But they do not
+about the mechanicalbehavior of the systembut does not       appear to be well-suitedfor computer visualization.Only
+revealthe elasticwavesthat drive the fracture mechanism.     recentlyhavedirect visualizationmethodsfor second-order
+   Figure7b showsa moresuccessful     idiom for representing tensorfieldsappeared."
+preciseiythe sameinformation.In this case,we modify the         Figure 8 showsa new direct visualizationtechniquefor
+AVO so that the squareroot of the kinetic-energydensityis    the symmetric, second-orderstresstensor applied to the
+mapped to the z coordinatesof the AVO polygon vertices problem of dynamic-fracturemechanics.We will discuss
+(instead of to the eight-bit color values).Gradients of the  this idiom in the followingsection.
+mapped kinetic-energydensityfield definethe surfacenor-         In the data-enrichmentstage,we compute the stress-ten-
+mal direction at each AVO vertex. The mapping of the         sor componentsat the centroidof selectedfinite elements.In
+strain-energydensity field is not modified. We changethe     eachelement,we interpolatethe nodal displacementsfrom
+renderingmappingto includemultiple light sources,general the elementnode valuesby usingthe finite-elementinterpo-
+three-dimensionalrotations,scalings,translations,and per-    lation functions.The strain-tensorcomponentsare com-
+spectivetransformations.Z-buffer hidden surface and          puted at the element(reduced)Gaussintegrationpointsfrom
+Gouraud shadingalgorithmscompletethe renderingspecifi- the gradientsof the interpolateddisplacementcomponents.
+cation and producethe singlethree-dimensionalimage(Fig-      We then computethe stressat eachGausspoint by contract-
+ure 7b). We haveincludeda plot of the normalizedcrack-tip    ing the strain tensor with the material elasticitytensor.
+stress-intensityfactor history at the bottom of the display. Finally,we interpolatethe Gausspoint stresscomponentsto
+   Although Figures 7a and 7b contain the sameinforma-       the elementcentroid. The details of this processare of
+tion, only the idiom in Figure 7b interactswith the human    interestto a numericalanalyst,becausethey are linked with
+perceptualsystemto revealthe wave patterns around the        certain accuracypropertiesof the finite-elementsolution.
+moving crack tip. This demonstratesthat the perceived           Visualization mapping involves the definition at each
+information depends strongly on the particular idiom         sampledlocation of a geometricalobject that encodesthe
+chosen.Scientistsshould be able to test a variety of idioms  completeinformation of the stresstensor.We solvean eigen
+rapidly to seek one that best reveals the physics of the     problem to determinethe tensor'sprincipal directionsand
+problem. In the secondidiom (Figure 7b), we want to          magnitudes.The principal directions are orthogonal, be-
+control the transfer functions used in the mappings for      causethe stresstensoris symmetric.We constructa cylindri-
+height and color, the time mapping for animation, and the    cal shaft in the direction of the major principal direction.
+lighting and the perspectiveview. Only recentlyhavegraph-    The color and length of the shaft indicate the sign and
+ics hardware systemsachievedthe performanceneededto          magnitude of the stressin this direction. An eliptical disk
+supportthis kind of interactivity.                           wraps around the central portion of the shaft. The major
+   The scalarstrain-energydensityfield in this exampleis, in and minor axesof the ellipsecorrespondto the middle and
+fact, an indirect representationof the second-ordertensor minor principle directions of the stresstensor. The color
+strain field.'A second-ordertensor in three dimensionsis     distribution on the disk indicatesthe stressmaenitude in
+generallyrepresented  by ninecomponents,arrangedin a 3 X     each  direction.
+                                                                                                                       Aift$rE
+                                                                                                                               r)
+                                                                                                                           l PisS-{: l
+                                                                                                               -----),.-...._
+                                                                                                               i eil
+                                                                                                               i*... _-....J' _."""._."J
+                                                                                                               '.1:.      --.-+-----
+
+                                                                                                                       : gTtt- ;
+
+
+
+
+                                                                                                                               I
+
+                                                                                                                       ':'-"       j
+
+
+                                                                                                                         Pt.}a
+
+
+
+
+       F igur e8 .T e n s o rfi e l dv i s u a l i z a ti ouns i ngl he R IV E R Spol ygonani mati ontool .FromC henS heng,H yunKoh,
+       HaeSu n g L e e ,C re toV i d a l ,a n d R o b e rtH aber,D epartments             of Theoreti cal & A ppl i edMechani csand Civil
+       E ngin e e ri n gU, n i v e rs i tyo f l l l i n o i sa t Urbana-C hampai gn;    and S teveC hal l ,R ay l daszak,and P ol l yBaker ,
+       NCS A.
+
+
+
+   An outlineof the structurevolumeprovidesa contextfor                    through the thicknessis modeledby layersof triangle-sec-
+the tensordisplal'.Because  the tensordisplaytechniquecan                  tion, prismaticfinite elements.We assumesymmetricalre-
+provideonly point-wiseinformation,we includea modified                     sponsein the mid-surfaceof the mold.
+versionof the idiom for displayingthe strain and kinetic
+                                                                              The solutiondataincludestemperature   and velocityfields
+energydensityfieldson the back faceof the volume.In this
+                                                                           computedat the elementcentroidswith piece-wise       linear
+version, we use the kinetic-energyheight field to calculate
+                                                                           interpolationthroughthe depth.We computepressureas a
+surfacenormalsfor shading.but we constrainthe polygon
+                                                                           uniform value within eachtriangularelement.In this case
+vertexcoordinatesfor the displaygeometryto lie within a
+                                                                           the visualizationmapping is not simply a map from one
+plane.This propagates  shadedkinetic-energy  wavesacrossa
+                                                                           continuum field to another. Instead.geometric"glyphs"
+flat. colored surface.When this idiom is animated.the
+                                                                           communicatethe behaviorat discretelocations.The height
+tensordisplayobjectsrevealthe stresscontentof the elastic
+                                                                           of eachglyphcorresponds  to the half thicknessof the mold.
+wavesby rotation and changesin size,shape,and color as
+                                                                           The glyphsareseatedon a horizontalplanerepresenting     the
+eachwave passes.
+                                                                           mid-surfaceof the mold. The glyph'scross-section    at any
+   Figure 9 shows an idiom portraying multivariatedata
+                                                                           verticallevelhas the shapeof an arrowheadwhoselength
+arisingfrom a three-dimensional   finite-elementsimulation
+                                                                           and directioncorrespondto scaledvaluesof the horizontal
+of plasticinjectionmoiding.The mold geometryconsistsof
+                                                                           componentof the fluid velocityvectorat that location.No
+two joined rectangularcavitiesof different thicknesses.
+                                                                           glyphsare drawn in regionswherethe plastichas not yet
+Heatedplasticis injectedinto the mold underpressure.As
+                                                                           penetrated.and we draw theglyphsascylindersin locations
+the plasticflows to fill the mold. it cools and eventually
+                                                                           wherethe flow hasceasedbecause   the plastichassolidified.
+solidifies.Because thethicknessof the mold is smallrelative
+to its other dimensions,we assumethe pressureto be uni-                      The temperaturethroughthe thicknessis represented by
+form through the thickness.But temperaturevariation                        color valueson the surfaceof eachglyph,and the pressure
+
+
+
+
+                                                                                                                                               g
+                             of plaslicinjectionmolding.From RichElson,KodakCorp.;and DonnaCox, Depart-
+        Figure9. Visualization
+        ment of Art and Design,Universityof lllinoisat Urbana-Champaign;and Ray ldaszak,NCSA.
+
+
+
+distribution is representedby a secondcolor scaleplotted on
+                                                                           tion and display of a surfaceof uniform rain density(a
+the mid-surfaceplane. We generatea triangular polygon in
+                                                                           three-dimensionalanalogueof two-dimensionalweather
+the mid-surfaceplane for each finite-elementzone with a
+                                                                           radar images).The renderingoperationis performedwith
+constant pressurecolor. We carefully selectthe two color
+                                                                           the Wavefront Technologiesrenderingpackage.The re-
+mapsto avoid visualconfusionbetweenthe two quantitative
+                                                                           quiredinput to the renderingoperationis a polygonsurface
+scales.Finally, the renderingmapping includesa lighting
+                                                                           with coordinateand normal informationat eachvertex.We
+model and three-dimensional    transformations. This idiom
+                                                                           haveusedtime in two wayswith this AVO. In one instance,
+exemplifiesthe generality of the concept of visualization
+                                                                           we mappedthe AVO time directlyfrom thesimulationtime,
+mappings beyond the simple caseof scalar transfer func-
+                                                                           so theanimationtracksthe evolutionof the stormsurfaceat
+tions. Although this idiom presentsan intuitivelycompre-
+                                                                           a fixed rain densitythreshold.In anothercase!we held the
+hensibleportrait of the injectionflow, it doesrequiresome
+                                                                           simulation time fixed and derived the AVO time from the
+explanation becauseof its intrinsic complexity.
+                                                                           thresholdvalue definingthe isodensitysurface.In this case,
+   Figure l0 visualizesa severestorm simulation.rrThe the animation portrays the surface'smotion within the
+simulationoutputsdatafor eachtime stepat a three-dimen- volumeof the cloudto revealits interiormorphology.Other
+s ionalar r ay of p o i n ts to d e s c ri b es c a l a ra n d vector con- visualizationidioms for severestorm data are reported in
+tinuum fields.The visualizationidiom involvesthe extrac- Wilhelmson." Direct volumetric renderinsis anotheral-
+
+
+
+
+                                                                E5
+        Figure10.Visualization
+                             of severestormsimulation.FromRobertWilhelmson,CrystalShaw,and Lou Wicker,
+        Departmentof AtmosphericSciences,Universityof lllinoisat Urbana-Champaign;
+                                                                                 and StefenFangmeier,
+        NCSA.
+
+
+ternativefor visualizingthis type of data.This approachhas         the accuracyof the gradientinformation is at leastasimpor-
+the advantageof using a volumetric AVO, consistentwith             tant as the scalardata itself in this kind of idiom. Figure l0
+the form of the original data; no surfaceconstruction is           showsnumericalartifactsat the samescaleasthe simulation
+needed.                                                            numerical grid. We would need a systematicapproach to
+                                                                   error indication and control, from the simulation through
+   Consistentwith the subsequentrenderingoperation,the
+                                                                   the seriesof visualizationoperations,to determinewhether
+AVO in this example consistsof a polygon surface with
+                                                                   theseartifactsresultfrom the visualizationtransformations
+varying geometryand surfacenormals. A number of algo-
+                                                                   or from the simulation itself.
+rithmic options exist for generatingthe coordinates,nor-
+                                        surface.An option
+mals,and connectivityfor this tessellated
+                                                                                Visualization Software Systems
+in the National Centerfor AtmosphericResearch'sgraphics
+packagegeneratedthe AVO for Figure 10. The "marching                  We can identify three visualization modes in computa-
+cubes" algorithm has also been applied to this data set.rl         tional science,basedon current practiceand the expressed
+Each of these algorithms has implicit assumptionsabout             desiresof scientists.Each involves different performance
+how the scalar-densityfield and the vector-normal(or gra-          requirementsfor the computational,graphics,massstorage,
+dient) field vary betweenthe discretearray of data points          and communicationssystemcomponents.The first is post-
+produced by the simulation. Each algorithm producesdif-            simulation analysis,wherein we complete the simulation
+ferent levelsof error and consequentvisual artifacts in the        and store the simulation data for later retrieval by the
+final image. Becauseof the importance of shading as a              visualization system.This mode is appropriate when the
+perceptualcue for understandingthree-dimensionalform,              cost in time, effort, or money of repeatingthe simulation
+
+
+
+
+                                                              86
+cannotbe toleratedand the costofstoring the resultsis not                 and then to identify suitablesoftwarestrategies.
+                                                                scientists,
+excessive.This approach supports interactivevisualization       Existing software strategiesprovide many of the desired
+and real-timeanimationwhen the simulationcannot exe-                                     But challengingnew problemsin
+                                                                qualitiesand capabilities.
+cute at animation rates.                                        computer sciencearise from the need to integratediverse
+   In runtime monitoring, the secondmode, the visualiza-        softwareconceptsinto a unified, high-performancesystem.
+tion systemmonitors the simulation'sintermediateresults            Most scientistsforegovisualizationaltogetherunlesspro-
+while it is in progress.As eachstepof a transientor iterative   vided with high-leveltools that keeptheir energiesfocused
+simulationalgorithm is completed,the output data is passed      on their science.With few exceptions,scientistsand engi-
+to the visualization system for immediate viewing. Data         neers are no more willing to get involved with graphics
+historiescan be accumulatedto permit animation of partial       languages,windowing systems,communicationsmecha-
+results.This allows the user to monitor progress,study          nisms,and the like than they are to write low-level device
+convergence,detecterrors,and perhapsdeterminewhether            drivers.This indicatesa needfor carefully layeredsoftware
+the simulation should be terminated.                            systems.Figure I I showsone suchsystem.Vendorsgeneral-
+   The third mode, interactivesteering,closesthe loop be-       ly provide the three layersimmediatelyabovethe hardware
+tweenthe simulation and the visualizationsystem.We sup-         platform. A scientistor a softwarevendor providesthe top
+plementruntime monitoring of the simulationwith interac-        applicationslayer. The visualizationapplication layer exe-
+tive tools for modifying the simulationinput data or analysis   cutesthe dataenrichmentand enhancement     transformations
+parameters.This provides the analyst immediate visual           and the visualizationmapping to convert the sciencedata
+feedbackabout the effectsof changesin the problem data.         into a renderableobject.The renderingmapping is executed
+   NCSA's RIVERS project investigates       and prototypes      with calls to the graphicsand window systemslayer.
+high-performance   hardwareand softwaresystemsfor interac-    The visualizationapplication layer is the missinglink in
+tive supercomputing   and visualization. ("RlVERS"-short
+                                                           most existing software environments.We want to apply
+for researchon interactive visualization environments-     layering within this level to separategeneric, discipline-
+refersto the massiveflow of data betweenthe supercomput-   independentfunctions from specialized,discipline-specific
+ing and visualizationsystemsin the project.)               functions. For example,a genericpolygon animation tool
+  High-end hardwareperformancehas improved dramati- (as in Figure 8) can provide renderingand view control for
+cally, and it is the lack of software systemsthat can take any AVO generatedas a polygon list. But the initial trans-
+advantageofthese new performancelevelsthat blocks fur-     formations that preparethe scienceoutput data for visuali-
+ther useof interactivevisualizationin computationalscience zation mappings tend to be disciplinespecific.The use of
+and engineering.Therefore,software designand develop- standard graphics languages(such as PHIGS+) and stan-
+ment is a major focusin the RIVERS project.Our approach dard window systems       (suchasX.l l) helpsensurethe porta-
+has beenfirst to identify goalsand functional requirements bility of visualizationapplicationswith little or no effort on
+basedon the visualizationidiom model and reouestsfrom      the part of the software developers.If layering is properly
+
+
+
+
+                            Scienceor EngineeringApplication ( -> Scienceoutput)
+
+                                   VisualizationAppiication ( + Graphicsdata)
+
+                                                      ( + Displaydata)
+                                Graphics& WindowSystems
+
+                              Device Drivers ( + Low-level graphicsinstructions)
+
+                                                   OoeradneSvstem
+
+
+
+                                                  HardwarePlaform
+                                           Figure 11. Layeredsoltware deslgn.
+applied, scientistsneed not be familiar with the details of        serve as real-time input to the modules to modify their
+graphics languages. Porting a software system to any              transformationmappings,providethis capability.The para-
+graphicsenvironment,without altering the internalsof the          meter data can come from a user interfacefor interactive
+visualizationapplication, should be possibleby rewriting          applicationsor from data files for batch execution.Exam-
+the interfacebetweenthe visualizationapplication and the          plesof tuning parametersincludeview control and lighting
+graphicsand window systemslayer.                                  parametersfor a renderingmodule,function parametersfor
+   Scientistsdesire the flexibility to explore visualization      a nonlinearmathematicalmapping,and parametersto con-
+idioms without writing new code.In other words,the precise        trol the dimensionsand color mapping of an AVO.
+sequenceof transformationsin the visualizationapplication            A goalof the RIVERS projectis to extendvisualization
+layer should be "configurable"at run time. This can be done       from a batch procedureto a real-time interactiveprocess.
+with a data-flow softwarestrategy(Figure l2) with a library       Therefore,performanceis a key concern in hardware and
+of modules to executea set of mapping transformations.            softwaredesign.The structureof visualizationindicatesthat
+Data-flow modelswith visual programminginterfaceshave             we can easilyadapt visualizationidioms to gain improved
+beenusedin a variety of computergraphicsapplicationsto            performancefrom pipelined or concurrent execution.The
+provide robust capabilitiesfor interactivespecificationof         RIVERS software design supports concurrent execution
+high-levelalgorithms.'oIn the presentdesign,the scientist         modes on multiprocessor hosts and networks of hetero-
+can choosemodules at run time and specify how they are            geneousdistributed processors.
+connectedin the data-flow diagram. In some cases,each                Figure l3 showspart of a typical mapping module. The
+module correspondsto an independentprocess.In others,             heart of the module is the mapping kernel, which executes
+several modules are grouped hierarchically into a single          the actualtransformation-a transferfunction, an isopoten-
+process.                                                          tial surfaceextraction, data smoothing, rendering,and so
+   Once a configuration is established,we should be able to       forth. We apply the mapping to information receivedfrom
+fine-tunethe idiom while it is executing.Parameters,which         upstreammodulesin the pipelinethat hasbeenstoredin one
+
+
+
+
+                                                  Library
+
+
+
+                                                     Us e r ln t e rf a c e
+                                                f o r T u n in g ld io m
+
+
+
+
+                                                                                    Rendering
+
+
+                       Data Enrichment               V is u a lization
+                                                          Mapping
+                                                                                       lmage Buffer
+                                                                                      & CRT Display
+
+
+                            S imulation
+                               Module
+                                                r-l
+                                                 l .-
+                                                                     User lnterface
+                                                                      tor Steering
+                                                                       Simulation
+
+
+                 Flgure 12. Software archltecture lor Interacllve steerlng and distrlbuted vlsuallzation.
+
+
+
+
+                                                           ttti
+                                                             User interface
+
+
+
+
+            (x,y,z) f rom
+            data or user                                                           Polygon tist with
+            inlerface                                                              vertex data to
+                                                                                   def ine principal
+                                                                                   direction tensor
+           2n d -order
+                                                                                   display object to
+           ten sor
+                                                                                   renderer module
+           co mponents
+
+
+       Figure13.Mappingmodulearchltecture:(a) typicalmapplngmodule;(b) mapplngmodulefor tensordlsplay.
+
+
+or more input buffers.We storethe resultof the mapping in     memory, the memory bus of a multiprocessorcomputer,or
+output buffers to be transmittedto the next module down-      a network connection-transparent to the user.
+stream.We can apply double-bufferingtechniquesto keep
+the pipelinefull. Tuning parametersare receivedfrom a user      We can extend the system'sfunctionality by adding new
+interfaceor a data file through parameterinput ports. Mes-    modules. For interactive steering,the simulation module
+sagesfor synchronizing,controlling,and passingannotative      must take on an architecturesimilar to that of a mapping
+data betweenmodulesin a multiprocessingenvironmentare         module. The analysisdata is accessedthrough input buffers,
+sent and receivedthrough messageinput/output ports. A         and analysisparameters-such as integration step size or
+specificinstanceof a mapping module for the tensordisplay     convergencetolerance-are received through parameter
+visualizationmapping is also shown in Figure 13.Support       input ports.
+for communication and synchronizationbetweenmodules             A specialtype of mapping module,the data accumulator,
+is part of the basicinfrastructureof the systemdesign.One     accumulatesand storesframesof data. (A typical mapping
+of our goalsis to make the communications-whether shared      module operateson one frame of data at a time, consistent
+with the data-flowdesign.)We can inserta data accumulator      computingand networkstrategies.   Personalcomputersand
+at any location in the systemto archiveintermediateresults     workstationsconstitutethe lower tier of the computing
+or to accumulateframes for rapid replay when the early         environment,and true supercomputers   comprisethe upper
+stagesof the system cannot achievereal-time, interactive       tier. High-bandwidth massstoragesystemswith very large
+performance.Suppose,for example, that the simulation           capacity will be available as shared network resources.
+time stepsfor the systemrepresented  in Figure l2 cannotbe     Middle-tier, near-supercomputersystemsprovide higher
+executedat animation rates.We can insert a data accumu-        performancecapabilitiesthat can be shared by a small
+lator at the end of the visualizationmapping to storethe       group of userswithout the compromisesnecessary  with the
+intermediateresultsof all of the completedsimulationtime       largenationalusercommunitiesassociated  with true super-
+steps.If the system'srendering portion is capableof real-      computers.On the other hand,the combinationof a very-
+time,interactiveanimation.thenwe canviewanimationsof           high-performancegraphicsengine,a high-bandwidth net-
+the completedportion of the simulationwhilethe restof the      work connection,and a stripeddisk arrayon a multiproces-
+numericalcomputationcontinues.                                 sor host(all usefulto achievea balanceddesign)is still too
+                                                               expensiveto dedicateto a singleuser.
+                                                               The supercomputers     and middle-tierprocessors     are con-
+                 VisualizationHardware                      nectedby a very high-speednetwork(NCSA hasinstalledan
+   Commonly,executinga visualizationidiom is more data      UltraNetsystemwith a peakbandwidthof 100MBi s).This
+and computationintensivethan the originalsimulationthat     network is optimizedfor massivedata transfers-using large
+producedthe data. Therefore,the goal of real-time,inter-    packet  sizesand hardwareacceleration       ofprotocol proces-
+activevisualizationpresentsa considerablechallenge.Gener-  sing-to    support  real-time visualization,  distributedproces-
+ally, we need specializedhardware to enhancethe perfor-    sing,  and  access to the shared  high-performance    massstor-
+manceof the most demandingstepsin the process.These        age   system.  Standards    for  high-speed   channel  interfaces
+hardwaresystemsemploypipelinearchitectures,     concurren- (e.g., the HSC    specification, designed  to operate at 50, 100,
+cy,and special-purpose  chipsto improveprice-performance    or 200  M B, s) appear to  be gaining  acceptance  among   com-
+ratios.In general,this leadsto a trade-offbetweenperfor-    puter  vendors.  This promises   to facilitatethe integration of
+mance on one hand and generalityor easeof software         the  high-performance,    multivendor   systems  needed  for real-
+developmenton the other.                                   time interactivevisualization.
+   Balanceis the key issuein designinga visualizationhard-    A middle-tier network forms the backbonefor handling
+ware system.This truism of computer designis especially messages,      smallerdata packets,and conventionalnetwork
+        in
+critical this context,becausevisualizationidioms naturally traffic  between   the large machinesand the bottom tier
+havepipelinestructuresand the worst bottleneckin a pipe-   networksconnectingthe workstations.         The notion hereis to
+line determinesthe effective performance. In fact, most    segregatemassivedata transfersfrom terminal keystrokes
+visualizationhardware systemsare not well balanced,be- and other smaller messages          to optimize efficiencyand per-
+cause  improvement  has occurredin the  pricel'performance formance.    The  FDDI   (fiber digital data interface)standard
+of the underlying hardware technologies:special-purpose is expected to take on the middle-tier network function
+graphicshardware,general-purposeprocessors,communi-        durine 1989or 1990.
+cations systems,and mass-storagesystems.Although the
+performanceof hardwaregraphicsenginesand CPUs have
+improved dramatically,effectivenetwork bandwidths and
+disk-systemtransfer rates have not kept up. If one is at-
+tempting to animate imagesin real time, there is no benefit                            Conclusions
+to having a workstation with a graphics engine that can           Visualization'sfunctionalrequirementsappearto demand
+render100,000  polygonsper secondif the polygonsmustbe         new advancesin severalareasofcomputer science.Subspe-
+read from a disk or the network at a rate of only 1,000        cialtiesof distributedprocessing,network systems,parallel
+polygonsper second.The recentintroductionof networks           processing,and object-orientedlanguagesseem likely to
+with effectivesustainedbandwidthsapproachingone billion        developaroundthe problemof visualization.     Many existing
+bits per secondand of hardware-stripeddisk-arraysystems        computer graphicsand image-processing       technologiesare
+with similar transfer rates offers some hope of improved       applicableto visualization;but scientificvisualizationappli
+systembalancein visualizationhardware environments.            cations have already spurred new developmentsin such
+   Figure 14 diagramsa distributedhardwaresystemfor            areasas volumetric rendering.Other new classesofrender-
+visualizationin a supercomputing   environment,now under       ing algorithmswill eventuallyemerge.Artificial intelligence
+development   within RIVERS and othersegments    of NCSA.      and computervision could be introducedto providetools
+A key theme is the use of dual, three-tierschemesfor the       for computer-aidedinterpretationof visualizationimages.
+                                   NCSATHREE.TIER
+                                                COMPUTING
+                                                        STRATEGY
+
+                                       1 00 0 Mb p s Ma s s iv e F lle T ra n s f e r Ne t wo rk      (UltraNel
+
+
+
+                                                                          Mas sl vel         Unlx               H l gh
+CRAY                                   Alllant          C l u ste red     P aral l el                                             L a se r
+                                                                                             Fron t          B andw l d th                          od uc l l
+X. MP                                  VF X.80         Processor           S ystem                           Mas s S tore         D l sks          F6c l l l ty
+                                                                                              End
+
+
+
+                                                  1 0 0 Mb p s B a c k b o n e Ne t wo rk (F DDI )
+
+        l0   M bD 3 E lh arne t L AN                          10 Mbps E l hernel LA N                             10 Mbps E thernot LA N
+
+
+
+
+W or kst atlons & Per sonal Comput ers                                                                 Wor kst at l on s & P e r so n a l C o m p u t e r s
+
+
+
+
+             Hlgh- Bandwldt h
+                                                                                          Tl ghtl y- C oup l ed
+               Dlsk Array
+                                                                                        3D Graphl cs E ngi nes
+
+
+
+
+                                                   Fllm and V l deo
+                                                 Producl l on S ystsm
+
+
+
+
+                                        Figure 14. Hardwarearchilecturefor distribuled simulation and visualization'
+   Visualization'stechnical requirementshave significant         2. I. Babuska and A. Miller, "The Post-ProcessingAp-
+implicationsfor the continueddevelopmentof the comput-              proach in the Finite ElementMethod - Part l: Calcu-
+ing infrastructure. First, we need a large-scale software           lation of Displacements,Stressesand Other Higher
+developmentprogram to build the high-leveltools to make             Derivativesof the Displacements,"Int'1.J. Numerical
+visualization a practical tool in mainstream scienceand             Methods Engineering,Vol. 20, 1984,pp. 1085-1109.
+engineering.Second,the high level of system integration
+                                                                 3. A. Noor and I. Babuska, "Quality Assessmentand
+requiredfor visualizationand the needto sharethe substan-
+                                                                    Control of Finite Element Solutions,"Finite Elements
+tial costsof softwaredevelopmentunderlinethe importance
+                                                                    in Anal.ysisand Design, Vol. 3, 1987,pp. l-26.
+of the current trend toward standardsand open hardware
+and software systems.                                            4. R. Gonzales and P. Wintz, Digital Image Processing,
+  Finally, the data-intensivenature of visualization supports       2nd Ed., Addison-Wesley,Reading, Mass., 1987.
+the need for a national broadband (multigigabit/s) com-
+                                                                 5. D. Cox, "Usingthe Supercomputerto VisualizeHigher-
+municationscapability.
+                                                                    Dimensions:An Artist'sContribution to ScientificVisu-
+                                                                    alization," Ironardo, Yol.22, 1988,pp. 233-242.
+                                                                 6. R. Drebin, L. Carpenter,and P. Hanrahan, "Volume
+                                                                    Rendering,",4 CM Compu ter Graphics,Y ol. 22, August
+                                                                    1988,pp. 65-74.
+                                                                 7. M. Levoy, "Display of Surfacesfrom Volume Data,"
+                                                                    IEEE Computer Graphics and Applications, Yol. 8,
+                                                                    May 1988,pp.29-37.
+                                                                 8. C. Upsonand M. Keeler,"V-BUFFER: VisibleVolume
+                    Acknowledgments                                 Rendering," ,4 CM Computer Graphics,Vol. 22, 1988,
+                                                                    pp. 59-64.
+  The authors wish to thank the scientistsand staff of the
+National Center for SupercomputingApplications, Uni-             9. H.M. Koh, H.-S. Lee, and R.B. Haber, "Dynamic
+versityof Illinois at Urbana-Champaignwho contributedto             Crack Propagation Analysis Using Eulerian-Lagran-
+the work describedin this chapter. Specialthanks are due            gian Kinematic Descriptions," Computational Me-
+Chuck Evans,Michael Norman, Donna Cox, Rich Elson,                  chonics,Vol. 3, 1988,pp. l4l-155.
+the Software Development Group, the Scientific Media            10. Y.C. Fung, Foundations of Solid Mechonics, Pren-
+Servicesteam, and the ScientificVisualizationgroup. The             tice-Hall, Englewood Cliffs, N.J., 1965.
+NationalScienceFoundation,Apple Computer,Sun Micro-             ll. R.R. Dickinson, "Interactive 4D Visualization of
+systems,and Cray Researchsupportedportionsof our work.              Fields," Tech.Rep. CS-89-15,Dept. of Computer Sci-
+                                                                    ence, University of Waterloo, Waterloo, Ontario,
+                                                                    Canada,1989.
+                                                                12. R.B. Wilhelmson,"Numerical Simulationsof Severe
+                                                                    Storms," Pro c. Fourth Int'1.S.y'mp.Sci.Engineeringon
+                                                                    Cra.ySupercomputers,Minneapolis, Minn., 1988,pp.
+                                                                    329-345.
+                                                                13. E. LorensonandH.E. Cline,"MarchingCubes:  A High
+                                                                    Resolution3D SurfaceConstructionAlgorithm," ACM
+                        References                                  Computer Graphics,Vol. 21, 1987,pp. 163-169.
+ l. "Visualizationin ScientifrcComputing," A SpecialRe-         14. P.E. Haeberli,"ConMan: A VisualProgrammingLan-
+    port of ACM SIGGraph, Computer Graphics,Vol.2l,                 guage for Interactive Graphics," ACM Computer
+    App. E, 1987,pp. El-87.                                         Graphics,Yol. 22, Aug. 1988, pp. 65-74.
+    Robert B. Haber is associateprofessorof theoreticaland        David McNabb is a researchprogrammer and leaderof
+applied mechanicsand civil engineeringat the Universityof     software designand developmentfor the RIVERS project
+Illinois at Urbana-Champaign.He is alsoa researchscientist    at NCSA. From 1985through 1988,he was visiting lecturer
+at NCSA, wherehe directsthe RIVERS project,a research         in the Departmentof Computer Scienceat the Universityof
+and developmentproject to prototype hardware and soft-        Illinois, wherehe is finishinga PhD in computerscience.His
+ware systemsfor real time, interactive visualization and      researchinterestsinclude programming languageenviron-
+distributed supercomputingacrossgigabit/s networks. He        ments,object-orientedprogramminglanguages,distributed
+worked in the Cornell University Program for Computer         computing, and operating systems.He is designing and
+Graphicsfrom 1975until 1980.His researchinterestsinclude      implementingdistributed interactivereal-timesystemsup-
+finite-elementmethods in computational solid mechanics,       port for scientificvisualizationenvironments,includingdy-
+computer-assisteddesign and optimization, and applica-        namic reconfigurationand visual programming interfaces.
+tions of computer graphicsvisualizationto computational       David McNabb is a member of the ACM (SIGGraph,
+scienceand engineering.Recent researchincludesmoving          SIGOPS, SIGPlan) and Sigma Xi. He receivedthe BS in
+finite-elementtechniquesfor analyzingdynamiccrackprop-        physics and mathematicsin 1975from the University of
+agation and new techniquesfor explicit design sensitivity     Illinois at Urbana-Champaignand hasdonegraduatework
+analysisand shapeoptimization of structuraland mechani-       in computer scienceat the Chicago-Circleand Urbana-
+cal systems.Haber is a member of ASCE, ACM (SIG-              Champaign campuses.
+Graph),AAM, IACM, AAAS, and SigmaXi. He is a Cray
+Researchaffiliate,a former Beckmanassociatein the Center
+for Advanced Studiesat the University of Illinois, and past
+president of ALLUS, the Alliant Users' Society. Haber
+receivedthe PhD in civil engineeringin 1980and a bachelor
+of architecturedegreein 1977from Cornell University.
+

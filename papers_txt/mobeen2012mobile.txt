@@ -1,0 +1,699 @@
+        Journal of Internet Technology and Secured Transactions (JITST), Volume 1, Issue 2, June 2012
+
+
+
+
+              Mobile Visualization of Biomedical Volume
+                               Datasets
+                                                Movania Muhammad Mobeen, Lin Feng,
+                                              Nanyang Technological University, Singapore
+
+                                                                             these systems are often synonymous with filling innumerable
+Abstract— The WebGL platform has been introduced based on                     forms and storing bulky files filled with patient information.
+the OpenGL ES 2.0 API. It allows scripts embedded in a web                    In the instrumental examinations, such as Computed
+browser to have native access to GPU hardware. Now that more
+                                                                              Tomography (CT) and Magnetic Resonance Imaging (MRI),
+and more real-time systems are moving towards a cloud-based
+architecture, it becomes important to capitalize on existing tools            the resulting images and documents have to be processed
+to extend the biomedical imaging and visualization domain. One                offline. Ambiguous and incomplete data, or data
+such tool that can enable ubiquitous biomedical imaging and                   fragmentation, often lead to lack of overview, and these
+visualization is the WebGL platform. Existing work relies on a                drawbacks may impede the continuity and quality of care.
+multi-pass strategy. We extend the visualization using a single               Moreover, these information systems are limited to the niche
+pass approach. This gives much better performance especially on               of a hospital or its subsidiaries.
+the mobile platforms where every additional texture access is
+costly. Quantitative evaluation reveals that the proposed                        In a web-based system, the medical information and tools
+algorithm outperforms the existing algorithm by a consistent 2x               available on an integrated platform can be accessed by
+speedup not only on desktop platforms but also on the mobile                  different people at any geographical location at any point of
+platforms. Current mobile phones and tablets have limited                     time. There are various portals which handle information
+support for dynamic loops thus, sampling rate cannot be changed               transfer and storage but little work has been done on data
+dynamically and high quality renderings cannot be carried out.                processing. Online availability of biomedical image
+To circumvent these problems, we present the first 3D texture
+slicer. Since 3D texture slicing uses the rasterization hardware
+                                                                              processing and visualization would improve accessibility of
+and support of the rasterizer is pervasive, we can not only modify            remotely located tools and also maintain congruency of
+the sampling rate but also carry out advanced effects. The design             processes applied by different users.
+of our approach and extensive experiments are presented in this                  Biomedical image visualization is based on identification of
+paper which proves the effectiveness of the proposed approach                 appropriate features to assist practitioners to differentiate one
+for pervasive biomedical data processing and visualization.                   type of objects, e.g. tumorous tissues, from another, according
+                                                                              to their morphological characteristics. Challenges to graphics
+  Index Terms— Ubiquitous computing, Biomedical imaging,
+Data visualization, Biomedical image processing, Computer                     researchers are mainly in supporting standard and accurate
+graphics                                                                      assessment of images using combined set of filters present at
+                                                                              one location. Currently, sophisticated volume rendering and
+                          I. INTRODUCTION                                     feature visualization programs are only available on a stand-
+
+T   HE healthcare scenario has changed to accommodate                         alone workstation. Data processing capability on a mobile
+    better clinical decision and higher patient satisfaction. It              device such as a smart phone is very limited.
+has moved from traditional one-point contact to a                                In this connection, WebGL is proposed as a new standard
+conglomeration of multidisciplinary people working together                   for plugin-less high quality high performance graphics in a
+to obtain best results. With the availability of internet, we                 web browser. It is a cross-platform, immediate mode royalty-
+have seen a large number of hospitals using integrated Health                 free web standard for a low-level 3D graphics API. Since
+Information Systems (HIS) which help them to maintain a                       WebGL is based on the OpenGL ES 2.0 API which is a subset
+seamless flow of patient’s information, insurance, clinical                   of OpenGL for embedded devices, it uses the same shader
+data, etc. between different departments. However, currently                  language framework as the desktop OpenGL. Before WebGL,
+                                                                              most of the 3D content was available only through plugins for
+                                                                              the web browsers which often had compatibility issues and
+   Manuscript received September 16, 2012. This work is partially supported   were not a write-once-run-everywhere solution. Moreover,
+by two research grants, M408020000 from Nanyang Technological University      such plugins had to be manually installed before any 3D
+and M4080634.B40 from Institute for Media Innovation, NTU, and a grant
+MOE2011-T2-2-037 from Ministry of Education, Singapore.                       content could be viewed. With WebGL, applications can now
+   Movania Muhammad Mobeen is with the School of Computer                     have native access to the graphics hardware through the well
+Engineering, Nanyang Technological University, Singapore, e-mail:             established OpenGL ES API without any plugin [1].
+mova0002@ e.ntu.edu.sg.
+   Lin Feng is with the School of Computer Engineering, Nanyang                  For application development, WebGL is exposed through
+Technological University, Singapore, e-mail: asflin@ntu.edu.sg.               the HTML5 canvas element as a collection of Document
+
+
+
+
+        Copyright © 2012, Infonomics Society                                                                                         52
+       Journal of Internet Technology and Secured Transactions (JITST), Volume 1, Issue 2, June 2012
+
+
+
+
+Object Model (DOM) interfaces. It is entirely shader-based            in the first pass. The ray direction is calculated in the fragment
+API bringing 3D to the web, and implemented right into the            shader in the second pass. For the mobile platforms, each
+browser. Major browser vendors such as Apple (Safari),                additional texture fetch degrades the performance
+Google (Chrome), Mozilla (Firefox), and Opera (Opera) are             significantly. In addition, their method suffers from visible
+members of the WebGL Working Group. WebGL uses the                    artifacts at the unit color cube edges due to rasterization.
+low-level javascript API to gain access to the power of a             Moreover, it uses a fixed transfer function which is loaded
+mobile device's graphics hardware such as GPU from within             from an image, which limits the flexibility in an interactive
+scripts on web pages. It makes it possible to create 3D               rendering session on a mobile device. This motivated the
+graphics that update in real-time, run in the browser, and can        development of a single-pass approach for GPU ray casting in
+also be run in any OpenGL ES 2.0 compliant mobile device.             WebGL [13].
+Currently, it is available in a number of smart phones and               We present two volume rendering algorithms using the
+tablet computers from numerous vendors.                               WebGL platform for implementing medical image
+                                                                      visualization on the mobile devices. A remarkable advantage
+                     II. PREVIOUS WORK                                of our approach is that it can run directly on most embedded
+   GPU-based direct volume rendering has been used for                and mobile devices. In the next section, we will particularly
+visualization of medical and scientific datasets. Numerous            introduce a novel single-pass rendering pipeline, in contrast to
+approaches have been proposed in the literature [2], [3], and         the current WebGL volume rendering systems which use the
+for a more recent work, the SIGGRAPH course notes in [4].             multi-pass algorithms. The new pipeline can be implemented
+Initial GPU-based approaches focused on using the fragment            efficiently on the embedded GPU in the mobile device,
+shader pipeline in a multi-pass approach [5] which renders            enabling real-time visualization of high-resolution volumetric
+front and back faces of a unit color cube. Then, rays are             datasets. We will also extend the pseudo-color shading by
+generated using textures rasterized in the first pass as lookups      using customable transfer function widgets, which enables
+in a fragment shader. Thanks to its simplicity, this still            interactive feature enhancement in rendering.
+remains as an effective approach for GPU ray casting.                    Currently, the mobile devices and smart phones have
+   With the introduction of loops in shaders in the Shader            limited support for shaders. Hence, variable length loops are
+Model 3, a single-pass approach was pioneered by Stegmaier            limit to a compile time constant. This limits the volume
+et al. [6]. Similar to other fragment shader based approaches,        rendering algorithms since, advance shading effects cannot be
+first a full screen quad is rendered on screen in order to invoke     carried out. Moreover, the sampling rate cannot be adaptively
+the fragment shader. Then, the ray casting fragment shader is         modified without recompilation of the shaders. To circumvent
+applied. Using the assigned texture coordinates, the ray              these problems, we propose the first 3D texture slicer for
+directions for sampling of volume are determined. Finally, the        WebGL. Since texture slicing relies on the rasterizer hardware
+volume is traversed front-to-back. Such a single-pass                 and because the support for the rasterizer hardware is better
+approach shows great potential although more improvement is           on mobile platforms, we can not only carry out advanced
+needed, especially for mobile devices where every additional          shaders but also change the sampling rate at runtime. This
+texture lookup degrades performance considerably.                     enables us to carry out advanced shading [14] as detailed in
+   The versatility of GPU ray casting allows ray functions to         the later section.
+be efficiently implemented with both front-to-back and back-             The rest of the paper is organized as follows. Section III
+to-front variants, and to be modified in real-time in the             details the development of our system on the WebGL platform
+fragment shader. This helps to accommodate various ray                which includes both the single pass ray caster and the 3D
+functions like maximum intensity projection (MIP), maximum            texture slicer. Section IV presents the experimental results and
+intensity difference accumulation (MIDA) [7], composite               performance assessments we carried out on both desktop and
+accumulation, psuedo-isosurface rendering [8] etc. in real-           mobile platforms. Finally, section V discusses and concludes
+time without additional modifications.                                this paper.
+   The WebGL API was introduced only recently. In the
+medical domain, there has been some work using the new                                  III. SYSTEM DEVELOPMENT
+API, including the Google Body project [10]. However, there              WebGL is an extension of the HTML5 canvas element.
+are very few reports on using WebGL for volume rendering.             This element provides fast and high performance graphics
+The only relevant work was reported in [9]. The authors               constructs for rendering high quality graphics in a browser
+presented an algorithm for extracting the 2D slice from the 2D        window. For 2D graphics, this is usually accomplished by
+flat texture layout. This approach uses the Kruger and                using     a     2D     rendering    context    called   the
+Westermann’s multi-pass approach [5] of rendering the front           CanvasRenderingContext2D. For 3D rendering, the canvas
+and back faces of a unit color cube in an offscreen buffer.           element provides a rendering context, called the
+Then, it uses these to generate the ray directions for sampling       WebGLRenderingContext which provides the OpenGL ES 2.0
+through the volume dataset in the fragment shader. The multi-         functionalities. Both of these API are controlled through
+pass approach for GPU ray casting requires additional textures        javascript.
+
+
+
+
+       Copyright © 2012, Infonomics Society                                                                                   53
+        Journal of Internet Technology and Secured Transactions (JITST), Volume 1, Issue 2, June 2012
+
+
+
+
+A. WebGL supported system architecture
+   Internally, the OpenGL context makes calls to the graphics                          Web Browser
+hardware directly through the graphics driver (see Fig. 1).
+                                                                                          HTML5 Canvas
+Therefore, there have been several debates on the security
+                                                                                                         WebGL
+issues and vulnerabilities of the WebGL API. While such a
+low level access is necessary for high performance graphics,
+this also allows the client program to have access to the
+hardware directly which could potentially be used for an                             Application Layer
+attack. Nevertheless, such security issues have been addressed
+by the new specifications and more security features are being
+introduced with each new specification update.                                                    Graphics Driver
+   In the case of WebGL, a rendering context is obtained from
+the HTML5 canvas element. This is usually accomplished                               Operating System
+using javascript code. Most of the current WebGL
+implementations provide an experimental WebGL context
+which does not comply with the full WebGL specifications. In                                    Graphics Hardware
+
+the new specifications v 1.0.1, however, the implementations
+are now required to provide a pure non-experimental WebGL                         Figure 1. Hardware Design of WebGL
+context. The returned gl context can then be used to call any
+OpenGL ES 2.0 API function [1].
+   With the type-less javascript API, the object type and their
+                                                                                                                      Vertex
+memory management is handled by WebGL. This has some
+                                                                                                                     shader +
+performance implications especially due to the strongly typed                                                        Rasterizer
+nature of OpenGL. WebGL has introduced special typed
+arrays that correspond to the native types used by OpenGL.
+This allows proper argument passing to the native OpenGL
+call from WebGL. With newer browser release, their
+javascript engine performance improves and becomes
+comparable to a native call as in C/C++ [1].
+B. Volume Rendering
+   The following sections list the two volume rendering                              Flat 2D
+                                                                                                                     Fragment
+approaches implemented in our WebGL based volume                                 volume texture
+                                                                                                                      shader
+rendering system. The framework of our WebGL based single
+pass volume renderers is shown in Fig. 2. The volume dataset
+is first stored into the GPU texture memory. Usually, this is
+carried out by using 3D textures. Since WebGL is based on
+the OpenGL ES 2.0 API which is a restricted subset of the                       Transfer function
+desktop OpenGL, there are some functionalities missing, in                          texture
+                                                                                                                    Frame buffer
+particular, there is no 3D texture which is a crucial
+requirement for volume rendering. As shown in the figure, in                                                           GPU
+our design, this limitation is circumvented by tiling each slice
+of the 3D texture into a 2D flat texture layout [9].
+                                                                        Figure 2. The dataflow for WebGL based volume
+   The volume rendering approach is based on an optical
+                                                                        renderer
+model to approximate the emission/absorption characteristics
+of the participating medium. The volume rendering integral             transparency function, q(s) is the source term (the illumination
+models the emission, absorption and transmission properties            model used), I is the intensity leaving the volume, κ(t) is the
+that map the physical attributes stored in the 3D density              extinction coefficient, D is the distance of the viewer from the
+function. The emission absorption model is given as                    volume and ∫κ(t)dt is the optical depth which gives the distance
+                                   D                                   the light travels before it is absorbed. For a transparent
+  I ( D)  F (s0 , D) I 0   q(s ) F ( s, D)ds
+                                                                       material, the optical depth is small and for a more opaque
+                                   s0
+                                                          (1)
+                    b                                                  material, it is large.
+                     ( t ) dt
+  F ( a, b)  e     a                                                     Equation 1 only captures emission and absorption ignoring
+  where, I0 is the background light intensity, F is the                the scattering effects. Usually, single scattering is
+                                                                       approximated using a local illumination model such as the
+                                                                       Blinn Phong model. The normal for shading in this case is
+
+
+
+
+        Copyright © 2012, Infonomics Society                                                                                       54
+         Journal of Internet Technology and Secured Transactions (JITST), Volume 1, Issue 2, June 2012
+
+
+
+
+estimated by evaluating the gradient at the current sample point        clip space position, the vertex shader also outputs object space
+using finite difference approximation. The volume rendering             position for shading calculation. Following the vertex shader,
+integral given in Eq. 1 cannot be solved analytically. Hence,           using the connectivity information, the triangle is rasterized
+numerical approximation is used by partitioning the integration         and the fragments are obtained. On each fragment, the
+domain into sub-intervals from s0 to D such that s0 < s1 < … <          fragment shader is invoked. Once the positions are obtained,
+sn-1 < D. The integral is then approximated as,                         rays are cast into the volume in the fragment shader. These
+                                                 si
+                                                                        rays are sampled and adjacent material values are used to
+   I ( si )  F ( si 1 , si ) I ( si 1 )   q( s) F ( s, si )ds
+                                                                        reconstruct the original data, typically using trilinear
+                                                si 1
+                                                                        interpolation.
+   Replacing F(si-1,si) with Ti and the right side integral that is
+                                                                           In our single-pass GPU ray caster, the bulk of the work for
+∫q(s)F(s,si)ds with Ci, we get
+                                                                        volume rendering takes place in the fragment shader. The
+   I (si )  Ti I ( si1 )  Ci
+                                                                        shader is given in Listing 1. The vertex shader projects the
+The total radiance at the exit point of volume is then given as         vertices of a unit cube to clip space by multiplying them with
+   I ( D)  I ( s n )  Tn I ( sn1 )  C n                             the modelview and projection matrices. It also calculates the
+            Tn (Tn1 I ( sn2 )  C n1 )  C n                        3D texture coordinates for sampling and stores the object
+This can be given with the following recursive expression               space positions for shading calculation.
+                n                   n
+                                                                           The fragment shader gets the interpolated 3D texture
+   I ( D)     T I ( s ) C ,
+              j i 1
+                        j   j 1
+                                   i 0
+                                            i     with C0  I ( s0 )
+                                                                        coordinates and object space vertex positions. The current
+In practice however, the transparency term (Ti) is usually              camera position (which is the eye ray’s origin) is passed in as
+replaced by opacity (αi =1-Ti).                                         a shader uniform variable (line 11-12 in Listing 1). Using this
+1) Composite Rendering                                                  eye ray’s origin and the cube’s interpolated object space
+   The physical model for volume rendering relies on                    position, the ray directions are obtained (line 14). Before
+modeling the interaction between light and the participating            running the costly sampling loop, we introduce an
+media. The composite rendering tries to approximate the                 optimization which checks the current ray against the
+volume rendering integral through finite difference                     bounding box of the unit cube (line 16). Only if the ray
+approximation. Typically, this mode is implemented through              intersects the bounding box, the sampling loop is initiated
+front-to-back or back-to-front alpha compositing. The                   (lines 19-28); otherwise, the current fragment is discarded
+discretized volume rendering integral is iteratively computed           (line 30). This gives significant performance boost especially
+using either front-to-back or back-to-front compositing                 on the mobile platforms.
+depending on the direction the volume is viewed from. When               1 struct BBox {
+front-to-back compositing is used, the iterations are given as           2     vec3 min, max;
+                                                                         3 };
+   Ci  Ti 1Ci  Ci 1                                                  4 BBox getBBox(vec3 mn, vec3 mx) {
+   Ti  Ti 1 (1   i )       with C n  C n , Tn  1   n             5     BBox temp;
+                                                                         6     temp.min = mn;
+   In the above equations, the terms Ci and αi are obtained              7     temp.max = mx;
+from the transfer function. Replacing the term Ci+1 with Cdst            8     return temp;
+                                                                         9 }
+and Ci with Csrc, αsrc=1-Ti and αdst =1-Ti+1, and reformulating,         10 BBox bbox = getBBox(vec3(-0.5),vec3(0.5));
+we get the conventional blending equation for front-to-back              11 uniform vec3 eye_pos; //camera position
+compositing                                                              12 varying vec3 pos; //interpolated from vertices
+   Cdst  Cdst  (1   dst )Csrc                                        13 void single_pass_raycaster() {
+    dst   dst  (1   dst ) src                                     14    ray_dir    = normalize(pos - eye_pos);
+                                                                         15    frag_color = vec4(0.0);
+   For back-to-front compositing, the direction of traversal is
+reversed. Hence, the iterations are given as                             16    if(intersects(eye_pos,ray_dir,bbox)) {
+                                                                         17       dir_step = ray_dir*steps;
+   Ci  Ti Ci 1  Ci                                                    18       ray_pos = pos;
+   Ti  Ti 1 (1   i )                  with C0  C0 , T0  1   0    19       for(i=0;i<steps;i++) {
+                                                                                     //sampling and classification
+   In this case, there is no need to explicitly store and                20          sample = getSample(volume, ray_pos);
+                                                                         21          value = texture1D(lut, sample);
+calculate transparency. Replacing the term Ci-1 with Cdst and Ci                     //compositing
+with Csrc, αsrc=1-Ti and αdst =1-Ti-1, and reformulating, we get         22          pre_alpha=value.a-(value.a*
+the conventional blending equation for back-to-front                                                  frag_color.a);
+                                                                         23          frag_color.rgb +=pre_alpha*value.rgb;
+compositing                                                              24          frag_color.a += pre_alpha;
+   Cdst  Csrc  (1   src )Cdst                                        25          ray_pos += dir_step; //advance ray
+                                                                         26          if(vec3(0)>ray_pos||ray_pos>vec3(1))
+2) Single-pass GPU Ray Casting                                           27             break;
+   When using GPU for ray casting, a unit cube is first                  28       }
+                                                                         29    } else {
+rendered. Using the vertex shader, the clip space positions are          30       discard;
+estimated by multiplying the per-vertex positions with the               31    }
+                                                                         32    return frag_color;
+modelview and projection matrices. During estimation of the
+
+
+
+
+         Copyright © 2012, Infonomics Society                                                                                 55
+          Journal of Internet Technology and Secured Transactions (JITST), Volume 1, Issue 2, June 2012
+
+
+
+
+ 33 }                                                                    background color, the colors bleed on the isosurface, making
+    Listing 1. Shader for the single-pass GPU ray casting                its identification difficult.
+   Depending on the current step size used and the total                    In our solution, we eliminate the conditional test. Instead,
+number of sampling points, a loop is initiated (line 19). In             we use blended isosurfaces which are generated using an
+each iteration, the sample value is obtained by a lookup from            alpha transfer function. This allows the isosurfaces to be
+the volume dataset (line 20). To the interpolated the value, the         blended naturally with the existing ray function. This avoids
+transfer function is applied (line 21) and then the classified           flickering artifacts in isosurface evaluation, because when the
+value is accumulated using the current compositing scheme                next ray step composites the current sample value, the
+(line 22-24). The ray steps forward in the current viewing               isosurface loses its color. In addition, the resulting isosurface
+direction (line 25). The whole process is repeated until the ray         will not suffer from color bleeding artifacts, and therefore the
+exits the whole volume dataset (line 26-27). Finally, the                isosurface color is sustained, as can been verified by the
+composited color is returned as the fragment color (line 32).            rendering experiment in Fig. 3 (b).
+   With the versatility of the single-pass ray caster, we can
+modify the ray function instantly. Effects like maximum
+intensity projection (MIP), maximum intensity difference
+accumulation (MIDA), average, composite, and isosurface
+rendering modes can be realized easily thanks to the efficiency
+of the single-pass ray caster.
+3) Isosurface Rendering with Adaptive Refinement
+   The isosurface can be given using the following implicit
+function
+    S  {x |  ( x )  k }
+where, k is a constant and φ is called the embedding. The
+locality of a point p with respect to the isosurface depends on
+the value of φ(p). If the value is less than k, the point is below
+the isosurface. If the value is greater than k, the point is above
+the isosurface. The shading calculation of the isosurface
+requires the evaluation of the normal vector. This normal
+vector is obtained from the normalized gradient of φ which is
+calculated as follows
+                ( x)
+   N ( x) 
+                ( x)
+   For volume dataset, the gradient is estimated using finite             Figure 3. Ray casting for the Manix dataset: (a)
+difference approximations such as centered finite difference as           without ray function blending, and (b) with ray
+follows                                                                   function blending. (Note that both renderings used the
+         f ( x  1, y, z )  f ( x  1, y, z )                          same transfer function, but the color bleeding and
+                           2                   
+         f ( x, y  1, z )  f ( x, y  1, z )                          sampling artifacts are removed in our ray function
+   f                                         
+                           2                                            blended single-pass ray casting.)
+         f ( x, y, z  1)  f ( x, y, z  1) 
+                          2                   
+                                                                         5) Real-time Transfer Function Modification
+   In case of isosurface rendering, only lines (22-24) are                  For effective visualization, we provide a transfer function
+modified. Now instead of compositing, the current and the                widget that can adjust the current transfer function as required
+next sample’s classified value is checked to see if the values           in real-time. This widget was written entirely in the client side
+are close to the given isovalue. If they are within an epsilon           javascript.
+range of the isovalue, the normal is estimated using the
+centered finite difference approximation and then the shading
+is calculated using Blinn Phong shading model.
+4) Combining Composite and Isosurface Rendering
+   We further developed a new hybrid rendering mode. This
+mode allows us to combine the result of multiple ray
+functions. For instance, we can combine the isosurface
+rendering to the composite rendering. The conventional
+isosurface is evaluated using a condition to test whether the
+current sample value is closer to the required isovalue. This
+results in an image containing a lot of sampling artifacts
+especially in regions where the isosurface blends with the
+background color, as shown by a rendering experiment in Fig.
+3 (a). Moreover, since the isosurface is combined with the
+
+
+
+
+          Copyright © 2012, Infonomics Society                                                                                  56
+                          Journal of Internet Technology and Secured Transactions (JITST), Volume 1, Issue 2, June 2012
+
+
+
+
+                                                                                            The second platform is a Dell Alienware M15x laptop
+                                                                                         (referred to as SYSTEM2) with an Intel Core i7 CPU and an
+   RGBA Intensity (0-1)
+
+
+
+
+                                                                                         NVIDIA GeForce 260M GPU. In addition, we also carried out
+                                                                                         experiments on two mobile platforms, an ACER Iconia A500
+                                                                                         Tablet (referred to as MOBILE1), 1GHz dual-core Cortex A9
+                                                                                         processor with an NVIDIA Tegra 2 GPU and a Samsung
+                                                                                         Galaxy SII GT-I9100 (referred to as MOBILE2), dual-core
+                                                                                         1.2 GHz Cortex-A9 mobile phone with Mali-400MP GPU.
+                                                                                         Both of these mobile platforms ran the Google Android
+                                                                                         operating system.
+                                        Scalar Value (0-255)                                For thorough evaluation, four 8-bit datasets were used in
+                                                                                         these experiments, namely Aorta (256×256×97), Skull
+ Figure 4. The transfer function widget for transfer                                     (256×256×256), CTHead (256×256×256) and Manix dataset
+ function assignment in WebGL                                                            (256×230×256). These datasets were stored on our local web
+                                                                                         server. The datasets were stored into a 2D flat texture layout
+   The user can adjust the transfer function color and the                               with an image resolution of 4096×4096. The Aorta dataset
+current samples alpha value by assigning color and alpha                                 contained 96 slices which were stored in a 2D layout of
+values to specific keys. The X-axis corresponds to the scalar                            10×10. The other datasets contained 256 slices which were
+value (which for our case varies from 0 to 255 since we used                             stored in a 2D layout of 16×16.
+8-bit datasets) and the Y-Axis corresponds to the transparency
+value (which varies in the 0-1 range). Such a widget is shown                            A. Comparison of Single-Pass Ray Caster to Multi-Pass Ray
+in Fig. 4.                                                                               Caster on Desktop Platforms
+   When the user modifies the transfer function by adding a                                 The first set of experiments was conducted on both
+new key or moving an existing key, first the new positions of                            SYSTEM1 and SYSTEM2 to compare the performance of our
+all of the keys are determined. These keys are then sorted                               single pass GPU ray caster against the current state-of-the-art
+based on the intensity value they represent. Finally, the colors                         WebGL ray caster [9]. For this experiment, we used the
+are interpolated and then the transfer function texture is                               composite rendering mode with transfer function (shown in
+updated. For efficiently modifying the transfer function                                 Fig. 4). All of the rendering and startup settings (for example
+texture, the gl.texSubImage2D function is used which directly                            the distance of the volume from the camera) were same for
+modifies the texture data without creating a new texture. The                            both of the WebGL ray casters. The tests were carried out on
+whole process of transfer function modification is detailed in                           the canvas resolutions of 1024×1024 pixels. The ray sampling
+Listing 2. Each transfer function key contains a data-value                              steps for this experiment were 100. These results are given in
+pair with the data being intensity and the value being a color                           Table 1. The rendering results on the desktop platform in the
+value containing red, green, blue and alpha components.                                  Google Chrome Web browser are given in Fig. 5.
+                                                                                            As can be seen from the statistics in Table 1, our proposed
+ proc updateTF()                                                                         single pass ray caster consistently outperforms the multi-pass
+    //data contains the output transfer func. data
+    sort the keys on the intensity                                                       ray caster. The reason for this speedup in our proposed
+    for i=0 to keys.length                                                               algorithm is the significantly less number of texture fetches
+       dColor = keys[i+1].rgba–keys[i].rgba;
+       dIndex = keys[i+1].intensity -
+                                                                                         and more efficient ray traversal. The multi-pass approach of
+                 keys[i].intensity;                                                      [9] suffers from visual artifacts at the cube edges. Since we do
+       delta = dColor/dIndex;                                                            not require any additional lookup (for example the multi-pass
+       for j=keys[i].intensity+1 to
+             keys[i+1].intensity                                                         approach requires the front and back textures for extracting
+          data[j] = data[j] + delta;                                                     the ray direction), our performance remains consistent.
+       end for
+    end for                                                                              B. Comparison of Single-Pass Ray Caster to Multi-Pass Ray
+ end proc
+                                                                                         Caster on Mobile Platforms
+ Listing 2. The transfer function modification pseudocode
+                                                                                            The second set of experiments was carried out on the
+                          IV. EXPERIMENTAL RESULTS AND PERFORMANCE                       mobile platforms, for estimating the performance of the
+                                        ASSESSMENT                                       proposed GPU based single pass ray casting algorithm in
+                                                                                         WebGL on the mobile platforms. For this experiment,
+   The performance of the proposed algorithm was evaluated
+                                                                                         composite function without transfer function was used with
+using a few experiments on two desktop platforms and two
+                                                                                         100 sampling steps. The reason we used 100 sampling steps is
+mobile platforms. Two different desktop systems were used
+                                                                                         because we found out that the maximum steps for a variable
+which include the Dell Precision T7500 workstation (referred
+                                                                                         loop supported on the tablet were 100. Any loop size larger
+to as SYSTEM1) with a 2.27 GHz Intel Xeon CPU with 4 GB
+                                                                                         than this value timed out the shader compiler and the tablet
+of RAM. This machine is equipped with an NVIDIA Quadro
+                                                                                         could not run the shader.
+FX 5800 GPU with 4096 MB of dedicated video memory.
+
+
+
+
+                          Copyright © 2012, Infonomics Society                                                                                 57
+      Journal of Internet Technology and Secured Transactions (JITST), Volume 1, Issue 2, June 2012
+
+
+
+
+   The canvas resolution for this experiment was 1024×1024.                                            Frame rate (in frames per second)
+The datasets were down sampled to 1024×1024 resolution.                 Dataset     Hardware           Multi-pass ray
+                                                                                                                                Our proposed
+                                                                                                                                 single-pass
+This was due to the memory limitations on the mobile                                                    caster [9]
+                                                                                                                                  ray caster
+platforms. The results are given in Table 2 and the screenshots                     SYSTEM1             72.3-90.7                90.8-90.9
+from the mobile platforms are shown in Fig. 6.                           Aorta
+                                                                                    SYSTEM2             32.0-46.4                77.8-80.8
+   As can be seen, the performance trend we observed on the
+desktop platforms (shown in Table 1) is followed in this case                       SYSTEM1             52.3-80.7                89.4-90.9
+                                                                        CTHead
+as well. Our single pass ray caster out performs the multi-pass                     SYSTEM2             31.6-45.0                73.1-77.5
+ray caster by almost 2x. We get much better performance even
+                                                                                    SYSTEM1             54.5-81.2                90.7-90.8
+though all of the rendering settings are same. The reason for            Skull
+better performance in the single-pass ray caster seems to be                        SYSTEM2             31.0-44.7                75.6-77.8
+due to the significantly less number of texture fetches as           Table 1. Comparison of performance of our proposed
+compared to the multi-pass approach. We expect the                   single pass GPU ray caster against the current state-of-
+upcoming hardware to relax the variable length loop limit            the-art GPU ray caster for WebGL for 100 sampling steps
+further which would improve the performance of this                  on the desktop platforms.
+algorithm considerably.
+
+
+
+
+               (a)                           (d)
+                                                                      Figure 6. WebGL compliant volume rendering of 3D
+                                                                      medical dataset implemented on the stand-alone
+                                                                      desktop (left) and two mobile platforms: ACER Iconia
+                                                                      A500 tablet (middle) and the Samsung Galaxy SII GT-
+                                                                      I9100 mobile phone (right)
+
+                                                                                                      Frame rate (in frames per second)
+                                                                                                                               Our proposed
+                                                                                                  Multi-pass ray
+                                                                         Dataset   Hardware                                     single-pass
+                                                                                                   caster [9]
+                                                                                                                                 ray caster
+                                                                                                512×512      1024×1024   512×512      1024×1024
+               (b)                           (e)
+                                                                                   MOBILE1      0.5          0.1         0.9-1.0     0.2-0.3
+                                                                         Aorta
+                                                                                   MOBILE2      1.5-1.8      0.5         4.4-4.6     1.3-1.6
+
+                                                                                   MOBILE1      0.5          0.1-0.2     1.0         0.2-0.3
+                                                                         CTHead
+                                                                                   MOBILE2      1.8-1.9      0.5         3.3-3.6     1.0-1.1
+
+                                                                                   MOBILE1      0.5          0.1-0.2     1.0         0.2-0.3
+                                                                         Skull
+                                                                                   MOBILE2      1.4-1.5      0.4-0.5     3.3-3.5     0.9-1.0
+
+                                                                     Table 2. Comparison of performance of our proposed
+              (c)                      (f)                           single pass GPU ray caster against the current state-of-
+ Figure 5. Rendering results from the proposed GPU-                  the-art GPU ray caster for WebGL for a sampling rate of
+ based single-pass ray casting on WebGL showing (a,d)                0.01 (100 sampling points) on the mobile platforms
+ the Aorta dataset, (b,e) the CTHead dataset, and (c,f)
+ the Skull dataset. Figures (a-c) are generated using                C. Performance of 3D Texture Slicer on Desktop Platforms
+ single pass ray caster with 256 sampling steps and                    In the third set of experiments, we evaluated the
+ composite rendering mode whereas Figures (d-f) are
+                                                                     performance of 3D texture slicing on the desktop platforms.
+ generated using 3D texture slicer with 512 sampling
+                                                                     There were two rendering modes used in this experiment, the
+ points and composite with shading rendering mode
+                                                                     composite (as shown in Fig. 5 (a-c)) and the composite with
+                                                                     shading mode (as shown in Fig. 5 (d-f)) which calculated the
+                                                                     normal for shading by on demand gradient estimation using
+
+
+
+
+      Copyright © 2012, Infonomics Society                                                                                              58
+      Journal of Internet Technology and Secured Transactions (JITST), Volume 1, Issue 2, June 2012
+
+
+
+
+centered finite difference. For all of the experiments on these      camera so that it covered the whole screen. These results are
+platforms, a common canvas resolution of 1024 × 1024 pixels          given in Table 4. As can be seen from the statistics in Table 4,
+was used. The datasets were kept at 2 world units from the           the performance of 3D texture slicer is almost 1.5x better as
+camera so that they were visible entirely on the screen. In          compared to the single pass ray caster.
+addition to remove any biases due to a specific viewing
+                                                                     E. Comparison of Single-pass Ray Caster to 3D Texture
+direction, the datasets were rotated 720 degrees. The frame
+                                                                     Slicer on Mobile Platforms
+rates varied in a small range. There were three web browsers
+used in this experiment, Opera Next v 12.00 alpha, Google               In the final set of experiments, we compared the
+Chrome v 17.0.963.56 and Mozilla Firefox v 11.0 beta.                performance of 3D texture slicer and single pass GPU ray
+   The Opera WebGL implementation uses the OpenGL API                caster on the mobile platforms. The canvas resolution was
+whereas both Chrome and Firefox WebGL implementations                1024×1024. For this experiment, composite function without
+emulate the OpenGL ES API using DirectX 9 though the                 transfer function was used. The total sampling steps used were
+Angle engine. These WebGL implementations are named                  100 for both texture slicing and GPU ray casting because the
+ChromeDX and FirefoxDX respectively. To disable the Angle            fragment shader could not link on the tablet for variable loop
+rendering both Chrome and Firefox provide configuration              size larger than 100. These results are given in Table 5.
+settings. For Chrome, the –use-gl=desktop startup switch                As can be seen, we were able to obtain interactive frame
+provides this whereas for Firefox, the configuration is              rates even on a mobile platform. The 3D texture slicer
+manually set by setting the prefer-native-gl and force-enabled       outperformed the GPU ray caster by almost 2x. The results
+flags to true in the about:config configuration settings.            concluded that performance wise, for volume rendering, 3D
+   We named these configurations as ChromeGL and                     texture slicing is consistently better both on the desktop as
+FirefoxGL in the experiments. The results for 256 sampling           well as the mobile platforms.
+steps are presented in Table 3. We can see that there are
+                                                                                                      Frame rate (in frames per second)
+significant differences in performance on different browsers.           Dataset     Hardware
+                                                                                                       Ray caster        3D texture slicer
+In our experiments, Google Chrome and Mozilla Firefox
+performed the best for all of the experiments.                                      SYSTEM1            63.6-79.4           98.2-98.7
+                                                                         Aorta
+                                                                                    SYSTEM2            33.5-35.2           51.3-55.2
+                            Frame rate (in frames per second)
+               Web                                                                  SYSTEM1            39.3-47.5           54.9-59.4
+   Dataset                                                              CTHead
+              browser       Composite        Composite+Shading                      SYSTEM2            16.9-18.4           29.2-32.5
+             Opera           80.1-90.0           66.9-74.6                          SYSTEM1            33.7-41.0           58.4-61.8
+                                                                         Skull
+             ChromeGL        96.3-97.5           60.6-70.9                          SYSTEM2            14.2-19.5           30.6-35.5
+   Aorta     ChromeDX        95.8-97.7           60.8-70.9
+             FirefoxGL       54.8-59.8           38.3-43.3           Table 4. Comparison of performance of the single pass
+             FirefoxDX       94.9-100.0          65.2-75.2           GPU ray caster against the proposed 3D texture slicer for
+             Opera           74.0-76.1           24.9-26.8           WebGL on the desktop platforms
+             ChromeGL        68.7-71.1           26.2-30.7
+   CTHead    ChromeDX        68.9-71.4           26.7-30.1
+                                                                                                      Frame rate (in frames per second)
+             FirefoxGL       41.7-43.5           21.6-24.0              Dataset     Hardware
+             FirefoxDX       76.9-82.3           28.5-31.2                                             Ray caster        3D texture slicer
+             Opera           73.5-80.1           24.2-26.9                          MOBILE1             1.2-1.3              2.3-2.5
+             ChromeGL        71.6-74.4           26.7-31.4               Aorta
+                             70.9-74.8           26.9-31.7
+                                                                                    MOBILE2             1.3-1.6              3.8-5.6
+   Skull     ChromeDX
+             FirefoxGL       32.4-43.4           21.1-24.8                          MOBILE1             0.2-0.3              1.9-2.4
+             FirefoxDX       80.8-85.5           28.3-33.1              CTHead
+                                                                                    MOBILE2             1.0-1.1              4.3-5.1
+Table 3. The performance results for 3d texture slicing in
+                                                                                    MOBILE1             0.2-0.3              2.4-2.5
+WebGL for a sampling rate of 0.0039 (256 sample points)                  Skull
+on SYSTEM1                                                                          MOBILE2             0.9-1.0              4.8-5.1
+                                                                     Table 5. Comparison of performance of 3D texture slicer
+D. Comparison of Single-pass Ray Caster to 3D Texture                and GPU ray casting for a sampling rate of 0.01 (100
+Slicer on Desktop Platforms                                          sample points) on mobile platforms
+   The fourth set of experiments was conducted on both
+SYSTEM1 and SYSTEM2 to compare the performance of the                              V. DISCUSSION AND CONCLUSION
+single pass GPU ray caster against the 3D texture slicer in            We have presented the first single-pass ray caster for
+WebGL on the Google Chrome browser. For this experiment,             WebGL. In contrast to the current state-of-the-art for volume
+the composite rendering mode with transfer function was              rendering in WebGL [9], our implementation is able to handle
+used. The tests were carried out on the canvas resolutions of        dynamic transfer functions even on mobile platforms. A
+1024×1024 pixels.                                                    quantitative evaluation revealed that the proposed algorithm
+   The ray sampling steps as well as the total texture slices        outperforms the existing WebGL ray caster by up to 2x on
+were both 256 and the volume was placed 2 units from the             both stand-alone and mobile platforms. Such high
+
+
+
+
+      Copyright © 2012, Infonomics Society                                                                                         59
+        Journal of Internet Technology and Secured Transactions (JITST), Volume 1, Issue 2, June 2012
+
+
+
+
+performance is helpful especially on the mobile platforms                      [2]    K. Engel, M. Hadwiger, J. M. Kniss, A. Lefohn, C. R. Salama and D.
+                                                                                      Weiskopf, “Real-time volume graphics,” A.K.Peters Publisher, 2005.
+where the texture accesses are too costly. With the new mobile
+                                                                               [3]    B. Preim and D. Bartz, "Visualization in Medicine," Elsevier Inc.
+devices, we expect more support in the upcoming WebGL                                 Publisher, 2007.
+implementations for more advanced shaders.                                     [4]    M. Hadwiger, P. Ljung, C. R. Salama, and T. Ropinski, “Advanced
+   Currently, due to the limitation in the loop iteration for                         illumination techniques for gpu-based volume raycasting,” ACM
+                                                                                      SIGGRAPH 2009 Courses, 2009.
+dynamic loops on the mobile platforms, it is not possible to
+                                                                               [5]    J. Kruger and R. Westermann, “Acceleration techniques for GPU-based
+implement advanced shaders. Therefore, to have high                                   volume rendering,” Proceedings of the 14th IEEE visualization, 2003.
+performance volume rendering especially on the mobile                          [6]    S. Stegmaier, M. Strengert, T. Klein and T. Ertl, “A simple and flexible
+platform, we presented the first 3D texture slicer for WebGL.                         volume rendering framework for graphics-hardware-based raycasting,”
+This allows us to render volumes with higher sampling rates                           Proceedings of The Fourth International Workshop on Volume
+                                                                                      Graphics, 2005, pp. 187 – 241.
+on the mobile platforms. The experimental results have shown                   [7]    S. Bruckner and M. E. Groller, “Instant volume visualization using
+that, performance wise, 3D texture slicer performs better as                          maximum intensity difference accumulation,” Computer Graphics
+compared to the single-pass ray caster.                                               Forum, 28(3), 2009, pp. 775-782.
+   While both of them are suitable for WebGL                                   [8]    M. Hadwiger, C. Sigg, H. Scharsach, K. Bühler and M. Gross, “Real-
+                                                                                      time ray-casting and advanced shading of discrete isosurfaces,”
+implementation, the choice is subject to a performance/quality                        Computer Graphics Forum, 24(3), 2005, pp. 303-312.
+trade off. Although, the limited support for variable loops in                 [9]    J. Congote, L. Kabongo and A. Moreno, “Interactive visualization of
+the current WebGL implementations on the mobile platforms                             volumetric data with WebGL in real-time,” Proceedings of The 2011
+                                                                                      Web3D ACM Conference, 2011, pp. 137-146.
+prevents us from introducing more optimization in the single-
+                                                                               [10]   F. Lin, H. S. Seah, Z. Wu, D. Ma, “Voxelisation and fabrication of
+pass ray caster, we expect that the upcoming hardware will                            freeform models,” Virtual and Physical Prototyping, vol. 2(2), 2007, pp.
+relax such restrictions. This will enable the proposed single-                        65-73.
+pass ray caster to perform better on the upcoming mobile                       [11]   M. M. Movania and F. Lin, “A Novel GPU-based Deformation
+platforms.                                                                            Pipeline,” ISRN Computer Graphics, Vol. 2012, Article ID: 936315,
+                                                                                      2012. doi:10.5402/2012/936315.
+    We are confident on the results obtained from the                          [12]   M. M. Movania and F. Lin, “Real-time Physically-based Deformation on
+experiments and would like to expand the work to address                              the GPU using Transform Feedback,” Chapter 17 in The OpenGL
+specific applications such as rapid prototyping of biomedical                         Insights, AK Peters/CRC Press, pp:233-248, 2012.
+models [10], coupling between deformation and rendering of                     [13]   M. M. Movania and F. Lin, “Ubiquitous Medical Volume Rendering on
+volumetric models [11,12,19] as well as confocal                                      Mobile Devices” IEEE International Conference on Information Society
+                                                                                      (i-Society 2012), London, UK, pp:93-98, 2012.
+endomicroscopy [15]. This will enable the ubiquitous
+                                                                               [14]   M. M. Movania and F. Lin, “High-Performance Volume Rendering on
+visualization and processing capabilities in a wide application                       the Ubiquitous WebGL Platform” The 14th International Conference on
+domain.                                                                               High Performance Computing and Communication (HPCC 2012),
+   In conclusion, thanks to the wide availability of the WebGL                        Liverpool, UK, June 2012 (in press).
+architecture, we have successfully developed a ubiquitous                      [15]   P. Thong, M. Olivo, S. Tandjung, M. M. Movania, F. Lin, K. Qian, H. S.
+                                                                                      Seah, K. C. Soo, “Review of Confocal Fluorescence Endomicroscopy
+volume renderer for visualization of the biomedical datasets                          for Cancer Detection,” IEEE Photonics Society (IPS) Journal of Selected
+directly on the mobile platforms. With new and improved                               Topics in Quantum Electronics, PP(99), 2011, pp:1-12.
+hardware features in the upcoming mobile devices, we expect                    [16]   T. J. Cullip and U. Neumann, "Accelerating volume reconstruction with
+                                                                                      3D texture hardware," University of North Carolina at Chapel Hill,
+these advanced features to be exposed through WebGL. This                             Tech. Rep.,1994.
+would allow a richer interactive visualization experience.                     [17]   B. Cabral, N. Cam, and J. Foran, "Accelerated volume rendering and
+Moreover, with new and improved mobile GPUs in the                                    tomographic reconstruction using texture mapping hardware," in Proc.
+coming generations, we expect our algorithm to perform even                           Symp. Volume Vis., Tysons Corner, Virginia, United States, 1994, pp.
+                                                                                      91-98.
+better on these newer devices. WebGL is indeed a promising                     [18]   A. Van Gelder and K. Kim, "Direct volume rendering with shading via
+platform for high-quality mobile applications. We can carry                           three-dimensional textures," in Proc. Symp. Volume Vis., San Francisco,
+out more sophisticated renderings, for example, dynamic                               California, United States, 1996, pp. 23-30.
+shading using real-time texture lookups in 3D texture slicing                  [19]   M. M. Movania, F. Lin, K. Qian, W.M. Chiew and H.-S. Seah,
+                                                                                      "Coupling between Meshless FEM Modeling and Rendering on GPU for
+even on the mobile platforms. Such effects are impossible in                          Real-time Physically-based Volumetric Deformation", Journal of
+the current state-of-the-art ray caster.                                              WSCG, Vol. 20, No. 1, pp:1-10, ISSN 1213-6972, Union Agency, 2012.
+
+
+                          ACKNOWLEDGMENT
+  This work is partially supported by two research grants,
+M408020000 from Nanyang Technological University and
+M4080634.B40 from Institute for Media Innovation, NTU,
+and a grant MOE2011-T2-2-037 from Ministry of Education,
+Singapore.
+
+                              REFERENCES
+[1]   C. Marrin, “The official WebGL specifications,” Available online:
+      http://www.khronos.org/registry/webgl/specs/latest/, accessed in 2012.
+
+
+
+
+        Copyright © 2012, Infonomics Society                                                                                                      60
+

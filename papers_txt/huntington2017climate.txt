@@ -1,0 +1,580 @@
+                                        CLIMATE ENGINE
+        Cloud Computing and Visualization of Climate and
+       Remote Sensing Data for Advanced Natural Resource
+             Monitoring and Process Understanding
+               Justin L. Huntington, K atherine C. Hegewisch, Britta Daudert, Charles G. Morton,
+                            John T. Abatzoglou, Daniel J. McEvoy, and Tyler Erickson
+
+
+            Climate Engine enables users to process, visualize, download, and share climate and remote
+          sensing datasets with a simple web connection, thereby overcoming common big data barriers.
+
+
+
+
+      C
+           limate and weather affect all sectors of society at            are freely available and are being increasingly used.
+           regional to local scales. However, the paucity of              However, the accessibility of these data to researchers,
+           long-term observations in many parts of the                    decision-makers, and the general public are limited
+      globe provides a constraint on the utilization of data              because of challenges related to computational re-
+      for applied use and scientific research. To address the             quirements, data storage, and software needed to
+      need for place-based data, a number of operational                  work with large volumes of data.
+      gridded climate and meteorological datasets have                       A good example of these limitations can be il-
+      been created (Daly et al. 1994; Mitchell et al. 2004;               lustrated with current drought monitoring. Climate
+      Abatzoglou 2013; Thornton et al. 2014; Oyler et al.                 data are the primary basis for operationally providing
+      2015), in addition to remote sensing datasets that                  information about the degree and intensity of drought
+                                                                          conditions through the use of drought indices
+                                                                          (Hobbins et al. 2016; Svoboda et al. 2002; McKee et al.
+AFFILIATIONS: Huntington, Daudert, and McEvoy—Western Re-
+                                                                          1993). Climate-based drought indices are comple-
+gional Climate Center, Desert Research Institute, Reno, Nevada;
+Hegewisch and Abatzoglou —Department of Geography, Univer-
+                                                                          mented by relatively fine-resolution satellite remote
+sity of Idaho, Moscow, Idaho; Morton —Division of Earth and               sensing data (Anderson et al. 2007; Brown et al. 2008;
+Ecosystem Sciences, Desert Research Institute, Reno, Nevada;              Wang and Qu 2007). These data can be calculated at
+Erickson —Google, Inc., Mountain View, California                         their native spatial and temporal resolutions—often at
+CORRESPONDING AUTHOR: Justin Huntington,                                  spatial scales from 30 m to 12 km and temporal scales
+justin.huntington@dri.edu                                                 from hourly to weekly. However, operational products
+The abstract for this article can be found in this issue, following the   that are summarized for decision-makers are typi-
+table of contents.                                                        cally available at much coarser spatial (e.g., climate
+DOI:10.1175/BAMS-D-15-00324.1                                             division) and temporal (e.g., monthly) resolution.
+In final form 16 February 2017                                            Moreover, many operational web-based products are
+©2017 American Meteorological Society                                     static and offer limited options for interacting with
+For information regarding reuse of this content and general copyright
+information, consult the AMS Copyright Policy.                            the data, customizing analyses to specific periods for
+                                                                          summaries, or acquiring the digital data.
+
+      AMERICAN METEOROLOGICAL SOCIETY                                                                     NOVEMBER 2017          | 2397
+Fig. 1. User interface of Climate Engine illustrating the (top) mapping and (bottom) time series menus. Spatial
+distribution of average latent heat flux (LE) from the Climate Forecast System Reanalysis (CFSR) for 23
+Jul–20 Sep 2016 is displayed in the top panel using user-defined color map options. A time series of spatially
+averaged daily LE is displayed in the bottom panel for 23 Jul–20 Sep 2016 for a user-drawn polygon over the
+western United States (shown in blue in the top panel).
+
+
+        Recognizing these limitations, recent web appli-       2013; Teng et al. 2016). New computing technologies,
+     cations have focused on providing on-demand and           where massively parallel processors are collocated
+     dynamic visualization, extraction, and processing         with data collections, allow for on-demand and on-
+     of precomputed data (Berrick et al. 2009; Eberle et al.   the-f ly generation of custom data products and
+
+2398 |      NOVEMBER 2017
+APPLICATION DEVELOPMENT AND DESIGN
+
+T  he Climate Engine web application
+   is hosted on the Google App Engine
+web server, while the source code is
+                                           The request is submitted as an asyh-
+                                           chronous JavaScript and XML (AJAX)
+                                           request to Earth Engine. On Earth
+                                                                                       the ability for the user to custom-
+                                                                                       ize the map layer (e.g., scale and
+                                                                                       color palette options) and to place
+hosted on a GitHub repository for ver-     Engine servers, the data are extracted      optional vector images (e.g., KML,
+sion control and source code manage-       from the Google Cloud and processed         polygons, Google Fusion Tables) atop
+ment. The source code is divided into      in parallel. Earth Engine sends back a      the map layer to aid in geographical
+two parts: the front end, which the        response to the Climate Engine applica-     orientation or to be used for spatial
+user sees on the web page; and the         tion as map identifications (IDs) for the   averaging.
+back end, which is where the request-      map layers, JavaScript Object Nota-             The time series display illustrates a
+ed data are formed and processed.          tion (JSON) data for the time series,       time series figure and respective data
+     The front-end display of Climate      and URL links for map downloads.            as a tabular list alongside the figure.
+Engine is viewed in a web browser and      For time series requests, the returned      The SVG figure is constructed using
+is constructed using the Twitter Boot-     data in JSON format is processed into       the Highcharts JavaScript graphics
+strap 3 Cascading Style Sheets (CSS)       JavaScript arrays for creating High-        library, which displays the user-
+web framework for the navigation bars      charts figures. For map requests, the       requested data in an interactive figure.
+and tabs, and the overall responsive       Google map display is parsed into tiles     Climate Engine provides the ability for
+design of the site. The display contains   and a URL request (containing the map       the user to customize the time series
+a form for users to customize their re-    ID) is sent to Earth Engine to compute      figure (e.g., scatter, bar, or line charts)
+quests and a section for displaying the    the layer at the resolution needed for      on the fly without resubmitting the
+response (a map layer or a time series     display. As the user zooms in on the        request.
+figure with data).                         Google map, the computations needed             The beauty of this application
+     The back end of Climate Engine        to further refine the spatial resolu-       framework is that the requests can be
+utilizes Google’s webapp2 Python           tion of the map layers are performed        made from anywhere a web browser
+web framework and functions from           on Earth Engine in real time and are        has an Internet connection, all major
+Google’s Earth Engine Python applica-      reloaded on the user’s map.                 computing is performed using the
+tion programming interface (API) to            The map-layer display illustrates       thousands of processors via Earth
+create the custom data extraction and      user-requested raster output on a           Engine, and results are returned to the
+processing request for Earth Engine.       Google map. Climate Engine provides         device for display and/or download.
+
+
+
+    visualization, thereby avoiding many limitations of           highlighted to illustrate its ability to generate maps
+    the past (Moore and Hansen 2011; Baumann et al.               and time series for rapid analysis and visualization,
+    2016; Yang et al. 2017). The development of a cloud-          and to support advanced natural resource monitoring
+    computing web application for on-demand processing            and process understanding.
+    and visualizing climate and remote sensing data is
+    motivated by current web application limitations, and         METHODS. The Climate Engine web application
+    by climate and natural resource scientist and manager         development and design philosophy was centered
+    needs related to drought, ecology, and agriculture that       around providing the ability for users to perform
+    can be addressed through advanced processing and              on-demand mapping and time series visualization
+    visualization of Earth observation archives.                  and analyses that are customizable, and where map
+        This article outlines the development of a free web ap-   and time series results can be downloaded in com-
+    plication called Climate Engine (http://ClimateEngine         mon file formats, or shared via web URL links (see
+    .org) (Fig. 1) that uses Google’s parallel cloud-com-         sidebar about “Application and development design”).
+    puting platform, Google Earth Engine (Gorelick et al.         Datasets and variables available within Climate En-
+    2017), to enable users to process, visualize, download,       gine are derived from existing Google Earth Engine
+    and share various global and regional climate and             image collections that are consistently updated with
+    remote sensing datasets and products (e.g., anomaly           minimal latency (approximately 1–16 days) opera-
+    maps and time series) in real time. Climate Engine            tional data (Table 1). Additional datasets, variables,
+    helps overcome many of the data storage and pro-              and calculations are continually being added by user
+    cessing limitations that are common to researchers,           request and as Climate Engine evolves.
+    practitioners, and stakeholders. The development of              Climate Engine offers both mapping and time series
+    Climate Engine is detailed through a brief discussion         analysis options. Users are able to choose specific prod-
+    of the software application development and design.           uct types (remote sensing or climate), datasets (dif-
+    Several case study applications of Climate Engine are         ferent satellite platforms or gridded climate datasets),
+
+    AMERICAN METEOROLOGICAL SOCIETY                                                                NOVEMBER 2017            | 2399
+    Table 1. Satellite and climate datasets and their respective variables currently available in Climate En-
+    gine. Additional datasets, variables, and calculations will be added as Climate Engine evolves.
+                                                     Spatial    Temporal                                   Google Earth Engine
+           Data a               Variablesb,c                                  Duration      Referencesd
+                                                   resolution   resolution                                    asset catalog
+                                                                 Satellite
+    Landsat-4, -5, -7, -8   LST, NDVI, EVI,
+    top-of-atmosphere       NDSI, NDWI,                                                     NASA/          https://goo.gl/GFmZVg;
+                                                    30–120 m     16 days     1984–present
+    and surface             NBRT, TC, FC,                                                   USGS           https://goo.gl/EFxZPf
+    reflectance             Blue, Green
+                            LST, NDVI,
+    Aqua–Terra/
+                            EVI, NDSI, BAI,        500–1000 m   8–16 days    2000–present NASA             https://goo.gl/kQpqfI
+    MODIS
+                            NDWI, FSC
+    AVHRR Pathfinder SST                              4 km        Daily       1981–2012     NOAA           https://goo.gl/934c1g
+                                                                 Climate
+                            T, Rs, q, Td, U,
+                            ET0, P, P − ET0,
+                                                                                            Abatzoglou
+    gridMET                 BI, ERC, FM100,           4 km        Daily      1979–present              https://goo.gl/17WF3c
+                                                                                            (2013)
+                            FM1000, PDSI,
+                            EDDI, SPI, SPEI
+                            T, Rs, Rl, Rn, q, U,                                            Saha et al.
+    CFSR                                           ~19–29 km     6 hourly    1979–present                  https://goo.gl/Kcy1MF
+                            PET, P, LE, H, SM                                               (2010)
+                                                                                            Funk et al.
+    CHIRPS                  P                        4.8 km       5 days     1980–present                  https://goo.gl/eSEpr2
+                                                                                            (2015)
+a
+  Data acronyms: AVHRR = Advanced Very High Resolution Radiometer; METDATA = meteorological data. Other acronyms are
+  defined in the text.
+b
+  Satellite variables: EVI = enhanced vegetation index; NDWI = normalized difference water index; NBRT = normalized difference burn
+  ratio thermal index; TC = true color composite; FC = false color composite; Blue = blue reflectance; Green = green reflectance; FSC
+  = fractional snow cover; SST = sea surface temperature. Other acronyms are defined in the text.
+c
+  Climate variables: T = temperature; Rs = downward solar radiation at the surface; q = specific humidity; Td = dewpoint tempera-
+  ture; U = wind speed; P = precipitation; P – ET0 = potential water deficit; BI = burning index; FM100 = 100-h dead fuel moisture;
+  FM1000 = 1000-h dead fuel moisture; PDSI = Palmer drought severity index; SPEI = standardized precipitation evapotranspiration
+  index; Rl = downward longwave radiation at the surface; Rn = net radiation; H = sensible heat flux, SM = soil moisture at 5, 25, 70,
+  150 cm. Other variables are defined in the text.
+d
+  Reference acronyms: NASA = National Aeronautics and Space Administration; USGS = U.S. Geological Survey; NOAA = National
+  Oceanic and Atmospheric Administration.
+
+       variables (from precipitation to vegetation indices), and      locations or from multiple variables can be compared
+       common calculations (climatologies or anomalies) and           at the same time. Users can dynamically interact with
+       statistics (mean, median, maximum, minimum, total)             the resulting scalable vector graphics (SVG) figure to
+       for customized time periods. In the mapping view,              view values at data points, zoom in on the time series
+       users are able to modify the map layer displayed on            figure, toggle the display of series data, download the
+       the Google map by adjusting the color palette, trans-          figure in common image formats, and download the
+       parency, and value ranges; to perform masking; and             data in comma-separated values (.csv) or Excel (.xls)
+       to add vector layers to the map. Users can also request        file format. Climate Engine provides easy access to
+       values from the map or download rectangular regions            remote sensing and climate archives by pairing cloud-
+       of the map layer in Georeferenced Tagged Image File            computing capabilities and a web application, thereby
+       Format (GeoTiff) (Fig. 1). In the time series view, users      avoiding the computational expenses of storage and
+       are able to choose from one of three types of time series      processing such large datasets.
+       visualizations for data covering either a point location
+       or an area average: daily values (or native temporal           CASE STUDY APPLICATIONS. We dem-
+       resolution of dataset), interannual summaries of values        onstrate the potential of Climate Engine to both
+       over a defined period, or values within a year compared        the research community and decision-makers by
+       to statistics from other years. Data from multiple point       highlighting several recent case studies related to
+
+2400 |          NOVEMBER 2017
+Fig. 2. LST anomalies from MODIS for (a) Jan–Feb 2016, (b) Jan–Mar 2015, and (c) Apr 2016 relative to 2000–15
+averages extracted from Climate Engine’s mapping tools. Panels illustrate patterns of anomalously warm and
+cool temperatures over the Arctic and midlatitude continents, respectively, potentially caused by a combination
+of sea ice loss and internal atmospheric variability. (d) NDSI anomaly from MODIS for Apr 2016 for southern
+Greenland, where unusually warm temperatures resulted in an unusually early melting in southwestern Greenland.
+
+    climate, drought, fire, ecology, and agriculture. Map      ice loss and internal atmospheric variability that is
+    and time series figures shown in the case studies were     associated with a polar vortex (Overland and Wang
+    all computed and downloaded using Climate Engine           2016; Waugh et al. 2016). For example, the Arctic-
+    and edited (i.e., projection and color modifications) to   wide temperature anomaly in January–February 2016
+    create publication-quality graphics; however, readers      was 5.0°C above normal (Overland and Wang 2016),
+    can visit http://ClimateEngine.org/bams to replicate       whereas the eastern half of North America was excep-
+    these case study maps and time series in real time.        tionally cool. Climate observations are rather sparse
+                                                               in the Arctic. However, finescale (1 km) temperature
+    Climate. Recent winters have featured a pattern of         anomalies can be detected through remotely sensed
+    anomalously warm air over the Arctic and anoma-            land surface temperature (LST), from the Moderate
+    lously cool temperatures over portions of midlatitude      Resolution Imaging Spectroradiometer (MODIS)
+    continents, potentially a by-product of Arctic sea         sensor on board the National Aeronautics and Space
+
+    AMERICAN METEOROLOGICAL SOCIETY                                                          NOVEMBER 2017         | 2401
+Fig. 3. Effects of the 2012 Great Plains drought on near-surface boundary layer feedbacks between ET and ET0 are
+shown through maps of (a) Jun–Aug EDDI, (c) MODIS NDVI, and (d) MODIS LST anomalies relative to 2000–15
+averages extracted from Climate Engine’s mapping tool. (b) Time series of accumulated JJA Penman–Monteith
+reference ET0 averaged over Missouri from 1979 to 2015 using Climate Engine’s time series tool.
+
+     Administration (NASA)’s Terra and Aqua satellites.       Drought. Drought is a sustained imbalance of sup-
+     Climate Engine’s mapping tools were used to compute      ply (precipitation) and demand (i.e., evaporative
+     and visualize anomalous surface temperature and          demand). The demand side of drought is often
+     snow cover maps in the following examples. Figure 2a     overlooked but can be equally important as supply.
+     illustrates the median LST anomaly for January–Feb-      In addition to common supply and demand drought
+     ruary 2016 relative to a 2000–15 baseline climatology,   indices available on Climate Engine (Table 1), the
+     showing a large swath of Alaska, Canada, Greenland,      evaporative demand drought index (EDDI; Hobbins
+     and Siberia with LST from 6° to 10°C above normal.       et al. 2016; McEvoy et al. 2016) is also available
+     Figure 2b highlights a similar example, but for Janu-    and was computed with meteorological forcings
+     ary–March (JFM) 2015, where the impact of the polar      from gridded surface meteorological (gridMET)
+     vortex on LST is clear and compelling.                   data (Abatzoglou 2013) as inputs into the Ameri-
+         Last, Greenland experienced unusually high LST       can Society of Civil Engineers’ Penman–Monteith
+     in April 2016, with some locations in the interior ap-   standardized reference evapotranspiration (ET 0)
+     proaching 20°C above the 2000–15 average (Fig. 2c),      equation (Allen et al. 2005). EDDI is an effective
+     prompting an early commencement for ice melt in          drought metric due to two distinct feedbacks be-
+     the southwestern portion of Greenland in mid-April       tween regional evapotranspiration (ET) and ET0:
+     that resulted in widespread ice loss (Mottram 2016).     a complementary relationship under water-limited
+     Figure 2d shows the unusually low ice cover [via the     conditions (extended drought) where ET and ET0
+     normalized difference snow index (NDSI) from MO-         vary in opposite directions (Bouchet 1963; Morton
+     DIS] in early April along the southwestern portion       1969), and a parallel relationship under energy-
+     of the Greenland ice sheet and coincides with early      limited conditions and at the onset drought (Budyko
+     melting (Mottram 2016).                                  1974; Hobbins et al. 2016).
+
+2402 |      NOVEMBER 2017
+    The summer of 2012 Great Plains drought stands
+out as one of the most extreme drought events in
+instrumental records (Hoerling et al. 2014), with esti-
+mated total economic losses (largely from the agricul-
+ture sector) of $35 billion (U.S. dollars). The Climate
+Engine–derived June–August (JJA) EDDI map shown
+in Fig. 3a highlights the large spatial extent of this
+drought, with extreme and exceptional drought cat-
+egories stretching from the Canadian to the Mexican
+borders and encompassing approximately two-thirds
+of the continental United States. Using the interannual
+time series options and the spatial averaging feature of
+Climate Engine, the time series illustrated in Fig. 3b
+shows the accumulated summer ET0 anomaly averaged
+over Missouri in 2012 was greater than 200 mm above
+average and approximately 100 mm greater than the
+previous record set in 1980.
+    The MODIS normalized difference vegetation
+index (NDVI) and LST anomalies are especially
+useful for evaluating regional vegetation stress due
+to drought. During the warm season, LST is largely
+a function of the ET rate due to evaporative cooling
+(i.e., latent heat flux). If ET is relatively low, then the
+LST will be relatively high, and vice versa. Figures 3c
+and 3d illustrate reduced NDVI and increased LST
+during the summer of 2012 Great Plains drought
+due to reduced vegetation vigor and ET, respectively.
+Having multiple indicators of drought that are read-
+ily accessible through on-demand cloud computing
+and web visualization is extremely useful for better
+understanding the drivers and impacts of drought
+from multiple perspectives and disciplines (i.e., land
+surface energy balance, vegetation, near-surface
+boundary layer).
+    Snow drought is a term that has been recently used
+to describe the lack of snow depth or coverage that
+occurs simultaneously with near-normal or above-              Fig. 4. Snow drought of 2015 over the northwestern
+normal precipitation conditions. A snow drought oc-           United States is shown by Climate Engine–generated
+curred during the winter and spring of 2014/15 over           maps for Dec 2014–Mar 2015 (a) SPI, (b) EDDI, and
+the northwestern United States, featuring record-low          (c) MODIS NDSI anomalies relative to 2000–15 aver-
+                                                              ages. SPI shows little to no drought over the Cascades
+snowpack conditions in the Cascades and northern
+                                                              and northern Rockies. However, EDDI shows extreme
+Rocky Mountains even though respective precipita-             drought conditions primarily caused by anomalously
+tion amounts in many areas were at or above normal            high temperature and solar radiation. This led to ex-
+(Cooper et al. 2016; McEvoy et al. 2016). To illustrate       tremely high freezing levels, resulting in anomalously
+this example, maps of the standardized precipitation          low snow cover at mid- to high elevations, as illustrated
+index (SPI; McKee et al. 1993), EDDI, and the MODIS-          by the NDSI anomaly.
+derived NDSI anomaly for December 2014–March
+2015 were generated with Climate Engine (Figs. 4a–c).         fuel aridity. Four sets of fire danger indices using the
+                                                              U.S. National Fire Danger Rating System (Cohen and
+Fire. Fire danger indices are used operationally to assess    Deeming 1985) are computed daily from the gridMET
+wildfire potential for short-term wildland fire business      data and are available via Climate Engine, including
+decision-making (e.g., large fire potential) and are used     the energy release component (ERC). ERC is a proxy
+by the research community as a numerical measure of           for daily potential fire radiative energy that integrates
+
+AMERICAN METEOROLOGICAL SOCIETY                                                                NOVEMBER 2017          | 2403
+Fig. 5. Fire danger illustrated using ERC over the mountains of southwestern Idaho is shown with a Climate
+Engine–generated (a) map of mean ERC values expressed as percentage departure from average for 1 May–5
+Sep 2016 relative to 1981–2010 normals and (b) time series of daily ERC values averaged over Boise County,
+ID [outlined in black in (a)], for 1 May–5 Sep 2016 (red line), with 1979–2015 daily median values (black line)
+and daily 5th–95th percentiles (gray shading). (c) Landsat NDVI anomaly for 18 Jul–22 Sep 2016 relative to the
+Landsat-5, -7, and -8 climatology (1984–2015) where the 76,000-ha Pioneer fire occurred.
+
+     temperature, precipitation, humidity, and solar ra-         ecological-focused research, such as change detection
+     diation over the preceding several weeks and exhibits       at fine and large spatial scales (Cohen and Goward
+     strong links to the occurrence of very large fires (Riley   2004; Wulder et al. 2012; Roy et al. 2014).
+     et al. 2013) and seasonal burned area (Abatzoglou and           Long-term monitoring of groundwater-dependent
+     Williams 2016), particularly across forested regions.       ecosystems (GDEs) for baseline assessments and water
+     A map of ERC anomalies and a time series of ERC             and land use impacts analyses is a central focus area for
+     averaged over Boise County, Idaho, for JJA 2016 are         many western U.S. federal, state, and nongovernmental
+     shown in Figs. 5a and 5b, respectively. The Pioneer         agencies. These agencies must adhere to regulations
+     fire started on 18 July 2016 in the Boise National Forest   and requirements, including environmental assess-
+     and burned a total of 76,000 ha, making it one of the       ments and monitoring related to sage-grouse habitat,
+     largest fires of the 2016 western U.S. fire season. The     groundwater development, and mining. A compel-
+     fire primarily burned during a period of well-above-        ling example of how Climate Engine can be used for
+     normal ERC values for much of the latter half of July       advanced GDE monitoring is shown in Fig. 6, which
+     and August, including making large fire runs during         illustrates the coincident increase and decrease in
+     the first couple days of August and the last couple days    Landsat-derived summer vegetation vigor (i.e., NDVI)
+     of August when ERC values were well above normal,           beginning in 2002 for respective agricultural and
+     approaching the 90th–95th percentiles for the calendar      adjacent spring areas located in eastern Nevada and
+     day. To visualize the areal extent of the burn, Fig. 5c     western Utah (Figs. 6b and 6c). These changes are a
+     illustrates the 30-m-pixel-resolution Landsat-8 NDVI        consequence of groundwater pumping for agriculture,
+     anomaly from 18 July to 22 September 2016 relative          lowering of the groundwater table, and drying of the
+     to the Landsat-5, -7, and -8 climatology (1984–2015),       spring (Halford 2015; Huntington et al. 2016). Paired
+     clearly highlighting the burned area as regions of de-      with gridMET water-year precipitation and ET0 com-
+     creased vegetation greenness.                               puted with Climate Engine, Fig. 6d shows that lower-
+                                                                 ing of the groundwater table has markedly changed
+     Ecology. The use of gridded climate and remote sensing      the vegetation response to precipitation (PPT) within
+     products within the ecology community is becoming           the spring area. Also evident is the complementary
+     commonplace as relevant datasets have become avail-         relationship between NDVI and ET0 with PPT, a novel
+     able and accessible, and as requirements for long-term      illustration showing how atmospheric demand, supply,
+     monitoring are becoming standard for permitting             and vegetation response are inherently linked.
+     land and water development projects. Ecological
+     modeling and monitoring typically require finescale         Agriculture. Monitoring agricultural vegetation vigor
+     information at long time scales (i.e., ~30+ years). The     is important for assessing water use, irrigation per-
+     combination of gridded high-resolution climate data         formance, crop yields, and drought impacts and
+     and the Landsat satellite image archive has catapulted      for reviewing and litigating water rights, transfers,
+
+2404 |      NOVEMBER 2017
+    and disputes. All of these issues are receiving high-
+    priority attention in the western United States and in
+    other water-limited environments around the world.
+    The use of high-resolution satellite imagery is needed
+    to accurately characterize spatial and temporal varia-
+    tions in crop productivity, phenology, and water use
+    over large areas. Given free access to the >30-year
+    Landsat archive combined with Google Earth Engine,
+    rapid field-scale assessments can be readily produced
+    using Climate Engine.
+        An example of a field-level analysis, where Climate
+    Engine was used to generate maps of growing season
+    maximum NDVI from Landsat for 2011 and 2015 over
+    the Tulare Lake basin in the Central Valley of Califor-
+    nia is shown in Fig. 7. Figures 7a and 7b clearly illustrate
+    the large amount of fallowing that occurred in 2015 due
+    to the multiyear drought. Melton et al. (2015) estimated
+    that over 2,000 km2 of Central Valley cropland was
+    fallowed in 2015, approximately twice that of 2011. A
+    unique and very powerful feature of Climate Engine is
+    the ability to extract field-level time series information
+    related to vegetation vigor for anywhere around the
+    globe using predefined polygons, user-uploaded Key-
+    hole Markup Language (KML) files, or by dynamically
+    drawing polygons on the map to define areas of inter-
+    est. The latter option is applied in Fig. 7c to examine
+    field-level crop phenology stages (dormant, green-up,
+    full cover, and senescence/harvest periods) from 2011
+    to 2015, clearly showing the fallowed land in 2015.
+        Africa’s Sahel region is the semiarid zone just south
+    of the Sahara, but north of the humid tropical zone of
+    Africa. The agriculture, livestock, and human villages
+    and pastoralists in this region are heavily dependent
+    on rainfall. During late 2015 to early 2016, a strong El
+    Niño contributed to regional shifts in precipitation in
+    the Sahel region. Significant drought across Ethiopia
+    resulted in widespread crop failure and more than
+    10 million people in Ethiopia required food aid (U.S.
+    Department of State 2016). Global precipitation data-
+    sets can be used to detect local to regional anomalies
+    in precipitation as a tool for devising early-warning
+▶ Fig. 6. (a) Effects of groundwater irrigation on spring-
+area vegetation vigor in eastern Nevada and western
+Utah are illustrated using the time series tool of Cli-
+mate Engine to track Aug–Sep-average NDVI from
+1984 to 2016 spatially averaged over two user-drawn
+domains. Irrigation commenced in 2002, resulting in
+(b) increased NDVI and (c) a coincident decline in NDVI
+within the spring area due to lowering of the ground-
+water table and drying of the spring. Lowering of the
+groundwater table changed the vegetation response
+to precipitation within the spring area as evidenced
+by (d) pre- and post-irrigation NDVI and water-year
+PPT relationships.
+
+    AMERICAN METEOROLOGICAL SOCIETY                                NOVEMBER 2017   | 2405
+Fig. 7. Extensive fallowed cropland in 2015 within the Tulare Lake basin in the Central Valley of California due
+to multiyear drought is illustrated with the spatial distribution of Landsat growing season (Apr–Oct) maximum
+NDVI for (a) 2011 and (b) 2015. (c) Time series tool in Climate Engine was used to extract NDVI from 2011
+to 2015 for the red polygon in (a) and (b). Field-level crop phenology stages [identified as a cotton crop for all
+years according to U.S. Department of Agriculture (USDA) cropland data layers] are clearly evident, along
+with fallowing that occurred in 2015.
+
+
+     systems for drought-related impacts, such as famine.      precipitation and drought in areas with limited ob-
+     Whereas most available global precipitation products      servations, such as Africa.
+     have coarse spatial resolutions, the Climate Hazards         Climate Engine–derived precipitation anomalies
+     Group Infrared Precipitation with Station (CHIRPS)        from CHIRPS for late 2015–early 2016 depict large
+     dataset (Funk et al. 2015) provides quasi-global          portions of Ethiopia, particularly pastoral regions,
+     (50°S–50°N, 180°E–180°W) pentad (5 day) precipi-          received less than half of average rainfall during
+     tation totals at ~4.8-km resolution from 1980 to the      their primary growing season (Fig. 8a). The multi-
+     present, and is ideal for monitoring shifts in regional   scalar and multiproduct nature of Climate Engine
+
+
+
+
+Fig. 8. (a) Sep 2015–Feb 2016 CHIRPS precipitation anomaly over Africa relative to the 1981–2010 average shows
+that large areas of Ethiopia received less than half of normal precipitation. Consequently, widespread impacts
+to agricultural productivity, especially within pastoral regions, were present across Ethiopia as evidenced by
+(d) reduced greenness in remote sensing images. (b) MODIS NDVI anomalies for Sep 2015–Feb 2016 relative to
+2000–15 average are shown for the inset box in (a). (c) Landsat NDVI anomalies for Sep 2015–Feb 2016 relative
+to 2000–15 average are shown for the inset box in (b).
+
+2406 |      NOVEMBER 2017
+is demonstrated by evaluating NDVI anomalies at              as a sustainable resource for advanced natural resource
+regional and field scales with MODIS and Landsat             monitoring and process understanding, and lead to tak-
+datasets, respectively (Figs. 8b and 8c), and is espe-       ing the next step—translate data into decisions.
+cially useful for supporting famine early-warning
+efforts and assessments of on-the-ground impacts.            ACKNOWLEDGMENTS. Funding for this study
+                                                             was provided by a Google Earth Engine faculty research
+DISCUSSION AND CONCLUSIONS. Cloud                            award (unrestricted gift from Google), the U.S. Geologi-
+computing of environmental datasets is rapidly               cal Survey 2012–17 Landsat Science Team (G12PC00068),
+changing the way researchers and practitioners are           the U.S. Bureau of Land Management Nevada State Office
+conducting research, making applications, and plan-          (L13AC00169), the U.S. Geological Survey–Great Basin
+ning for long-term application sustainability (Zhang         Cooperative Ecosystem Study Unit (G15AC00137), and the
+et al. 2010; Hansen et al. 2013; Pekel et al. 2016; Yang     National Integrated Drought Information System of the
+et al. 2017). The motivation behind Climate Engine is        National Oceanic and Atmospheric Administration (AB-
+to enable users to quickly process and visualize large       133E-16-cQ-0022). The authors thank FEWS NET and the
+datasets of climate and satellite Earth observations for     Climate Hazard Group at the University of California, Santa
+advanced monitoring and process understanding and            Barbara, for their assistance in making CHIRPS precipita-
+to improve early warning of drought, wildfire, and           tion products available through Google Earth Engine and
+crop-failure risk at spatial scales relevant to scientists   for providing input on famine early warning applications.
+and decision-makers alike. Application features in-
+clude on-demand mapping of environmental monitor-
+ing datasets, customizable analyses, time series and          REFERENCES
+statistical summaries, downloadable digital data, and        Abatzoglou, J. T., 2013: Development of gridded surface
+URL link sharing that reproduce results in real time.           meteorological data for ecological applications and
+    What makes Climate Engine unique is the un-                 modelling. Int. J. Climatol., 33, 121–131, doi:10.1002
+precedented access for processing, visualizing, and             /joc.3413.
+analyzing Earth observation datasets with a simple           —, and A. P. Williams, 2016: The impact of anthropo-
+web connection, overcoming computational burdens                genic climate change on wildfire across western US
+of big data, and providing the ability to download or           forests. Proc. Natl. Acad. Sci. USA, 113, 11 770–11 775,
+share results instead of downloading and processing             doi:10.1073/pnas.1607171113.
+entire data archives. A valid argument is that the           Allen, R. G. I. A. Walter, R. L. Elliott, T. A. Howell, D.
+science community should be focused on data dis-                Itenfisu, M. E. Jensen, and R. L. Synder, 2005: The
+covery, providing answers, and creating new useful              ASCE Standardized Reference Evapotranspiration
+tools, rather than devoting time to downloading and             Equation. American Society of Civil Engineers, 216 pp.
+processing entire archives on local or research institu-     Anderson, M. C., J. M. Norman, J. R. Mecikalski, J. A.
+tion network computers. Cloud-computing platforms,              Otkin, and W. P. Kustas, 2007: A climatological study
+such as Google Earth Engine, allow us to move from              of evapotranspiration and moisture stress across the
+archives to answers very efficiently, bypassing all the         continental United States based on thermal remote
+downloading and processing paralysis of yesteryear.             sensing: 2. Surface moisture climatology. J. Geophys.
+    A primary challenge is integrating new cloud-based          Res., 112, D11112, doi:10.1029/2006JD007507.
+research findings, products, and applications into deci-     Baumann, P., and Coauthors, 2016: Big Data Analytics
+sion-making activities. The modular nature of Climate           for Earth Sciences: The EarthServer approach. Int.
+Engine allows for easy integration of additional climate        J. Digital Earth, 9, 3–29, doi:10.1080/17538947.2014
+and remotely sensed datasets that are added to Google           .1003106.
+Earth Engine collections. Future directions of Climate       Berrick, S. W., G. Leptoukh, J. D. Farley, and H. Rui, 2009:
+Engine involve working with collaborators to identify           Giovanni: A Web services workflow-based data visual-
+and integrate additional spatial averaging domains (e.g.,       ization and analysis system. IEEE Trans. Geosci. Remote
+watershed boundaries, grazing allotments, ecological            Sens., 47, 106–113, doi:10.1109/TGRS.2008.2003183.
+units) for generating summary products; developing           Bouchet, R. J., 1963: Evapotranspiration réelle et po-
+climate and remotely sensed datasets that best address          tentielle, signification climatique. IAHS Publ., 62,
+community needs; and performing extensive and                   134–142.
+detailed outreach, stakeholder engagement, and train-        Brown, J. F., B. D. Wardlow, T. Tadesse, M. J. Hayes, and
+ings. Such stakeholder engagement and coproduction              B. C. Reed, 2008: The Vegetation Drought Response
+of knowledge will ultimately enhance Climate Engine             Index (VegDRI): A new integrated approach for
+
+AMERICAN METEOROLOGICAL SOCIETY                                                                NOVEMBER 2017            | 2407
+       monitoring drought stress in vegetation. GIsci. Re-          Huntington, J., and Coauthors, 2016: Assessing the role
+       mote Sens., 45, 16–46, doi:10.2747/1548-1603.45.1.16.           of climate and resource management on groundwater
+     Budyko, M. I., 1974: Climate and Life. International              dependent ecosystem changes in arid environments
+       Geophysics Series, Vol. 18, Academic Press, 508 pp.             with the Landsat archive. Remote Sens. Environ., 185,
+     Cohen, J. D., and J. E. Deeming, 1985: The National               186–197, doi:10.1016/j.rse.2016.07.004.
+       Fire-Danger Rating System: Basic equations. USDA             McEvoy, D. J., J. L. Huntington, M. T. Hobbins, A. Wood,
+       General Tech. Rep. 16, 17 pp.                                   C. Morton, M. Anderson, and C. Hain, 2016: The
+     Cohen, W. B., and S. N. Goward, 2004: Landsat’s role              evaporative demand drought index. Part II: CONUS-
+       in ecological applications of remote sensing. BioSci-           wide assessment against common drought indica-
+       ence, 54, 535–545, doi:10.1641/0006-3568(2004)054               tors. J. Hydrometeor., 17, 1763–1779, doi:10.1175/JHM
+       [0535:LRIEAO]2.0.CO;2.                                          -D-15-0122.1.
+     Cooper, M. G., A. W. Nolin, and M. Safeeq, 2016: Test-         McKee, T. B., N. J. Doesken, and J. Kleist, 1993: The
+       ing the recent snow drought as an analog for climate            relationship of drought frequency and duration
+       warming sensitivity of Cascades snowpacks. Envi-                to time scales. Preprints, Eighth Conf. on Applied
+       ron. Res. Lett., 11, 084009, doi:10.1088/1748-9326              Climatology, Anaheim, CA, Amer. Meteor. Soc.,
+       /11/8/084009.                                                   179–184.
+     Daly, C., R. P. Neilson, and D. L. Phillips, 1994: A statis-   Melton, F., and Coauthors, 2015: Fallowed area mapping
+       tical-topographic model for mapping climatological              for drought impact reporting: 2015 assessment of
+       precipitation over mountainous terrain. J. Appl. Me-            conditions in the California Central Valley. NASA,
+       teor., 33, 140–158, doi:10.1175/1520-0450(1994)033              13 pp. [Available online at https://nex.nasa.gov
+       <0140:ASTMFM>2.0.CO;2.                                          /nex/static/media/other/Central_Valley_Fallowing
+     Eberle, J., S. Clausnitzer, C. Hüttich, and C. Schmullius,        _Data_Report_14Oct2015.pdf.]
+       2013: Multi-source data processing middleware for            Mitchell, K. E., and Coauthors, 2004: The multi‐in-
+       land monitoring within a web-based spatial data                 stitution North American Land Data Assimilation
+       infrastructure for Siberia. ISPRS Int. J. Geoinf., 2,           System (NLDAS): Utilizing multiple GCIP products
+       553–576, doi:10.3390/ijgi2030553.                               and partners in a continental distributed hydrologi-
+     Funk, C., and Coauthors, 2015: The climate hazards                cal modeling system. J. Geophys. Res. Atmos., 109,
+       infrared precipitation with stations—A new environ-             D07S90, doi:10.1029/2003JD003823.
+       mental record for monitoring extremes. Sci. Data, 2,         Moore, R. T., and M. C. Hansen, 2011: Google Earth
+       150066, doi:10.1038/sdata.2015.66.                              Engine: A new cloud-computing platform for global-
+     Gorelick, N., M. Hancher, M. Dixon, S. Ilyushchenko,              scale earth observation data and analysis. 2011 Fall
+       D. Thau, and R. Moore, 2017: Google Earth Engine:               Meeting, San Francisco, CA, Amer. Geophys. Union,
+       Planetary-scale geospatial analysis for everyone.               Abstracts IN43C-02.
+       Remote Sens. Environ., doi:10.1016/j.rse.2017.06.031,        Morton, F. I., 1969: Potential evaporation as a manifesta-
+       in press.                                                       tion of regional evaporation. Water Resour. Res., 5,
+     Halford, K. J., 2015: Exhibit 153, public administrative          1244–1255, doi:10.1029/WR005i006p01244.
+       hearing before the state engineer in the matter of           Mottram, R., 2016: Unusually early Greenland melt. Po-
+       protested applications 78795, etc., February 2–6,               lar Portal: Monitoring Ice and Climate in the Arctic.
+       2015. Office of the Nevada State Engineer, Nevada               [Available online at http://polarportal.dk/en/nyheder
+       Division of Water Resources, 14 pp.                             /arkiv/nyheder/usaedvanlig-tidlig-afsmeltning-i
+     Hansen, M. C., and Coauthors, 2013: High-resolution               -groenland/.]
+       global maps of 21st-century forest cover change.             Overland, J. E., and M. Wang, 2016: Recent extreme
+       Science, 342, 850–853, doi:10.1126/science.1244693.             Arctic temperatures are due to a split polar vor-
+     Hobbins, M. T., D. J. McEvoy, J. L. Huntington, C. Mor-           tex. J. Climate, 29, 5609–5616, doi:10.1175/JCLI
+       ton, and J. Verdin, 2016: The evaporative demand                -D-16-0320.1.
+       drought index. Part I: Linking drought evolution to          Oyler, J. W., A. Ballantyne, K. Jencso, M. Sweet, and
+       variations in evaporative demand. J. Hydrometeor.,              S. W. Running, 2015: Creating a topoclimatic daily
+       17, 1745–1761, doi:10.1175/JHM-D-15-0121.1.                     air temperature dataset for the conterminous United
+     Hoerling, M., J. Eischeid, A. Kumar, R. Leung, A. Mariotti,       States using homogenized station data and remotely
+       K. Mo, S. Schubert, and R. Seager, 2014: Causes and             sensed land skin temperature. Int. J. Climatol., 35,
+       predictability of the 2012 Great Plains drought.                2258–2279, doi:10.1002/joc.4127.
+       Bull. Amer. Meteor. Soc., 95, 269–282, doi:10.1175           Pekel, J.-F., A. Cottam, N. Gorelick, and A. S. Belward,
+       /BAMS-D-13-00055.1.                                             2016: High-resolution mapping of global surface
+
+2408 |       NOVEMBER 2017
+   water and its long-term changes. Nature, 540, 418–             Ridge National Laboratory, accessed 12 Jan 2016,
+   422, doi:10.1038/nature20584.                                  doi:10.3334/ORNLDAAC/1219.
+Riley, K. L., J. T. Abatzoglou, I. C. Grenfell, A. E. Klene,   U.S. Department of State, 2016. Briefing on announce-
+   and F. A. Heinsch, 2013: The relationship of large fire        ment of new measures to address the drought in
+   occurrence with drought and fire danger indices in the         Ethiopia. [Available online at https://2009-2017.state
+   western USA, 1984–2008: The role of temporal scale.            .gov/r/pa/prs/ps/2016/03/253954.htm.]
+   Int. J. Wildland Fire, 22, 894–909, doi:10.1071/WF12149.    Wang, L., and J. J. Qu, 2007: NMDI: A normalized multi‐
+Roy, D. P., and Coauthors, 2014: Landsat-8: Science and           band drought index for monitoring soil and vegeta-
+   product vision for terrestrial global change research.         tion moisture with satellite remote sensing. Geophys.
+   Remote Sens. Environ., 145, 154–172, doi:10.1016/j.rse         Res. Lett., 34, L20405, doi:10.1029/2007GL031021.
+   .2014.02.001.                                               Waugh, D. W., A. H. Sobel, and L. M. Polvani, 2016: What
+Saha, S., and Coauthors, 2010: The NCEP Climate Fore-             is the polar vortex, and how does it influence weath-
+   cast System Reanalysis. Bull. Amer. Meteor. Soc., 91,          er? Bull. Amer. Meteor. Soc., 98, 37–44, doi:10.1175
+   1015–1057, doi:10.1175/2010BAMS3001.1.                         /BAMS-D-15-00212.1.
+Svoboda, M., and Coauthors, 2002: The Drought                  Wulder, M. A., J. G. Masek, W. B. Cohen, T. R. Loveland,
+   Monitor. Bull. Amer. Meteor. Soc., 83, 1181–1190,              and C. E. Woodcock, 2012: Opening the archive:
+   doi:10.1175/1520-0477(2002)083<1181:TDM>2.3.CO;2.              How free data has enabled the science and monitor-
+Teng, W., H. Rui, R. Strub, and B. Vollmer, 2016: Opti-           ing promise of Landsat. Remote Sens. Environ., 122,
+   mal reorganization of NASA earth science data for              2–10, doi:10.1016/j.rse.2012.01.010.
+   enhanced accessibility and usability for the hydrol-        Yang, C., M. Yu, F. Hu, Y. Jiang, and Y. Li, 2017: Utilizing
+   ogy community. J. Amer. Water Resour. Assoc., 52,              cloud computing to address big geospatial data chal-
+   825–835, doi:10.1111/1752-1688.12405.                          lenges. Comput. Environ. Urban Syst., 61, 120–128,
+Thornton, P. E., M. M. Thornton, B. W. Mayer,                     doi:10.1016/j.compenvurbsys.2016.10.010.
+   N. Wilhelmi, Y. Wei, R. Devarakonda, and R. B.              Zhang, Q., L. Cheng, and R. Boutaba, 2010: Cloud comput-
+   Cook, 2014: Daymet: Daily surface weather data                 ing: state-of-the-art and research challenges. J. Internet
+   on a 1-km grid for North America, version 2. Oak               Serv. Appl., 1, 7–18, doi:10.1007/s13174-010-0007-6.
+
+
+
+
+AMERICAN METEOROLOGICAL SOCIETY                                                                   NOVEMBER 2017            | 2409
+AMS titles now
+available as eBooks
+at springer.com
+
+www.ametsoc.org/amsbookstore
+                                    Scan to see
+                               AMS eBook titles
+                                at springer.com
+
+
+
+
+        AmericAn meteorologicAl Society
+

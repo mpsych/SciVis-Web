@@ -1,0 +1,549 @@
+W514–W522 Nucleic Acids Research, 2018, Vol. 46, Web Server issue                                                         Published online 7 June 2018
+doi: 10.1093/nar/gky510
+
+
+OmicsNet: a web-based tool for creation and visual
+analysis of biological networks in 3D space
+Guangyan Zhou1 and Jianguo Xia1,2,*
+1
+ Institute of Parasitology, McGill University, Montreal, Quebec, Canada and 2 Department of Animal Science, McGill
+University, Montreal, Quebec, Canada
+
+Received January 31, 2018; Revised May 21, 2018; Editorial Decision May 22, 2018; Accepted May 23, 2018
+
+
+
+
+                                                                                                                                                                  Downloaded from https://academic.oup.com/nar/article-abstract/46/W1/W514/5033998 by guest on 18 June 2020
+ABSTRACT                                                                          tical approach and the network-based approach. The statis-
+                                                                                  tical approach aims to identify overall patterns or shared
+Biological networks play increasingly important                                   signatures across multiple datasets by employing various
+roles in omics data integration and systems biol-                                 multivariate statistical methods (1,2), while the network-
+ogy. Over the past decade, many excellent tools have                              based approach views the biological system as intercon-
+been developed to support creation, analysis and vi-                              nected networks of molecular entities, and is primarily con-
+sualization of biological networks. However, impor-                               cerned with creating and computing on such networks (3,4).
+tant limitations remain: most tools are standalone                                Multivariate statistics are inherently complex. Although nu-
+programs, the majority of them focus on protein-                                  merous methods have been developed to deal with multi-
+protein interaction (PPI) or metabolic networks, and                              omics datasets, there is a general lack of well-established
+visualizations often suffer from ‘hairball’ effects                               guidelines and strong use cases to promote their wide adop-
+when networks become large. To help address these                                 tion and application (5). In contrast, the network-based ap-
+                                                                                  proach is particularly appealing as networks can easily in-
+limitations, we developed OmicsNet - a novel web-
+                                                                                  tegrate new data into current knowledge framework and vi-
+based tool that allows users to easily create differ-                             sually engage researchers to facilitate data understanding.
+ent types of molecular interaction networks and visu-                             Over the past decade, large-scale experiments have enabled
+ally explore them in a three-dimensional (3D) space.                              comprehensive collection of high-quality molecular inter-
+Users can upload one or multiple lists of molecules of                            action data. Many excellent public databases and bioin-
+interest (genes/proteins, microRNAs, transcription                                formatics tools have been developed for storage, visualiza-
+factors or metabolites) to create and merge differ-                               tion, and analysis of such data (6–11). These expansive re-
+ent types of biological networks. The 3D network                                  sources have made the network-based approach the pre-
+visualization system was implemented using the                                    ferred choice in current multi-omics data integration and
+powerful Web Graphics Library (WebGL) technology                                  systems biology.
+that works natively in most major browsers. Omic-                                    The first step in the network-based approach is to create
+                                                                                  a subnetwork (or a few subnetworks) that connects signifi-
+sNet supports force-directed layout, multi-layered
+                                                                                  cant molecules identified from individual omics data anal-
+perspective layout, as well as spherical layout to help                           ysis. Protein–protein interactions (PPI) and metabolic re-
+visualize and navigate complex networks. A rich set                               actions have been widely used for building such subnet-
+of functions have been implemented to allow users                                 works. In general, there is a lack of easy-to-use bioinfor-
+to perform coloring, shading, topology analysis, and                              matics tools that permits facile incorporation of important
+enrichment analysis. OmicsNet is freely available at                              regulators such as microRNAs (miRNAs) or transcription
+http://www.omicsnet.ca.                                                           factors (TFs) into biological networks. These two types of
+                                                                                  molecules are important players in gene regulations and
+                                                                                  are integral components in systems biology. High-quality
+INTRODUCTION                                                                      public resources housing gene regulator data have become
+The growing applications of large-scale multi-omics stud-                         readily available in recent years. For instance, TarBase (12)
+ies in current life sciences have generated vast amounts                          and miRTarBase (13) are two comprehensive databases that
+of molecular measurements at DNA, RNA, protein and                                host experimentally validated         miRNA-target interac-
+metabolite levels. Novel bioinformatics tools and computa-                        tions. Meanwhile, the ENCODE (14), JASPAR(15) and
+tional methods are urgently needed to help researchers ana-                       TRRUST (16) databases have provided high-quality infor-
+lyze these complex datasets to facilitate systems-level under-                    mation on TFs and their potential target genes. Integrat-
+standing. Two general approaches have emerged - the statis-                       ing these resources to allow users to easily include these
+
+* To   whom correspondence should be addressed. Tel: +1 514 398 8668; Email: jeff.xia@mcgill.ca
+
+C The Author(s) 2018. Published by Oxford University Press on behalf of Nucleic Acids Research.
+This is an Open Access article distributed under the terms of the Creative Commons Attribution Non-Commercial License
+(http://creativecommons.org/licenses/by-nc/4.0/), which permits non-commercial re-use, distribution, and reproduction in any medium, provided the original work
+is properly cited. For commercial re-use, please contact journals.permissions@oup.com
+                                                                 Nucleic Acids Research, 2018, Vol. 46, Web Server issue W515
+
+
+important players into widely-supported PPI or metabolic            WebGL technology to enable 3D network visual analytics,
+networks would therefore enable deep insights for systems           with built-in support for flexible creations of composite net-
+understanding.                                                      works. The key features of OmisNet include:
+   After the creation of subnetworks that can, ideally, con-
+nect a significant portion of the molecules of interest, the          (i) Accepting lists of genes/proteins, transcription factors,
+next step is to analyze the subnetworks. Although graph                   miRNAs, metabolites, as well as network files (.txt, .sif
+theory is often used to help identify important patterns and              or .graphml);
+links, a key strength of network analysis lies in organiz-           (ii) Supporting ten molecular interaction databases
+ing and visualizing the considerable knowledge about the                  on protein-protein, miRNA-target, TF-target and
+interplay among biological molecules to help researchers                  enzyme-metabolite interactions, with multiple proce-
+make informed decisions or to develop new hypotheses (17).                dures for network customization;
+Therefore, an important goal of network visualization is to         (iii) Fully-featured 3D network visualization system sup-
+
+
+
+
+                                                                                                                                      Downloaded from https://academic.oup.com/nar/article-abstract/46/W1/W514/5033998 by guest on 18 June 2020
+facilitate easy interpretation and absorption of large quanti-            porting three layouts (force-directed layout, multi-
+ties of information without being overwhelmed by it. How-                 layered perspective layout and spherical layout) and
+ever, as networks become larger, it often leads to the well-              a wide array of 3D visual effects and interactions
+known ‘hairball’ effect, which is caused by a large number                (shading, zooming, highlighting, rotating, drag-and-
+of overlapping nodes and edges. Many empirical methods                    drop, etc.);
+have been developed to address this issue such as trimming          (iv) Comprehensive support for functional analysis based
+uninformative nodes, edge bundling or applying different                  on GO, KEGG, Reactome and PANTHER (31–34),
+layouts (18,19). One potential solution is to increase the vi-            as well as network topology analysis including module
+sualization space from the conventional 2D to 3D space,                   detection, computing shortest paths and node central-
+thereby providing more viewing perspectives and reducing                  ities;
+intersections between nodes and edges. In addition, the ex-
+tra dimension can present critical information unique in               OmicsNet contains a comprehensive list of frequently
+multi-omics and time-series data to facilitate systems-level        asked questions (FAQs) and multiple tutorials on differ-
+understanding (20,21).                                              ent use cases to help researchers navigate common analy-
+   Most current network visualization tools are standalone          sis tasks. The public server is freely available at http://www.
+programs focusing primarily on 2D network visualiza-                omicsnet.ca.
+tion, such as Cytoscape (6) and Gephi (22). A few of
+them also support 3D visualizations such as BioLayout3D
+(23), iCAVE (24), NAViGaTOR (10), Arena3D (25) and                  PROGRAM DESCRIPTION AND METHODS
+3DScapeCS (26). Over the past several years, there is a
+                                                                    OmicsNet is mainly composed of three web pages corre-
+clear trend to move away from standalone applications to-
+                                                                    sponding to the three tasks - data input, network creation,
+wards integration of visualization within web browsers (27–
+                                                                    and network visual analytics. Figure 1 shows the overall
+29). To the best of our knowledge, no dedicated web-based
+                                                                    design and workflow of OmicsNet. Users can upload lists
+tools are currently available to support 3D visualization of
+                                                                    of genes/proteins, TFs, miRNAs or metabolites to search
+biological networks. There are some technical reasons be-
+                                                                    different molecular interaction databases. The results will
+hind this. Early 3D rendering was often implemented us-
+                                                                    be used to create different subnetworks, which can be ex-
+ing Flash or Java 3D, both of which require plugins in or-
+                                                                    plored in our 3D visualization system. Each component is
+der to work within a web browser. In addition, 3D render-
+                                                                    furnished with various options to facilitate users’ tasks. The
+ing is inherently a computationally intensive task, and dis-
+                                                                    key features of each page are described in the sections below.
+playing large networks in 3D could easily exceed the com-
+puting capacity of early web browsers. The situation has
+significantly changed over the past few years. Modern web
+                                                                    Creation of knowledgebase on molecular interactions
+browsers are much more powerful. Browser-based applica-
+tions with hardware acceleration using graphics processing          To support the construction of biological networks for dif-
+units (GPUs) can deliver excellent user experience through          ferent types of molecules, the first task is to create a com-
+their interactive, media-rich interfaces. The recent arrival        prehensive knowledgebase on molecular interactions. In ad-
+of WebGL technology, now standard in all modern web                 dition to PPI and metabolic interactions, we have also in-
+browsers, has made it possible to implement interactive 3D          cluded transcriptional and post-transcriptional regulations.
+graphics directly in a web browser. When properly imple-            Together they represent the four main types of molecular
+mented, WebGL can deliver higher performance as com-                interactions in a simplified biological system. In total, data
+pared to other existing technologies such as canvas or scal-        from ten different databases were collected, including three
+able vector graphics (SVG) (30). Leveraging this new web            PPI databases (STRING (7), InnateDB (9), and IntAct (8)),
+technology to enable intuitive online 3D network visualiza-         two miRNA-target database (TarBase (12) and miRTar-
+tion represent a promising direction to address the current         Base (13)), two metabolic databases (KEGG (32) and Re-
+challenges in large network visualization and multi-omics           con2 (35)), and three TF-target databases (TRRUST (16),
+integration.                                                        JASPAR (15), and ENCODE (36)). These publicly avail-
+   We introduce OmicsNet, a novel web-based tool for bi-            able databases are well maintained. We will perform annual
+ological network creation and visual exploration in 3D              check to synchronize our knowledgebase with the major re-
+space. OmicsNet was developed using the state-of-the-art            leases of these databases.
+W516 Nucleic Acids Research, 2018, Vol. 46, Web Server issue
+
+
+
+
+                                                                                                                                                          Downloaded from https://academic.oup.com/nar/article-abstract/46/W1/W514/5033998 by guest on 18 June 2020
+Figure 1. The overall workflow of OmicsNet. Users can upload lists of genes/proteins, TFs, miRNAs or metabolites to search different molecular inter-
+action databases. The results will be used to create composite networks, which can be explored in a powerful 3D visualization system with comprehensive
+built-in support for different layouts, topology analysis and functional analysis.
+
+
+Data upload and processing                                                    Network construction
+The query input can be one or multiple lists of                               After users have uploaded one or more lists of molecules
+genes/proteins, miRNAs, TFs or metabolites. Omic-                             of interest, they can proceed to the next page for network
+sNet currently supports nine organisms (human, mouse,                         building. The interface allows users to select one or more
+rat, cattle, chicken, zebra fish, fruit fly, Caenorhabditis                   (up to three) types of interactions (PPI, miRNA-gene, TF-
+elegans and Schistosoma mansoni). In addition to support-                     gene or protein–metabolite) to be included in the network.
+ing creation of conventional PPI, miRNA-gene, TF-gene                         For building composite network containing more than one
+and metabolic networks, OmicsNet has been designed to                         interaction types, users need to specify the order of network
+support three general use cases for systems biology and                       creation (primary, secondary, or tertiary interactions). The
+multi-omics integration: (i) starting from a list of genes,                   primary interaction should be selected to build networks
+proteins or metabolites to build PPI or metabolic networks                    consisting of molecular entities of main interest and their
+and further include miRNAs or TFs that target these                           immediate interactors. The secondary and tertiary interac-
+nodes; (ii) starting from a few miRNAs or TFs to identify                     tions are mainly to ‘enrich’ the information contained in the
+their target genes and further add interactions between                       primary network through: (a) adding new edges - when the
+these target genes/proteins based on PPI information.                         PPI database is chosen as secondary, the process will intro-
+Note it is not advisable to start from a long list of TFs                     duce new edges between gene/protein nodes in the current
+or miRNAs as primary queries because they tend to have                        network; or (b) adding new nodes - when the TF or miRNA
+large numbers of interaction partners, making it impossible                   database is chosen, the process will introduce new regulator
+to identify any meaningful connections through visual                         nodes that target gene nodes in the current network. If mul-
+inspection of the resulting networks; (iii) starting from                     tiple lists are uploaded, the lists corresponding to the sec-
+multiple lists of molecules (genes, miRNAs, and TFs) to                       ondary and/or tertiary interactions will serve as constraints
+identify known interactions among them. Finally, users can                    to make the resulting networks more context-specific by fil-
+also directly upload their own networks in several common                     tering out nodes that are not in the input lists. In addition,
+graph file formats (.txt, .sif, or .graphml) for 3D visual                    we have implemented the ‘targeted node search’ function,
+exploration.                                                                  which allows users to search for higher-order interactions
+                                                                              for a selected node during the network visualization stage.
+                                                                              The details will be described later in the corresponding sec-
+                                                                              tion.
+                                                                 Nucleic Acids Research, 2018, Vol. 46, Web Server issue W517
+
+
+    Once interaction types are chosen and submitted for net-        will be applied in subsequent highlighting when users dou-
+work building, a table will be displayed indicating the num-        ble click a node or click the halo icon (a circle with rays) to
+ber of edges and nodes of the resulting networks to help            indicate the ‘seed’ nodes.
+users make decisions regarding whether to perform network
+filtering or proceed to network visualization. The purpose          Shading. Shading is a unique feature in 3D visualization.
+of network filtering is to reduce the network size by exclud-       When applied, the colors of a node surface will vary based
+ing less-informative nodes based on their topological prop-         on its angle and distance to the light source to produce
+erties, such as degrees or betweenness. Users can also com-         more realistic 3D effects. To minimize memory load, the
+pute and extract a minimum network that connects all cur-           default network nodes are generated using premade texture
+rent seed nodes.                                                    mapped to point primitives to simulate 3D effect. OmicsNet
+                                                                    supports six different shading options under the ‘Shading’
+                                                                    drop-down menu. Note the ‘Mesh-phong’ shading was im-
+
+
+
+
+                                                                                                                                      Downloaded from https://academic.oup.com/nar/article-abstract/46/W1/W514/5033998 by guest on 18 June 2020
+Network visual analytics                                            plemented based on 3D mesh objects, which is more mem-
+                                                                    ory intensive thus only suitable for small and medium net-
+OmicsNet offers comprehensive options for network visu-             works. For visualization of very large networks, it is rec-
+alization, customization, topology analysis, and functional         ommended to turn off the shading effects for better perfor-
+analysis. A screenshot of the Network Viewer page is shown          mance.
+in Figure 2A. The top tool bar contains various menu items
+for network viewing and customization, the left panel dis-          Node highlighting. This is an important function to help
+plays node-related information, the center panel shows the          bring out important nodes and connections. OmicsNet cur-
+network, and the right panel consists of various functions          rently supports three options for node highlighting - mixed
+for enrichment analysis and network topology analysis.              mode (default), halo effect and node color. In the default
+                                                                    mixed mode, halo effect is used for node searching (when
+Visual exploration through mouse controls. OmicsNet al-             users click a node name in the node table), and for high-
+lows users to intuitively navigate 3D network using a mouse         lighting seed nodes (when users click the halo icon); while
+or trackpad. The basic mouse controls are described below:          the node coloring is used for direct node highlighting (when
+                                                                    user double click a node in the network) and for highlight-
+• Zoom in/out: scroll the mouse wheel in the middle. Node           ing functions, modules, or shortest paths (when users click
+  labels will show up automatically based on the zoom lev-          an item from the results of enrichment analysis, module de-
+  els;                                                              tection, or shortest path finding). The highlighting color (in-
+• Rotate the current view: press the left mouse button and          cluding the color for halo effect) is controlled by the color
+  drag. The network will stay in the center;                        palette located on the top-left corner of the center panel.
+• Obtain node information: move the mouse over a node to            Network layout. Network layout (arrangements of nodes)
+  show its label; click a node to display more detailed infor-      plays a critical role in revealing important patterns during
+  mation about the node in the ‘Current selections’ panel           network visualization. Unlike the 2D layout where numer-
+  on the bottom right;                                              ous algorithms have been implemented, very few ready-to-
+• Drag and drop: in the 3D force-directed layout, users             use algorithms are available for 3D network layout. Omic-
+  can directly drag a single node or a group of highlighted         sNet offers the standard 3D force-directed layout as de-
+  nodes depending on the current scope selection. In the            fault. We have also spent significant efforts to implement
+  2D perspective mode, users can drag and drop individual           two other layouts - a multi-layered 2D perspective layout
+  layers using the grey triangle located at one corner of the       and a 3D spherical layout. These three layouts are described
+  layer. Node dragging is not yet supported at the moment           below.
+  in the spherical layout.
+• Other advanced options: users can right-click on a node           • Force-directed layout. This algorithm was adapted from
+  to search for interaction partners for this particular node         the standard 2D force-directed layout algorithm (37). It
+  against several databases (targeted node search will be             rearranges nodes in the current network using a physical
+  discussed later), or select two nodes (source and target)           model where all pairs of nodes repulse and adjacent nodes
+  and search for shortest paths between them.                         attract each other with edges acting as springs. It often
+                                                                      results in an aesthetically pleasing graph with reasonable
+Coloring. Coloring is probably the most important factor              node distribution and clustering. An example is shown in
+for effective visualizations. OmicsNet provides three places          Figure 2A. In some cases, the default force-directed lay-
+for users to adjust the colors of their networks. The ‘Col-           out in 3D may seem even more cluttered than the 2D view.
+oring Options’ panel on the top-left corner allow users to            There are several options to help partially resolve this is-
+set the background color, as well as to customize the node            sue including edge bundling, manual drag-and-drop of
+colors for different molecular types. The ‘Node’ option on            nodes to reduce overlap, decreasing edge opacity using
+the top tool bar provides a comprehensive list of coloring            the ‘Edge’ option in the top toolbar, or rotating the net-
+schemes based on different node topology measures or node             work to a different viewing angle.
+expression values (if available). Some of the most commonly         • Multi-layered perspective layout. When networks con-
+used functions are provided in the vertical toolbar located           tain more than one node type (i.e. bipartite or tripar-
+inside the network view. Located on the top is the color              tite graphs), it is often more intuitive to apply a multi-
+picker, which is used to set the current highlight color that         layered layout that takes advantage of the best of both 2D
+W518 Nucleic Acids Research, 2018, Vol. 46, Web Server issue
+
+
+
+
+                                                                                                                                                        Downloaded from https://academic.oup.com/nar/article-abstract/46/W1/W514/5033998 by guest on 18 June 2020
+Figure 2. Some screenshots of the Network Viewer showing the main features and different network layouts. (A) A force-directed subnetwork composed
+of ∼2000 nodes and ∼4000 edges. Seed nodes are indicated using halo effect, and nodes from two enriched pathways are highlighted in different colors.
+(B) A 2D perspective view of PPI subnetwork further enhanced with TFs and miRNAs targeting the key genes; (C) A spherical layout showing a module
+extracted from a large PPI network
+
+
+  and 3D. This layout, first introduced by Arena3D (25),                     • Spherical layout. The spherical layout is inspired by flight
+  separates the network into an array of 2D networks us-                       paths around the globe, which is implemented by pro-
+  ing existing context information (i.e. types of molecules).                  jecting a 2D force-directed network onto the surface of
+  This arrangement can greatly reduce the number of edge-                      a sphere. This layout improves the visual experience in
+  crossings and emphasizes the source data type of each                        some cases by reducing visual occlusions and avoids in-
+  node. This feature is also available in iCAVE (24). An ex-                   formation overload by showing only a part of the net-
+  ample is shown in Figure 2B. Users can use their mouse to                    work. An example is shown in Figure 2C. Users can
+  move each layer by dragging the grey triangle at one cor-                    change both the color and opacity of the globe using the
+  ner to improve the layout. The type of layer (grid, plane,                   corresponding option under the ‘More Options’ menu.
+  or none) can also be specified using the corresponding
+  option under the ‘More Options’ menu.
+                                                                             Functional and topology analysis.              OmicsNet supports
+                                                                           Nucleic Acids Research, 2018, Vol. 46, Web Server issue W519
+
+
+Table 1. Comparison of OmicsNet with other network visualization tools
+Tools                    OmicsNet                  3DScapeCS                BioLayout3D               Arena3D                   NAViGaTOR
+Platform                Web                        Cytoscape plug-in        Standalone                Standalone                Standalone
+Inputs                  One or more lists of       List of genes,           List of genes,            Multiple graph files;     List of genes, multiple
+                        genes, proteins, TFs,      multiple graph files;    Multiple graph files,     time-series data          graph files
+                        miRNAs,                    time-series data         expression matrix
+                        metabolites; Or graph
+                        files (.txt, .sif,
+                        graphml)
+Network Construction and Integration
+Built-in database       Yes                        -                        Yes                       -                         Yes
+support
+Network integration     Up to three types of       -                        -                         -                         -
+
+
+
+
+                                                                                                                                                          Downloaded from https://academic.oup.com/nar/article-abstract/46/W1/W514/5033998 by guest on 18 June 2020
+                        interactions
+Network Visualization and Analysis
+3D visualization        Yes                        Yes                      Yes                       Yes                       Yes
+Perspective layout      Yes                        -                        -                         Yes                       -
+Spherical layout        Yes                        -                        -                         -                         -
+Node drag-drop          Yes                        -                        2D only                   -                         Yes
+Enrichment Analysis     GO, KEGG,                  -                        -                         -                         -
+                        Reactome,
+                        PANTHER
+Module Detection        Yes                        -                        -                         -                         -
+
+The URL for each tool is given below the table (note, evaluation for 3DScapeCS is based on functions offered by the plug-in itself).
+• OmicsNet: http://omicsnet.ca/.
+• 3DScapeCS: http://scape3d.sourceforge.net/.
+• BioLayout3D: https://kajeka.com/graphia-professional/.
+• Arena3D: http://arena3d.org/.
+• NAViGaTOR: http://ophid.utoronto.ca/navigator/.
+
+
+functional enrichment analysis on genes displayed in the                        and then click the ‘Add nodes’ button located directly above
+current network. It uses hypergeometric tests for over-                         the result table. These new nodes will be added to the cur-
+representation analysis (38), and can be performed against                      rent network via connections to the target node.
+GO, PANTHER GO-Slim, Reactome or KEGG pathways
+(31–34). OmicsNet supports three network topology anal-                         Other features. The top menu bar contains most of the
+yses including node centrality analysis, module detection,                      functions related to network viewing and customization.
+and shortest path finding. Five different node centrality                       From the left side, the ‘Network’ menu allows users to ac-
+measures can be computed (degree, betweenness, closeness,                       cess the other subnetworks created during network build-
+eigenvalue, and transitivity), with degree being the default.                   ing; the ‘Layout’ menu contains the three different lay-
+To view different centrality measures, users can use the                        out options; the ‘Shading’ menu allow users to select dif-
+‘Topology’ option under the ‘View’ menu or the ‘Color’ op-                      ferent shading effects or turn off the shading; the ‘Node’
+tion under the ‘Node’ menu. Module analysis aims to find                        and ‘Edge’ menus allow users to customize the node style
+subsets of nodes that are more closely connected than ex-                       (size, color and label) and edge style (opacity, color and
+pected by chance. Three module detection algorithms are                         bundling). Finally, the ‘More Options’ menu contains vari-
+supported in OmicsNet including InfoMap (39), Walktrap                          ous advanced functions to customize the scope of selection
+(40) and Label Propagation (41). Finally, users can use the                     for highlighting, dragging as highlighting styles. The net-
+‘Path Explorer’ panel to search for the shortest paths be-                      work can be exported as a PNG image or graph files (.txt,
+tween any two nodes of interest. Users can either enter the                     .sif or .graphml) in the ‘Download’ menu.
+corresponding node IDs or right click the two nodes to de-
+fine the source and target. Click a returned path will high-                    Case study: Understanding complex immune regulations dur-
+lighted it in the current network.                                              ing helminth infection
+                                                                                Parasitic nematodes (helminths) are known to employ a
+Targeted node search. Due to practical reasons, the net-                        wide array of immunomodulatory mechanisms in order
+work creation interface does not allow users to intro-                          to maintain their long-time survival in the host (42). To
+duce high-order interaction partners in batches (i.e. for all                   better understand the effects of helminth infection, we re-
+nodes). To address this limitation, we added the ‘Targeted                      cently performed a meta-analysis of multiple gene expres-
+node search’ to allow users to search higher-order interac-                     sion datasets from helminth-infected mice, and revealed
+tions for a particular node displayed in the current network.                   a core signature of genes that are differentially expressed
+To do this, users must right click a node of interest to show a                 across multiple independent studies (43). It is of great inter-
+drop-down menu containing different databases, then click                       est to further identify potential regulators (i.e. miRNAs or
+to search a particular database. The detailed results will be                   TFs) involved in the host immune response. To achieve this,
+displayed in the ‘Regulation Explorer’ panel on the right.                      we first built a PPI network using the InnateDB database
+Users can then use checkboxes to select one or more hits,                       from the signature gene list that maximally connects all seed
+W520 Nucleic Acids Research, 2018, Vol. 46, Web Server issue
+
+
+genes and then further included miRNA-gene and TF-gene            with several well-known stand-alone tools that support 3D
+regulatory relationships using the miRNet and TRRUST              biological network visualization, including 3DScapeCS, Bi-
+databases. From the 2D perspective view, Sp1 and mir-9-5p         oLayout3D, Arena3D, and NAViGaTOR. Compared to
+clearly stands out as the key regulatory hub nodes in the         these tools, OmicsNet distinguishes itself as being the only
+composite network. Literature search indicates that both          web-based tool with comprehensive built-in support for
+molecules play important roles in the immune system. Sp1          generation of different types of molecular interaction net-
+is a transcription factor involved in the regulation of Il-10     works and a fully-featured 3D visualization system.
+(44), a key effector in regulatory T cell response that medi-
+ates helminth-mediated immunoregulation (45), while the           Current limitations and future perspectives
+miRNA-9 family is involved in the regulation of the im-
+                                                                  While the standard 3D visualization increases the viewing
+mune response (46,47). More detailed step-by-step analysis
+                                                                  space and provides greater freedom in navigation, new is-
+together with screenshots are available as Tutorial #4 on the
+
+
+
+
+                                                                                                                                     Downloaded from https://academic.oup.com/nar/article-abstract/46/W1/W514/5033998 by guest on 18 June 2020
+                                                                  sues are introduced such as edge occlusion and lack of per-
+OmicsNet website.
+                                                                  ceptual reproducibility due to excessive numbers of viewing
+                                                                  perspectives. To address these issues, we have implemented
+IMPLEMENTATION
+                                                                  two enhanced layout options by dividing the nodes into
+OmicsNet was developed using a server-client design. The          multiple layers based on node types (the multi-layered per-
+server side was implemented using the PrimeFaces compo-           spective view), and by projecting the network on a globe’s
+nent library (version 6.1) for the web framework, and R           surface to mask network complexity while maintaining
+(version 3.4.3) for back-end computing. The client side was       connectivity and ease of navigation (the sphere view). To
+implemented based on JavaScript using the Three.js library        further reduce edge occlusion, we implemented a force-
+(https://threejs.org/) as an interface to WebGL. WebGL can        directed edge bundling. In the future, we will implement
+take advantage of the GPU acceleration by sending and ex-         additional network layouts and editing options to improve
+ecuting code directly on the GPU to render graphics. This         both the performance and visualization experience. Mean-
+type of code is termed shader. To minimize the memory             while, we also intend to increase its interoperability with
+load and computational resources required, we used ma-            community network visualization tools such as Cytoscape
+terial rendered using low-level custom shader to represent        (6) and Gephi (22). At the moment, OmicsNet does not sup-
+nodes as opposed to memory intensive meshes. Addition-            port directed or weighted edges, both features are impor-
+ally, to minimize the instances of time-consuming data pass-      tant for many biological network visualization and inter-
+ing to CPU, we store the geometry data of nodes and edges         pretation. This will be our focus in the next updates. Other
+in buffers before sending them. Our empirical testing shows       features to be added is the support of time-series, dynamic
+that OmicsNet can display large networks with ∼10,000             networks and general functionalities to perform differential
+nodes. A key limiting factor in terms of performance is the       network analysis. Indeed, as tremendous progresses have
+high interactivity of the current implementation. Support-        been made in the field of personalized medicine, there is
+ing features such as drag-and-drop and dynamic updating           an increasing need in the processing and visualization of -
+visual properties (color, size, etc.) of nodes/edges requires a   omics data from a single source over a period of time (48).
+large amount of event listeners which will negatively impact      This remains a huge challenge in the field and novel fea-
+the performance in the cases of larger networks. We are de-       tures such as integrating animation and other additional di-
+veloping a specialized version for 3D viewing only (zoom          mensions could facilitate its visualization and analysis (49).
+and rotate) that will allow visualization of up to one million    Another extension of the current work is to explore the ef-
+nodes with same size and color. We intend to add this op-         fects of virtual reality (VR) through browsers using the We-
+tion in the near future. Meanwhile, we recommend users to         bVR API. This is already achievable with either Firefox or
+keep network size between 200 and 2000 for practical rea-         Chrome using a VR device such as the Oculus Rift.
+sons. OmicsNet also supports retina display by automati-
+cally adjusts the pixels of rendered networks depending on        CONCLUSION
+the user’s screen resolution. Since most of the network visu-
+                                                                  Driven by the growing numbers of studies on multi-omics
+alization functions come from browser-side JavaScript func-
+                                                                  data integration and systems biology, there are strong
+tions, its performance is dependent on the user’s browser
+                                                                  demands for user-friendly web-based tools to allow re-
+and graphics card. The public server is hosted on a Google
+                                                                  searchers to easily create, integrate and visualize different
+Cloud Engine with 30GB of RAM and eight virtual CPUs
+                                                                  types of biological networks. To address this need, we have
+with 2.6 GHz each. OmicsNet has been tested in most ma-
+                                                                  developed OmicsNet to support intuitive network construc-
+jor web browsers such as Chrome 50+, Firefox 47+, Safari
+                                                                  tion from a single or multiple lists of molecules. To facilitate
+10.1+ and Edge 12+ with WebGL enabled.
+                                                                  data visualization experience, OmicsNet leverages the pow-
+                                                                  erful WebGL technology to enable native 3D rendering of
+Comparison with other tools
+                                                                  complex biological networks within modern web browsers.
+OmicsNet is a 3D network visualization and integrative            Three graph layouts have been implemented to provide dif-
+analysis tool containing a comprehensive built-in molecular       ferent perspectives of the same network. The interface al-
+interaction knowledgebase that supports an array of differ-       lows users to easily customize their visualizations through
+ent organisms. To the best of our knowledge, it is currently      coloring, shading, highlighting, drag-and-drop, etc. In ad-
+the only web-based application dedicated for visualizing bi-      dition, users can also perform targeted node search, func-
+ological network in 3D space. Table 1 compares OmicsNet           tional enrichment analysis, module detection, and shortest
+                                                                            Nucleic Acids Research, 2018, Vol. 46, Web Server issue W521
+
+
+path computing. OmicsNet therefore fills an important gap                      16. Han,H., Cho,J.W., Lee,S., Yun,A., Kim,H., Bae,D., Yang,S.,
+by providing an easy-to-use web-based tool for 3D network                          Kim,C.Y., Lee,M., Kim,E. et al. (2018) TRRUST v2: an expanded
+                                                                                   reference database of human and mouse transcriptional regulatory
+visual analytics.                                                                  interactions. Nucleic Acids Res., 46, D380–D386.
+                                                                               17. Barabasi,A.L., Gulbahce,N. and Loscalzo,J. (2011) Network
+                                                                                   medicine: a network-based approach to human disease. Nat. Rev.
+FUNDING                                                                            Genet., 12, 56–68.
+                                                                               18. Barsky,A., Gardy,J.L., Hancock,R.E.W. and Munzner,T. (2007)
+Natural Sciences and Engineering Research Council of                               Cerebral: a Cytoscape plugin for layout of and interaction with
+Canada (NSERC) Discovery Grant; Genome Canada;                                     biological networks using subcellular localization annotation.
+Canada Research Chairs Program (CRC). Funding for                                  Bioinformatics, 23, 1040–1042.
+open access charge: CRC.                                                       19. Holten,D. and Van Wijk,J.J. (2009), Computer Graphics Forum. Wiley
+                                                                                   Online Library, Vol. 28, pp. 983–990.
+Conflict of interest statement. None declared.                                 20. De Domenico,M., Porter,M.A. and Arenas,A. (2015) MuxViz: a tool
+
+
+
+
+                                                                                                                                                            Downloaded from https://academic.oup.com/nar/article-abstract/46/W1/W514/5033998 by guest on 18 June 2020
+                                                                                   for multilayer analysis and visualization of networks. J. Complex
+                                                                                   Netw., 3, 159–176.
+REFERENCES                                                                     21. Secrier,M., Pavlopoulos,G.A., Aerts,J. and Schneider,R. (2012)
+ 1. Ritchie,M.D., Holzinger,E.R., Li,R., Pendergrass,S.A. and Kim,D.               Arena3D: visualizing time-driven phenotypic differences in biological
+    (2015) Methods of integrating data to uncover genotype-phenotype               systems. BMC Bioinformatics, 13, 45.
+    interactions. Nat. Rev. Genet., 16, 85–97.                                 22. Jacomy,M., Venturini,T., Heymann,S. and Bastian,M. (2014)
+ 2. Meng,C., Zeleznik,O.A., Thallinger,G.G., Kuster,B., Gholami,A.M.               ForceAtlas2, a continuous graph layout algorithm for handy network
+    and Culhane,A.C. (2016) Dimension reduction techniques for the                 visualization designed for the Gephi software. PLoS One, 9, e98679.
+    integrative analysis of multi-omics data. Brief. Bioinformatics, 17,       23. Theocharidis,A., Van Dongen,S., Enright,A.J. and Freeman,T.C.
+    628–641.                                                                       (2009) Network visualization and analysis of gene expression data
+ 3. Kitano,H. (2002) Systems biology: a brief overview. Science, 295,              using BioLayout Express3D. Nat. Proto., 4, 1535–1550.
+    1662–1664.                                                                 24. Liluashvili,V., Kalayci,S., Fluder,E., Wilson,M., Gabow,A. and
+ 4. Robinson,J.L. and Nielsen,J. (2016) Integrative analysis of human              Gümüş,Z.H. (2017) iCAVE: an open source tool for visualizing
+    omics data using biomolecular networks. Mol. Biosyst., 12,                     biomolecular networks in 3D, stereoscopic 3D and immersive 3D.
+    2953–2964.                                                                     GigaScience, 6, 1–13.
+ 5. Chong,J. and Xia,J. (2017) Computational approaches for integrative        25. Pavlopoulos,G.A., O’Donoghue,S.I., Satagopam,V.P., Soldatos,T.G.,
+    analysis of the metabolome and microbiome. Metabolites, 7, E62.                Pafilis,E. and Schneider,R. (2008) Arena3D: visualization of
+ 6. Shannon,P., Markiel,A., Ozier,O., Baliga,N.S., Wang,J.T.,                      biological networks in 3D. BMC Syst. Biol., 2, 104.
+    Ramage,D., Amin,N., Schwikowski,B. and Ideker,T. (2003)                    26. Wang,Q., Tang,B., Song,L., Ren,B., Liang,Q., Xie,F., Zhuo,Y.,
+    Cytoscape: a software environment for integrated models of                     Liu,X. and Zhang,L. (2013) 3DScapeCS: application of three
+    biomolecular interaction networks. Genome Res., 13, 2498–2504.                 dimensional, parallel, dynamic network visualization in Cytoscape.
+ 7. Szklarczyk,D., Morris,J.H., Cook,H., Kuhn,M., Wyder,S.,                        BMC Bioinformatics, 14, 322.
+    Simonovic,M., Santos,A., Doncheva,N.T., Roth,A. and Bork,P.                27. Xia,J., Gill,E.E. and Hancock,R.E. (2015) NetworkAnalyst for
+    (2017) The STRING database in 2017: quality-controlled                         statistical, visual and network-based meta-analysis of gene expression
+    protein–protein association networks, made broadly accessible.                 data. Nat. Protoc., 10, 823–844.
+    Nucleic Acids Res., 45, D362–D368.                                         28. Salavert,F., Garcia-Alonso,L., Sanchez,R., Alonso,R., Bleda,M.,
+ 8. Orchard,S., Ammari,M., Aranda,B., Breuza,L., Briganti,L.,                      Medina,I. and Dopazo,J. (2016) Web-based network analysis and
+    Broackes-Carter,F., Campbell,N.H., Chavali,G., Chen,C. and                     visualization using CellMaps. Bioinformatics (Oxford, England), 32,
+    Del-Toro,N. (2013) The MIntAct project––IntAct as a common                     3041–3043.
+    curation platform for 11 molecular interaction databases. Nucleic          29. Fan,Y., Siklenka,K., Arora,S.K., Ribeiro,P., Kimmins,S. and Xia,J.
+    Acids Res., 42, D358–D363.                                                     (2016) miRNet - dissecting miRNA–target interactions and
+ 9. Breuer,K., Foroushani,A.K., Laird,M.R., Chen,C., Sribnaia,A.,                  functional associations through network-based visual analysis.
+    Lo,R., Winsor,G.L., Hancock,R.E., Brinkman,F.S. and Lynn,D.J.                  Nucleic Acids Res., 44, W135–W141.
+    (2013) InnateDB: systems biology of innate immunity and                    30. Kee,D.E., Salowitz,L. and Chang,R. (2012) Comparing interactive
+    beyond–recent updates and continuing curation. Nucleic Acids Res.,             web-based visualization rendering techniques. In Poster Proc. IEEE
+    41, D1228–D1233.                                                               Conf. InfoVis.
+10. Brown,K.R., Otasek,D., Ali,M., McGuffin,M.J., Xie,W., Devani,B.,           31. Reference Genome Group of the Gene Ontology, C. (2009) The Gene
+    Toch,I.L.v and Jurisica,I. (2009) NAViGaTOR: network analysis,                 Ontology’s Reference Genome Project: a unified framework for
+    visualization and graphing Toronto. Bioinformatics, 25, 3327–3329.             functional annotation across species. PLoS Comput. Biol., 5,
+11. Hu,Z., Snitkin,E.S. and DeLisi,C. (2008) VisANT: an integrative                e1000431.
+    framework for networks in systems biology. Brief. Bioinformatics, 9,       32. Kanehisa,M., Furumichi,M., Tanabe,M., Sato,Y. and Morishima,K.
+    317–325.                                                                       (2017) KEGG: new perspectives on genomes, pathways, diseases and
+12. Karagkouni,D., Paraskevopoulou,M.D., Chatzopoulos,S.,                          drugs. Nucleic Acids Res., 45, D353–D361.
+    Vlachos,I.S., Tastsoglou,S., Kanellos,I., Papadimitriou,D.,                33. Fabregat,A., Jupe,S., Matthews,L., Sidiropoulos,K., Gillespie,M.,
+    Kavakiotis,I., Maniou,S., Skoufos,G. et al. (2018) DIANA-TarBase               Garapati,P., Haw,R., Jassal,B., Korninger,F., May,B. et al. (2018) The
+    v8: a decade-long collection of experimentally supported                       reactome pathway knowledgebase. Nucleic Acids Res., 46,
+    miRNA-gene interactions. Nucleic Acids Res., 46, D239–D245.                    D649–D655.
+13. Chou,C.H., Shrestha,S., Yang,C.D., Chang,N.W., Lin,Y.L.,                   34. Mi,H., Poudel,S., Muruganujan,A., Casagrande,J.T. and
+    Liao,K.W., Huang,W.C., Sun,T.H., Tu,S.J., Lee,W.H. et al. (2018)               Thomas,P.D. (2016) PANTHER version 10: expanded protein
+    miRTarBase update 2018: a resource for experimentally validated                families and functions, and analysis tools. Nucleic Acids Res., 44,
+    microRNA-target interactions. Nucleic Acids Res., 46, D296–D302.               D336–D342.
+14. Kellis,M., Wold,B., Snyder,M.P., Bernstein,B.E., Kundaje,A.,               35. Swainston,N., Smallbone,K., Hefzi,H., Dobson,P.D., Brewer,J.,
+    Marinov,G.K., Ward,L.D., Birney,E., Crawford,G.E., Dekker,J. et al.            Hanscho,M., Zielinski,D.C., Ang,K.S., Gardiner,N.J. and
+    (2014) Defining functional DNA elements in the human genome.                   Gutierrez,J.M. (2016) Recon 2.2: from reconstruction to model of
+    Proc. Natl. Acad. Sci. U.S.A., 111, 6131–6138.                                 human metabolism. Metabolomics, 12, 1–7.
+15. Khan,A., Fornes,O., Stigliani,A., Gheorghe,M.,                             36. Consortium,E.P. (2004) The ENCODE (ENCyclopedia of DNA
+    Castro-Mondragon,J.A., van der Lee,R., Bessy,A., Cheneby,J.,                   elements) project. Science, 306, 636–640.
+    Kulkarni,S.R., Tan,G. et al. (2018) JASPAR 2018: update of the             37. Fruchterman,T.M. and Reingold,E.M. (1991) Graph drawing by
+    open-access database of transcription factor binding profiles and its          force-directed placement. Software: Pract. Exp., 21, 1129–1164.
+    web framework. Nucleic Acids Res., 46, D260–D266.
+W522 Nucleic Acids Research, 2018, Vol. 46, Web Server issue
+
+
+38. Cho,R.J., Huang,M., Campbell,M.J., Dong,H., Steinmetz,L.,             45. Sher,A., Gazzinelli,R.T., Oswald,I.P., Clerici,M., Kullberg,M.,
+    Sapinoso,L., Hampton,G., Elledge,S.J., Davis,R.W. and                     Pearce,E.J., Berzofsky,J.A., Mosmann,T.R., James,S.L. and
+    Lockhart,D.J. (2001) Transcriptional regulation and function during       MorseIII,H. (1992) Role of T-Cell derived cytokines in the
+    the human cell cycle. Nat. Genet., 27, 48.                                downregulation of immune responses in parasitic and retroviral
+39. Rosvall,M. and Bergstrom,C.T. (2007) An information-theoretic             infection. Immunol. Rev., 127, 183–204.
+    framework for resolving community structure in complex networks.      46. Bazzoni,F., Rossato,M., Fabbri,M., Gaudiosi,D., Mirolo,M.,
+    Proc. Natl. Acad. Sci. U.S.A., 104, 7327–7331.                            Mori,L., Tamassia,N., Mantovani,A., Cassatella,M.A. and Locati,M.
+40. Pons,P. and Latapy,M. (2005) Computing communities in large               (2009) Induction and regulatory function of miR-9 in human
+    networks using random walks. Lect. Notes Comput. Sci., 3733,              monocytes and neutrophils exposed to proinflammatory signals.
+    284–293.                                                                  Proc. Natl. Acad. Sci. U.S.A., 106, 5282–5287.
+41. Raghavan,U.N., Albert,R. and Kumara,S. (2007) Near linear time        47. Nie,K., Gomez,M., Landgraf,P., Garcia,J.-F., Liu,Y., Tan,L.H.,
+    algorithm to detect community structures in large-scale networks.         Chadburn,A., Tuschl,T., Knowles,D.M. and Tam,W. (2008)
+    Phys. Rev. E Stat. Nonlin. Soft. Matter Phys., 76, 036106.                MicroRNA-mediated down-regulation of PRDM1/Blimp-1 in
+42. Maizels,R.M. and Yazdanbakhsh,M. (2003) Immune regulation by              Hodgkin/Reed-Sternberg cells: a potential pathogenetic lesion in
+
+
+
+
+                                                                                                                                                      Downloaded from https://academic.oup.com/nar/article-abstract/46/W1/W514/5033998 by guest on 18 June 2020
+    helminth parasites: cellular and molecular mechanisms. Nat. Rev.          Hodgkin lymphomas. Am. J. Pathol., 173, 242–252.
+    Immunol., 3, 733–744.                                                 48. Schork,N.J. (2015) Personalized medicine: time for one-person trials.
+43. Zhou,G., Stevenson,M.M., Geary,T.G. and Xia,J. (2016)                     Nature, 520, 609–611.
+    Comprehensive transcriptome meta-analysis to characterize host        49. Pavlopoulos,G.A., Malliarakis,D., Papanikolaou,N., Theodosiou,T.,
+    immune responses in helminth infections. PLoS Neglect. Trop. Dis.,        Enright,A.J. and Iliopoulos,I. (2015) Visualizing genome and systems
+    10, e0004624.                                                             biology: technologies, tools, implementation techniques and trends,
+44. Zhang,X., Edwards,J.P. and Mosser,D.M. (2006) Dynamic and                 past, present and future. GigaScience, 4, 38.
+    transient remodeling of the macrophage IL-10 promoter during
+    transcription. J. Immunol., 177, 1282–1288.
+

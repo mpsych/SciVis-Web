@@ -1,0 +1,374 @@
+Mohebifar and Sajadi ﻿J Cheminform (2015) 7:56
+DOI 10.1186/s13321-015-0101-7
+
+
+
+
+ SOFTWARE                                                                                                                                    Open Access
+
+Chemozart: a web‑based 3D molecular
+structure editor and visualizer platform
+Mohamad Mohebifar*                 and Fatemehsadat Sajadi
+
+
+  Abstract
+  Background: Chemozart is a 3D Molecule editor and visualizer built on top of native web components. It offers
+  an easy to access service, user-friendly graphical interface and modular design. It is a client centric web application
+  which communicates with the server via a representational state transfer style web service. Both client-side and
+  server-side application are written in JavaScript. A combination of JavaScript and HTML is used to draw three-dimen-
+  sional structures of molecules.
+  Results: With the help of WebGL, three-dimensional visualization tool is provided. Using CSS3 and HTML5, a user-
+  friendly interface is composed. More than 30 packages are used to compose this application which adds enough flex-
+  ibility to it to be extended. Molecule structures can be drawn on all types of platforms and is compatible with mobile
+  devices. No installation is required in order to use this application and it can be accessed through the internet. This
+  application can be extended on both server-side and client-side by implementing modules in JavaScript. Molecular
+  compounds are drawn on the HTML5 Canvas element using WebGL context.
+  Conclusions: Chemozart is a chemical platform which is powerful, flexible, and easy to access. It provides an online
+  web-based tool used for chemical visualization along with result oriented optimization for cloud based API (applica-
+  tion programming interface). JavaScript libraries which allow creation of web pages containing interactive three-
+  dimensional molecular structures has also been made available. The application has been released under Apache 2
+  License and is available from the project website https://chemozart.com.
+  Keywords: Cheminformatics, Web-based, JavaScript, Visualization
+
+
+Background                                                                           platform independency and compatibility are some of
+In the field of computational chemistry, applications                                them. Most of the web applications which are used for
+which are capable of constructing and viewing 3D struc-                              building chemical structures have limited capabilities and
+tures of molecules play an important role. Such software                             most of them are two-dimensional editors such as Chem-
+can be used to by students to understand stereochemical                              Doodle [5]. There are several chemical structure editors
+concepts [1]. There are numerous desktop applications                                available powered by Java applets such as JME a free 2D
+available for viewing and building 3D molecules. Avoga-                              molecule editor java applet [6]; however, they are not
+dro [2], JMol [3], QuteMol [4] and PyMol are few such                                compatible with all the browsers. Besides, JAVA needs
+examples. When it comes to web applications capable of                               to be separately installed on the system in order to run
+constructing 3D chemical structures, there are not many                              these applications. This issue exists for other embedded
+available.                                                                           objects like Flash and Flame [7], a Flash molecular editor
+  Today web-based tools are becoming extremely popu-                                 is a case in point. There is another web application availa-
+lar. There are numerous benefits which can be derived                                ble to build 3D chemical structures, it is called CH5M3D
+from them; accessibility, flexible core technologies,                                [8]. It portrays a 3D picture with HTML5 however, it fails
+                                                                                     to deliver optimum results as it uses canvas 2D context.
+                                                                                     Because of its limitation, it does not use any shader pro-
+*Correspondence: mohamad@mohebifar.com                                               gram. As a result of which three-dimensional rendering
+Department of Chemistry, Shahid Beheshti University, Tehran, Iran
+
+                                         © 2015 Mohebifar and Sajadi. This article is distributed under the terms of the Creative Commons Attribution 4.0 International
+                                         License (http://creativecommons.org/licenses/by/4.0/), which permits unrestricted use, distribution, and reproduction in any
+                                         medium, provided you give appropriate credit to the original author(s) and the source, provide a link to the Creative Commons
+                                         license, and indicate if changes were made. The Creative Commons Public Domain Dedication waiver (http://creativecommons.
+                                         org/publicdomain/zero/1.0/) applies to the data made available in this article, unless otherwise stated.
+Mohebifar and Sajadi ﻿J Cheminform (2015) 7:56                                                                     Page 2 of 8
+
+
+
+
+cannot be portrayed in the truest sense. Today, it is pos-       the molecular structures in both of the client-side and
+sible to draw sophisticated graphics that are hardware           server-side applications. The client-side consists of the UI
+accelerated by GPU; thanks to HTML5 and WebGL. Fur-              and the visualization part that helps one to view or edit
+thermore, these components are supported by all mod-             the structures easily. The convenient user interface offers
+ern web browsers, especially mobile browsers.                    modifying molecular structures interactively while the
+   Applications built using web-based components can             visualization part helps in viewing the 3D representations
+be accessed with ease on portable devices such as iPods          of the molecular compounds.
+and smartphones with an additional feature which enable
+to use it in offline mode too. In today’s tech savvy world,      Implementation
+the utilization of chemistry related applications are dra-       Software architecture and interactivity
+matically growing [9]. This 3D molecule editor targets           Chemozart provides a web-based platform for creation,
+students at varied levels of study, i.e. high school, college,   modification and display of molecules. It is available
+and graduate school. Along with the students Chemo-              under Apache 2 License which gives power and access
+zart targets the chemical professionals, and teachers too        to everyone to contribute on extending it. This pack-
+with the motive that they can effectively research in any        age consists of a client-side and a server-side applica-
+topic and also appropriately solve the queries of their stu-     tion. The client-side application is designed according
+dents. We have developed a 3D molecule editor on top of          to Model View ViewModel (MVVM) pattern. It is built
+web components which leads to better performance and             with Angular.js which is an MV* client-side framework.
+maintainability. With the help of node.js https://nodejs.        It offers service providers, two-way bindings, data mod-
+org/, it is now possible to use JavaScript outside the web       els, convenient RESTful resource client service, declara-
+browsers. Both server-side and client-side codes are fully       tive user interface, etc. The server-side application is
+written in JavaScript. By writing both in same language,         designed according to the Model View Controller (MVC)
+we seek to enhance integration. Javascript is the language       pattern. It is also completely written in JavaScript and
+used to develop this software. A Github data visualiza-          uses node.js as the runtime environment. This package
+tion factually states that JavaScript is considered to have      is flexible enough to be developed with a well-organized
+the most active repositories. As a result, there are diverse     structure. The entire application is written in JavaScript
+packages written in JavaScript with which this software          according to ECMAScript 6 which offers classy, flexible
+can be bundled.                                                  and cleaner syntax, a universal way for module defini-
+   A chemical toolbox is also needed in order to read dif-       tion, etc. Chemozart transpiles ES6 codes to ES5-friendly
+ferent chemical file formats, calculate energy, etc. Open-       codes using Babel https://babeljs.io/ for browser support.
+Babel is considered to be one of the best chemical toolkit       The stylesheets are originally written in LESS which are
+which is open-source and it can be easily ported to dif-         compiled to CSS.
+ferent languages. There are bindings of OpenBabel in                The client-side application depends on two major pack-
+some languages such as Rubabel [10] for Ruby and Pybel           ages which are designed to facilitate the process of bind-
+[11] for Python. We also made OpenBabel-Node http://             ing chemical data to the graphics. Chem.js is a JavaScript
+mohebifar.github.io/OpenBabel-Node/ to port OpenBa-              package which creates event-based models of molecule,
+bel [12] to node.js. It exposes OpenBabel application pro-       atoms and bonds through an object-oriented approach.
+gramming interfaces (APIs) to many available packages            It is also used to serialize the molecules in JSON for-
+in node.js via a convenient interface. We bundled it with        mat. Mol3D https://github.com/mohebifar/mol3d is
+express.js web framework to create a chemical represen-          another JavaScript package that displays the structure
+tational state transfer style (REST)ful API. OpenBabel-          of molecules and it uses Three.js to render 3D objects
+Node is used to read and write a variety of chemical file        with WebGL. It converts the Chem.js objects into Three.
+formats. Apart from this, it also supports various molec-        js https://github.com/mrdoob/three.js objects according
+ular mechanics force fields and provides optimization of         to atoms’ position, atomic radius and CPK coloring con-
+geometry of the molecules.                                       vention. The default display mode is “ball and stick” as it
+   Chemozart is a web application tool that can be used          is the most convenient model for editing molecules. It is
+for viewing and editing of 3D molecular structures.              also possible to make arbitrary display modes.
+With the help of this web-based platform user can eas-              The server-side application depends on OpenBabel-
+ily create, modify or view the structures of the molecu-         Node which is a submodule of Chemozart, to provide
+lar compounds. With the help of JavaScript and HTML              native bindings of OpenBabel in node.js. It is originally
+user can easily draw or view the 3D structures of the            written in C++ and makes it possible to use OpenBabel
+molecular compounds. The web application represents              APIs in JavaScript codes. This package is used to build 3D
+Mohebifar and Sajadi ﻿J Cheminform (2015) 7:56                                                                 Page 3 of 8
+
+
+
+
+coordinates, calculate the energy of molecules, import         Implementation
+and export chemical files including SMILES [13], CML           Library development
+[14], Hyperchem HIN, MDL SD [15], Sybyl Mol2 [16]              The client-side consists of the user interface along with
+and PDB [17].                                                  a variety of logical modules. It helps to view or edit the
+  One of the most important aims of Chemozart is to            structures interactively. The user interface is composed
+provide a good user experience. So it facilitates build-       in CSS and HTML, a dynamic stylesheet language called
+ing molecules with the help of mouse and keyboard              LESS is used in this software. These stylesheets are com-
+actions or by touch screens devices. Changing the              piled into CSS which makes it easier to write and main-
+position of atoms is also as simple as dragging them           tain stylesheets in big projects. For the views, JADE
+around. All the hidden elements such as periodic table         platform is used that offers inheritance and re-usable
+appear with an animation effect that provides a better         functions. Based on MVVM architectural pattern, the
+user experience.                                               molecular models are two-way bound as ViewModel
+  While this application focuses on educational pur-           between the controllers and view. It exposes the data
+poses, more educational functionalities are planned to         objects in such a way that user can view the model struc-
+be included in future versions. The most important fea-        ture without being bothered about the back end logic
+ture is to attach a database to the server-side applica-       of the model. Working under a framework of Angular.
+tion to make it possible to share a molecule via a link so     js which is based on MV* architecture, the application
+that students can share their mind and questions with          firstly reads the view and interprets it as directives and
+their teachers. It also facilitates the process of teaching    binds the data to a model. The models here are a repre-
+for teachers given that this application works on mobile       sentation of a molecule drawn or structured by the user
+devices. In addition, more OpenBabel features will be          working. Further, the models discussed above are origi-
+used such as force field clean-up. More complete support       nally the atoms and bonds.
+for chemical file formats is also planned to be included in       The server-side of the application is based on the MVC
+future versions (Fig. 1).                                      software architectural pattern that helps to separate
+                                                               this web application into three interconnected parts.
+Installation                                                   This helps in easy viewing of the structure of a molecu-
+One of the unique features of this application is the fact     lar compound by separating the inner information from
+that it does not require any installation process and can      the logics and views. Written in JavaScript, the software
+be accessed online. However, it can be installed locally       uses both node.js and express.js that can be used for fast
+too. The application requires an existing installation of      running of this application and fewer lines of codes to
+node.js, npm, bower and grunt. The code is developed           develop.
+and maintained on a Git repository https://github.com/
+mohebifar/chemozart available on Github. After cloning         Modes
+this repository in any convenient location, dependen-          The 3D molecule editor and visualizer works on three
+cies are required to be installed. Note that the client-side   modes which are as follows:
+dependencies are managed by bower and the server-side
+dependencies are managed by npm. It is required to run           Camera mode
+“npm install” and “bower install” commands in a termi-           Editing mode
+nal window to install both frontend and backend depend-          Positioning mode
+encies. By running “grunt serve” the application will be
+started and it starts listening on port 9000 by default        Camera mode
+while a web browser will show up automatically. It is also     In this mode user can rotate any molecular structure just
+possible to change the port by changing the OS environ-        by holding the left button of the mouse and moving it. Its
+ment variable “PORT”.                                          function Pan can also be used just by holding the right
+  This application requires a web server since it has          button of the mouse and moving it according to require-
+some functions that use OpenBabel-node. However, it            ments. The zoom function of this mode can be accessed
+can also be accessed without web server installation but       when user scroll by holding the middle button of the
+some functionalities that require OpenBabel will not be        mouse. This mode works with touch screen devices as
+available such as energy calculation, adding Hydrogens         well.
+and 3D build, export and import different chemical lan-
+guages. The different versions of this application are dis-    Editing mode
+tributed as compressed zip archives and are accessible in      Editing any molecular structure is quite easy because of
+the releases menu on the Github page.                          the array of options available in this mode. To add atom
+Mohebifar and Sajadi ﻿J Cheminform (2015) 7:56                                                                 Page 4 of 8
+
+
+
+
+to any structure user have to click on the empty space        way to construct or view structures, this chemical soft-
+while to delete any atom while to delete any atom just        ware is a good to educate and explaining the detail aspect
+right click on the atom itself. By dragging from one atom     of 3D geometry in a convenient way. This 3D geometry
+to another user can add bond. Clicking on a bond adjusts      visualization also helps in performing an in depth analy-
+their order. Removing a bond is also possible by right        sis of the background of the image and get clear informa-
+clicking on it.                                               tion about the formation of each molecules which is not
+                                                              possible with 2D images with no visual of background
+Positioning mode                                              images. Analysis of molecular structures and its 3D rep-
+This mode offers proper positioning of the molecular          resentations also play an important role in the field of
+structure is. In this mode, dragging the atoms on the         computational chemistry as well. The application does
+screen changes the position of them.                          not require any installation and can be accessed online.
+                                                              Interested user can install it locally and continue work
+Menus                                                         without any hassle. It provides a good user experience
+The menu option of this chemical structure viewing soft-      with the help of keyboard and mouse actions and with
+ware comprises of three main options which are known          the touch screen devices. In accordance with the edu-
+as File, Build and Energy.                                    cational requisites, Chemozart will give the students a
+                                                              clarity about the molecules and their stereochemistry
+File                                                          concepts. The biggest advantage of this software is that
+The file option of this web application comprises of an       it assists in educating the students and imparting knowl-
+array of options which includes New, Open, Save, Delete,      edge to them as it works on portable devices (Fig. 2).
+Import, Export and Print. User can save or delete a struc-       This application is written in JavaScript which is the
+ture easily or even import one from the desktop with          preferred language for making web applications. Usage of
+the help of these options available in File menu. It sup-     JavaScript enhances the integration as it is used in both
+ports wide range of file formats to read and write. All the   client-side and server-side. Moreover, it helps in creating
+drawn structures are also saved in browser’s local storage.   an easy user interface and any one can avail its advanced
+                                                              functionalities just by entering web url in the browser.
+Build                                                         Now studying a 3D structure of a molecular compound,
+The Build menu comprises of two options which are             modifying it or calculating the energy is very easier
+known as Build 3D and Add Hydrogens. The Build 3D             because of this online chemical software. Chemozart is
+option helps user to generate 3D coordinates for the          surely going to be a milestone in the field of construct-
+drawn molecule. Adding Hydrogen functionality to the          ing 3D images in the field of chemistry to analyze, study
+existing structure is also provided in order to fill out      and create unique 3D chemical structure images with its
+implicit valence spots. The Builder and Hydrogen Adder        user-friendly interface.
+options use OpenBabel-Node via a RESTful API.
+                                                              Creating web pages
+Energy                                                        This application can be accessed in two different envi-
+Different molecular mechanics force-field methods like        ronments; development and production. To create a
+MMFF94, UFF and Ghemical are available to evaluate the        web page development files should be used which make
+energy. By creating the structure and using any of these      it easier to develop and extend the application. After
+options the energy shows up on a dialog. Further, this is a   changing the code files, by running “grunt build” pro-
+common feature of the OpenBabel-Node too.                     duction files will be created in a folder named “dist”. It
+                                                              basically concatenates and compresses the scripts and
+Result and discussion                                         stylesheets to prevent networks delay caused by trans-
+Technologies and components                                   ferring all unnecessary characters in the code such as
+This web application tool is used for viewing, editing of     white spaces. To create a chemical editor web page using
+molecular structures and also view it in the 3D mode.         Chemozart, it is required to determine the angular.js
+One can easily draw any structure with the help of JavaS-     that this web page belongs to a Chemozart application.
+cript codes and represent it on the HTML5 canvas ele-         This can be accomplished by adding the following line to
+ment with WebGL context. By using standard techniques         the <body> statement:
+3D structure of a molecule can also be viewed. Because          <body ng-app = “chemartApp”>
+of its flexibility in operation and numerous editing and        The main element to create a Chemozart web page
+modifying modes, the software is easy to work with and        is the div element with ui-view attribute. It will auto-
+beneficial. With its numerous editing options and easy        matically include the tool bar, status bar, menu and the
+Mohebifar and Sajadi ﻿J Cheminform (2015) 7:56                                                                                   Page 5 of 8
+
+
+
+
+drawing window to show and edit the molecule. It is
+accomplished by using angular.js templates.
+  <div ui-view = “”> </div>
+  At the end of the body tag, it is required to include all
+the dependencies in the right order that vary from ven-
+dor libraries to each Chemozart modules.
+  Each template can be customized as well as the
+stylesheets. Templates in JADE and their correspond-
+ing stylesheets in LESS are located inside the app or com-
+ponents folder inside the client folder based on their role.
+Components such as menu bar, tool bar, status bar, periodic
+table, help window and about window are located in the
+components folder and the main template that puts these
+components together is located in the app folder (Fig. 3).
+
+User‑defined functions                                               Fig. 1 Overview of the client-side application architecture. The
+                                                                     client-side application is designed according to MVVM software
+This application is built with Angular.js on client-side. All the    architecture
+components and libraries are a directive, a service or a con-
+troller. For example, to create a button in the menu bar that
+adds a carbon on the drawing window the following steps
+could be used. In the first step, a service must be created.        After injecting the service, it should be assigned to the
+                                                                    controller’s scope so it can be accessed in the view.
+angular.module('chemartApp')
+                                                                    angular.module('chemartApp')
+ .factory('addCarbon', funcon (canvas) {
+                                                                     .controller('MainCtrl', funcon ($scope, ..., addCarbon) {
+  return funcon() {
+                                                                      $scope.addCarbon = addCarbon;
+       var atom = new Chem.Atom();
+                                                                      // Rest of code
+       atom.atomicNumber = 6;
+                                                                     });
+       atom.posion = new THREE.Vector3(0, 0, 0);
+                                                                      Finally, a button in the view is needed. To add this but-
+       canvas.addAtom(atom);                                        ton in the menu bar view the JADE file of the menu bar
+                                                                    (client/components/menubar/menubar.jade) should be
+  };                                                                altered as following:
+
+ });                                                                div.menubar(ng-controller='MenubarCtrl')
+
+  This service returns a function that creates an instance           ul
+of “Chem.Atom” that is a class of mol.js module. Then
+the atomic number should be determined by assigning                   li
+the value to the “atomicNumber” property. To “position”
+property determines the atom’s position that should be                     a(ng-click=’addCarbon()’) Add Carbon
+an instance of “Three Vector”. A singleton of the canvas
+object can be accessed via a service named “canvas”. To               // Rest of menu items
+add the created to the drawing window, the atom should
+be passed to the “addAtom” method on the canvas object.
+This service should be injected to the main controller (cli-        Conclusions
+ent/app/main/main.controller.js) by adding “addCarbon”              It can be concluded that Chemozart is a chemical web-
+to the list of arguments of the main controller function.           based application and component which provides the
+Mohebifar and Sajadi ﻿J Cheminform (2015) 7:56                                                                        Page 6 of 8
+
+
+
+
+ Fig. 2 Sample molecules. Chemozart generates high-quality molecular images since it uses WebGL
+
+
+
+
+ability to create 3D structure of molecules. The most                   Availability and requirements
+important feature is that there’s no need to install any-               Project name: Chemozart
+thing and it can be accessed easily via a URL. Also, it                   Project home page: https://chemozart.com
+can be beneficial for the educational purposes as well.                   Operating system(s): Platform independent
+To catch up with the technology, Chemozart has been                       Programming language: JavaScript
+designed in a way that it is compatible with the mobile                   Other requirements: An up-to-date web browser
+devices. The most up-to-date version of this application                  License: Apache2 License
+is available on the project home page. For the purpose                    Any restrictions to use by non-academics: None.
+of smooth functioning it is advisable to access Chemo-
+zart using the latest versions of browsers across different
+operating systems (Fig. 4)
+Mohebifar and Sajadi ﻿J Cheminform (2015) 7:56                                                                                                 Page 7 of 8
+
+
+
+
+ Fig. 3 The main page. The main page of Chemozart consists of menu bar, tool bar and a canvas to draw molecules on
+
+
+
+
+ Fig. 4 File menu. Chemozart is able to read and write different chemical file formats. It also uses browser’s local storage to store molecular struc-
+ tures
+Mohebifar and Sajadi ﻿J Cheminform (2015) 7:56                                                                                                      Page 8 of 8
+
+
+
+
+Authors’ contributions                                                          5.    Burger MC (2015) ChemDoodle web components: HTML5 toolkit for
+MM developed the applications and drafted the manuscript. FS participated             chemical graphics, interfaces, and informatics. J Cheminform 7:35.
+in the design of study, helped to write Chem.js and Mol3D and helped to draft         doi:10.1186/s13321-015-0085-3
+the manuscript. Both authors read and approved the final manuscript.            6.    Ertl P (2010) Molecular structure input on the web. J Chem 2:1
+                                                                                7.    Dallakian P, Haider N (2011) Flame: flash molecular editor—a 2D structure
+                                                                                      input tool for the web. J Chem 3:6
+Acknowledgements                                                                8.    Earley CW (2013) CH5M3D: an HTML5 program for creating 3D molecular
+The authors are grateful to Shant Shahbazian for reading a previous draft of          structures. J Chem 5:46
+this paper and some helpful suggestions.                                        9.    Libman D, Huang L (2013) Chemistry on the go: review of chemistry apps
+                                                                                      on smartphones. J Chem Educ 90(3):320–325
+Competing interests                                                             10.   Smith R et al (2013) Rubabel: wrapping openbabel with ruby. J Chem
+The authors declare that they have no competing interests.                            5:35
+                                                                                11.   O’Boyle NM, Morley C, Hutchison GR (2008) Pybel: a python wrapper for
+Received: 26 May 2015 Accepted: 29 October 2015                                       the OpenBabel cheminformatics toolkit. Chem Cent J 2:5
+                                                                                12.   O’Boyle NM et al (2011) OpenBabel: an open chemical toolbox. J Chem
+                                                                                      3:33
+                                                                                13.   Weininger D (1988) SMILES, a chemical language and information system.
+                                                                                      1. Introduction to methodology and encoding rules. J Chem Inf Comput
+                                                                                      Sci 28(1):31–36
+References                                                                      14.   Murray-Rust P, Rzepa HS (2003) Chemical markup, XML, and the World
+1. Abraham M, Varghese V, Tang Hui (2010) Using molecular representations             Wide Web. 4. CML schema. J Chem Inf Comput Sci 43(3):757–772
+    to aid student understanding of stereochemical concepts. J Chem Educ        15.   Arthur Dalby et al (1992) Description of several chemical structure file
+    87(12):1425–1429                                                                  formats used by computer programs developed at molecular design
+2. Hanwell MD, Curtis DE, Lonie DC, Vandermeersch T, Zurek E, Hutchison               limited. J Chem Inf Comput Sci 32(3):244–255
+    GR (2012) Avogadro: an advanced semantic chemical editor, visualization,    16.   Homer RW et al (2008) SYBYL line notation (SLN): a single notation to
+    and analysis platform. J Cheminformatics 4:17                                     represent chemical structures, queries, reactions, and virtual libraries. J
+3. Jmol: an open-source java viewer for chemical structures in. http://jmol.          Chem Inf Model 48(12):2294–2307
+    sourceforge.net/. Accessed 1 Nov 2015                                       17.   Berman HM (2007) The protein data bank: a historical perspective. Acta
+4. Tarini M, Cignoni P, Montani C (2006) Ambient occlusion and edge cueing            Crystallogr A 64(1):88–95
+    for enhancing real time molecular visualization. IEEE Trans Visualization
+    Comput Graph 12(5):1237–1244
+
+
+
+
+                                                                                     Publish with ChemistryCentral and every
+                                                                                     scientist can read your work free of charge
+                                                                                            Open access provides opportunities to our
+                                                                                        colleagues in other parts of the globe, by allowing
+                                                                                            anyone to view the content free of charge.
+                                                                                                              W. Jeffery Hurst, The Hershey Company.
+                                                                                      available free of charge to the entire scientific community
+                                                                                      peer reviewed and published immediately upon acceptance
+                                                                                      cited in PubMed and archived on PubMed Central
+                                                                                      yours you keep the copyright
+                                                                                 Submit your manuscript here:
+                                                                                 http://www.chemistrycentral.com/manuscript/
+

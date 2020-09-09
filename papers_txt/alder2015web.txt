@@ -1,0 +1,438 @@
+Web based visualization of large climate data sets
+
+
+
+
+              Alder, J. R., & Hostetler, S. W. (2015). Web based visualization of large climate
+              data sets. Environmental Modelling & Software, 68, 175-180.
+              doi:10.1016/j.envsoft.2015.02.016
+
+
+
+
+               10.1016/j.envsoft.2015.02.016
+               Elsevier
+
+               Version of Record
+               http://cdss.library.oregonstate.edu/sa-termsofuse
+                                                              Environmental Modelling & Software 68 (2015) 175e180
+
+
+
+                                                                    Contents lists available at ScienceDirect
+
+
+                                              Environmental Modelling & Software
+                                              journal homepage: www.elsevier.com/locate/envsoft
+
+
+Short communication
+
+Web based visualization of large climate data sets
+J.R. Alder*, S.W. Hostetler
+US Geological Survey, College of Earth, Oceanic and Atmospheric Sciences, Oregon State University, Corvallis, OR 97331, United States
+
+
+
+
+a r t i c l e i n f o                                     a b s t r a c t
+
+Article history:                                          We have implemented the USGS National Climate Change Viewer (NCCV), which is an easy-to-use web
+Received 20 August 2014                                   application that displays future projections from global climate models over the United States at the
+Received in revised form                                  state, county and watershed scales. We incorporate the NASA NEX-DCP30 statistically downscaled
+13 January 2015
+                                                          temperature and precipitation for 30 global climate models being used in the Fifth Assessment Report
+Accepted 18 February 2015
+Available online 11 March 2015
+                                                          (AR5) of the Intergovernmental Panel on Climate Change (IPCC), and hydrologic variables we simulated
+                                                          using a simple water-balance model. Our application summarizes very large, complex data sets at scales
+                                                          relevant to resource managers and citizens and makes climate-change projection information accessible
+Keywords:
+Visualization
+                                                          to users of varying skill levels. Tens of terabytes of high-resolution climate and water-balance data are
+Big data                                                  distilled to compact binary format summary ﬁles that are used in the application. To alleviate slow
+Climate modeling                                          response times under high loads, we developed a map caching technique that reduces the time it takes to
+Statistical downscaling                                   generate maps by several orders of magnitude. The reduced access time scales to >500 concurrent users.
+                                                          We provide code examples that demonstrate key aspects of data processing, data exporting/importing
+                                                          and the caching technique used in the NCCV.
+                                                                                                                                          Published by Elsevier Ltd.
+
+
+
+
+Software availability                                                                      native Network Common Data Form format (NetCDF-4, Hartnett
+                                                                                           and Rew, 2008). Many scientists are knowledgeable of NetCDF
+Software name: USGS National Climate Change Viewer                                         ﬁles, but the format of the data and size of the climate model ﬁles
+Software URL: http://www.usgs.gov/climate_landuse/clu_rd/nccv.                             (gigabytes to terabytes) can be a barrier to access for users who are
+         asp                                                                               not familiar with climate modeling and the data format. Further-
+Developer: U.S. Geological Survey (USGS)                                                   more, this barrier is an obstacle to bridging the gap between the
+Contact information: gs-w-or_regclim@usgs.gov                                              real and perceived complexity of climate science and to commu-
+Software required: Internet browser with Adobe Flash Player                                nicating climate science to managers, policy makers and the public,
+Hardware required: Any web-enabled device supporting the Adobe                             which is increasingly imperative for developing policy and miti-
+         Flash Player                                                                      gation and adaptation strategies (Voinov et al., 2014).
+Program languages: Adobe/Apache Flex, Java and Exelis IDL                                     One approach to make climate data generally more accessible is
+                                                                                           through web sites that provide user-friendly interactive visualiza-
+                                                                                           tion of model data1,2. The World Bank Group Climate Change
+1. Introduction                                                                            Knowledge Portal3 is a robust tool for visualizing CMIP3 models at
+                                                                                           the country and basin scales. More recently, the Global Climate
+    One of the major challenges of the 5th Climate Model Inter-                            Change Viewer4 (GCCV, Alder et al., 2013) is an example of such a
+comparison Program (CMIP5, Taylor et al., 2012), which provides                            web site that allows users to visualize country-scale changes in
+climate data to the Intergovernmental Panel on Climate Change                              temperature and precipitation as projected by CMIP5 models.
+(IPCC), is making the data accessible to scientists and others. The
+Earth System Grid Federation (Williams et al., 2009) is a platform
+for hosting, querying and downloading climate model output in its
+
+                                                                                             1
+                                                                                                 http://www.ipcc-data.org/maps.
+                                                                                             2
+  * Corresponding author.                                                                        http://www.climatewizard.org.
+                                                                                             3
+    E-mail    addresses:  jalder@usgs.gov         (J.R.   Alder),     swhostet@usgs.gov          http://sdwebx.worldbank.org/climateportal.
+                                                                                             4
+(S.W. Hostetler).                                                                                http://regclim.coas.oregonstate.edu/gccv/index.html.
+
+http://dx.doi.org/10.1016/j.envsoft.2015.02.016
+1364-8152/Published by Elsevier Ltd.
+176                                            J.R. Alder, S.W. Hostetler / Environmental Modelling & Software 68 (2015) 175e180
+
+
+
+
+Fig. 1. Example of the USGS National Climate Change Viewer displaying mean model annual maximum temperature. The climograph of the historical and the future simulations is
+displayed in the bottom left and the histogram of the distribution of future minus present maximum temperature for all 30 models is displayed on the bottom right.
+
+
+
+   Thrasher et al. (2013) applied the Bias-Correction Spatial                             can be incorporated in other web interfaces that are built upon
+Disaggregation statistical method (BCSD, Wood et al., 2004) to                            static data sets such as CMIP and NEX-DCP30. We provide docu-
+downscale monthly averages of maximum and minimum temper-                                 mented code examples for key aspects of our data processing to
+ature and precipitation from 33 of the CMIP5 global models. The                           demonstrate our general approach (see Code Examples Section).
+resulting NEX Downscaled Climate Projections (NEX-DCP30) are
+registered to a 30-arcsecond (~800 m) rectangular grid. This new
+                                                                                          2. Overview of the USGS NCCV
+high-resolution data set provided us with the opportunity to recast
+the GCCV at a ﬁner scale to develop visualization and analysis tools
+                                                                                             The goal of the viewer is to provide an easy-to-use tool for
+at the spatial scales of states, counties and watersheds for the
+                                                                                          visualizing and summarizing data sets for predetermined
+contiguous United States.
+                                                                                          geographic units consisting of states, counties and watersheds
+   Here we present an overview of the USGS National Climate
+                                                                                          which are at scales that are relevant to society and tangible to citi-
+Change Viewer5 (NCCV) and the design and implementation of the
+                                                                                          zens (Fig. 1). The full NEX-DCP30 data set includes 33 models and
+ﬁle structure and software that underpin the application. Our
+                                                                                          four Representative Concentration Pathways (RCP, Moss et al., 2010)
+overarching goal is to demonstrate one approach for distilling and
+                                                                                          spanning 1950e2099. The data set comprises 17 terabytes (Tb) of
+summarizing a massive volume of data so that it can be accessed
+                                                                                          compressed NetCDF-4 ﬁles. Although the large ﬁle sizes of 30-
+and visualized in a meaningful way by a wide range of technical and
+                                                                                          arcsecond resolution data require substantial time to process and
+non-technical users. Although we focus on the NCCV, our approach
+                                                                                          map, the ﬁne spatial resolution represents the topography and re-
+                                                                                          solves the outline of geographic units better than the native data sets
+                                                                                          prior to downscaling. In the NCCV, we use a subset of 30 models over
+ 5
+      http://www.usgs.gov/climate_landuse/clu_rd/nccv.asp.                                a historical baseline (1950e2005), the near term (2025e2049), mid-
+                                              J.R. Alder, S.W. Hostetler / Environmental Modelling & Software 68 (2015) 175e180                                       177
+
+
+
+
+Fig. 2. Example of the mean model change in March snow water equivalent for the Paciﬁc Northwest Region as simulated by the water-balance model. The 1950e2099 time series
+of March snow water equivalent for the Paciﬁc Northwest Region for both RCP4.5 and RCP8.5 (bottom).
+
+
+
+
+(2050e2074) and late- (2075e2099) 21st century for the RCP4.5 and                        impart a sense of the rate of change of climate in the RCP4.5 and
+RCP8.5 emissions scenarios. We also use temperature and precipi-                         RCP8.5 scenarios (Fig. 2, bottom). The application includes inter-
+tation as input for a simple water-balance model (McCabe and                             active tables that summarize changes in the distribution of a
+Wolock, 2011) to simulate additional hydrologic variables. We                            selected variable through time and across emission scenarios. Many
+include snow water equivalent, runoff, soil moisture and evapora-                        users of the NCCV are interested in downloadable summaries or
+tive deﬁcit (the difference between potential evaporation and actual                     data or both for the geographic units so we created multi-page PDF
+evaporation) in the NCCV. The water-balance model produces an                            reports summary (~10,000 reports) and CSV time series (~340,000
+additional 17 Tb of compressed NetCDF output.                                            ﬁles) that capture the viewable information in the web application.
+    Nested levels of states, counties and watersheds allow users to
+navigate and access the data. Hydrologic Unit Code (HUCs, Seaber                         3. Software implementation
+et al., 1987) watersheds provide hierarchical levels for 21 regions
+(HUC2, average area of ~460,000 km2), 222 subregions (HUC4,                                 The NCCV is based on Adobe Flex (now Apache Flex6), which is a
+average area of ~43,000 km2) and 2264 cataloging units (HUC8,                            widely used platform for developing Rich Internet Applications
+average area of ~1800 km2). Maps, charts and tables of historical                        (RIAs). Flex includes robust libraries for charting, mapping and
+and projected climate are provided for each geographic unit.                             application frameworks. The NEX-DCP30 data can be accessed in
+Climatology plots display the present and future seasonal cycles for                     real time through the Open-source Project for a Network Data
+a selected variable, and histograms represent the distribution of the
+change simulated by the 30 models (Fig. 1, bottom). Time series for
+1950 through 2099 are displayed for each geographical unit to                              6
+                                                                                               http://ﬂex.apache.org.
+178                                                              J.R. Alder, S.W. Hostetler / Environmental Modelling & Software 68 (2015) 175e180
+
+
+                                                                                                                                Flex:
+                                                                                                                 USGS National Climate Change Viewer
+                                                                                                                           web application
+
+
+                                                                                                                                                                   WMS
+
+
+             f)                          g)                              h)                                i)
+                   Downloadable                  Downloadable                   Geographic unit                   Geographic unit                      Java: Memcached             Memcached
+                  summary reports                  time series                  climatology data                     time series                             filter*                 service
+                   (PDF - 17 Gb)                 (CSV - 37 Gb)                (binary - 192.5 Mb)                (binary - 18.6 Gb)
+
+                                                                                                                                                                   WMS
+
+
+                    IDL / LaTeX                   IDL: Export                     IDL: Export                       IDL: Export
+                                                                                                                                                       Java: THREDDS
+                   Create reports               CSV time series               binary climatology*                binary time series
+
+
+
+
+                                                                               d)                                                     e)
+                                                                                               Spatially averaged
+                                                                                                                                                  Climatology anomalies
+                                                                                            geographic unit time series
+                                                                                                                                             (30-arcsecond NetCDF - 1.5 Tb)
+                                                                                          (NetCDF time series - 16.4 Gb)
+
+
+
+
+                                                                                             IDL: Create geographic                             IDL: Create climatological
+                                                                                                 unit time series*                                     anomalies
+                              b)                                                                                                                                              c)
+                                          Geograhic unit mask                                                                                                                          Climatological averages
+                                    (30-arcsecond NetCDF - 44 Mb)                                                                                                                  (30-arcsecond NetCDF - 1.8 Tb)
+                                                                                     IDL: Create geographic                                     IDL: Create climatological
+                                                                                           unit mask*                                                   averages
+
+
+
+
+                                                                                a)
+
+                                                                                                                  NEX-DCP30 and Water-balance data
+                                                                                                                   (30-arcsecond NetCDF - 15.7 Tb)
+
+
+
+
+Fig. 3. Flowchart detailing the processing of the primary NEX-DCP30 and water-balance derived data into geographic unit (state, county or watershed) summaries and anomaly
+maps. The format and total ﬁle sizes are given for each step of the data processing. Data products are displayed as rectangles and software is displayed as ovals listing the pro-
+gramming language. Simpliﬁed code examples are available for software items ending with an * (see Code Examples Section). The primary 30-arcsecond data (a) are spatially
+averaged by geographic units (b) and stored as Discrete Sampling Geometry NetCDF time series (d), which are used to create the summary data displayed in the application (fei).
+Climatologies (c) and future minus present climatology anomalies (e) are calculated on the 30-arcsecond grids, stored in NetCDF ﬁles and organized into a Thematic Real-time
+Environmental Distributed Data Services (THREDDS) catalog, from which the maps are generated by ncWMS.
+
+
+Access Protocol7 (OpenDAP); however, employing direct access to                                                                run on multiple computers at the Environmental Computing Center
+create the spatial and temporal summaries from the primary data                                                                maintained in the College of Earth, Atmospheric and Oceanic Sci-
+in real time is very input/output and network intensive, which                                                                 ences, Oregon State University. To calculate a county average, for
+results in a sluggish user experience. Because the NEX-DCP30 data                                                              example, the code searches for all of the 30-arcsecond grid cells
+set is static, we preprocessed it in order to serve summaries (spatial                                                         that fall within the designated county geometry (Figs. 3b and 4) and
+and temporal averages) instead of the primary data. The ﬂow of the                                                             computes the area average of those grid points. Selecting the grid
+steps involved in processing the 30-arcsecond data to produce the                                                              points in the county is simpliﬁed by the IDLanROI.containspoints
+geographic unit summaries, time series and maps used in the web
+application are illustrated in Fig. 3.
+
+
+3.1. Viewer software and GIS processing
+
+    We employ the Environmental Systems Research Institute (ESRI)
+ArcGIS Flex API8 to provide GIS-like capabilities in the application. To
+allow users to interact with the geographic units, the geometry of
+each region is loaded into the web application. We developed
+simpliﬁed GIS shapeﬁles for the counties, states and watersheds using
+ArcMap GIS desktop software, which we used to reduce the number
+of vertices in the standard shapeﬁles. Excluding shapeﬁle details that
+would not be resolved on a client's screen resulted in smaller ﬁles and
+thus improves loading times. The simpliﬁed shapeﬁles were exported
+to small (<50 Kb) ﬁles that contain the latitudes and longitudes of the
+vertices using code written in Exelis IDL.9
+
+3.2. Data processing
+
+   We processed the NEX-DCP30 temperature and precipitation
+data and the water-balance data (Fig. 3a) using IDL codes that were
+
+
+ 7
+      http://www.opendap.org.                                                                                                  Fig. 4. 30-arcsecond geographic unit masks for (a) counties and (b) HUC8 watersheds.
+ 8
+      http://developers.arcgis.com/ﬂex.                                                                                        The masks are used to create the spatial averages for each geographic unit using the
+ 9
+      http://www.exelisvis.com.                                                                                                NEX-DCP30 data set and water-balance data (see Fig. 3b).
+                                                                             J.R. Alder, S.W. Hostetler / Environmental Modelling & Software 68 (2015) 175e180                                             179
+
+
+                                                       a)                                                                  b)
+                                                       100.000                                                                               2000
+
+                                                                     Without Memcache
+                                                                     With Memcache
+                                                        10.000
+
+                                                                                                                                             1500
+                          WMS map request time (sec)
+
+
+                                                         1.000
+
+
+
+
+                                                                                                                           Requests/second
+                                                         0.100                                                                               1000
+
+
+
+
+                                                         0.010
+
+                                                                                                                                              500
+
+                                                         0.001
+
+
+
+                                                         0.000                                                                                  0
+                                                                 4       8      16       32       64     128   256   512                            4     8     16       32       64     128   256   512
+                                                                                     Concurrent requests                                                             Concurrent requests
+
+
+Fig. 5. Performance testing of map generation using THREDDS/ncWMS and memcached under an increasing number of concurrent requests. All memcached tests were initialized
+with a pre-populated cache. Time values less than 0.5 ms are rounded to 0 as THREDDS records map return times as integer milliseconds. a) Box plots displaying the 25th, 50th
+(bold) and 75th percentiles with whiskers for the 10th and 90th percentiles and b) Performance curve of map return rate over the duration of the test with an increasing number of
+concurrent requests.
+
+
+
+function in IDL. The state averages are created by aggregating the                                                         which is hosted on an Apache Tomcat12 server. In order to display
+county values within each state.                                                                                           maps in the ESRI ArcGIS Flex API, we created a custom mapping
+    We created monthly spatial averages for the counties and HUC8                                                          layer to interface with THREDDS and ncWMS. We leveraged the
+watersheds for all 30 models and 7 variables for the period 1950                                                           robust array of styling features in ncWMS to create the anomaly
+through 2099 for both the RCP4.5 and RCP8.5 scenarios. The                                                                 maps based on discrete color breaks. We use the GetLegendGraphic
+monthly time series are stored in Discrete Sampling Geometry,                                                              function in ncWMS to read the exact RGB hexadecimal color values
+which is a NetCDF time series format10 (Fig. 3d). The summaries                                                            of the maps to add a legend that displays the discrete color break
+that are provided in the NCCV are derived from these monthly time                                                          intervals (Fig. 1).
+series ﬁles (Fig. 3fei).                                                                                                       About 100,000 maps were generated during the ﬁrst two weeks
+    Multidimensional numerical arrays are widely used in scientiﬁc                                                         after we released the NCCV, with peaks of ~7000 maps per hour
+and engineering programming but are not commonly found in web                                                              after the application was featured by the Department of the Interior
+applications. Through experimentation, we found that large volumes                                                         and news outlets which attracted attention from social media. The
+of numeric data could be loaded quickly into the web application if we                                                     user load created occasional instabilities in our THREDDS server
+stored the data in customized binary ﬁles. The customized ﬁles bridge                                                      which crashed the server and required restarting the THREDDs
+the gap between the multidimensional data stored in NetCDF ﬁles                                                            software. Because the application has a large, but ﬁnite, number of
+and ﬁle types that can be read directly by a web client such as Flex.                                                      possible maps it was an ideal candidate for exploring and imple-
+Before writing the data to the binary ﬁles, we scale the values by a                                                       menting memory caching.
+factor of 10 and convert them to integers, which eliminates signiﬁcant                                                         We created a custom Java ﬁlter and added it to the THREDDS
+digits that are not displayed in the application and enables the ﬁles to                                                   software stack to intercept map requests and cache them using
+be compressed to less than half the size of similar ﬂoating-point ﬁles.                                                    memcached,13 which is a general-purpose caching library and
+The compressed data are decompressed by Flex and divided by 10 to                                                          service. The collective user behavior dynamically determines which
+retrieve the original values. By combining the data for all counties or                                                    maps are of most interest and thus reside in the server conﬁgured
+watersheds, models, variables, scenarios and months in one ﬁle, the                                                        cached memory (we use 2 Gb). Once full, the least recently used
+user can rapidly navigate the NCCV to view summary information in                                                          (LRU) policy is invoked dynamically to purge the cache of the maps
+the form of graphs and tables for a selected region.                                                                       that are not frequently requested. Compared to the time it takes to
+                                                                                                                           regenerate the maps for each user request, caching maps in
+                                                                                                                           memory dramatically reduces the access time by two or more or-
+3.3. Real-time mapping                                                                                                     ders of magnitude resulting in greatly reduced loads and thus
+                                                                                                                           stability of the THREDDS and improved viewing speed of the maps.
+   To create the maps in the viewer, at each grid cell in the 30-                                                          Our performance tests revealed that without caching map gener-
+arcsecond grid we calculate climatologies and future minus pre-                                                            ation times were progressively slower as the number of concurrent
+sent anomalies for all models, variables, future climatology periods                                                       users increased (Fig. 5a) and the server was limited to creating
+and the two scenarios (Fig. 3c and e) and write the data to NetCDF                                                         15e22 maps/sec (Fig. 5b). Incorporating memcached ﬁlter
+ﬁles. The anomaly ﬁles are mapped using the Unidata Thematic                                                               dramatically decreased the map response times to <2 ms and the
+Real-time Environmental Distributed Data Services (THREDDS)11                                                              speedup scaled across all numbers of user requests.
+and ncWMS, (NetCDF Web Map Service, Blower et al., 2013),
+
+
+10                                                                                                                                 12
+      http://cfconventions.org.                                                                                                               http://tomcat.apache.org.
+ 11                                                                                                                                13
+      http://www.unidata.ucar.edu/software/thredds/tds/.                                                                                      http://memcached.org.
+180                                         J.R. Alder, S.W. Hostetler / Environmental Modelling & Software 68 (2015) 175e180
+
+
+4. Discussion and ﬁnal remarks                                                         how to read and plot the sample binary ﬁle in Flex and Example 5
+                                                                                       outlines the code for the memcached ﬁlter used with THREDDS/
+    The USGS National Climate Change Viewer demonstrates one                           ncWMS. All code examples can be accessed at http://github.com/
+approach to distilling massive volumes of climate information for                      usgs/nccv_code_examples/.
+presentation in a web application that is accessible to users of
+varying skill levels and backgrounds. The web application allows
+                                                                                       Acknowledgments
+scientists, resource managers, policy makers and the general public
+to explore future climate and water-balance projections at the local
+                                                                                           We thank C. Sears and T. Leach for their support in using the
+level and clearly evaluate the consensus or lack thereof among the
+                                                                                       CEOAS Environmental Computing Center at Oregon State Univer-
+CMIP5 models.
+                                                                                       sity. We are grateful to A. Wiggins and W. Dillon for their help
+    Working with the primary data directly via OpenDAP has ad-
+                                                                                       implementing and testing the memcached THREDDS ﬁlter, and C.
+vantages, such as not requiring heavy preprocessing and potentially
+                                                                                       Sears, D. Blodgett, W. Dillion and R. Sodja for their reviews of the
+greater ﬂexibility, but the high spatial resolution of our data im-
+                                                                                       manuscript.
+poses limits on real-time processing. Future applications attempt-
+                                                                                           Brand names and software names described in the imple-
+ing to create a similar interface to climate model data using real-
+                                                                                       mentation of the NCCV are for informational purposes only and do
+time access to the primary data would need to process on de-
+                                                                                       not constitute endorsement by the US Geological Survey.
+mand most, if not all, of the steps outlined in Fig. 3. Our approach to
+ofﬂine analysis and serving summary information is not appro-
+priate for dynamic or frequently updated data sets such as those                       References
+generated from numerical weather prediction.
+                                                                                       Alder, J.R., Hostetler, S.W., Williams, D., 2013. An interactive web application for
+    Incorporating memcached into our application has greatly                               visualizing climate data. Eos Trans. AGU 94, 197e198. http://dx.doi.org/10.1002/
+improved the scalability of our site to a larger number of concurrent                      2013EO220001.
+users. Not only has memcached dramatically reduced the time to                         Blower, J.D., Gemmell, A.L., Grifﬁths, G.H., Haines, K., Santokhee, A., Yang, X., 2013.
+                                                                                           A Web map service implementation for the visualization of multidimensional
+return maps, but it has also reduced the load on our web server and                        gridded environmental data. Environ. Model. Softw. 47, 218e224. http://
+improved the stability of THREDDS. Implementing memcached                                  dx.doi.org/10.1016/j.envsoft.2013.04.002.
+within THREDDS could also be applied to high-trafﬁc web appli-                         Hartnett, E., Rew, R.K., 2008. Experience with an enhanced netCDF data model and
+                                                                                           interface for scientiﬁc data access. In: Presented at the 88th American Meteo-
+cations that serve dynamic data (e.g., weather forecasts) for                              rological Society Annual Meeting, 24th Conference on Interactive Information
+improved map response times between data updates.                                          Processing Systems, New Orleans, LA.
+    The NCCV was largely developed using freely available and                          McCabe, G.J., Wolock, D.M., 2011. Independent effects of temperature and precipi-
+                                                                                           tation on modeled runoff in the conterminous United States. Water Resour. Res.
+open-source software. The proprietary Adobe Flash builder was
+                                                                                           47 http://dx.doi.org/10.1029/2011WR010630.
+used to develop the Flex code; although, free alternatives are                         Moss, R.H., Edmonds, J.A., Hibbard, K.A., Manning, M.R., Rose, S.K., van Vuuren, D.P.,
+available. Exelis IDL was used to process, analyze, manipulate and                         Carter, T.R., Emori, S., Kainuma, M., Kram, T., Meehl, G.A., Mitchell, J.F.B.,
+export the NetCDF climate model data, but these steps could also be                        Nakicenovic, N., Riahi, K., Smith, S.J., Stouffer, R.J., Thomson, A.M., Weyant, J.P.,
+                                                                                           Wilbanks, T.J., 2010. The next generation of scenarios for climate change
+performed with free mathematical packages that can manipulate                              research and assessment. Nature 463, 747e756. http://dx.doi.org/10.1038/
+NetCDF data, such as Ferret14 or FORTRAN. Although the imple-                              nature08823.
+mentation of the NCCV reﬂects the software choices we have made,                       Seaber, P.R., Kapinos, F.P., Knapp, G.L., 1987. Hydrological Unit Maps (No. Water-
+                                                                                           Supply Paper 2294). Water-Supply paper 2294. U.S. Geological Survey.
+the general outline of data processing detailed in Fig. 3 and the use                  Taylor, K.E., Stouffer, R.J., Meehl, G.A., 2012. An overview of CMIP5 and the exper-
+of binary ﬁles to serve summaries of climate data that have been                           iment design. Bull. Am. Meteor. Soc. 93, 485e498. http://dx.doi.org/10.1175/
+analyzed ofﬂine would readily apply to future climate visualization                        BAMS-D-11-00094.1.
+                                                                                       Thrasher, B., Xiong, J., Wang, W., Melton, F., Michaelis, A., Nemani, R., 2013.
+interfaces using different technologies.                                                   Downscaled climate projections suitable for resource management. Eos Trans.
+                                                                                           AGU 94, 321e323. http://dx.doi.org/10.1002/2013EO370002.
+Code Examples                                                                          Voinov, A., Seppelt, R., Reis, S., Nabel, J.E.M.S., Shokravi, S., 2014. Values in socio-
+                                                                                           environmental modelling: persuasion for action or excuse for inaction. Envi-
+                                                                                           ron. Model. Softw. 53, 207e212. http://dx.doi.org/10.1016/j.envsoft.2013.12.005.
+   We provide ﬁve simpliﬁed code examples demonstrating key                            Williams, D.N., Drach, R., Ananthakrishnan, R., Foster, I.T., Fraser, D., Siebenlist, F.,
+aspects of our data processing and exporting/importing binary ﬁles                         Bernholdt, D.E., Chen, M., Schwidder, J., Bharathi, S., Chervenak, A.L., Schuler, R.,
+                                                                                           Su, M., Brown, D., Cinquini, L., Fox, P., Garcia, J., Middleton, D.E., Strand, W.G.,
+into a Flex application. Example 1 uses a shapeﬁle to create a 30-
+                                                                                           Wilhelmi, N., Hankin, S., Schweitzer, R., Jones, P., Shoshani, A., Sim, A., 2009. The
+arcsecond mask for states in the contiguous US. Example 2 dem-                             earth system grid: enabling access to multimodel climate simulation data. Bull.
+onstrates using the NEX-DCP30 data and mask ﬁle to create                                  Am. Meteor. Soc. 90, 195e205. http://dx.doi.org/10.1175/2008BAMS2459.1.
+monthly time series of area-weighted averages for each state.                          Wood, A.W., Leung, L.R., Sridhar, V., Lettenmaier, D.P., 2004. Hydrologic implications
+                                                                                           of dynamical and statistical approaches to downscaling climate model outputs.
+Example 3 illustrates how we create climatological averages from                           Clim.        Change          62,        189e216.          http://dx.doi.org/10.1023/B:
+the time series and export to binary ﬁles. Example 4 demonstrates                          CLIM.0000013685.99609.9e.
+
+
+
+
+14
+      http://ferret.wrc.noaa.gov/Ferret/.
+

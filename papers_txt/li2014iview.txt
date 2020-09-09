@@ -1,0 +1,366 @@
+Li et al. BMC Bioinformatics 2014, 15:56
+http://www.biomedcentral.com/1471-2105/15/56
+
+
+
+
+ SOFT WA R E                                                                                                                                Open Access
+
+iview: an interactive WebGL visualizer for
+protein-ligand complex
+Hongjian Li1* , Kwong-Sak Leung1 , Takanori Nakane2 and Man-Hon Wong1
+
+
+  Abstract
+  Background: Visualization of protein-ligand complex plays an important role in elaborating protein-ligand
+  interactions and aiding novel drug design. Most existing web visualizers either rely on slow software rendering, or lack
+  virtual reality support. The vital feature of macromolecular surface construction is also unavailable.
+  Results: We have developed iview, an easy-to-use interactive WebGL visualizer of protein-ligand complex. It exploits
+  hardware acceleration rather than software rendering. It features three special effects in virtual reality settings, namely
+  anaglyph, parallax barrier and oculus rift, resulting in visually appealing identification of intermolecular interactions. It
+  supports four surface representations including Van der Waals surface, solvent excluded surface, solvent accessible
+  surface and molecular surface. Moreover, based on the feature-rich version of iview, we have also developed a neat
+  and tailor-made version specifically for our istar web platform for protein-ligand docking purpose. This demonstrates
+  the excellent portability of iview.
+  Conclusions: Using innovative 3D techniques, we provide a user friendly visualizer that is not intended to compete
+  with professional visualizers, but to enable easy accessibility and platform independence.
+  Keywords: Structural bioinformatics, Visualization, Molecular docking
+
+
+Background                                                                           In addition, there are web visualizers based on either
+Visualization of protein-ligand complex plays an impor-                            Java applet, Adobe Flash, or HTML5 canvas. Jmol (http://
+tant role in elaborating protein-ligand interactions and                           www.jmol.org), an open source Java viewer for chemi-
+aiding novel drug design. To date, dozens of visualization                         cal structures in 3D, has been deployed worldwide and
+tools already exist. VMD [1], PyMOL (http://www.pymol.                             recognized as the de facto molecular viewer on the web.
+org) and Chimera [2] are very well-known and highly                                GIANT [9], a web visualizer based on Jmol, supports
+cited. They can interpret multiple file formats and gener-                         analyzing protein-ligand interactions on the basis of pat-
+ate multiple representations to supply precise and power-                          terns of atomic contacts obtained from the statistical
+ful control. AutoDockTools4 [3] provides native support                            analyses of 3D structures. However, Java is being dis-
+for the PDBQT file format, which is widely used in var-                            abled on more and more systems due to security con-
+ious protein-ligand docking software such as AutoDock                              cerns so that Java-free visualizers are highly required.
+[3], AutoDock Vina [4], and our idock [5]. We also devel-                          JSmol [10], a JavaScript-only version of Jmol, includes the
+oped our own method [6] to visualize structures in virtual                         full implementation of the entire set of Jmol function-
+reality settings and employ fragment-based de novo ligand                          alities. Although Jmol and JSmol support a large set of
+design strategy for interactive drug design. PoseView [7]                          advanced features including scripting, they rely on soft-
+and LigPlot+ [8], on the other hand, plot 2D diagrams of                           ware rendering which is slow on large display areas and
+protein-ligand interactions from 3D coordinates.                                   thus prevents detailed inspection of the structure. In con-
+                                                                                   trast, WebGL visualizers benefit from GPU acceleration.
+                                                                                   For instance, ChemDoodle Web Components (http://web.
+*Correspondence: jackyleehongjian@gmail.com                                        chemdoodle.com), a pure JavaScript chemical graphics
+1 Department of Computer Science and Engineering, Chinese University of
+                                                                                   and cheminformatics library, presents 2D and 3D graph-
+Hong Kong, Hong Kong, China
+Full list of author information is available at the end of the article             ics and animations for chemical structures, reactions and
+
+
+                                       © 2014 Li et al.; licensee BioMed Central Ltd. This is an Open Access article distributed under the terms of the Creative Commons
+                                       Attribution License (http://creativecommons.org/licenses/by/2.0), which permits unrestricted use, distribution, and reproduction
+                                       in any medium, provided the original work is properly credited. The Creative Commons Public Domain Dedication waiver
+                                       (http://creativecommons.org/publicdomain/zero/1.0/) applies to the data made available in this article, unless otherwise stated.
+Li et al. BMC Bioinformatics 2014, 15:56                                                                                             Page 2 of 6
+http://www.biomedcentral.com/1471-2105/15/56
+
+
+
+
+spectra, but it lacks protein surface construction. GLmol      Table 1 Full features of iview
+(http://webglmol.sourceforge.jp), a molecular viewer on        Category                                           Features
+WebGL/JavaScript using the three.js library, supports          File format input                                  PDB
+multiple file formats and representations, and features                                                           PDBQT
+an experimental version of surface construction based
+                                                               Camera                                             perspective
+on the EDTSurf algorithm [11,12]. Another study [13]                                                              orthographic
+also presents a WebGL technology for rendering molecu-
+                                                               Background                                         black
+lar surface using the SpiderGL library [14]. Nevertheless,
+                                                                                                                  grey
+none of these WebGL visualizers support virtual reality
+                                                                                                                  white
+effects.
+  Surface representation is a convenient way to visual-        Structure coloring                                 atom spectrum
+                                                                                                                  protein chain
+ize protein-ligand interactions. However, macromolecular
+                                                                                                                  protein secondary structure
+surface calculation is computationally and memory inten-
+                                                                                                                  B factor
+sive. Furthermore, the calculated mesh is very complex,
+                                                                                                                  residue name
+often exceeding 500,000 polygons. Therefore its imple-
+                                                                                                                  residue polarity
+mentation in JavaScript/WebGL was considered to be very
+                                                                                                                  atom type
+difficult. Most existing web visualizers either rely on slow
+                                                               Primary structure                                  line
+software rendering, or lack virtual reality support. More-
+                                                                                                                  stick
+over, the vital feature of protein surface construction is
+                                                                                                                  ball & stick
+usually unavailable, and the support for PDBQT format is
+                                                                                                                  sphere
+not implemented.
+                                                                                                                  dot
+  To address the above obstacles, we have developed
+                                                               Secondary structure                                ribbon
+iview, an interactive WebGL visualizer of protein-ligand
+                                                                                                                  strand
+complex, featuring three special effects in virtual reality
+                                                                                                                  cylinder & plate
+settings and four surface representations (Table 1). Fur-
+                                                                                                                  C alpha trace
+thermore, we show that iview can be easily modified to
+                                                                                                                  B factor tube
+adapt to different applications. As an application exam-
+ple, we have recently developed a web platform called istar    Protein surface                                    Van der Waals surface
+                                                                                                                  solvent excluded surface
+[15] to automate large-scale protein-ligand docking using
+                                                                                                                  solvent accessible surface
+our idock [5]. Refactored from the feature-rich version of
+                                                                                                                  molecular surface
+iview, we have also developed tailor-made version specifi-
+cally for visualizing docking input data and output results    Proteins surface opacity                           1.0
+of user-submitted jobs.                                                                                           0.9
+                                                                                                                  0.8
+                                                                                                                  0.7
+Implementation
+                                                                                                                  0.6
+iview is refactored from GLmol 0.47, using three.js as its
+                                                                                                                  0.5
+primary 3D engine with antialiasing support. It is based on
+WebGL canvas and can be easily integrated into existing        Protein surface wireframe                          yes
+                                                                                                                  no
+HTML5 web pages to display molecular models without
+requiring Java or browser plugins. It loads a protein-ligand   Atom and residue labeling                          yes
+structure from the PDB (Protein Data Bank) [16] as its                                                            no
+data source via a RESTful interface. It renders four stan-     Virtual reality effect                             anaglyph
+dard representations of primary structure, namely line,                                                           parallax barrier
+stick, ball & stick and sphere, and five standard repre-                                                          oculus rift
+sentations of secondary structure, namely ribbon, strand,      Canvas manipulation                                mouse
+cylinder & plate, C alpha trace and B factor tube. It colors                                                      hand touch
+the structure by either atom spectrum, protein chain, pro-     Manipulation mode                                  rotation
+tein secondary structure, B factor, residue name, residue                                                         translation
+polarity, or atom type, by setting the vertex colors of the                                                       zooming
+geometry object of the corresponding representation. It                                                           slab
+supports user interactions including rotation, translation,
+                                                               Canvas export                                      png
+zooming and slab with mouse or hand touch manip-
+                                                               iview is the only web visualizer that is accelerated by GPU hardware and
+ulation. It provides both perspective and orthographic         supports three unique features: protein surface construction, virtual reality
+cameras, and anaglyph, parallax barrier and oculus rift        effects, and PDBQT format input.
+Li et al. BMC Bioinformatics 2014, 15:56                                                                                                Page 3 of 6
+http://www.biomedcentral.com/1471-2105/15/56
+
+
+
+
+effects from three.js examples for use in a virtual reality                   Figure 1 shows the human CCR5 secondary struc-
+environment.                                                               ture rendered as ribbon, and the ligands rendered as
+   We have ported EDTSurf [11,12], an fast algorithm                       sphere.
+to generating triangulated macromolecular surfaces by                         Figure 2 shows the anaglyph effect in a virtual reality
+Euclidean distance transform, to JavaScript and integrated                 environment. When users wear a spectacle with special
+it into iview to construct and render in real time four                    filters on both sides, the disparity between two superim-
+representations of protein surface, namely Van der Waals                   posed molecules creates a perception of depth, leading to
+surface, solvent excluded surface, solvent accessible sur-                 visually more appealing identification of intermolecular
+face and molecular surface, with opacity and wireframe                     interactions. The parallax barrier and oculus rift effects
+adjustable by users. Note that molecular surface is in                     are illustrated in the Additional files 2 and 3.
+fact solvent excluded surface, but EDTSurf uses differ-                       Figure 3 shows the protein surface generated by our
+ent ways to derive them. We therefore provide them                         JavaScript implementation of the EDTSurf algorithm
+both as two different surface representations in iview.                    [11,12]. The human CCR5 is rendered as molecular sur-
+Although the JavaScript implementation of the EDT-                         face colored by chain. The marketed HIV drug maraviroc
+Surf algorithm typically consumes a few seconds and                        is rendered as stick colored by chain. It can be clearly
+500MB to 700MB memory for computation, it is suffi-                        seen that the asymmetric unit is composed of two com-
+ciently efficient for practical applications. To limit CPU                 plexes, and the CCR5 forms a deep allosteric cavity where
+and memory usage, the calculation grid size is restricted to               maraviroc binds.
+180 × 180 × 180.                                                              We have successfully tested iview in Chrome 30,
+   It is worthwhile to highlight that iview performs all                   Firefox 25, Safari 6.1 and Opera 17. Support for IE 11
+parsing and rendering in the client browser, without any                   is experimental because gl_FrontFacing is unsupported
+dependency on server side at all, ensuring the data privacy                in IE 11. Refer to http://caniuse.com/webgl, for com-
+is maintained. This is unlike ChemDoodle Web Compo-                        patibility of WebGL support in desktop and mobile
+nents, some of whose functions send data to a dedicated                    browsers.
+server for processing and wait for retrieval of results.
+   The differences between iview and GLmol are listed in                   Application example
+the Additional file 1.                                                     We emphasize portability and usability, and illustrate that
+                                                                           iview can be easily modified to suit one’s particular appli-
+Results                                                                    cation, given that iview is free and open source under a
+We take as example the CCR5 chemokine receptor-                            permissive license. We take protein-ligand docking as an
+HIV entry inhibitor maraviroc complex [17] (PDB code:                      example. Based on the feature-rich version of iview, our
+4MBS).                                                                     tailor-made version specifically for idock jobs cleans up
+
+
+
+
+ Figure 1 iview rendering of the CCR5 chemokine receptor-HIV entry inhibitor maraviroc complex [17] (PDB code: 4MBS). The secondary
+ structure of human CCR5 is rendered as ribbon. The marketed HIV drug maraviroc is rendered as sphere. This figure can be reproduced at http://
+ istar.cse.cuhk.edu.hk/iview/?4MBS.
+Li et al. BMC Bioinformatics 2014, 15:56                                                                                                  Page 4 of 6
+http://www.biomedcentral.com/1471-2105/15/56
+
+
+
+
+ Figure 2 iview rendering of the CCR5 chemokine receptor-HIV entry inhibitor maraviroc complex [17] (PDB code: 4MBS), with anaglyph
+ effect enabled. The anaglyph effect encodes each eye’s image using filters of chromatically opposite colors to achieve stereoscopic 3D effect.
+ When users wear a spectacle with special filters on both sides, each of the two differently filtered colored images reaches one eye, revealing an
+ integrated stereoscopic image. This figure can be reproduced at http://istar.cse.cuhk.edu.hk/iview/?4MBS.
+
+
+
+
+many dispensable functions, enabling a very neat inter-                     web worker to keep the web page responsive. It automati-
+face. It only retains the rendering of primary structure                    cally detects a binding site from the largest co-crystallized
+of protein and ligand, and the construction of protein                      ligand first by finding the smallest cubic box that cov-
+surface. Most importantly, it implements new features                       ers the entire ligand and then by extending the box by
+especially for protein-ligand docking purpose.                              50% in all the three dimensions in order to reserve space
+  In the input phase of a docking job, it merely requires                   for conformational sampling. In case of non-existence
+a PDB file, which can be obtained either from the PDB                       of co-crystallized ligand, the binding site is defaulted to
+database [16] or via homology modeling, and then con-                       the geometric center of the protein. The binding site is
+structs the protein surface asynchronously in a separate                    visually depicted in the form of a cubic box whose cen-
+                                                                            ter and size can be manually adjusted by users in real
+                                                                            time.
+                                                                               In the output phase of a docking job, it displays the
+                                                                            user-supplied cubic box for users to confirm that the
+                                                                            predicted ligand conformations do fall inside the desired
+                                                                            binding site. Other than PDB format, its parsers are capa-
+                                                                            ble of parsing a protein and multiple top hit ligands in
+                                                                            PDBQT format used by idock. It displays the top hit lig-
+                                                                            and IDs in a horizontally scrollable row and provides a
+                                                                            straightforward way to switch ligands easily through a
+                                                                            button group. It has built-in support for putative inter-
+                                                                            molecular hydrogen bond detection by finding hydro-
+                                                                            gen bond donors and acceptors from protein and ligand
+                                                                            and setting the distance threshold to 3.5Å. It automati-
+                                                                            cally annotates important atoms, like those involving in
+ Figure 3 iview rendering of the CCR5 chemokine receptor-HIV
+ entry inhibitor maraviroc complex [17] (PDB code: 4MBS), with
+                                                                            intermolecular hydrogen bonds, by placing labels next
+ protein surface enabled. The human CCR5 is rendered as molecular           to the corresponding atoms in the canvas. It lists the
+ surface colored by chain. The marketed HIV drug maraviroc is               docking result files, predicted free energy and binding
+ rendered as stick colored by chain. It can be clearly seen that the        affinity values, molecular properties, SMILES represen-
+ crystal structure consists of two complexes, and the CCR5 forms a          tation, compound suppliers and annotations, and puta-
+ deep allosteric cavity where maraviroc is buried. This figure can be
+ reproduced at http://istar.cse.cuhk.edu.hk/iview/?4MBS.
+                                                                            tive hydrogen bond positions and their lengths, in order
+                                                                            to give users a quick overview of the top hit ligands
+Li et al. BMC Bioinformatics 2014, 15:56                                                                                                          Page 5 of 6
+http://www.biomedcentral.com/1471-2105/15/56
+
+
+
+
+ Figure 4 Tailor-made version of iview specifically for visualizing docking results of user-submitted jobs. It displays the user-supplied search
+ space in the form of a cubic box so that the binding site is visually depicted. It displays the top hit ligand IDs in a horizontally scrollable row and
+ provides a straightforward way to switch ligands easily. It lists the docking result files, predicted binding affinity values, molecular properties,
+ compound suppliers and annotations, and putative hydrogen bonds, in order to give users a quick overview of the top hit ligands, and assist them
+ in making decisions of which compounds to purchase for subsequent wet-lab experiments. This figure can be reproduced at http://istar.cse.cuhk.
+ edu.hk/idock/iview/?525a0abab0717fe31a000001.
+
+
+
+
+and assist them in making decisions of which com-                              Additional files
+pounds to purchase for subsequent wet-lab experiments
+(Figure 4).                                                                     Additional file 1: Differences between iview and GLmol. The text file
+                                                                                lists the differences between iview and GLmol.
+
+Conclusions                                                                     Additional file 2: iview rendering of the CCR5 chemokine
+                                                                                receptor-HIV entry inhibitor maraviroc complex [17] (PDB code:
+We have designed and developed iview to be a simple                             4MBS), with parallax barrier effect enabled. A parallax barrier is a device
+and straightforward way to visualize protein-ligand com-                        placed in front of a LCD (Liquid Crystal Display) to permit a stereoscopic or
+plex. It enables non-experts to quickly elucidate protein-                      multiscopic image without 3D glasses. The device is composed of a layer of
+                                                                                material with precision slits, enabling each eye to see a different set of
+ligand interactions in a 3D manner. Furthermore, iview is                       pixels and thus creating a sense of depth through parallax.
+free and open source, and can be easily integrated into                         Additional file 3: iview rendering of the CCR5 chemokine receptor-
+any bioinformatics application that requires interactive                        HIV entry inhibitor maraviroc complex [17] (PDB code: 4MBS), with
+protein-ligand visualization.                                                   oculus rift effect enabled. The Oculus Rift is a virtual reality head-mounted
+                                                                                device, which features a high-speed inertial measurement unit and a LCD
+                                                                                display, visible via dual lenses positioned over the eyes to provide a 90
+Availability and requirements                                                   degrees horizontal and 110 degrees vertical stereoscopic 3D perspective.
+Project name: iview
+Project home page: http://istar.cse.cuhk.edu.hk/iview                          Competing interests
+Operating system: Platform independent                                         The authors declare that they have no competing interests.
+Programming languages: JavaScript, HTML5, CSS3
+Other requirements: Browser and graphics card with                             Authors’ contributions
+                                                                               HL and TN developed the presented software. HL drafted the manuscript. TN,
+WebGL capability                                                               KWL and MHW edited the manuscript. All authors read and approved the final
+License: Apache License 2.0                                                    manuscript.
+Li et al. BMC Bioinformatics 2014, 15:56                                                                                                              Page 6 of 6
+http://www.biomedcentral.com/1471-2105/15/56
+
+
+
+
+Acknowledgements                                                                       Berman HM, Bourne PE: The RCSB Protein Data Bank: redesigned web
+Takanori Nakane thanks Japan Society for the Promotion of Science (JSPS) for           site and web services. Nucleic Acids Res 2011, 39(suppl 1):392–401.
+scholarship (DC1). This work was partly supported by Grant-in-Aid for JSPS         17. Tan Q, Zhu Y, Li J, Chen Z, Han GW, Kufareva I, Li T, Ma L, Fenalti G, Li J,
+Fellows (Grant Number 11J04341).                                                       Zhang W, Xie X, Yang H, Jiang H, Cherezov V, Liu H, Stevens RC, Zhao Q,
+                                                                                       Wu B: Structure of the CCR5 Chemokine receptor-HIV entry inhibitor
+                                                                                       Maraviroc complex. Science 2013, 341(6152):1387–1390.
+Author details
+1 Department of Computer Science and Engineering, Chinese University of
+                                                                                    doi:10.1186/1471-2105-15-56
+Hong Kong, Hong Kong, China. 2 Graduate School of Medicine, Kyoto
+                                                                                    Cite this article as: Li et al.: iview: an interactive WebGL visualizer for
+University, Kyoto, Japan.
+                                                                                    protein-ligand complex. BMC Bioinformatics 2014 15:56.
+
+Received: 23 November 2013 Accepted: 18 February 2014
+Published: 25 February 2014
+
+References
+1. Humphrey W, Dalke A, Schulten K: VMD: visual molecular dynamics.
+    J Mol Graph 1996, 14(1):33–38.
+2. Pettersen EF, Goddard TD, Huang CC, Couch GS, Greenblatt D. M,
+    Meng EC, Ferrin TE: UCSF Chimera - A visualization system for
+    exploratory research and analysis. J Comput Chem 2004,
+    25(13):1605–1612.
+3. Morris GM, Huey R, Lindstrom W, Sanner MF, Belew RK, Goodsell DS,
+    Olson AJ: AutoDock4 and AutoDockTools4: automated docking with
+    selective receptor flexibility. J Comput Chem 2009, 30(16):2785–2791.
+4. Trott O, Olson AJ: AutoDock Vina: improving the speed and accuracy
+    of docking with a new scoring function, efficient optimization, and
+    multithreading. J Comput Chem 2010, 31(2):455–461.
+5. Li H, Leung K-S, Wong M-H: idock: a multithreaded virtual screening
+    tool for flexible ligand docking. In 2012 IEEE Symposium on
+    Computational Intelligence in Bioinformatics and Computational Biology
+    (CIBCB). San Diego, California, USA: IEEE; 2012:77–84. [http://ieeexplore.
+    ieee.org/xpl/articleDetails.jsp?arnumber=6217214]
+6. Tse C-M, Li H, Leung K-S, Lee K-H, Wong M-H: Interactive drug design in
+    virtual reality. In 15th International Conference on Information
+    Visualisation (IV). London, UK: IEEE; 2011:226–231. [http://ieeexplore.ieee.
+    org/xpl/articleDetails.jsp?arnumber=6004005]
+7. Stierand K, Rarey M: PoseView - molecular interaction patterns at a
+    glance. J Cheminform 2010, 2:50.
+8. Laskowski RA, Swindells MB: LigPlot+: multiple ligand-protein
+    interaction diagrams for drug discovery. J Chem Inform Modeling 2011,
+    51(10):2778–2786.
+9. Kasahara K, Kinoshita K: GIANT: pattern analysis of molecular
+    interactions in 3D structures of protein-small ligand complexes.
+    BMC Bioinformatics 2014, 15(1):12.
+10. Hanson RM, Prilusky J, Renjian Z, Nakane T, Sussman JL: JSmol and the
+    next-generation web-based representation of 3D molecular
+    structure as applied to Proteopedia. Isr J Chem 2013, 53(3–4):207–216.
+11. Xu D, Zhang Y: Generating triangulated macromolecular surfaces by
+    Euclidean distance transform. PLoS ONE 2009, 4(12):8140.
+12. Xu D, Li H, Zhang Y: Fast and accurate calculation of protein depth by
+    Euclidean distance transform. Research in Computational Molecular
+    Biology, vol. 7821, pp. 304–316. Springer: Berlin; 2013.
+13. Callieri M, Andrei RM, Benedetto MD, Zoppè M, Scopigno R: Visualization
+    methods for molecular studies on the web platform. In Proceedings of
+    the 15th International Conference on Web 3D Technology. New York, NY,
+    USA: ACM; 2010:117–126. [http://dl.acm.org/citation.cfm?id=1836067]
+                                                                                        Submit your next manuscript to BioMed Central
+14. Benedetto MD, Ponchio F, Ganovelli F, Scopigno R: SpiderGL: a                       and take full advantage of:
+    JavaScript 3D graphics library for next-generation WWW.
+    In Proceedings of the 15th International Conference on Web 3D Technology.           • Convenient online submission
+    New York, NY, USA: ACM; 2010:165–174. [http://dl.acm.org/citation.cfm?              • Thorough peer review
+    id=1836075]
+                                                                                        • No space constraints or color ﬁgure charges
+15. Li H, Leung K-S, Ballester PJ, Wong M-H: istar: a web platform for
+    large-scale protein-ligand docking. PLoS ONE 2014, 9(1):85678.                      • Immediate publication on acceptance
+16. Rose PW, Beran B, Bi C, Bluhm WF, Dimitropoulos D, Goodsell DS, Prlic A,            • Inclusion in PubMed, CAS, Scopus and Google Scholar
+    Quesada M, Quinn GB, Westbrook JD, Young J, Yukich B, Zardecki C,
+                                                                                        • Research which is freely available for redistribution
+
+
+                                                                                        Submit your manuscript at
+                                                                                        www.biomedcentral.com/submit
+

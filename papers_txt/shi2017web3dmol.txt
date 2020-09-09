@@ -1,0 +1,309 @@
+Published online 8 May 2017                                         Nucleic Acids Research, 2017, Vol. 45, Web Server issue W523–W527
+                                                                                                                 doi: 10.1093/nar/gkx383
+
+
+Web3DMol: interactive protein structure visualization
+based on WebGL
+Maoxiang Shi1 , Juntao Gao2,* and Michael Q. Zhang2,3,*
+
+
+
+
+                                                                                                                                                                   Downloaded from https://academic.oup.com/nar/article-abstract/45/W1/W523/3804423 by Univ Massachusetts Healey Library user on 31 May 2020
+1
+ Department of Basic Medical Sciences, School of Medicine, Tsinghua University, Beijing 100084, China, 2 MOE Key
+Laboratory of Bioinformatics, Bioinformatics Division and Center for Synthetic & Systems Biology, TNLIST,
+Department of Automation, Tsinghua University, Beijing 100084, China and 3 Department of Biological Sciences,
+Center for Systems Biology, University of Texas at Dallas, Richardson, TX 75080-3021, USA
+
+Received February 1, 2017; Revised April 22, 2017; Editorial Decision April 24, 2017; Accepted April 26, 2017
+
+
+
+ABSTRACT                                                                              Unlike desktop software, web applications are more flexi-
+                                                                                   ble in fetching, handling and sharing online resources. How-
+A growing number of web-based databases and tools                                  ever, until recently, web browsers have not able to render
+for protein research are being developed. There is                                 3D graphics without the support from additional plugins.
+now a widespread need for visualization tools to                                   Jmol (http://sourceforge.net/projects/jmol/) (4) and Ope-
+present the three-dimensional (3D) structure of pro-                               nAstexViewer (http://www.openastexviewer.net/) (5) are
+teins in web browsers. Here, we introduce our 3D                                   web-based molecule viewers implemented as Java Applets.
+modeling program––Web3DMol––a web application                                      Their performance is good, but a Java runtime plugin must
+focusing on protein structure visualization in mod-                                be preinstalled into every web browser accessing Jmol or
+ern web browsers. Users submit a PDB identification                                OpenAstexViewer, and a series of security options must
+code or select a PDB archive from their local disk,                                be found and checked off before the programs can finally
+and Web3DMol will display and allow interactive ma-                                run. Given the complexity and insecurity of Java Applets,
+                                                                                   JSmol (http://sourceforge.net/projects/jsmol/) (6) was cre-
+nipulation of the 3D structure. Featured functions,
+                                                                                   ated as a Jmol interpreter. JSmol directly executes with-
+such as sequence plot, fragment segmentation, mea-                                 out the support of plugins, but its performance is not yet
+sure tool and meta-information display, are offered                                adequate––obvious lagging can be observed, particularly
+for users to gain a better understanding of protein                                with large and complex 3D visualizations.
+structure. Easy-to-use APIs are available for develop-                                With the popularity of HTML5, WebGL (http://www.
+ers to reuse and extend Web3DMol. Web3DMol can                                     khronos.org/webgl/) has been widely accepted and sup-
+be freely accessed at http://web3dmol.duapp.com/,                                  ported by web browser manufacturers. As an embedded
+and the source code is distributed under the MIT li-                               implementation of OpenGL (http://www.opengl.org/), We-
+cense.                                                                             bGL has built-in JavaScript APIs to render computer
+                                                                                   graphics by using graphics processing unit (GPU) ac-
+                                                                                   celeration. These features make WebGL an ideal substi-
+                                                                                   tute for Java Applet or Flash for 3D presentation (7).
+INTRODUCTION                                                                       GLmol (http://www.glmol.com/), PV (http://github.com/
+Protein structure visualization is an essential task in bioin-                     biasmv/pv), NGL (http://github.com/arose/ngl) (8) and
+formatics and structural biology. Owing to the rendering                           3DMol.js (http://3dmol.csb.pitt.edu/) (9) are representa-
+efficiency bottleneck of three-dimensional (3D) computer                           tive web-based molecule viewers using WebGL. GLmol
+graphics, traditional protein structure viewers are often lim-                     and NGL are based on a packaged framework called
+ited to the native desktop environment (1–3). PyMOL (http:                         Three.js (http://threejs.org/), while PV and 3DMol.js di-
+//www.pymol.org/) is a commonly used and representative                            rectly use low-level APIs. These tools offer basic solu-
+software for molecular visualization, owing to its high ren-                       tions to present molecules in web browsers. GLmol is
+dering efficiency and fine graphical quality. However, begin-                      reused in several applications, such as iview (http://istar.
+ners, especially users in medical or biological fields, must de-                   cse.cuhk.edu.hk/iview/) (10) and ChemDoodle (http://web.
+vote time and energy to gain familiarity with the command-                         chemdoodle.com/) (11); PV is the default visualization en-
+line interaction of PyMOL, and it is inconvenient for desk-                        gine of SWISS-MODEL (http://www.swissmodel.expasy.
+top software to present their graphical results through the                        org/) (12); and both NGL and PV have been adopted by
+Internet.                                                                          the RCSB Protein Data Bank (http://www.rcsb.org/) (13) as
+
+* To
+   whom correspondence should be addressed. Tel: +86 10 62771461; Fax: +86 10 62771461; Email: jtgao@biomed.tsinghua.edu.cn
+Correspondence may also be addressed to Michael Q. Zhang. Tel: +86 10 62771461; Fax: +86 10 62771461; Email: michaelzhang@tsinghua.edu.cn
+
+C The Author(s) 2017. Published by Oxford University Press on behalf of Nucleic Acids Research.
+This is an Open Access article distributed under the terms of the Creative Commons Attribution License (http://creativecommons.org/licenses/by-nc/4.0/), which
+permits non-commercial re-use, distribution, and reproduction in any medium, provided the original work is properly cited. For commercial re-use, please contact
+journals.permissions@oup.com
+W524 Nucleic Acids Research, 2017, Vol. 45, Web Server issue
+
+
+online viewers. However, these applications have some in-        celeration as well as avoid the requirement of plugin pre-
+sufficiencies: the performance of GLmol is not stable during     installation.
+rendering of large and complex molecules; the representa-
+tion and functionality of PV and 3DMol.js is not diverse in      PRESENTATION
+comparison with the alternatives; and NGL is not flexible
+enough to present a molecule in an integrated way, that is       Diverse representation, color and label modes are sup-
+                                                                 ported to construct complex 3D graphics (Figure 2). To give
+
+
+
+
+                                                                                                                                   Downloaded from https://academic.oup.com/nar/article-abstract/45/W1/W523/3804423 by Univ Massachusetts Healey Library user on 31 May 2020
+to say, different parts of a protein cannot be presented as
+different modes.                                                 users enough choices to control the presentation of every
+   To date, the web-based viewers described above and other      residue, we incorporated an important concept––fragment,
+similar viewers focused solely on the visualization of 3D        which dramatically enhances the application’s flexibility. A
+structures, while some meta-information recorded in PDB          fragment is a segment of a chain in a molecule, and it has
+archives, such as primary sequence, source of organism and       independent representation, color and label mode from the
+crystallographic information, is entirely ignored.               global configuration. Users can freely add and remove frag-
+   Here, we present Web3DMol, a novel web-based protein          ments to manipulate the details of the 3D structure and
+structure visualization tool that provides interactive 3D pre-   make the resulting graphics more appealing (Figure 2).
+sentation of protein structures and allows users without any        Users can modify most of the default configuration val-
+programing experience to construct desirable graphical re-       ues, including the size of geometries, color schemes, light ef-
+sults with minimal time and effort. Compared with alter-         fects, fog effects, surface material, labeling font, animation
+native web-based molecule viewers, Web3DMol has unique           speeds and some auxiliary options. User-modified configu-
+features. For example, the primary and secondary structures      rations can be saved in local storage, and when Web3DMol
+of the visualized proteins are illustrated as a plot in order    is restarted in the same web browser, the local configura-
+to reveal the correspondence between the linear sequence         tions override the default ones.
+and 3D structure. Different parts of a molecule can be pre-
+sented as different modes by using the fragment segmen-          FUNCTIONALITY
+tation. Distances and angles among atoms in a molecule
+can be measured through simple mouse interactions. Re-           Correspondence
+lated meta-information recorded in the PDB archive is also       The primary and secondary structures of a protein molecule
+listed for further exploration. The only requirement to use      are illustrated as a sequence plot (Figure 3). The residue se-
+Web3DMol is a web browser that supports HTML5, no                quence is listed in order, and the ␣-helices, ␤-sheets and ran-
+matter on Windows, Mac OS or Linux with graphical in-            dom coils are shown as small red cylinders, green arrows
+terface (Supplementary Table S1).                                and blue strips, respectively. Single residues or secondary
+                                                                 structures can be recognized automatically when the mouse
+                                                                 hovers over the plot, and the recognized segment can be
+MATERIALS AND METHODS                                            highlighted or hidden through left or right clicking. Press-
+                                                                 ing and holding the left button of the mouse adds the rec-
+The technology architecture of Web3DMol is shown in Fig-         ognized segment as a fragment. By using the sequence plot,
+ure 1. An easy way to access Web3DMol is by visiting http:       users can intuitively inspect the mapping from the linear se-
+//web3dmol.duapp.com/ in a modern web browser. Notably,          quence to 3D structure.
+although Web3DMol can be accessed through a URL, the                Moreover, a segment can be picked up from the 3D struc-
+program is implemented with JavaScript and completely ex-        ture and mapped to the linear sequence. Right clicking a
+ecutes on client-side. Thus, Web3DMol can also be run by         region in the graphics, the information about residue, sec-
+downloading the source code to a local computer and then         ondary structure and chain at the clicked site is listed in a
+opening the HTML file in a web browser.                          pop-up dialog. Users can choose to highlight or hide these
+   The inputs of Web3DMol are PDB archives, which can be         segments or simply add them as fragments.
+either loaded automatically from the RCSB PDB by submit-
+ting a four-digit identification code or loaded manually by
+users from their local disks. The PDB archive is then parsed     Measurement
+line by line to extract useful information such as the 3D co-    Geometric measurements are useful in structural biology
+ordinates of atoms, residue sequences and secondary struc-       and computational chemistry. Web3DMol supports several
+tures. Next, the modeling algorithms compute the vertices        types of measurement, including distance, vector angle, di-
+and triangles, which are used to compose the final 3D pre-       hedral angle and area among atoms, which can be carried
+sentations. Users have an interactive visualization of the 3D    out through simple mouse interactions. User can click ‘Add
+structure that they can manipulate with simple mouse op-         Measurement’ to start a measuring procedure, then clicking
+erations, and the graphical results can also be shared with      the 3D structure to assign the guide points order by A, B, C
+others through URLs, saved as images or embedded into            and D according to the illustration. The calculation results
+other web applications.                                          are depicted on the graphical canvas.
+   The web browser plays a key role in Web3DMol, in which
+PDB archives are parsed, modeling algorithms execute and
+                                                                 Meta-information
+graphical results are presented. As for the 3D graphical
+engine, Web3DMol uses WebGL, rather than Java 3D (in             PDB archives record not only the 3D coordinate data but
+Java Applet) or Stage3D (in Flash), to obtain hardware ac-       also some related information about the molecules, such as
+                                                                              Nucleic Acids Research, 2017, Vol. 45, Web Server issue W525
+
+
+
+
+                                                                                                                                                              Downloaded from https://academic.oup.com/nar/article-abstract/45/W1/W523/3804423 by Univ Massachusetts Healey Library user on 31 May 2020
+Figure 1. The architecture of Web3DMol. The web browser plays a key role in Web3DMol, in which server requests are initiated, PDB archives are parsed,
+modeling algorithms execute and graphical results are presented. The red arrows indicate that PDB data never flows from the client-side to the server-side.
+
+
+                                                                                 Sharing by URL
+                                                                                 It is inconvenient for desktop software to share graphi-
+                                                                                 cal results through the Internet in an interactive way. The
+                                                                                 only feasible method is saving the results as static im-
+                                                                                 ages, and then posting the images to web pages. Users
+                                                                                 have no interaction with this kind of presentation of pro-
+                                                                                 tein structure. Web-based tools have the inherent ability
+                                                                                 to avoid incompatibility between the desktop and web en-
+                                                                                 vironments, because these programs are originally run in
+                                                                                 web browsers. Web3DMol’s graphical results can be easily
+                                                                                 shared with other users or presented on other web servers
+                                                                                 through the automatically generated sharing-URL. This
+                                                                                 URL copies the graphical results with complete interactive
+                                                                                 behaviors, such as rotating, zooming and translating. If an
+                                                                                 online database uses Web3DMol rather than static image
+                                                                                 to present protein structure in their web pages, users will
+                                                                                 be able to experience more intuitive observation and under-
+                                                                                 standing of the molecule’s 3D structure.
+
+
+Figure 2. The structure of a potassium channel (PDB ID: 1BL8) (14).
+This molecule consists of four chains, which are shown in different repre-
+sentation and color modes. Chain A is presented as stick mode colored by
+element; Chain B is presented as spheres colored by hydrophobicity; Chain
+C is presented as tubes colored by chain spectrum; Chain D is presented          EXTENSIONS
+as cartoon mode colored by secondary structure. A region of chain B is la-
+beled with B-Factor values. This integrated graphical result is constructed      There are two options for extending Web3DMol. For
+with several fragments.                                                          HTML developers, the <iframe> tag can be used to di-
+                                                                                 rectly embed Web3DMol into web pages (Supplementary
+                                                                                 Figure S1A). The HTML code is very easy to write because
+                                                                                 the only requirement is a URL, which is set as the ‘src’ at-
+                                                                                 tribute of the <iframe> tag. The URL can be constructed
+                                                                                 manually with the configuration keys and values or sim-
+the molecular classification in biology, the structural res-                     ply by copying the sharing-URL instead. Another option
+olution and the experimental details. Archives are written                       is for JavaScript developers, which is somewhat more dif-
+in plain text with a particular format, so it is possible,                       ficult but has much more flexibility because the visualiza-
+though tedious and error-prone for users to find the buried                      tion details can be controlled and customized. In this case,
+meta-information by reading the source files. Web3DMol                           the Web3DMol library must initially be included by using a
+retrieves and lists this meta-information for potential fur-                     <script> tag; then, the initial function must be invoked to
+ther exploration. For example, if a researcher is interested                     start the rendering process, and other functions are invoked
+in a protein shown in Web3DMol, the original online page                         to customize the graphical results (Supplementary Figure
+of the related paper can be accessed through the PubMed                          S1B). Well-formed JavaScript APIs are available, covering
+or the DOI links listed at the right side of Web3DMol.                           the entire procedure from the initialization to the output.
+W526 Nucleic Acids Research, 2017, Vol. 45, Web Server issue
+
+
+
+
+                                                                                                                                                     Downloaded from https://academic.oup.com/nar/article-abstract/45/W1/W523/3804423 by Univ Massachusetts Healey Library user on 31 May 2020
+Figure 3. The structure of a Na+ -ATPase (PDB ID: 1YCE) (15) and its sequence plot. Correspondence between the linear sequence and 3D structure is
+illustrated by highlighting a region of the molecule.
+
+
+LIMITATIONS                                                                interactions. It saves users the time and energy spent
+                                                                           on installing of software or plugins and gaining famil-
+3D modeling and rendering are both resource-intensive cal-
+                                                                           iarity with command-lines. For web-based databases and
+culations, and as a form of interpreted language, JavaScript
+                                                                           tools, Web3DMol is helpful for visualizing protein struc-
+is not good at high-efficiency calculations. Therefore, when
+                                                                           ture data without a need to parse PDB archives and con-
+the size of a molecule becomes very large, Web3DMol sacri-
+                                                                           struct geometries from the beginning. Compared with ex-
+fices some graphical quality to maintain the efficiency. An-
+                                                                           isting web-based molecule viewers, Web3DMol has unique
+other restriction is from web browser manufacturers. For
+                                                                           functions, including sequence plot, fragment segmentation,
+example, V8, the JavaScript engine in Google Chrome, has
+                                                                           measure tool and meta-information display. We expect that
+a threshold for maximum heap memory usage, so that when
+                                                                           Web3DMol will be a valuable tool for both researchers
+the number of atoms is too large, Chrome will crash. In fact,
+                                                                           and developers who are interested in protein structure re-
+for very large molecules, RCSB PDB does not offer com-
+                                                                           search. More usage instructions are available at the Help
+mon PDB archives to download. Instead, structural data
+                                                                           Page (http://web3dmol.duapp.com/help.html).
+are recorded in a more complicated format such as mmCIF
+(16). Under these conditions, we recommend use of desktop
+software, for example PyMOL, whose modeling and render-                    SUPPLEMENTARY DATA
+ing algorithms are written in C++ (a compiled language).
+    JavaScript was originally designed for web page interac-               Supplementary Data are available at NAR Online.
+tion, and its function libraries are not abundant. Therefore,
+it is difficult for Web3DMol to handle PDB archives if they                ACKNOWLEDGEMENTS
+are in zipped format or to record a small movie while users
+are manipulating the 3D structure.                                         We are grateful to Xu Zhang in M.Q.Z.’s laboratory for
+    The support for WebGL on mobile devices is uneven.                     sharing his ideas and enthusiasm to make this work pos-
+Web3DMol runs well on some of the latest cellphones, but                   sible. Furthermore, we show high esteem to Warren Lyford
+not very smoothly on most mobile devices at present (Sup-                  DeLano, the author of PyMOL.
+plementary Table S1). The memory capacity, the perfor-
+mance of microchips and the touch-based interactions limit                 FUNDING
+the user experience of Web3DMol on mobile devices.
+                                                                           State Key Research Development Program of China
+                                                                           [2016YFC1200303]; National Natural Science Foundation
+DISCUSSION
+                                                                           of China [31361163004, 31671383]. Funding for open ac-
+Web3DMol provides a solution to visualize protein struc-                   cess charge: National Natural Science Foundation of China
+tures in web browsers. Users with little computational ex-                 [31361163004, 31671383].
+pertise can easily create 3D models with simple mouse                      Conflict of interest statement. None declared.
+                                                                           Nucleic Acids Research, 2017, Vol. 45, Web Server issue W527
+
+
+REFERENCES                                                                    10. Li,H., Leung,K.S., Nakane,T. and Wong,M.H. (2014) iview: an
+                                                                                  interactive WebGL visualizer for protein-ligand complex. BMC
+1. O’Donoghue,S.I., Goodsell,D.S., Frangakis,A.S., Jossinet,F.,
+                                                                                  Bioinformatics, 15, 56.
+   Laskowski,R.A., Nilges,M., Saibil,H.R., Schafferhans,A.,
+                                                                              11. Burger,M.C. (2015) ChemDoodle Web Components: HTML5 toolkit
+   Wade,R.C., Westhof,E. et al. (2010) Visualization of macromolecular
+                                                                                  for chemical graphics, interfaces, and informatics. J. Cheminform., 7,
+   structures. Nat. Methods, 7, S42–S55.
+                                                                                  35.
+2. Pirhadi,S., Sunseri,J. and Koes,D.R. (2016) Open source molecular
+                                                                              12. Biasini,M., Bienert,S., Waterhouse,A., Arnold,K., Studer,G.,
+   modeling. J. Mol. Graph. Model., 69, 127–143.
+                                                                                  Schmidt,T., Kiefer,F., Gallo Cassarino,T., Bertoni,M., Bordoli,L.
+
+
+
+
+                                                                                                                                                           Downloaded from https://academic.oup.com/nar/article-abstract/45/W1/W523/3804423 by Univ Massachusetts Healey Library user on 31 May 2020
+3. Mura,C., McCrimmon,C.M., Vertrees,J. and Sawaya,M.R. (2010) An
+                                                                                  et al. (2014) SWISS-MODEL: modelling protein tertiary and
+   introduction to biomolecular graphics. PLoS Comput. Biol., 6,
+                                                                                  quaternary structure using evolutionary information. Nucleic Acids
+   e1000918.
+                                                                                  Res., 42, W252–W258.
+4. Hanson,R.M. (2010) Jmol––a paradigm shift in crystallographic
+                                                                              13. Rose,P.W., Prlic,A., Altunkaya,A., Bi,C., Bradley,A.R.,
+   visualization Journal of Applied Crystallography. J. Appl.
+                                                                                  Christie,C.H., Costanzo,L.D., Duarte,J.M., Dutta,S., Feng,Z. et al.
+   Crystallogr., 43, 1250–1260.
+                                                                                  (2017) The RCSB protein data bank: integrative view of protein, gene
+5. Hartshorn,M.J. (2002) AstexViewer: a visualisation aid for
+                                                                                  and 3D structural information. Nucleic Acids Res., 45, D271–D281.
+   structure-based drug design. J. Comput. Aided Mol. Des., 16, 871–881.
+                                                                              14. Doyle,D.A., Morais Cabral,J., Pfuetzner,R.A., Kuo,A., Gulbis,J.M.,
+6. Hanson,R.M., Prilusky,J., Renjian,Z., Nakane,T. and Sussman,J.L.
+                                                                                  Cohen,S.L., Chait,B.T. and MacKinnon,R. (1998) The structure of
+   (2013) JSmol and the next-generation web-based representation of
+                                                                                  the potassium channel: molecular basis of K+ conduction and
+   3D molecular structure as applied to Proteopedia Israel Journal of
+                                                                                  selectivity. Science, 280, 69–77.
+   Chemistry. Israel J. Chem., 53, 207–216.
+                                                                              15. Meier,T., Polzer,P., Diederichs,K., Welte,W. and Dimroth,P. (2005)
+7. Chavent,M., Levy,B., Krone,M., Bidmon,K., Nomine,J.P., Ertl,T.
+                                                                                  Structure of the rotor ring of F-Type Na+ -ATPase from Ilyobacter
+   and Baaden,M. (2011) GPU-powered tools boost molecular
+                                                                                  tartaricus. Science, 308, 659–662.
+   visualization. Brief. Bioinform., 12, 689–701.
+                                                                              16. Westbrook,J.D. and Bourne,P.E. (2000) STAR/mmCIF: an ontology
+8. Rose,A.S. and Hildebrand,P.W. (2015) NGL viewer: a web application
+                                                                                  for macromolecular structure. Bioinformatics, 16, 159–168.
+   for molecular visualization. Nucleic Acids Res., 43, W576–W579.
+9. Rego,N. and Koes,D. (2015) 3Dmol.js: molecular visualization with
+   WebGL. Bioinformatics, 31, 1322–1324.
+

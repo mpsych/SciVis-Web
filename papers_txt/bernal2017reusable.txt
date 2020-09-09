@@ -1,0 +1,556 @@
+                                                                                                                                                         METHODS
+                                                                                                                                             published: 01 May 2017
+                                                                                                                                      doi: 10.3389/fninf.2017.00032
+
+
+
+
+                                             Reusable Client-Side JavaScript
+                                             Modules for Immersive Web-Based
+                                             Real-Time Collaborative Neuroimage
+                                             Visualization
+                                             Jorge L. Bernal-Rusiel 1*, Nicolas Rannou 2 , Randy L. Gollub 3, 4, 5 , Steve Pieper 6, 7 ,
+                                             Shawn Murphy 5, 8, 9 , Richard Robertson 5, 10 , Patricia E. Grant 1, 5, 10 and Rudolph Pienaar 1, 5, 10
+                                             1
+                                               Fetal-Neonatal Neuroimaging and Developmental Science Center, Boston Children’s Hospital, Boston, MA, USA, 2 Eunate
+                                             Technology S.L., Sopela, Spain, 3 Department of Radiology, Massachusetts General Hospital, Boston, MA, USA,
+                                             4
+                                               Department of Psychiatry, Massachusetts General Hospital, Boston, MA, USA, 5 Harvard Medical School, Boston, MA,
+                                             USA, 6 Isomics Inc., Cambridge, MA, USA, 7 Surgical Planning Laboratory, Brigham and Women’s Hospital, Boston, MA,
+                                             USA, 8 Department of Neurology, Massachusetts General Hospital, Boston, MA, USA, 9 Laboratory of Computer Science,
+                                             Massachusetts General Hospital, Boston, MA, USA, 10 Department of Radiology, Boston Children’s Hospital, Boston, MA,
+                                             USA
+
+
+                                             In this paper we present a web-based software solution to the problem of implementing
+                                             real-time collaborative neuroimage visualization. In both clinical and research settings,
+                            Edited by:       simple and powerful access to imaging technologies across multiple devices is becoming
+                  Richard A. Baldock,
+           University of Edinburgh, UK
+                                             increasingly useful. Prior technical solutions have used a server-side rendering and
+                         Reviewed by:
+                                             push-to-client model wherein only the server has the full image dataset. We propose
+                       Zhen Ricky Qiu,       a rich client solution in which each client has all the data and uses the Google Drive
+           University of Edinburgh, UK       Realtime API for state synchronization. We have developed a small set of reusable
+                    Robert C. Cannon,
+                Textensor Limited, UK        client-side object-oriented JavaScript modules that make use of the XTK toolkit, a
+                  *Correspondence:           popular open-source JavaScript library also developed by our team, for the in-browser
+                Jorge L. Bernal-Rusiel       rendering and visualization of brain image volumes. Efficient realtime communication
+   jorge.bernal@childrens.harvard.edu
+                                             among the remote instances is achieved by using just a small JSON object, comprising
+          Received: 03 January 2017
+                                             a representation of the XTK image renderers’ state, as the Google Drive Realtime
+            Accepted: 13 April 2017          collaborative data model. The developed open-source JavaScript modules have already
+            Published: 01 May 2017
+                                             been instantiated in a web-app called MedView, a distributed collaborative neuroimage
+                           Citation:
+                                             visualization application that is delivered to the users over the web without requiring the
+        Bernal-Rusiel JL, Rannou N,
+     Gollub RL, Pieper S, Murphy S,          installation of any extra software or browser plugin. This responsive application allows
+Robertson R, Grant PE and Pienaar R          multiple physically distant physicians or researchers to cooperate in real time to reach a
+        (2017) Reusable Client-Side
+   JavaScript Modules for Immersive
+                                             diagnosis or scientific conclusion. It also serves as a proof of concept for the capabilities
+ Web-Based Real-Time Collaborative           of the presented technological solution.
+            Neuroimage Visualization.
+          Front. Neuroinform. 11:32.         Keywords: collaborative visualization, interactive visualization, real-time collaboration, neuroimaging, HTML5,
+      doi: 10.3389/fninf.2017.00032          web services, telemedicine, Google Drive
+
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                               1                                                May 2017 | Volume 11 | Article 32
+Bernal-Rusiel et al.                                                                                      Web-Based Collaborative Neuroimaging Visualization
+
+
+
+1. INTRODUCTION                                                            (the collaboration owner) could have direct control over the
+                                                                           visualization parameters and the other users were limited to
+Diagnosis in complex medical disorders as well as imaging                  passive viewing of results using various streaming technologies.
+research can benefit from cooperative visualization and analysis           As such, real-time synchronization among physically remote
+of the same image volume by more than one physician or                     highly interactive clients over the wide Internet has not been
+researcher at the same time in a session that shares control               readily available.
+and events between all parties. The viewing parties often may                  Recently some web-based CIVS have been implemented that
+not be located at the same physical location but are connected             attempt to achieve real-time synchronization by rendering the
+via some data network and their geographical separation can                image volumes on the server side and sending a representation
+span different cities or even different countries. These location          of the visualization to each collaborator’s web browser as a
+constraints together with the need for real-time interactions on           series of 2D images or streaming video (mainly JPEG, PNG,
+the image data between participants calls for the development              or MPEG formats) (Kaspar et al., 2010, 2013). However,
+of the so-called collaborative image visualization systems (CIVS).         this server-side rendering technique is not suitable for the
+In medical diagnosis, these types of systems form an important             so-called Fully-Shared-Control real-time CIVS in which all
+sub-area of Telemedicine (Manssour and Dal Sasso Freitas,                  the collaborators have control over the parameters associated
+2000). CIVS can be seen as a type of distributed software                  with a given interactive visualization (e.g., window leveling
+system that attempts to provide simultaneous visualization of              of the currently rendered image volume slice) (Manssour
+shared image data and automatic synchronization of user-                   and Dal Sasso Freitas, 2000). The main reason for this is
+data interactions among users working on physically remote                 that it requires continuously sending relatively heavy data
+computational entities (desktop computers, mobile devices, etc).           over the network after each single user-data interaction
+This synchronization is difficult to achieve in real time as it            that modifies the visualization parameters. This makes the
+usually has to be carried out over the Internet without assuming           application not only highly sensitive to user-specific network
+any specific network topology and latency or a predefined                  latency but doesn’t scale well when the number of concurrent
+number of connected users. Furthermore, user accessibility and             users increases. Therefore, a distributed client-side rendering
+visualization synchronization are both affected by the fact that the       approach would be preferable for fast real-time all-users
+remote computational entities can have quite different hardware            interactivity.
+architectures and operating system platforms. In addition CIVS                 New advances in core web application technologies such as
+are expected to provide a user-friendly homogeneous-across-                the modern web browsers’ universal support of ECMAScript
+platforms interface and to require minimal user technological              5 (and 6), CSS3 and HTML5 APIs have made it much more
+skills for their installation and usage.                                   feasible to implement efficient graphical image volume rendering
+    Several attempts to implement CIVS have been reported                  and visualization as well as real-time communication purely
+over the last two decades. Early solutions mainly ran on UNIX              in client-side JavaScript (Mwalongo et al., 2016). Indeed a few
+platforms because of the built-in network and security features.           powerful client-side JavaScript libraries that can perform in-
+These remote visualization instances were interconnected                   browser rendering and visualization of 3D neuroimage volumes
+using middleware technologies for distributed systems such                 have already emerged and are freely available as open-source
+as Common Object Request Broker Architecture (CORBA)                       projects (Sherif et al., 2015). In particular, in this paper we make
+or Remote Method Invocation (RMI) (Anupam et al., 1994;                    use of the popular XTK toolkit which was developed by our
+Forslund et al., 1996, 1998; Coleman et al., 1997). Cross-platform         team at the Fetal-Neonatal Neuroimaging and Developmental
+solutions began to appear around the turn of the century                   Science Center, Boston Childrens Hospital1 and can be freely
+using java to implement the client-side software (Manssour and             downloaded from the web2 (Haehn et al., 2014).
+Dal Sasso Freitas, 2000). However, these technologies lack the                 Despite the ready availability of client-side JavaScript
+desirable loose coupling between clients and servers and provide           rendering libraries we only know of a single attempt at
+an unnecessary complex application programming interface                   implementing a web-based real-time CIVS based on a client-
+(API) among other technical and cost issues (Gokhale et al., 2002;         side rendering and visualization approach. The Slice:Drop3
+Henning, 2006).                                                            application previously developed by our team provides a
+    The shift to full web-based solutions has occurred somewhat            solution based on the XTK toolkit and the Dropbox API
+haphazardly since the early 2000s (Eckersley et al., 2003; Millan          (Haehn, 2013). However, Slice:Drop was developed mostly as a
+and Yunda, 2014; Sherif et al., 2014; Wood et al., 2014)                   prototypical concept showcase and is less modular and difficult
+and closely tracked the increasing rise and power of the web               to reuse in other applications. In addition, Slice:Drop uses third
+browser as a middleware platform and the expressiveness of                 party services provided by Dropbox and early implementations
+the JavaScript programming language. Web-based solutions are               required data to be publicly shared without any restrictions which
+especially appealing as they do not require the installation of any        may lead to undesirable data leaking to non-intended Internet
+client-side software other than a standard web browser which               users.
+enhances accessibility and usability. But as with the previous
+technologies in most cases collaboration only meant data sharing           1 http://fnndsc.babymri.org.
+with no realtime interactivity between participants. Alternatively,        2 http://goxtk.com.
+when simultaneous visualization was required only a single user            3 http://slicedrop.com.
+
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                    2                                                    May 2017 | Volume 11 | Article 32
+Bernal-Rusiel et al.                                                                                      Web-Based Collaborative Neuroimaging Visualization
+
+
+
+    In this article we propose a new web-based technological                browser without requiring any special back-end infrastructure.
+solution (in many ways a logical successor to Slice:Drop) to                It is built on top of the fast and well supported HTML5 Canvas
+the problem of implementing efficient real-time collaborative               2D and WebGL 3D graphics’ APIs by encapsulating functionality
+neuroimage visualization. As with Slice:Drop, here we adopt a               in an easy-to-use abstraction API for image visualization
+client-side rendering and visualization approach based on the               applications. This API is well documented with an extensive
+XTK toolkit. We propose a portable viewing application that                 set of demos, lessons and practical code examples9 . The library
+can easily be embedded into larger systems, such as ChRIS [also             supports the most common neuroimage data formats including
+developed at Boston Children’s Hospital (Pienaar et al., 2015)].            DICOM, NIFTI, MGH/MGZ, NRRD, VTK PolyData, Freesurfer
+Real-time synchronization and communication among remote                    meshes, STL and TrackVis as well as label maps, color tables and
+visualization instances is then managed through the Google                  surface overlays (Haehn et al., 2014).
+Drive Realtime API. We provide a small set of reusable client-side              A successor to XTK called AMI10 is currently being developed.
+object-oriented JavaScript modules named viewerjs4 , fmjs5 ,                AMI features a highly efficient visualization pipeline and is
+and gcjs6 that are freely accessible as open source software                built on top of the powerful threejs11 JavaScript library.
+from our Github organization repositories7 . These JavaScript               Subsequent versions of viewerjs will transition to AMI
+modules have already been instantiated in the implementation of             for more powerful visualization operations. Importantly, the
+a distributed collaborative neuroimage visualization application            final application (like MedView) ideally does not need to call
+called MedView that is delivered to the users over the web without          primitives at the rendering library directly.
+requiring the installation of any extra software or browser plugin.             The viewerjs library exposes a viewerjs.Viewer
+The source code of this application and a built and deployed                class. This class provides methods for easily embedding a
+version are also hosted in our Github repositories. It allows               neuroimage visualization object (VObj) within an HTML page.
+multiple physically distant physicians or researchers to cooperate          The viewerjs.Viewer constructor only requires as an input
+in real-time to reach a diagnosis or scientific conclusion.                 the Document Object Model (DOM) identifier of the HTML
+                                                                            element on which the resultant VObj’s HTML interface is
+                                                                            inserted. The following code shows the simplicity of the method
+2. MATERIALS AND METHODS                                                    calls:
+2.1. Scope
+The MedView application described in this paper provides a                  var view = new viewerjs.Viewer(divId);
+web-based viewer for common medical image formats. When                     view.init();
+clients visit the MedView website8 , the required functionality is          view.addData(imgFileArr);
+downloaded into, and executed by, the browser. Any medical
+image data that is “dropped" into the browser (or navigated to              The VObj can asynchronously load more than one neuroimage
+from the file picker dialog) stays in the local client context, i.e.,       volume specified by the imgFileArr variable passed to the
+no data is uploaded out to the web or to some remote website. All           addData method. The imgFileArr is an array of custom file
+data remains local—only the viewer source code in the form of               objects where each object entry has the following properties:
+Javascript programming is fetched remotely.
+                                                                            • url: String representing the file’s URL/local path (required)
+    In addition to image rendering, MedView provides for real-
+                                                                            • file: HTML5 File object (optional but necessary when the
+time collaboration and sharing of a common image cursor
+                                                                              files are sourced through a local file-picker or drop-zone)
+between all participants in a collaborative session.
+                                                                            • cloudId: String representing the file cloud identifier
+                                                                              (optional but necessary when the files are sourced from a cloud
+2.2. Client-Side Rendering and                                                storage service such as Google Drive)
+Visualization
+From an application programming perspective, an application                 Using the fmjs library, the VObj can load image data from
+like MedView is rather lightweight and most of the application              diverse sources such as a remote service using the provided
+visualization logic and behavior is provided by the viewerjs.               url, a local filesystem using the file property or the Google
+This library is in turn reliant on several subcomponents—a low              Drive storage service using the cloudId property. More data
+level visualization component (XTK), a collaboration component              can be added to the viewer by repeatedly calling the addData
+(gcjs), and a unified file management system (fmjs), see                    method which creates a new thumbnail bar for each dataset (users
+Figure 1.                                                                   can also interactively add more data by dragging files/folders
+   Currently, the popular open-source XTK toolkit is used by                onto the viewer—each drag/drop event will create a new floating
+viewerjs for low level graphic services. XTK is a fully client-             thumbnail bar).
+side JavaScript library, which means it runs entirely in the web               Using viewerjs, MedView constructs a graphical user
+                                                                            interface (GUI) comprising the main functional components
+4 https://github.com/FNNDSC/viewerjs.                                       as shown in Figure 2. It contains a tool bar at top with
+5 https://github.com/FNNDSC/fmjs.
+6 https://github.com/FNNDSC/gcjs.                                           9 https://github.com/xtk/X.
+7 https://github.com/FNNDSC.                                                10 https://github.com/FNNDSC/AMI.
+8 https://fnndsc.github.io/medview.                                         11 https://threejs.org.
+
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                     3                                                   May 2017 | Volume 11 | Article 32
+Bernal-Rusiel et al.                                                                                             Web-Based Collaborative Neuroimaging Visualization
+
+
+
+
+ FIGURE 1 | The main logical components of Medview. The viewerjs library provides most of the services that an application such as MedView might require.
+ Multiple viewers can quickly be constructed on viewerjs (for example a FreeSurfer surface viewer, a tractography viewer, etc). Internally, viewerjs uses low level
+ graphical libraries (XTK and AMI), a real time collaboration library gcjs and a file management library fmjs. Note that the colors in the boxes are for ease of
+ illustration and similarly colored boxes are not functionally related.
+
+
+
+
+action buttons (using toolbarjs12 ), a central neuroimage
+visualization square (provided by rboxjs13 ) that contains
+individual interactive visualizers, rendererjs14 , and on
+each side, two floating thumbnail bars (thbarjs15 ) with an
+automatically generated snapshot image of the middle slice for
+each neuroimage volume. Currently the visualization objects
+rendererjs only provide cross-sectional slice rendering of
+the 3D datasets. These just use two types of XTK’s objects that
+are closely associated, the X.Volume that contains the 3D
+volume data and the X.renderer2D that performs the actual
+rendering and visualization.
+   Up to four thumbnail images can be dragged and dropped
+from the thumbnail bar into the visualization square for
+simultaneous visualization of their corresponding volumes.
+This action also “removes" the volume from the thumbnail
+bar—closing a volume view returns the volume to its
+original thumbnail bar. The four-volume display limit is
+                                                                                      FIGURE 2 | The main logical components of Medview. At the top is a
+not programmatically imposed, but reflects a design choice
+                                                                                      toolbar in blue provided by toolbarjs, and on the left and right are floating
+to show multiple volumes without visually overwhelming the                            pink colored thumbnail bars containing the center image of a volume, provided
+display. Only those volumes being visualized in the visualization                     by thbarjs. In the center is a yellow rboxjs container that houses one or
+square are kept in memory to reduce the possibility of out-of-                        more green rendererjs objects that provide image interactivity. An app
+memory crashes. Therefore, every time a thumbnail is dropped                          such as MedView assembles these building blocks as it sees fit.
+
+into the visualization square a new data loading is triggered
+from either the local filesystem or a remote service according
+
+12 https://github.com/FNNDSC/toolbarjs.
+                                                                                     to the location of the volume file. Once data is loaded locally
+13 https://github.com/FNNDSC/rboxjs.                                                 in memory the rendering performs very rapidly as there is no
+14 https://github.com/FNNDSC/rendererjs.                                             network upload involved. For remote data, the speed of access
+15 https://github.com/FNNDSC/thbarjs.                                                is unavoidably limited by the network latency. Finally a volume
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                              4                                                  May 2017 | Volume 11 | Article 32
+Bernal-Rusiel et al.                                                                                  Web-Based Collaborative Neuroimaging Visualization
+
+
+
+can then be unloaded from the visualization square by dragging             collaborators. When any data is modified in the RT-CDM or new
+and dropping it back into the thumbnail bar. This modern                   application data is included they are automatically persisted and
+and simple GUI allows users to quickly explore several 3D                  shared with all the collaborators19 . The gcjs.GDriveCollab
+neuroimage volumes in a very intuitive manner.                             class provides methods to get and set the RT-CDM and five
+                                                                           event listeners that can be dynamically overwritten on its object
+2.3. Real-Time Synchronization                                             instances:
+The client-side rendering approach adopted in MedView allows               1. onConnect called by all connected instances just after a new
+for a very responsive desktop-application-like visualization                  instance connects to the collaboration session
+experience. Once a neuroimage volume has been loaded in                    2. onDataFilesShared called on all connected instances
+the visualization square the user can interact with the data                  every time the collaboration owner has shared all the data files
+by manipulating the visualization through peripheral device                   in its GDrive with a new collaborator
+controls and immediately sees the results of that interaction (e.g.,       3. onCollabObjChanged called on all connected instances
+moving the mouse to point to a different image location or                    every time the RT-CDM is updated by any remote collaborator
+rolling the mouse wheel to navigate across the volume slices by            4. onNewChatMessage called by all connected instances
+cross-section). The goal of the real-time collaboration is then to            everytime a new chat message is received from a remote
+provide a way for simultaneous visualization of the same data by              collaborator
+several collaborators working on remote computational entities             5. onDisconnect called by all connected instances everytime
+and propagate the results of any user-data interaction to all the             a remote collaborator disconnects
+collaborators in real time. This requires a mechanism for sharing
+both the neuroimage data and the visualization state among                 A gcjs.GDriveCollab instance can allow any client-side
+collaborators.                                                             JavasScript application the ability to participate in a real-time
+    The data sharing mechanism we provide here is based on                 collaboration session through these methods and custom event
+two reusable JavaScript modules called fmjs and gcjs (see                  listeners.
+Figure 1 for library organization). The fmjs module is a file                  Indeed the viewerjs.Viewer constructor of the previous
+manager designed to provide a unified interface to common                  section can accept a gcjs.GDriveCollab object as an
+file operations on abstract filesystems such as the HTML5                  optional second parameter to enable the collaboration among
+sandboxed filesystem (currently available only in Chrome) and              remote visualizations. The resultant VObj delegates the
+the Google Drive cloud storage service (GDrive). In particular,            synchronization of the data describing the visualization state on
+the exposed fmjs.GDriveFileManager class implements                        that object. These data are mainly comprised of a small JavaScript
+file uploading/downloading, file sharing and other operations              Object Notation (JSON) object with a few numeric and string
+on GDrive by leveraging the GDrive Representational State                  properties describing the state of the XTK’s X.Volume and
+Transfer (REST) API16 . The gcjs module on the other                       X.renderer2D objects currently instantiated in the VObj’s
+hand, exposes the gcjs.GDriveCollab class that reuses the                  visualization square. This information is available thanks to
+fmjs.GDriveFileManager’s functionality and the GDrive                      the XTK API exposing the state of its graphics objects which
+Realtime REST API17 to manage the real-time collaboration.                 can easily be modified not only through device controls (e.g.,
+    There are several advantages of choosing GDrive services               mouse wheel) but also programmatically with the corresponding
+and APIs for this client-side distributed application. First, they         automatic visualization update. Thus, by keeping the lightweight
+can be accessed directly from the client-side JavaScript code              JSON object describing the state of the graphics objects in
+without requiring any back-end infrastructure. Second, there               sync among remote instances the actual visualizations are also
+is no need for the heavy work of running our own data                      automatically synchronized.
+storage and real-time synchronization servers but instead we                   A collaboration session starts when one user clicks the button
+simply leverage the high availability and latency of the powerful          “Start collaboration” in the VObj’s toolbar. A new modal window
+GDrive servers. Third, conflict resolution is automatically                pops up to let the user decide if she wants to start a new
+handled when many collaborators are concurrently changing                  collaboration session as the collaboration owner or instead join
+the visualization parameters. Last but not least, an OAuth 2.0-            an existing collaboration session. Either choice triggers Google’s
+based18 mechanism for user authentication and authorization                authorization flow so that the user can log into their Google
+management is provided that allows for controlled access to                account and authorize the VObj to access its GDrive space.
+collaborators’ private data and identity.                                  After successful authorization a floating chat window with a
+    The real-time collaboration is actually implemented by                 collaboration session identifier (id) shows up on top of the VObj’s
+synchronizing the application data (visualization parameters)              GUI. This id (similar to a chat room id) can then be sent to
+among collaborators using the GDrive Realtime Collaborative                other users by email or any other on-line messaging system so
+Data Model (RT-CDM) which is basically a hierarchy of                      they can use it to connect to the current collaboration session
+collaborative objects with built-in synchronization among                  through their local VObj. The actual neuroimage data files (all
+                                                                           the volumes corresponding to the thumbnail images in the
+16 https://developers.google.com/drive/v2/reference/.                      thumbnail bar) are uploaded to the collaboration owner’s GDrive.
+17 https://developers.google.com/google-apps/realtime/.
+18 https://developers.google.com/identity/protocols/OAuth2UserAgent.       19 https://developers.google.com/google-apps/realtime/build-model.
+
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                    5                                                 May 2017 | Volume 11 | Article 32
+Bernal-Rusiel et al.                                                                                 Web-Based Collaborative Neuroimaging Visualization
+
+
+
+However, if any neuroimage volume is comprised of many                     any module required by the currently executing client-side code.
+Digital Imaging and Communications in Medicine (DICOM)                     Finally, all the typical JavaScript development and building tasks
+files then they are first concatenated into a small number of              such as code hinting, testing, concatenation, minification and
+compressed (zip) files before uploading to GDrive. This is done            generation of the production application files are automatically
+mainly to reduce the number of required HTTP connections                   managed by Grunt26 which is a widely used JavaScript task
+and network bandwidth usage but it is also useful to reduce the            runner based on the Node platform27 .
+number of automatic notification emails received by the other                  As an integrative example the MedView app’s source code can
+collaborators when these files are shared with them in GDrive.             be downloaded to a local development machine by cloning its
+Unlike Slice:Drop, the uploaded files are not publicly shared with         Github repository28 . The developer can then change the working
+the whole Internet. They are only automatically shared with the            directory to the created local git repository and follow the detailed
+other authenticated collaborators on demand when they connect              instructions in the README file to build and test a local version
+to the collaboration session. At that point their VObj instance will       of the web application. The app’s source code basically showcases
+then automatically download a copy of the data files from GDrive           the usage of the proposed JavaScript modules whose source codes
+for their local rendering and visualization.                               are in turn fetched within the bower components directory at the
+                                                                           root of the repository.
+2.4. Real-Time Implications
+The real-time model described here does have some important
+                                                                           2.6. Comparison with Slice:Drop
+implications to consider. In order to allow for responsive client
+                                                                           MedView can be thought of as a logical successor to our previous
+behavior, each participating client needs a complete copy of the
+                                                                           work, Slice:Drop (Haehn (2013)). Several key technological
+image data to render locally. The delay in joining a collaborative
+                                                                           differences exist between this work and Slice:Drop. Perhaps most
+session is thus a strong function of network bandwidth between
+                                                                           importantly from a software development perspective, Slice:Drop
+the client and the GDrive servers. Relatively long delays may be
+                                                                           was more of a prototype and less of a fully engineered/designed
+experienced on slow connections, especially if many (or large)
+                                                                           application. Its internal structure was monolithic and not
+data sets are being shared.
+                                                                           modularized in terms of functionality, unlike MedView which has
+   Real-time collaboration is best intended for single image
+                                                                           a reusable modular library design. For example, in Slice:Drop the
+(or volume image) cases and not really multiple image sets
+                                                                           data push and pull to the Dropbox servers (for collaboration) is
+concurrently. Moreover, despite the startup delay in sharing
+                                                                           an inherent part of the code and not at all easily extractable for
+multiple image sets, the viewing experience is limited by the
+                                                                           use elsewhere, while in MedView all push/pull is modularized in
+memory available to a browser. The operation of the technology
+                                                                           the reusable gcjs library which can effectively be used by any
+may be unworkable in cases where limited memory and/or
+                                                                           application.
+bandwidth environments exist.
+                                                                               MedView also uses OAuth 2.0 for its user authentication and
+                                                                           authorization management which allows a fine grain of access
+2.5. Development and Build System                                          control to uploaded data. In Slice:Drop files uploaded to Dropbox
+We adopted a modular software development strategy that
+                                                                           have no authorization control and are fully publicly accessible.
+allows for separation of concerns, improves code reusability and
+                                                                               In terms of collaboration, MedView has an integrated chat
+facilitates application development and maintenance.
+                                                                           client, while in Slice:Drop the chat was an external application—
+    The source files for each JavaScript module and its testing
+                                                                           practically in MedView the chat experience feels more integrated
+code are kept separate from other modules’ source files by
+                                                                           into the system. Most importantly, MedView offers a shared
+hosting them on their own independent Github repositories.
+                                                                           cursor among collaborators in their viewers, which is not a
+Automatic fetching of file dependencies between modules
+                                                                           feature of Slice:Drop.
+is carried out using Bower20 which is a popular package
+                                                                               Finally, in MedView multiple image volumes can be shared
+manager that can recursively download dependency source
+                                                                           in a collaboration session, unlike in Slice:Drop wherein only one
+files from Github repositories and other sources. Some of
+                                                                           image volume can be shared collaboratively.
+the external dependencies required by the developed modules
+and automatically fetched through Bower include jQuery21 and
+jQuery UI22 employed in the implementation of the interactive              3. RESULTS
+GUI, dicomParser23 to extract meta information from DICOM
+files and JSZip24 for file concatenation and compression. The              The JavaScript modules implementing the proposed
+logical dependencies between modules are then solved using                 technological solution have been instantiated in the development
+RequireJS25 , a commonly used JavaScript loader, also available            of a distributed collaborative neuroimage visualization
+through Bower, that can asynchronously load into the browser               application called MedView which basically showcases the
+                                                                           VObj usage and the way it can easily be embedded in any web
+20 http://bower.io/.
+21 https://jquery.com/.
+                                                                           application.
+22 https://jqueryui.com/.
+23 https://github.com/chafey/dicomParser.                                  26 http://gruntjs.com/.
+24 https://stuk.github.io/jszip/.                                          27 https://nodejs.org/.
+25 http://requirejs.org/.                                                  28 https://github.com/FNNDSC/medview.
+
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                    6                                               May 2017 | Volume 11 | Article 32
+Bernal-Rusiel et al.                                                                                            Web-Based Collaborative Neuroimaging Visualization
+
+
+
+
+ FIGURE 3 | Medview on a workstation. A screenshot of a session running on a Linux workstation in the Chrome Browser. The collaboration icon in the toolbar
+ (third from left) is active, and on the bottom left a minimized chat window provides visual indication that this session is currently linked to collaborators.
+
+
+
+
+   Medview is designed as a simple, robust, and multi-device                            Finally, Figure 4 shows a linked collaborative session as seen
+web-app. By simply pointing a browser at the MedView URL29                           from an Android tablet running FireFox. Due to the constrained
+almost any device can view and interact with most medical                            resolution, the main viewer windows are smaller and there
+image formats. For example, on a Linux host session running                          is some font interference (which will be addressed in future
+Google Chrome in Figure 3, the user opened the standard                              updates).
+graphical desktop filebrowser, and navigated to a directory                             The order of the thumbnails in each collaborative session
+containing medical image files. The parent directory was simply                      might be unique to that session itself, but the main render
+dragged and dropped into the main MedView window. The                                displays are intimately linked for each participant. While not
+thumbnail bar on left was generated. In this instance, the image                     explicitly shown, a shared pointer-cursor is also available that
+volumes were all NifTI data formats. The volumes were read                           appears on the same location on all linked images (with the
+into the browser, the center slice in the acquisition direction                      mouse over a specific image volume press the SHIFT key and
+determined, and that slice was rendered in the thumbnail                             then move the mouse to the desired location). In this manner,
+representation. A second directory, itself containing nested sub-                    any collaborator can explicitly highlight an exact pixel on a given
+directories of DICOM data was also dragged into the browser.                         image and have that information communicated between all
+This created a new, second thumbnail bar (on right) and                              linked sessions.
+again the center DICOM of each series uploaded is shown
+as representative of that volume. Each action of dragging and
+dropping from the host’s filesystem into the browser, triggers                       4. DISCUSSION
+the creation of a new thumbnail bar. The user can drag these
+bars and position them on either the left or the right of the                        We have presented a novel web-based software solution to the
+screen.                                                                              problem of implementing efficient real-time collaborative
+   Note that at time of writing only Google Chrome supports                          neuroimage visualization. A client-side rendering and
+recursive directory processing. In other browsers, such as                           visualization approach based on the XTK toolkit for “low
+FireFox, Safari, and Microsoft Edge, actual volume files have to                     level" graphical rendering in JavaScript and the fmjs and
+be explicitly selected and dragged/dropped.                                          gcjs libraries that provide for highly responsive real-time
+                                                                                     collaboration. Once a neuroimage volume has been loaded in
+                                                                                     the browser the results of subsequent user-data interactions are
+29 http://fnndsc.github.io/medview.                                                  seen by the local user instantaneously. Any linked collaborators
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                              7                                                 May 2017 | Volume 11 | Article 32
+Bernal-Rusiel et al.                                                                                             Web-Based Collaborative Neuroimaging Visualization
+
+
+
+
+ FIGURE 4 | Medview on a tablet. A screenshot of a collaborative session, captured on an Android tablet running Firefox. Any changes to the visual state of this
+ session are immediately shared with linked collaborators, and vice-versa.
+
+
+
+might experience a slight delay as the small real-time state object                  skills or administrator-level access to their computing
+is propagated across the network using the Google GDrive                             devices.
+RT-CDM. This conveys just enough information to describe the                             Moreover, given the rise of mobile devices and technology,
+current visualization state, effectively minimizing the amount                       as well as powerful mobile-versions of mainstream browsers,
+of data that needs to be serialized and distributed over the                         tablets and smartphone devices can fully participate in this
+network. This is in contrast with previous server-side rendering                     technology without requiring mobile-specific versions of the apps
+solutions in which both local and remote users can experience                        and libraries. Javascript in this case is a truly universal language
+low-responsive visualization interactions due to the continuous                      and technology.
+and heavy network traffic between the server and the connected                           Several limitations to the technology and solution presented in
+clients. In addition the server-side rendering approach doesn’t                      this paper do exist. Firstly, this work is intended for research use
+scale well as the number of concurrent users increases as the                        only—the security model and code do not purport to be ready for
+server can quickly become overwhelmed by the heavy data                              clinical certification. Furthermore, though the solution presented
+processing and network usage (Kaspar et al., 2013).                                  here is completely opensource, we do rely on Google services in
+    The open-source object-oriented JavaScript modules are                           the background to provide the “plumbing" that enables the real-
+highly reusable and can be easily integrated in existing or                          time collaboration. This is deemed acceptable, however, due to
+new web-based applications like MedView. These types of                              the ubiquity of Google services and the off-the-shelf leveraging of
+web-based distributed applications are very appealing as they                        existing, powerful solutions.
+can be delivered to users over the web without requiring the                             Given the intrinsic needs for cooperative work in the medical
+installation of any additional software or browser plug-ins.                         and neuroimage research, clinical, and education fields, web-
+This not only enhances accessibility and usability for the                           based collaborative image visualization systems are becoming
+end-users but automatically provides them with the latest                            more and more important and they can only reach their
+application updates without requiring any technological                              full potential by including real-time interactive collaboration
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                              8                                                  May 2017 | Volume 11 | Article 32
+Bernal-Rusiel et al.                                                                                                    Web-Based Collaborative Neuroimaging Visualization
+
+
+
+features. The technological solution presented in this paper                               AUTHOR CONTRIBUTIONS
+provides a rapid and practical way of implementing those
+requirements. Overall, this real-time interactive collaboration                            JB: Main coding of MedView. NR: Coding of XTK
+over the Internet is quite feasible using the latest advances in                           library. RG: Deployment of medview in clinical
+core web technologies and web-based distributed application                                context. SP: Design/UI. SM: Deployment of medview in
+development (Flanagan, 2011; Richardson et al., 2013). Future                              clinical context. RR: Design feedback. PG: UI/UIX. RP:
+work in MedView will focus on improved mobile experience                                   Architecture/lead.
+and the development of new JavaScript modules to enable in-
+app on-line video calls based on the WebRTC standard30 , as                                ACKNOWLEDGMENTS
+well as continual improvements in the core graphical rendering
+components.                                                                                Part of the work was funded by NIH R01EB014947
+                                                                                           “MI2B2 Enabled Pediatric Neuroradiological Decision
+30 http://www.webrtc.org.
+                                                                                           Support.”
+
+
+
+
+REFERENCES                                                                                 Millan, J., and Yunda, L. (2014). An open-access web-based medical image atlas for
+                                                                                              collaborative medical image sharing, processing, web semantic searching and
+Anupam, V., Bajaj, C., Schikore, D., and Schikore, M. (1994). Distributed and                 analysis with uses in medical training, research and second opinion of cases.
+   collaborative visualization. Computer 27, 37–43. doi: 10.1109/2.299409                     Nova 12, 143–150.
+Coleman, J. D., Klement, E., Savchenko, A., and Goettsch, A. (1997). “Teleinvivo:          Mwalongo, F., Krone, M., Reina, G., and Ertl, T. (2016). State-of-the-art report in
+   a novel telemedical application for collaborative volume visualization,” in                web-based visualization. Comput. Graph. Forum 35, 553–575. doi: 10.1111/cgf.
+   Proceedings of the Fourth ACM International Conference on Multimedia,                      12929
+   (Boston, MA: Fetal-Neonate DevCenter), 445–446.                                         Pienaar, R., Rannou, N., Bernal, J., Hahn, D., and Grant, P. E. (2015). “ChRIS –
+Eckersley, P., Egan, G. F., De Schutter, E., Yiyuan, T., Novak, M., Sebesta, V.,              A web-based neuroimaging and informatics system for collecting, organizing,
+   et al. (2003). Neuroscience data and tool sharing. Neuroinformatics 1, 149–165.            processing, visualizing and sharing of medical data,” Conference proceedings:
+   doi: 10.1007/s12021-003-0002-1                                                             Annual International Conference of the IEEE Engineering in Medicine and
+Flanagan, D. (2011). JavaScript: The Definitive Guide: Activate Your Web Pages.               Biology Society. IEEE Engineering in Medicine and Biology Society. Annual
+   Sebastopol, CA: O’Reilly Media, Inc.                                                       Conference (Milan, IL).
+Forslund, D. W., George, J. E., Gavrilov, E. M., Staab, T., Weymouth, T. E., Kotha,        Richardson, L., Amundsen, M., and Ruby, S. (2013). RESTful Web APIs.
+   S., et al. (1998). “Telemed: development of a java/corba-based virtual electronic          Sebastopol, CA: O’Reilly Media, Inc.
+   medical record,” in Medical Technology Symposium, 1998. Proceedings. Pacific,           Sherif, T., Kassis, N., Rousseau, M.-É., Adalat, R., and Evans, A. C.
+   (IEEE), 16–19. doi: 10.1109/PACMED.1998.767876                                             (2015). Brainbrowser: distributed, web-based neurological data
+Forslund, D. W., Phillips, R. L., Kilman, D. G., and Cook, J. L. (1996). “Telemed: a          visualization. Front. Neuroinform. 8:89. doi: 10.3389/fninf.2014.
+   working distributed virtual patient record system,” in Proceedings of the AMIA             00089
+   Annual Fall Symposium (Washington, DC: American Medical Informatics                     Sherif, T., Rioux, P., Rousseau, M.-E., Kassis, N., Beck, N., Adalat, R.,
+   Association), 990.                                                                         et al. (2014). Cbrain: a web-based, distributed computing platform
+Gokhale, A., Kumar, B., and Sahuguet, A. (2002). “Reinventing the wheel? corba                for collaborative neuroimaging research. Front. Neuroinform. 8:54.
+   vs. web services,” in Proceedings of International World Wide Web Conference               doi: 10.3389/fninf.2014.00054
+   (Honolulu, HI).                                                                         Wood, D., King, M., Landis, D., Courtney, W., Wang, R., Kelly, R., et al.
+Haehn, D. (2013). “Slice: drop: collaborative medical imaging in the browser,” in             (2014). Harnessing modern web application technology to create intuitive
+   ACM SIGGRAPH 2013 Computer Animation Festival (Anaheim, CA: ACM).                          and efficient data visualization and sharing tools. Front. Neuroinform. 8:71.
+Haehn, D., Rannou, N., Ahtam, B., Grant, E., and Pienaar, R. (2014).                          doi: 10.3389/fninf.2014.00071
+   “Neuroimaging in the browser using the x toolkit,” in Frontiers in
+   Neuroinformatics Conference Abstract: 5th INCF Congress of Neuroinformatics             Conflict of Interest Statement: The authors declare that the research was
+   (Munich).                                                                               conducted in the absence of any commercial or financial relationships that could
+Henning, M. (2006). The rise and fall of corba. Queue 4, 28–34.                            be construed as a potential conflict of interest.
+   doi: 10.1145/1142031.1142044
+Kaspar, M., Parsad, N. M., and Silverstein, J. C. (2010). “Cowebviz: interactive           The reviewer ZRQ and handling Editor declared their shared affiliation, and
+   collaborative sharing of 3d stereoscopic visualization among browsers with no           the handling Editor states that the process nevertheless met the standards of a fair
+   added software,” in Proceedings of the 1st ACM International Health Informatics         and objective review.
+   Symposium (Arlington, VA: ACM), 809–816.
+Kaspar, M., Parsad, N. M., and Silverstein, J. C. (2013). An optimized web-based           Copyright © 2017 Bernal-Rusiel, Rannou, Gollub, Pieper, Murphy, Robertson,
+   approach for collaborative stereoscopic medical visualization. J. Am. Med.              Grant and Pienaar. This is an open-access article distributed under the
+   Inform. Assoc. 20, 535–543. doi: 10.1136/amiajnl-2012-001057                            terms of the Creative Commons Attribution License (CC BY). The use,
+Manssour, I. H., and Dal Sasso Freitas, C. M. (2000). “Collaborative visualization         distribution or reproduction in other forums is permitted, provided the original
+   in medicine,” in WSCG ’2000: Conference proceeding: The 8th International               author(s) or licensor are credited and that the original publication in this
+   Conference in Central Europe on Computers Graphics, Visualization and                   journal is cited, in accordance with accepted academic practice. No use,
+   Interactive Digital Media ’2000 in cooperation with EUROGRAPHICS and IFIP               distribution or reproduction is permitted which does not comply with these
+   WG 5.10: University of West Bohemia (Plzen), 266–273.                                   terms.
+
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                                    9                                                    May 2017 | Volume 11 | Article 32
+

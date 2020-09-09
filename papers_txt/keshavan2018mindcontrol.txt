@@ -1,0 +1,504 @@
+                                                                        NeuroImage 170 (2018) 365–372
+
+
+
+                                                                 Contents lists available at ScienceDirect
+
+
+                                                                            NeuroImage
+                                                 journal homepage: www.elsevier.com/locate/neuroimage
+
+
+
+
+Mindcontrol: A web application for brain segmentation quality control                                                                                             MARK
+                           a,b,⁎                     a,b                                   c                                       d
+Anisha Keshavan     , Esha Datta , Ian M. McDonough , Christopher R. Madan ,
+Kesshi Jordana,b, Roland G. Henrya,b,e
+a
+  Department of Neurology, University California, San Francisco, USA
+b
+  UC Berkeley - UCSF Graduate Program in Bioengineering, San Francisco, USA
+c
+  The University of Alabama, Tuscaloosa, AL, USA
+d
+  Department of Psychology, Boston College, Chestnut Hill, MA, USA
+e
+  Department of Radiology and Biomedical Imaging, University California, San Francisco, CA, USA
+
+
+
+
+                                                        A BS T RAC T
+
+                                                        Tissue classiﬁcation plays a crucial role in the investigation of normal neural development, brain-behavior
+                                                        relationships, and the disease mechanisms of many psychiatric and neurological illnesses. Ensuring the
+                                                        accuracy of tissue classiﬁcation is important for quality research and, in particular, the translation of imaging
+                                                        biomarkers to clinical practice. Assessment with the human eye is vital to correct various errors inherent to all
+                                                        currently available segmentation algorithms. Manual quality assurance becomes methodologically diﬃcult at a
+                                                        large scale - a problem of increasing importance as the number of data sets is on the rise. To make this process
+                                                        more eﬃcient, we have developed Mindcontrol, an open-source web application for the collaborative quality
+                                                        control of neuroimaging processing outputs. The Mindcontrol platform consists of a dashboard to organize data,
+                                                        descriptive visualizations to explore the data, an imaging viewer, and an in-browser annotation and editing
+                                                        toolbox for data curation and quality control. Mindcontrol is ﬂexible and can be conﬁgured for the outputs of
+                                                        any software package in any data organization structure. Example conﬁgurations for three large, open-source
+                                                        datasets are presented: the 1000 Functional Connectomes Project (FCP), the Consortium for Reliability and
+                                                        Reproducibility (CoRR), and the Autism Brain Imaging Data Exchange (ABIDE) Collection. These demo
+                                                        applications link descriptive quality control metrics, regional brain volumes, and thickness scalars to a 3D
+                                                        imaging viewer and editing module, resulting in an easy-to-implement quality control protocol that can be
+                                                        scaled for any size and complexity of study.
+
+
+
+
+1. Background                                                                               limitations. First, the quality of the MRI scan itself due to motion
+                                                                                            artifacts or scanner instabilities could blur and distort anatomical
+    Imaging biomarkers derived from MRI play a crucial role in the                          boundaries (Blumenthal et al., 2002; Pardoe et al., 2016; Reuter et al.,
+ﬁelds of neuroscience, neurology, and psychiatry. Estimates of regional                     2015; Savalia et al., 2016). Diﬀerences in MRI hardware, software, and
+brain volumes and shape features can track the disease progression of                       acquisition sequences also contribute to contrast diﬀerences and
+neurological and psychiatric diseases such as Alzheimer's disease                           gradient distortions that aﬀect tissue classiﬁcation, which makes
+(Dickerson et al., 2009; Vemuri and Jack, 2010), Parkinson's disease                        combining datasets across sites challenging (Keshavan et al., 2016).
+(Tuite et al., 2013), schizophrenia (Shenton et al., 2001), depression                      An additional source of error comes from parameter selection for
+(Amico et al., 2011), autism (Brambilla et al., 2003), and multiple                         segmentation algorithms; diﬀerent parameter choices can translate to
+sclerosis (Filippi et al., 1995). Given recent increases in data collection                 widely varying results (Han et al., 2006). Furthermore, many MR
+to accommodate modern precision-medicine approaches, assuring the                           segmentation algorithms were developed and tested on healthy adult
+quality of these biomarkers is vital as we scale their production.                          brains; applying these algorithms to brain images of children, the
+    Various semi-automated programs have been developed to estimate                         elderly, or those with pathology may violate certain assumptions of the
+MRI biomarkers. While these applications are eﬃcient, errors in                             algorithm, resulting in drastically diﬀerent results.
+regional segmentation are inevitable, given several methodological                              Several quality assurance strategies exist to address segmentation
+challenges inherent to both technological and clinical implementation                       errors. In one approach, researchers ﬂag low-quality scans prior to
+
+
+    ⁎
+   Corresponding author at: Department of Neurology, University California, San Francisco, 675 Nelson Rising Lane, San Francisco, CA 94158, USA.
+   E-mail addresses: anisha.keshavan@ucsf.edu (A. Keshavan), Esha.Datta@ucsf.edu (E. Datta), immcdonough@ua.edu (I. M. McDonough), madanc@bc.edu (C.R. Madan),
+Kesshi.Jordan@ucsf.edu (K. Jordan), Roland.Henry@ucsf.edu (R.G. Henry).
+
+http://dx.doi.org/10.1016/j.neuroimage.2017.03.055
+Received 30 November 2016; Received in revised form 1 March 2017; Accepted 27 March 2017
+Available online 30 March 2017
+1053-8119/ © 2017 The Authors. Published by Elsevier Inc. This is an open access article under the CC BY license (http://creativecommons.org/licenses/BY/4.0/).
+A. Keshavan et al.                                                                                                                       NeuroImage 170 (2018) 365–372
+
+
+analysis by viewing the data before input to tissue classiﬁcation
+algorithms. However, identifying “bad” datasets using the raw data is
+not always straightforward, and can be prohibitively time consuming
+for large datasets. Pre-processing protocols have been developed to
+extract metrics that can be viewed as a cohort-level summary from
+which outliers are selected for manual quality-assurance. For example,
+by running the Preprocessed-Connectomes Project's Quality Assurance
+Protocol (PCP-QAP) (Shehzad et al., 2015), researchers can view
+summary statistics that describe the quality of the raw data going into
+the algorithm and automatically remove subpar images. However,
+these metrics are limited because segmentation may still fail even if
+the quality of the scan is good. Another quality assurance strategy is to
+plot distributions of the segmentation output metrics themselves and
+remove any outlier volumes. However, without manual inspection,
+normal brains that naturally have very small or large estimates of brain
+size or pathological brains with valid segmentations may be inappro-
+priately removed. Ideally, a link would exist between scalar summary
+                                                                                   Fig. 1. This diagram shows the diﬀerent components of the Mindcontrol application. A)
+statistics and 3D/4D volumes. Such a link would enable researchers to              The client sends information, such as annotations and edits, to the server. B) The server
+prioritize images for labor-intensive quality control (QC) procedures; to          calls a method that updates the MongoDB back-end. C) When the back-end MongoDB
+collaborate and organize QC procedures; and to understand how scalar               database changes, these changes are automatically pushed to the minimongo database on
+quality metrics, such as signal to noise ratio, relate to the actual image         the client. D) A change to the minimongo database automatically re-renders the view on
+                                                                                   the client. E) Users can optionally push changes to the client view via the MongoDB with
+and segmentation. In this report, we present a collaborative and
+                                                                                   Python MongoDB drivers. Drivers for C, C++, Scala, Java, PHP, Ruby, Perl, and Node.js
+eﬃcient MRI QC platform that links group-level descriptive statistics
+                                                                                   are also available through MongoDB. F) Developers can optionally write server methods
+to individual volume views of MRI images.                                          to launch Python or command-line processes that, in turn, use user annotations and edits
+     We propose an open source web-based brain quality control                     to re-process images and update the MongoDB with new results. G) Imaging data (in
+application called Mindcontrol: a dashboard to organize, QC, annotate,             NifTI format) is stored on an external server, such as Amazon S3 or Dropbox, and URLs
+edit, and collaborate on neuroimaging processing. Mindcontrol pro-                 to the images are stored in the MongoDB.
+vides an intuitive interface for examining distributions of descriptive
+measures from neuroimaging pipelines (e.g., surface area of the right              2.2. Server back-end framework
+insula), and viewing the results of segmentation analyses using the
+Papaya.js volume viewer (https://github.com/rii-mango/Papaya).                         Mindcontrol is built with Meteor (http://www.meteor.com), a full-
+Users are able to annotate points and curves on the volume, edit                   stack javascript web-development platform. Meteor features a build
+voxels, and assign tasks to other users (e.g., to manually correct the             tool, a package manager, the convenience of a single language
+segmentation of a particular image). The platform is pipeline agnostic,            (javascript) to develop both the front- and back-end of the
+meaning that it can be conﬁgured to quality control any set of 3D                  application, and an abstracted implementation of full-stack reactivity.
+volumes regardless of what neuroimaging software package produced                  Data is transferred “over the wire” and rendered by the client (as
+it. In the following sections, we describe the implementation details of           opposed to the server sending HTML), which means that changes to
+Mindcontrol, as well as its conﬁguration for three open-source                     the database automatically trigger changes to the application view. For
+datasets, each with a diﬀerent type of neuroimaging pipeline output.               example, as soon as a user ﬁnishes implementing QC procedures on an
+                                                                                   image and clicks “save”, all other users can see the changes. A diagram
+                                                                                   of this process is provided in Fig. 1.
+
+                                                                                   2.3. Client-side features
+2. Software design and implementation
+                                                                                       The user interface consists of a dashboard view and an imaging
+2.1. Design principles                                                             view, as shown in Figs. 2 and 3, respectively. The primary dashboard
+                                                                                   view consists of processing module sections, a query controller, data
+    Mindcontrol was developed with several design requirements.                    tables, and descriptive statistic visualizations. Each entry in the table is
+Mindcontrol must be easily accessible from any device, such as a                   a link that, when clicked, ﬁlters all tables on the page. The ﬁlters or
+Mac, Windows, or even a tablet. Therefore, the best option was to                  queries can be saved, edited, and loaded in the query controller section,
+develop a web application. Most tablets have limited storage capacity,             as shown in Fig. 4.
+so space-minimizing speciﬁcations were established. A dependence on                    Descriptive statistics are visualized using the D3 library (https://
+cloud-based data storage was speciﬁed to accommodate large neuroi-                 d3js.org/). Currently, two visualizations are provided: a calendar view
+maging datasets without needing local storage. To eﬃciently store                  of a heatmap that shows a histogram of the number of exams collected
+annotations and edited voxels, Mindcontrol only stores the changes to              on a given day and 1D histograms of scalar metrics with dimensions
+ﬁles, rather than whole-ﬁle information, on its database. Researchers              that are swappable using a dropdown menu, as shown in Fig. 2. Both
+must be able to QC outputs from any type of neuroimaging software                  histogram plots interactively ﬁlter the data tables below. Clicking on a
+package, so Mindcontrol was speciﬁed to ﬂexibly accommodate any ﬁle                particular date on the date-histogram plot ﬁlters all tables by the exams
+organization structure, with conﬁgurable “modules” that can contain                collected on that particular date. Users are able to “brush” sections of
+any type of descriptive statistics and 3D images. Mindcontrol conﬁg-               the 1D histogram to ﬁlter all tables with exams that meet requirements
+uration and database updates must require minimal Javascript knowl-                of values within that range (see Fig. 5).
+edge, since Matlab/Octave, Python, R, and C are primarily used in the                  The imaging view is shown in Fig. 3. The left-side column includes a
+neuroimaging community for data analysis. Finally, changes to the                  section to label an image as “Pass”, “Fail”, “Edited”, or “Needs Edits”
+database (like the addition of new images), changes in descriptive                 and to provide notes. The status bar at the top-left portion updates
+measures, and new edits/annotations, should be reﬂected in the                     instantaneously with information on which user checked the image, the
+application in real-time to foster collaboration.                                  quality status of the image, and when it was last checked. Users are also
+
+                                                                             366
+A. Keshavan et al.                                                                                                                                    NeuroImage 170 (2018) 365–372
+
+
+
+
+Fig. 2. This ﬁgure shows the Mindcontrol layout conﬁgured to quality check FreeSurfer outputs from the 1000 Functional Connectomes Project (FCP). Part A shows the module
+navigator, which links to the diﬀerent processing modules on the dashboard. Part B shows the diﬀerent exams and the dates they were acquired as a heatmap, where green is more and
+orange is less scans collected on a given day. (For demonstration purposes, the dates depicted here do not reﬂect the actual dates the data were collected for the FCP, since this
+information was not provided at the time.) Clicking on data in any column of the exam table ﬁlters the data by that column. For example, clicking the site “Milwaukee” reduces both the
+“Exams” and the “FreeSurfer” tables to only show subjects from Milwaukee. Part C shows the FreeSurfer table and regional volume distribution of the left caudate. A drop-down menu
+allows users to switch the descriptive metric. Clicking on a value in FreeSurfer ID column brings the user to the imaging view, as shown in Fig. 3, where users can evaluate and annotate
+the quality status of the image. The value of the label in the “QC” column changes instantaneously due to Meteor's built in full-stack reactivity.
+
+
+able to assign edits to be performed by other users on the system; for                          coordinates, along with annotation text or paintbrush values, are saved
+example, a research assistant can perform a general QC and assign                               to the mongo database when the user clicks “save”. Custom oﬄine
+diﬃcult cases to a neuroradiologist. On the right-hand side, the                                functions may be written to apply editing to images: for example, to
+Papaya.js viewer (http://rii-mango.github.io/Papaya/) is used to                                implement pial surface edits from FreeSurfer.
+display the NifTI volumes of the original data and FreeSurfer
+segmentations.                                                                                  2.4. Conﬁguration details
+    Annotations of points and curves are shown in Fig. 6. Using the
+shift key, users can click on the image to annotate points or select the                            Mindcontrol can be conﬁgured for a study's speciﬁc needs be
+“Logged Curves” toolbar. By shift+click and dragging, users can draw                            specifying a JSON ﬁle. The conﬁguration ﬁle describes processing
+curves. Keyboard and mouse shortcuts provided by the Papaya.js                                  modules by module names, the columns to display in the data table
+viewer, along with Mindcontrol, include toggling overlays (zz) and                              below, and the type of graph to display (date histogram or 1D
+undoing annotations (dd). Fig. 7 shows the editing (“Painter”) panel of                         histogram). Images must be hosted on a separate server or a content
+the imaging view. Users set paintbrush values and shift+click and drag                          delivery network (CDN) and the Mindcontrol database populated with
+to change voxel values. For point and curve annotations and voxel                               URLs to these images. An initial JSON ﬁle can be speciﬁed to populate
+editing, the images themselves are not changed, but world x,y,z                                 the Mindcontrol MongoDB with entries on startup if the database is
+
+                                                                                          367
+A. Keshavan et al.                                                                                                                                     NeuroImage 170 (2018) 365–372
+
+
+
+
+Fig. 3. The imaging view of Mindcontrol consists of a panel on the left-hand side that contains the QC status; a point annotation menu; a curve annotation menu; a voxel editing menu;
+and an editable sub-panel for QC status, notes, and editor assignment. On the right-hand side, the base MRI anatomical MPRAGE image is displayed with an overlay of the FreeSurfer
+segmentation output using the Papaya.js viewer.
+
+
+empty. Instructions and example JSON schema for the conﬁguration                                 et al., 2010), which have been openly shared with the public. The
+ﬁle and the database entries can be found at https://github.com/                                 purpose of the FCP collaboration is to comprehensively map the
+akeshavan/mindcontrol/wiki along with a Python function to access                                functional human connectome, to understand genetic inﬂuences on
+the MongoDB, which can be used to write custom editing scripts and                               the brain's structure and function, and to understand how brain
+externally update the database.                                                                  structure and function relate to human behavior (Biswal et al., 2010).
+                                                                                                 Segmentation of 200 selected FCP anatomical images from Baltimore,
+3. Examples/Applications                                                                         Bangor, Berlin, ICBM, and Milwaukee was performed with FreeSurfer
+                                                                                                 (recon-all) version 5.3.0 (Fischl et al., 2002) using the RedHat 7
+    Mindcontrol conﬁgurations were developed for selected data from                              operating system on IEEE 754 compliant hardware at UCSF. Regional
+the 1000 Functional Connectomes project (FCP), the consortium for                                volumes of subcortical and cerebellar regions were computed. Cortical
+reliability and reproducibility (CoRR), and the Autism Brain Imaging                             volumes, areas, and thicknesses were also computed and averaged
+Data Exchange (ABIDE) Collection I.                                                              across hemispheres. Scan dates were simulated in order to demonstrate
+    The FCP consists of 1,414 resting state fMRI and corresponding                               the date histogram shown in Fig. 1B. The original anonymized T1-
+structural datasets collected from 35 sites around the world (Biswal                             weighted images, along with the aparc+aseg output from FreeSurfer,
+
+
+
+
+Fig. 4. The query controller shows the diﬀerent ﬁlters that have been applied to this dataset. In this example, the exams have been ﬁltered by institution (“Milwaukee”) and by a range of
+left caudate volumes (brushed from the histogram). Clicking the “x” next to the ﬁlter removes it, and the view updates. Queries can be saved and reloaded by providing a name in the text-
+entry box and clicking “Save”. “Reset” removes all ﬁlters to show the whole dataset.
+
+
+                                                                                           368
+A. Keshavan et al.                                                                                                                                  NeuroImage 170 (2018) 365–372
+
+
+
+
+Fig. 5. This demonstrates the interactive brushing feature of Mindcontrol histograms. On the left, the user has brushed the tail end of the left caudate volume distribution from
+FreeSurfer. On the right, the histogram has been redrawn with data from the brushed range, and the table beneath ﬁltered from 200 entries to 10 entries based on the brushed caudate
+volumes.
+
+
+were converted to the compressed NifTI (.nii.gz) format and uploaded                           test-retest reliability of commonly used MR metrics; to understand the
+to Dropbox for the purpose of visualization within Mindcontrol. The                            variability of these metrics across sites; and to establish a standard
+Mindcontrol database was populated with URLs to these images, along                            benchmark dataset on which to evaluate new imaging metrics (Zuo
+with their corresponding FreeSurfer segmentation metrics. The demo                             et al., 2014). PCP-QAP normative data for the CoRR study was
+of the FCP data is located at http://mindcontrol.herokuapp.com.                                downloaded from https://github.com/preprocessed-connectomes-
+    More recently, researchers have developed the Preprocessed-                                project/quality-assessment-protocol. The Mindcontrol database was
+Connectomes Project's Quality Assurance Protocol (PCP-QAP) soft-                               populated with pointers to 2,963 CoRR structural images residing on
+ware, to provide anatomical and functional data quality measures in                            an Amazon S3 bucket along with their corresponding PCP-QAP
+order to detect low-quality images before data processing and analysis                         metrics. The demo of the CoRR dataset with PCP-QAP metrics is
+(Shehzad et al., 2015). Some metrics include contrast-to-noise ratio,                          hosted at http://mindcontrol-corr.herokuapp.com.
+signal-to-noise ratio, voxel smoothness, percentage of artifact voxels,                            The overarching goal of the ABIDE initiative is to expedite the
+foreground-to-background energy ratio, and entropy focus criterion                             discovery of the neural basis of autism by providing open access to a
+(Shehzad et al., 2015). The PCP-QAP protocol has been run on the                               large, heterogeneous collection of structural and functional neuroima-
+Consortium for Reliability and Reproducibility (CoRR), and the Autism                          ging datasets collected from over 23 institutions (Martino et al., 2013).
+Brain Imaging Data Exchange (ABIDE) datasets and the results have                              The Preprocessed Connectomes Project provides cortical thickness
+been posted online.                                                                            measures of the ABIDE dataset output by the ANTs software package
+    The purpose of CoRR is to provide an open-science dataset to assess                        (Tustison et al., 2014), along with summary statistics across regions of
+the reliability of functional and structural connectomics by deﬁning                           interests (ROIs) deﬁned by the Desikan-Killiany-Tourville (DKT)
+
+
+
+
+Fig. 6. The annotations panel can be used to annotate a single point (shown in red, part A) and curves (shown in B). When annotating points, the user is shown the selected x,y,z world
+coordinates and is able to name the annotation. In the curve annotation panel on the left sidebar, the user is able to name the curve and add/remove curves. Keyboard shortcuts: “dd”
+removes the previous annotation and “zz” toggles the segmentation overlay.
+
+
+                                                                                         369
+A. Keshavan et al.                                                                                                                                      NeuroImage 170 (2018) 365–372
+
+
+
+
+Fig. 7. The editing panel on the left shows the “Painter” toolbox in yellow, where users can input brush values or use the eyedropper tool to set the value to that of a clicked label. The
+eraser icon sets the brush value to 0, to delete or erase voxels. In the image above, the FreeSurfer segmentation is being edited by erasing the voxels misclassiﬁed as dura.
+
+
+protocol (Klein and Tourville, 2012). The Mindcontrol database was                               internally (Mongo database back-end). User edits can be extracted
+populated with pointer URLs to S3-hosted cortical thickness images                               automatically and written to the ﬁlesystem, eliminating the potential
+and their corresponding ROI summary measures, along with PCP-QAP                                 for clerical errors. An example python script to do this can be found at
+metrics. The demo of the ABIDE dataset with ANTS cortical thickness                              https://github.com/akeshavan/mindcontrol_docs/blob/master/
+and PCP-QAP metrics is located at http://mindcontrol-abide.                                      MindPrepFS.ipynb. Scalar metrics are linked to 3D images, enabling a
+herokuapp.com.                                                                                   user to inspect an outlier image with the click of a button. Mindcontrol
+                                                                                                 is web-based, so it can be used on any device; QC operators can even
+                                                                                                 use a tablet with stylus to edit, which is more natural than using a
+4. Discussion
+                                                                                                 mouse.
+                                                                                                     There have been considerable eﬀorts in this ﬁeld to ensure data
+    Mindcontrol is a conﬁgurable neuroinformatics dashboard that
+                                                                                                 quality on a large scale. The human connectome project's extensive
+links study information and descriptive statistics with scientiﬁc data
+                                                                                                 informatics pipeline, which includes a database service, QC procedures,
+visualization, MR images, and their overlays (segmentation or other-
+                                                                                                 and a data visualization platform, has been key to the project's success
+wise). The three conﬁgurations demonstrated in this report show the
+                                                                                                 in collecting a large, high-quality dataset (Marcus et al., 2013). The
+link between MRI quality metrics and raw data, the link between
+                                                                                                 Allen Brain Atlas oﬀers a comprehensive genetic, neuroanatomical, and
+FreeSurfer regional volumes and segmentation quality, and the link
+                                                                                                 connectivity web-based data exploration portal, linking an MRI viewer
+between ANTS cortical thickness summary statistics and segmenta-
+                                                                                                 to data tables (Sunkin et al., 2012). The open-source LORIS web-based
+tion/thickness estimates of the volume. The platform is conﬁgurable,
+                                                                                                 data management system integrates an image viewer with extensive QC
+open-source, and software/pipeline agnostic, enabling researchers to
+                                                                                                 modules (Das et al., 2012). Mindcontrol supplements these eﬀorts by
+conﬁgure it to their particular analyses. The dashboard allows re-
+                                                                                                 providing a lightweight and extensible data management and visualiza-
+searchers to assign editing tasks to others, who can then perform edits
+                                                                                                 tion system with the added capability to perform edits and curate
+on the application itself.
+                                                                                                 annotations within the application.
+    The Mindcontrol platform streamlines and standardizes QC proce-
+                                                                                                     Table 1 shows examples of subjects from the FCP, CoRR, and
+dures. The traditional method of collaborative QC within a lab
+                                                                                                 ABIDE datasets with low-quality scans or segmentations, identiﬁed
+assembles disparate software components into a procedure that is
+                                                                                                 using Mindcontrol. The tails of various PCP-QAP metric distributions
+vulnerable to clerical errors. The QC operators use existing viewers
+                                                                                                 for both the ABIDE and CoRR datasets could be ﬁltered interactively to
+(such as FSLview or Freeview) to view and edit the images, making
+                                                                                                 isolate images with motion artifacts, extensive blurring, and noise. In
+notes on a collaborative spreadsheet application (such as google-docs).
+                                                                                                 the ABIDE dataset, ﬁltering by the entropy focus criterion (EFC)
+They must carefully adhere to a common folder structure and naming
+                                                                                                 greater than 17 identiﬁed images with extreme motion artifacts. The
+convention so that other lab members and any automated processing
+                                                                                                 range of the EFC for the CoRR dataset was much smaller (less than 2)
+scripts can locate these images. Distributions of scalar metrics are then
+                                                                                                 and the image with the highest EFC had no motion artifacts, but failed
+plotted to identify outliers using a separate data analysis software
+                                                                                                 QC due to excessive defacing. In the ABIDE dataset, ﬁltering for the
+program. The results of that analysis must then be reviewed using the
+                                                                                                 high FWHM extremes identiﬁed images with motion artifacts, grainy/
+imaging software to ensure that outliers are appropriately screened.
+                                                                                                 noisy images, and one extremely blurry image. On the other hand, in
+This method is inherently ineﬃcient because images must be loaded
+                                                                                                 the CoRR dataset, the image with high FWHM had an extreme bias
+multiple times and attention split between the imaging platform and
+                                                                                                 ﬁeld. In the CoRR dataset, the images with very low contrast-to-noise
+annotation software. Additionally, results of the QC must be main-
+                                                                                                 (CNR) had motion artifacts, while the ABIDE images did not. Overall,
+tained consistently across several software packages. Clerical errors are
+                                                                                                 examining the extremes of the PCP-QAP metrics with Mindcontrol
+common and time-consuming to resolve because naming convention is
+                                                                                                 identiﬁed outliers, but the relationship between artifacts and metrics
+not explicitly enforced, and manual edits could be lost within the
+                                                                                                 varied by study.
+ﬁlesystem without thorough documentation by research assistants.
+                                                                                                     Exploring the link between ANTS Cortical Thickness and the PCP-
+Google-spreadsheets are collaborative, but ideally this pass/fail/edited
+                                                                                                 QAP metrics in the ABIDE dataset, we found that selecting the higher
+QC information would be directly linked to the data. Mindcontrol
+                                                                                                 tail of average left- and right-postcentral gyrus thickness corresponded
+stores all notes, annotations, and QC results, and in-browser edits
+
+                                                                                           370
+A. Keshavan et al.                                                                                                                          NeuroImage 170 (2018) 365–372
+
+
+Table 1
+A table of bad quality data or segmentations found on Mindcontrol.
+
+  Dataset    Filter                                              Algorithm    Example subject IDs                      Observation
+
+  ABIDE      Higher end of FWHM                                  PCP-QAP      50528, 0050511, 0050519                  Motion artifact
+  ABIDE      Higher end of FWHM                                  PCP-QAP      50496                                    Very grainy
+  ABIDE      Higher end of FWHM                                  PCP-QAP      50611                                    Extremely blurry
+  ABIDE      High EFC                                            PCP-QAP      51160, 0051191, 0051166, 0051174,        Motion artifact
+                                                                              0051192, 0051165, 0051186
+  ABIDE      High QI1                                            PCP-QAP      50197, 50017                             Very noisy, motion artifact
+  CoRR       Lower end of CNR                                    PCP-QAP      25073, 25085,                            Motion artifact
+  CoRR       High EFC (range much lower than ABIDE)              PCP-QAP      25567                                    No motion artifact, but frontal lobe cut off (excessive
+                                                                                                                       defacing)
+  CoRR       High FWHM                                           PCP-QAP      27040                                    Needs major bias field correction
+  FCP        Lower end of Left-Amygdala, temporal-pole, Left-    FreeSurfer   sub48830, sub93262, sub55176, sub75919   Temporal lobes not correctly segmented; gray white
+             Amygdala distribution                                                                                     delineation difficult to see
+  FCP        Higher end of SuperiorFrontal, Precentral,          FreeSurfer   sub98317, sub27536, sub28795,            Gray matter segmentation enters dura
+             Postcentral thickness                                            sub10582, sub93975
+
+
+
+to datasets at the higher range of PCP-QAP FWHM. Conversely,                                 Currently, conﬁguring Mindcontrol involves creating one JSON ﬁle
+selecting the lower tail of the precentral and postcentral gyrus                         to describe the diﬀerent modules and another JSON ﬁle to populate the
+thicknesses related to the lower range of the FWHM. It was diﬃcult                       Mongo database with pointers to images and their scalar metrics. In
+to pinpoint errors in the ANTS Cortical Thickness segmentation images                    the future, this process could be streamlined by creating a Mindcontrol
+because the data was normalized to MNI space. In the future, it would                    conﬁguration for datasets with a standardized folder structure, like the
+be better to QC each step of the ANTS pipeline to ensure that 1)                         Brain Imaging Data Structure (BIDS) (Gorgolewski et al., 2017), and
+segmentation in native space was accurate and 2) normalization to                        their BIDS-compliant derivatives (Gorgolewski et al., 2016).
+MNI space was reasonable.                                                                Additionally, implementing the server-side application within a con-
+    Mindcontrol is particularly useful to investigate where errors                       tainer, like Docker, will make it easier to deploy a Mindcontrol server.
+occurred in segmentation algorithms. In the FCP dataset, the most                        Further development of Mindcontrol will include the ﬂexible importing
+common errors in segmentation with FreeSurfer were that 1) parts of                      of additional scalar metrics, such as measures of structural complexity,
+the temporal lobes were excluded from the segmentation and 2) the                        calculated by third-party toolboxes developed to complement standard
+gray matter segmentation entered the dura. Scans with low-quality                        analysis pipelines (Madan and Kensinger, 2016, 2017). This will enable
+temporal lobe segmentation were found by selecting the lower tail of                     researchers to collaborate on the same dataset by uploading metrics
+the amygdala or temporal pole volume distributions. Often, these                         from their newly developed algorithms, and will enable them to easily
+images exhibited poor gray/white contrast in the temporal pole region,                   explore their results in the context of metrics contributed by others.
+and low signal to noise. Initially, we observed that dura misclassiﬁca-                  Finally, Mindcontrol has the potential to be a large-scale crowd-
+tion occurred most frequently in the precentral and postcentral gyri.                    sourcing platform for segmentation editing and quality control. We
+We then selected data points with high precentral/postcentral volumes                    hope the functionality, ease-of-use, and modularity oﬀered by
+to locate these errors. However, scans in the middle of these metric                     Mindcontrol will help to improve the standards used by studies relying
+distributions also exhibited dura misclassiﬁcation, suggesting that this                 on brain segmentation.
+particular problem may be consistent across the entire dataset. In this
+example, it is necessary to QC every scan, regardless of where its
+summary metrics lie on the distribution.
+    In cases where every scan must be quality controlled, Mindcontrol's                  6. Software availability
+summary statistic distributions and annotation features serve as a
+triage tool, sorting cases that are likely to require more time or                          The Mindcontrol codebase is hosted on GitHub at http://github.
+expertise. When training new editors, Mindcontrol's annotation and                       com/akeshavan/mindcontrol, along with installation instructions. The
+notes features enable users to ask questions, mark the image with the                    Mindcontrol conﬁguration of the FCP data is located on the master
+point or curve annotation feature, and assign images to more senior                      branch of the GitHub repository, and the conﬁgurations for CoRR and
+editors to review and provide feedback. An initial Mindcontrol quality                   ABIDE are located at http://github.com/akeshavan/mindcontrol_
+check can be used to estimate total editing time and expertise needed                    conﬁgs, along with conﬁguration documentation at https://github.
+for a study, enabling a strategic allocation of resources. Leveraging                    com/akeshavan/mindcontrol_docs. Mindcontrol is licensed under the
+Mindcontrol as an integrated quality control tool can make processing                    Apache License, Version 2.0.
+methods more eﬃcient, organized, and collaborative.
+
+
+5. Future directions                                                                     Acknowledgements
+
+    Mindcontrol is being actively developed to incorporate new features                      AK would like to acknowledge Satrajit Ghosh and Arno Klein for
+that will improve outlier detection, eﬃciency, and collaboration. New                    their mentorship, the Papaya.js developers for their support, and
+information visualizations to detect outliers include: scatter plots to                  Cameron Craddock for his assistance with the CoRR and ABIDE
+compare two metrics against each other, and a longitudinal view of a                     datasets. AK, ED, IM, KJ, and CM would like to thank the organizers
+single-subject trajectory for a given metric to detect uncharacteristic                  of Neurohackweek and the Brainhack events for fostering a collabora-
+temporal changes. New scientiﬁc data visualizations are planned using                    tive environment in which to develop new ideas and software. CM was
+the BrainBrowser library (Sherif et al., 2015) to display cortical                       supported by a fellowship from the Canadian Institutes of Health
+surfaces. A beta version of real-time collaborative annotations, where                   Research (FRN-146793). ED and KJ were supported by the National
+two users can annotate the same image and see the edits of the other                     Defense Science and Engineering Graduate Fellowship. Icons from
+user as they occur, is in the testing phase.                                             Fig. 1 were sourced from https://icons8.com.
+
+                                                                                   371
+A. Keshavan et al.                                                                                                                                                 NeuroImage 170 (2018) 365–372
+
+
+References                                                                                                1016/j.neurobiolaging.2016.10.023〉).
+                                                                                                      Tuite, Paul J, Mangia, Silvia, Michaeli, Shalom, 2013. Magnetic resonance imaging
+                                                                                                          (MRI) in Parkinson’s disease, J. Alzheimer's Dis. Parkinsonism, NIH Public Access,
+Amico, F., Meisenzahl, E., Koutsouleris, N., Reiser, M., Möller, H.-J., Frodl, T., 2011.                  pp. 001.
+     Structural MRI correlates for vulnerability and resilience to major depressive                   Marcus, D.S., Harms, M.P., Snyder, A.Z., Jenkinson, M., Wilson, J.A., Glasser, M.F. ,
+     disorder. J. psychiatry Neurosci.: JPN 36 (1), 15. http://dx.doi.org/10.1503/                        Barch, D.M., Archie, K.A. , Burgess, G.C., Ramaratnam, M., Hodge, M., Horton, W.,
+     jpn.090186.                                                                                          Herrick, R., Olsen, T., McKay, M., House, M., Hileman, M., Reid, E., Harwell, J.,
+Tustison et al. 2014. Large-scale evaluation of ANTs and FreeSurfer cortical thickness                    Coalson, T., Schindler, J., Elam, J.S., Curtiss, S.W., Essen, D.C.V., 2013. Human
+     measurements. Neuroimage. vol. 1 (99), pp. 166–179. http://dx.doi.org/10.1016/j.                     Connectome Project informatics: Quality control database services, and data
+     neuroimage.2014.05.044.                                                                              visualization, NeuroImage, vol. 80, pp. 202–219. http://dx.doi.org/10.1016/j.
+Biswal, B.B., Mennes, M., Zuo, X.-N., Gohel, S., Kelly, C., Smith, S.M., Beckmann, C.F.,                  neuroimage.2013.05.077 URL 〈http://dx.doi.org/10.1016/j.neuroimage.2013.05.
+     Adelstein, J.S., Buckner, R.L., Colcombe, S., et al., 2010. Toward discovery science of              077〉.
+     human brain function, Proceedings of the National Academy of Sciences, vol. 107                  Martino, A.D., Yan, C.-G., Li, Q., Denio, E., Castellanos, F.X., Alaerts, K., Anderson, J.S.,
+     (10), pp. 4734–4739 http://dx.doi.org/10.1073/pnas.0911855107.                                       Assaf, M., Bookheimer, S.Y., Dapretto, M., Deen, B., Delmonte, S., Dinstein, I., Ertl-
+Blumenthal, J.D., Zijdenbos, A., Molloy, E., Giedd, J.N., 2002. Motion artifact in                        Wagner, B., Fair, D.A., Gallagher, L., Kennedy, D.P., Keown, C.L., Keysers, C.,
+     magnetic resonance imaging: implications for automated analysis. NeuroImage 16                       Lainhart, J.E., Lord, C., Luna, B., Menon, V., Minshew, N.J., Monk, C.S., Mueller, S.,
+     (1), 89–92. http://dx.doi.org/10.1006/nimg.2002.1076, (URL 〈http://dx.doi.org/                       Müller, R.-A., Nebel, M.B., Nigg, J.T., O'Hearn, K., Pelphrey, K.A., Peltier, S.J.,
+     10.1006/nimg.2002.1076〉).                                                                            Rudie, J.D., Sunaert, S., Thioux, M., Tyszka, J.M., Uddin, L.Q., Verhoeven, J.S.,
+Brambilla, P., Hardan, A., di Nemi, S.U., Perez, J., Soares, J.C., Barale, F., 2003. Brain                Wenderoth, N., Wiggins, J.L., Mostofsky, S.H., Milham, M.P., 2013. The autism
+     anatomy and development in autism: review of structural MRI studies. Brain Res.                      brain imaging data exchange: towards a large-scale evaluation of the intrinsic brain
+     Bull. 61 (6), 557–569. http://dx.doi.org/10.1016/j.brainresbull.2003.06.001.                         architecture in autism. Mol. Psychiatry 19 (6), 659–667. http://dx.doi.org/10.1038/
+Das, S., Zijdenbos, A.P., Harlap, J., Vins, D., Evans, A.C., 2012. LORIS: a web-based data                mp.2013.78, (URL 〈http://dx.doi.org/10.1038/mp.2013.78〉).
+     management system for multi-center studies, Frontiers in Neuroinformatics, vol. 5                Pardoe, H.R., Hiess, R.K., Kuzniecky, R., 2016. Motion and morphometry in clinical and
+     http://dx.doi.org/10.3389/fninf.2011.00037 URL 〈http://dx.doi.org/10.3389/fninf.                     nonclinical populations. NeuroImage 135, 177–185. http://dx.doi.org/10.1016/
+     2011.00037〉.                                                                                         j.neuroimage.2016.05.005, (URL 〈http://dx.doi.org/10.1016/j.neuroimage.2016.05.
+Dickerson, B., Bakkour, A., Salat, D., Feczko, E., Pacheco, J., Greve, D., Grodstein, F.,                 005〉).
+     Wright, C., Blacker, D., Rosas, H., Sperling, R., Atri, A., Growdon, J., Hyman, B.,              Reuter, M., Tisdall, M.D., Qureshi, A., Buckner, R.L., van der Kouwe, A.J., Fischl, B.,
+     Morris, J., Fischl, B., Buckner, R., 2009. The cortical signature of Alzheimer's                     2015. Head motion during MRI acquisition reduces gray matter volume and
+     disease: regionally speciﬁc cortical thinning relates to symptom severity in very mild               thickness estimates. NeuroImage 107, 107–115. http://dx.doi.org/10.1016/
+     to mild AD dementia and is detectable in asymptomatic amyloid-positive individuals.                  j.neuroimage.2014.12.006, (URL 〈http://dx.doi.org/10.1016/j.neuroimage.2014.12.
+     Cereb. Cortex 19, 497–510. http://dx.doi.org/10.1093/cercor/bhn113.                                  006〉).
+Filippi, M., Horsﬁeld, M.A., Tofts, P.S., Barkhof, F., Thompson, A.J., Miller, D.H., 1995.            Savalia, N.K., Agres, P.F., Chan, M.Y. , Feczko, E.J., Kennedy, K.M., Wig, G.S., 2016.
+     Quantitative assessment of MRI lesion load in monitoring the evolution of multiple                   Motion-related artifacts in structural brain images revealed with independent
+     sclerosis. Brain 118 (6), 1601–1612. http://dx.doi.org/10.1093/brain/118.6.1601,                     estimates of in-scanner head motion, Human Brain Mapping http://dx.doi.org/10.
+     (URL 〈http://dx.doi.org/10.1093/brain/118.6.1601〉).                                                  1002/hbm.23397 URL 〈http://dx.doi.org/10.1002/hbm.23397〉.
+Fischl, B., Salat, D.H., Busa, E., Albert, M., Dieterich, M., Haselgrove, C., van der Kouwe,          Shehzad, Z., Giavasis, S., Li, Q., Benhajali, Y., Yan, C., Yang, Z., Milham, M., Bellec, P.,
+     A., Killiany, R., Kennedy, D., Klaveness, S., et al., 2002. Whole brain segmentation:                Craddock, C., 2015. The Preprocessed Connectomes Project Quality Assessment
+     automated labeling of neuroanatomical structures in the human brain. Neuron 33                       Protocol: A resource for measuring the quality of MRI data, Frontiers in
+     (3), 341–355. http://dx.doi.org/10.1016/S0896-6273(02)00569-X.                                       Neuroscience, (47), http://dx.doi.org/10.3389/conf.fnins.2015.91.00047 URL
+Gorgolewski,K.J., Auer, T., Calhoun, V.D.,Craddock, R.C., Das, S, Duﬀ, E.P., Flandin, G.,                 〈http://www.frontiersin.org/10.3389/conf.fnins.2015.91.00047/event_abstract〉.
+     Ghosh, S.S., Glatard, T., Halchenko, Y.O., Handwerker, D.A., Hanke, M., Keator, D.,              Shenton, M.E., Dickey, C.C., Frumin, M., McCarley, R.W., 2001. A review of MRI ﬁndings
+     Li, X., Michael, Z., Maumet, C., Nichols, B.N., Nichols, T.E., Pellman, J., Poline, v.,              in schizophrenia. Schizophr. Res. 49 (1), 1–52. http://dx.doi.org/10.1016/S0920-
+     Rokem, A., Schaefer, G., Sochat, V., Triplett, v, Turner, v, Varoquaux, G., Poldrack, v,             9964(01)00163-3, (URL 〈http://www.schres-journal.com/article/S0920-9964(01)
+     2016. The brain imaging data structure a format for organizing and describing                        00163-3/abstract〉.
+     outputs of neuroimaging experiments, Scientiﬁc Data, vol. 3 p. 160044 http://dx.doi.             Sherif, T., Kassis, N., Rousseau, M.-E., Adalat, R., Evans, A.C., 2015. Brain Browser:
+     org/10.1038/sdata.2016.44 URL 〈http://dx.doi.org/10.1038/sdata.2016.44〉.                             distributed web-based neurological data visualization. Front. Neuroinf. 8, 89. http://
+Gorgolewski Krzysztof, J., Alfaro-Almagro, Fidel, Auer, Tibor, Bellec, Pierre, Capota,                    dx.doi.org/10.3389/fninf.2014.00089, (URL 〈http://dx.doi.org/10.3389/fninf.2014.
+     Mihai, Chakravarty, Mallar, Churchill, Nathan W., Craddock, R. Cameron, Gabriel,                     00089〉).
+     Devenyi, Eklund, Anders, et al., 2017. BIDS apps: Improving ease of use,                         Sunkin, S.M., Ng, L., Lau, C., Dolbeare, T., Gilbert, T.L., Thompson, C.L., Hawrylycz, M.,
+     accessibility, and reproducibility of neuroimaging data analysis methods. PLoS                       Dang, C., 2012. Allen Brain Atlas: an integrated spatio-temporal portal for exploring
+     Comput. Biol. 13 (3), e1005209, (Public Library of Science).                                         the central nervous system. Nucleic Acids Res. 41 (D1), D996–D1008. http://
+Han, X., Jovicich, J., Salat, D., van der Kouwe, A., Quinn, B., Czanner, S., Busa, E.,                    dx.doi.org/10.1093/nar/gks1042, (URL 〈http://dx.doi.org/10.1093/nar/gks1042〉).
+     Pacheco, J., Albert, M., Killiany, R., Maguire, P., Rosas, D., Makris, N., Dale, A.,             Vemuri, P., Jack, C.R., 2010. Role of structural MRI in Alzheimer's disease. Alzheimers
+     Dickerson, B., Fischl, B., 2006. Reliability of MRI-derived measurements of human                    Res. Ther. 2 (4), 23. http://dx.doi.org/10.1186/alzrt47, (URL 〈http://dx.doi.org/10.
+     cerebral cortical thickness: the eﬀects of ﬁeld strength scanner upgrade and                         1186/alzrt47〉).
+     manufacturer. NeuroImage 32 (1), 180–194. http://dx.doi.org/10.1016/                             Zuo, X.-N., Anderson, J.S., Bellec, P., Birn, R.M., Biswal, B.B., Blautzik, J., Breitner, J.C.,
+     j.neuroimage.2006.02.051, (URL 〈http://dx.doi.org/10.1016/j.neuroimage.2006.02.                      Buckner, R.L., Calhoun, V.D., Castellanos, F.X., Chen, A., Chen, B., Chen, J., Chen,
+     051〉).                                                                                               X., Colcombe, S.J., Courtney, W., Craddock, R.C., Martino, A.D., Dong, H.-M., Fu, X.,
+Keshavan, A., Paul, F., Beyer, M.K., Zhu, A.H., Papinutto, N., Shinohara, R.T., Stern, W.,                Gong, Q., Gorgolewski, K.J., Han, Y., He, Y., He, Y., Ho, E., Holmes, A., Hou, X.-H.,
+     Amann, M., Bakshi, R., Bischof, A., et al., 2016. Power estimation for non-                          Huckins, J., Jiang, T., Jiang, Y., Kelley, W., Kelly, C., King, M., LaConte, S.M.,
+     standardized multisite studies. NeuroImage 134, 281–294. http://dx.doi.org/                          Lainhart, J.E., Lei, X., Li, H.-J., Li, K., Li, K., Lin, Q., Liu, D., Liu, J., Liu, X., Liu, Y.,
+     10.1016/j.neuroimage.2016.03.051.                                                                    Lu, G., Lu, J., Luna, B., Luo, J., Lurie, D., Mao, Y., Margulies, D.S., Mayer, A.R.,
+Klein, A., Tourville, J., 2012, 101 Labeled Brain Images and a Consistent Human Cortical                  Meindl, T., Meyerand, M.E., Nan, W., Nielsen, J.A., O’Connor, D., Paulsen, D.,
+     Labeling Protocol, Frontiers in Neuroscience, vol. 6. http://dx.doi.org/10.3389/                     Prabhakaran, V., Qi, Z., Qiu, J., Shao, C., Shehzad, Z., Tang, W., Villringer, A., Wang,
+     fnins.2012.00171 URL 〈http://dx.doi.org/10.3389/fnins.2012.00171〉.                                   H., Wang, K., Wei, D., Wei, G.-X., Weng, X.-C., Wu, X., Xu, T., Yang, N., Yang, Z.,
+Madan, C.R., Kensinger, E.A., 2016. Cortical complexity as a measure of age-related                       Zang, Y.-F., Zhang, L., Zhang, Q., Zhang, Z., Zhang, Z., Zhao, K., Zhen, Z., Zhou, Y.,
+     brain atrophy. NeuroImage 134, 617–629. http://dx.doi.org/10.1016/                                   Zhu, X.-T., Milham, M.P., 2014. An open science resource for establishing reliability
+     j.neuroimage.2016.04.029, (URL 〈http://dx.doi.org/10.1016/j.neuroimage.2016.04.                      and reproducibility in functional connectomics. Sci. Data 1, 140049. http://
+     029〉).                                                                                               dx.doi.org/10.1038/sdata.2014.49, (URL 〈http://dx.doi.org/10.1038/sdata.2014.
+Madan, C.R., Kensinger, E.A., 2017. Age-related diﬀerences in the structural complexity                   49〉).
+     of subcortical and ventricular structures. Neurobiol. Aging 50, 87–95. http://
+     dx.doi.org/10.1016/j.neurobiolaging.2016.10.023, (URL 〈http://dx.doi.org/10.
+
+
+
+
+                                                                                                372
+

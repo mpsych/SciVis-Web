@@ -1,0 +1,786 @@
+                                                                     Computers and Geosciences 111 (2018) 200–212
+
+
+
+                                                                      Contents lists available at ScienceDirect
+
+
+                                                                Computers and Geosciences
+                                                     journal homepage: www.elsevier.com/locate/cageo
+
+
+Research paper
+
+3D geospatial visualizations: Animation and motion effects on
+spatial objects
+Konstantinos Evangelidis a, *, Theoﬁlos Papadopoulos a, Konstantinos Papatheodorou a,
+Paris Mastorokostas b, Constantinos Hilas c
+a
+  Technological Educational Institute of Central Macedonia, Faculty of Applied Technology, Department of Civil, Surveying and Geoinformatics Engineering, Terma
+Magnisias, 62124 Serres, Greece
+b
+  Department of Computer Engineering, Piraeus University of Applied Sciences, 250, Thivon & P. Ralli Str., 12244 Egaleo - Athens, Greece
+c
+  Technological Educational Institute of Central Macedonia, Faculty of Applied Technology, Engineering Informatics Department, Terma Magnisias, 62124 Serres, Greece
+
+
+
+
+A R T I C L E I N F O                                       A B S T R A C T
+
+Keywords:                                                   Digital Elevation Models (DEMs), in combination with high quality raster graphics provide realistic three-
+3D geospatial visualization                                 dimensional (3D) representations of the globe (virtual globe) and amazing navigation experience over the
+3D spatial objects motion                                   terrain through earth browsers. In addition, the adoption of interoperable geospatial mark-up languages (e.g.
+WebGL                                                       KML) and open programming libraries (Javascript) makes it also possible to create 3D spatial objects and convey
+Javascript                                                  on them the sensation of any type of texture by utilizing open 3D representation models (e.g. Collada). One step
+                                                            beyond, by employing WebGL frameworks (e.g. Cesium.js, three.js) animation and motion effects are attributed
+                                                            on 3D models. However, major GIS-based functionalities in combination with all the above mentioned visuali-
+                                                            zation capabilities such as for example animation effects on selected areas of the terrain texture (e.g. sea waves) as
+                                                            well as motion effects on 3D objects moving in dynamically deﬁned georeferenced terrain paths (e.g. the motion
+                                                            of an animal over a hill, or of a big ﬁsh in an ocean etc.) are not widely supported at least by open geospatial
+                                                            applications or development frameworks. Towards this we developed and made available to the research com-
+                                                            munity, an open geospatial software application prototype that provides high level capabilities for dynamically
+                                                            creating user deﬁned virtual geospatial worlds populated by selected animated and moving 3D models on user
+                                                            speciﬁed locations, paths and areas. At the same time, the generated code may enhance existing open visuali-
+                                                            zation frameworks and programming libraries dealing with 3D simulations, with the geospatial aspect of a virtual
+                                                            world.
+
+
+
+
+1. Introduction                                                                                   Model (DSM) or a set of joined panoramic photographs.1 Secondly, the
+                                                                                                  substantial progress occurred in Web Semantics and the related geo-
+    We have come a long way since the appearance of the ﬁrst web                                  spatial web services introduced by the Open Geospatial Consortium
+mapping projects at the end of the 20th century (Haklay et al., 2008). The                        (OGC), with Web Map Service (WMS) being directly applicable and
+technological progress that affected crucially this area included, ﬁrst of                        widely used, have enabled data sharing and interoperability among
+all, the tremendous increase of internet speed connections (Eha, 2013),                           different ﬁelds of geosciences (Evangelidis et al., 2014). The aforemen-
+combined with efﬁcient image compression and presentation techniques                              tioned evolutions assisted also by the progress met in IT and hardware
+(e.g. tiled rendering) that allowed web clients to request rich raster im-                        infrastructure extended the usage of location based services, also termed
+ages associated with large spatial datasets (Batty et al., 2010). As a result,                    as geoservices, in people daily activities through the rapid penetration of
+today it is a routine job to perform a virtual tour, on an unknown or                             smartphone and tablet devices. Recent studies showed that 35% of
+inaccessible area or surface, by navigating through a browser over a                              smartphone users in the ﬁve largest European economies access maps on
+three-dimensional (3D) Digital Terrain Model (DTM) or a Digital Surface                           their device (Oxera, 2013) while at the same time map usage via
+
+
+  * Corresponding author. Technological Educational Institute of Central Macedonia, Faculty of Applied Technology, Terma Magnisias, 62124 Serres, Greece.
+    E-mail addresses: kevan70@gmail.com (K. Evangelidis), priestont@gmail.com (T. Papadopoulos), conpap@teicm.gr (K. Papatheodorou), mast@teipir.gr (P. Mastorokostas), chilas@
+teicm.gr (C. Hilas).
+  1
+    https://www.google.com/maps/streetview/explore/index.html.
+
+
+
+https://doi.org/10.1016/j.cageo.2017.11.007
+Received 22 November 2015; Received in revised form 21 December 2016; Accepted 1 November 2017
+Available online 21 November 2017
+0098-3004/© 2017 Elsevier Ltd. All rights reserved.
+K. Evangelidis et al.                                                                                                       Computers and Geosciences 111 (2018) 200–212
+
+
+smartphone is growing seven times faster than via the classic web.2 In               functionalities. In addition it may enhance geospatial libraries that
+conclusion, today, technological capabilities from the one side and peo-             mainly focus on 3D globes and spatial data visualizations (e.g.
+ple daily needs from the other, justify efforts spent towards enhancing              Cesium.js8) with major GIS-based capabilities. The results of the above
+graphical representations of geospatial data over the web by providing               approach may act as a forerunner for enriching Earth Browsers with
+3D visualization and animation effects on spatial objects.                           capabilities of representing 3D referenced inanimate or moving and
+    Computer graphics technologies can nowadays offer high 3D                        animated spatial objects (e.g. ﬂora and fauna) as well as phenomena
+modeling visualization and animation capabilities combined with high                 simulations (weather phenomena, landslides, ﬂoods etc.)
+satisfaction end-user interactivity, through a web browser. Such de-
+velopments are supported by cross-platform frameworks like WebGL                     2. Related work
+API,3 which are interpreted and rendered directly by any web browser
+compatible with World Wide Web Consortium (W3C) proven standards,                       Today JS has become the dominant programming language employed
+without the need of installing plug-ins. The above technologies are                  by the majority of websites and supported by all modern web browsers
+mainly applied in recreational applications (3D Games) or applications               without plug-ins. The WebGL JS API, based on OpenGL,9 utilizes hard-
+with 3D photorealistic effects representing the real world, without                  ware acceleration and brings 3D to the web, standing as the base for
+maintaining the geospatial dimension of the involved objects. In other               continuously emerging Javascript visualization frameworks and libraries
+words, the graphical representations in such frameworks are not asso-                developed on top of it. In this respect the presented work and the related
+ciated with a georeferenced area or map, and the geospatial aspect of the            works reviewed are exclusively based on the above free web standards.
+involved animated and moving objects does not have any practical value.              However, a reference to the following technologies should be cited:
+    In the geospatial community, Digital Elevation Models (DEMs) either
+DTMs or DSMs are widely used over the last 25 years providing views of                 Java 3D, the 3D API for Java platform, running since 2012 on top of
+the ground terrain or surface along with elevation values.4 Today                       JOGL10 binding to OpenGL speciﬁcation, exhibits quite a lot sophis-
+Geographic Information Systems (GIS) software can export DEMs into an                   ticated 3D featured projects (e.g. NASA World Wind11). To our best
+interoperable XML-based format.5 Such way DEMs may be potentially                       knowledge, research efforts rather focus on database connectivity
+visualized through web browsers and furthermore, managed by appli-                      issues (Hobona et al., 2006) or scientiﬁc analyses (Vance et al., 2005)
+cations developed under the prevailing on the World Wide Web (WWW)                      than on animation or motion effects on geospatial objects.
+open software development technologies. By employing 3D models that                    Google Earth, being one of the most popular APIs for building 3D
+represent inanimate or animated objects and also by utilizing open li-                  mapping browser-based applications with JS has stopped being sup-
+braries providing animation and movement functionalities on these ob-                   ported by dominant browsers for security reasons and Google
+jects it is possible to achieve real world geo-referenced simulations like              announced its deprecation.12
+for example a herd of animated animals moving through a forest on top of
+a DTM served by a WMS. The above may be enhanced with major GIS                          Geospatial visualizations over the web are not a new topic (Kahkonen
+functionalities, such as the creation of thematic layers for the various             et al.,1999; Huang et al., 2001; Huang and Lin, 2002; Billen et al., 2008).
+different categories of 3D models along with the interactivity of these              However, the development of powerful and free JS frameworks and li-
+spatial models with user speciﬁed geospatial locations, paths or areas.              braries on top of WebGL, compiled just in time by modern browsers,
+Thus, the coupling of geospatial functionalities on the one hand, with               boosted up performance and allowed more complicated visualizations
+computer graphics web technologies on the other, may be considered as a              during last ﬁve years (Christen et al., 2012; Gesquiere and Manin, 2012,
+strong applied research challenge and is reﬂecting the clear objective of            Resch et al., 2014; Rumor et al., 2014; Krooks et al., 2014; Kr€amer and
+the presented work.                                                                  Gutbell, 2015).
+    To achieve this, we gathered potential desirable functionalities                     Table 1 is an attempt to gather currently available WebGL visualiza-
+involving both animation and moving capabilities of 3D models (spatial               tion frameworks, libraries and projects and present their major visuali-
+objects), yet not currently offered, at least in a complete, structured and          zation features and geospatial capabilities. Speciﬁcally, the 'animation'
+usable form, by existing open web-GIS environments or Javascript (JS)                feature refers to the capability of loading animated 3D models and
+libraries. For example a user selected 3D model representing an animated             placing them on a 3D terrain, while the 'motion' feature refers to the
+object (e.g. a galloping horse), scaled to ﬁt to a 3D world created by the           capability of placing 3D models at different terrain positions in each
+user (e.g. a forest in a mountain area), and also moving on a user-                  rendering, simulating that way the movement of a 3D model. When, the
+speciﬁed path, is one of them. To populate a user-speciﬁed area with a               motion of a model may be dynamically speciﬁed by the user, this is
+3D spatial object representing for example a plant, or with an animated              depicted in the table as 'interactive motion'.
+texture in order to simulate for example water, are additional interesting               Major GIS-based functionalities are evaluated through the
+functionalities. Ideally, such functionalities and many more should be               following features:
+applied on user speciﬁed dynamic geospatial worlds, designed in various
+independent thematic layers, possessing any geographic, or not, non                    'spatial reference' assigned to the 3D terrain through the trans-
+angular coordinates. For this reason the presented work considers also                  formation of the design dimensions in to a user speciﬁed coordinate
+typical GIS-based capabilities to fully provide the geospatial aspect of 3D             system
+modeling visualization, animation and moving effects.                                  'overlaying' of multiple thematic layers containing geospatial features
+    Having made the proposed work available for the research commu-                     or 3D models, with the aim to compose a 'Geospatial World'
+nity6 it is possible to be directly exploited by acting as a supplement to             import of 'external feature data sources' with the aim to populate them
+existing JS libraries. For example it may extend the non geospatial li-                 with 3D models or animated textures, or to use them as speciﬁers of
+braries which focus on 3D animation (e.g. Three.js7) with geospatial                    motion paths
+
+
+ 2
+   http://www.comscore.com/Insights/Press-Releases/2012/5/EU5-Map-Usage-via-
+                                                                                      8
+Smartphone-Growing.                                                                      http://cesiumjs.org/.
+ 3                                                                                    9
+   https://www.khronos.org/webgl/.                                                       https://www.opengl.org/.
+ 4                                                                                    10
+   http://nationalmap.gov/standards/demstds.html.                                        http://jogamp.org/jogl/www/.
+ 5                                                                                    11
+   http://www.qgistutorials.com/en/docs/working_with_terrain.html.                       http://worldwind.arc.nasa.gov/java/.
+ 6                                                                                    12
+   https://github.com/Prieston/3dav.                                                     http://googlegeodevelopers.blogspot.gr/2014/12/announcing-deprecation-of-
+ 7
+   http://threejs.org/.                                                              google-earth.html.
+
+
+                                                                               201
+K. Evangelidis et al.                                                                                                                    Computers and Geosciences 111 (2018) 200–212
+
+Table 1
+Features of WebGL based 3D geospatial visualization frameworks.
+
+  Name                  Feature
+
+                        type            visualization   Animation   motion   interactive         integrated geospatial functionalities
+                                                                             motion
+                                                                                                 spatial           overlaying     external feature data        custom geospatial
+                                                                                                 reference                        sources                      world
+
+  Three.js              Library         ✓               ✓           ✓        ✓
+  Cesium                Library         ✓               ✓           ✓                            ✓                 ✓
+  Qgis2threejs          QGIS-plugin     ✓                                                        ✓                 ✓
+  X3DOM                 Framework       ✓               ✓           ✓        ✓                   ✓                 ✓              ✓
+  OSG.js                API             ✓               ✓           ✓        ✓
+  O3D                   Project/        ✓               ✓           ✓        ✓
+                        Library
+  OpenWebGlobe          SDK             ✓               ✓                                        ✓                 ✓              ✓
+  WebGL Globe           Platform        ✓                                                        ✓
+
+
+
+
+  creation of a 'custom geospatial world' based on user-deﬁned layers of                   provide signiﬁcant functionalities the code homogenization and the
+   features and 3D models                                                                   integration of patchy clusters of code is a real bottleneck.
+
+    A thorough study of the selected software items resulted to the                         3. Method
+following conclusions strengthening the need for performing the pre-
+sented work:                                                                                    The method adopted in the present work makes use of surveying
+    Three.js makes it possible to create complex 3D animations, geome-                      engineering and geometry fundamentals to formulate the algorithmic
+tries and impressive effects, while Cesium.js is ideal for creating globes                  base that document minimum functionalities for geospatial visualiza-
+and gathers plenty of advanced geospatial functionalities such as terrain                   tions and motion effects on spatial objects.
+visualization and imagery layers draw using geospatial web services and
+standards. Qgis2Threejs13 is a python plugin of QGIS utilizing three.js
+                                                                                            3.1. Specifying the geometry
+library, which provides the capability of exporting terrain data, map
+canvas images and vector data to browsers supporting WebGL.
+                                                                                               The Geometry should support representation of GIS digital terrain
+Combining the above Javascript libraries it is possible to perform so-
+                                                                                            models which typically consist of a homogeneous grid of points in the 3D
+phisticated 3D georeferenced visualizations with motion effects on 3D
+                                                                                            space. In this respect the Geometry, as shown in Fig. 1 is speciﬁed by:
+models. However interaction of spatial objects with external feature data
+sources towards creating custom geospatial worlds is not directly sup-
+                                                                                              The extend of the grid as this is projected in XY plane provided by the
+ported. O3D14 is also a JS library implemented on top of WebGL, for
+                                                                                               minimum and maximum X, Y values (Xmin, Ymin) and (Xmax, Ymax),
+creating rich, interactive 3D applications in the browser. OSGJS15 is a
+                                                                                              The dimensions of the grid as this is projected in XY plane provided by
+WebGL API for creating 3D applications with Javascript, based on
+                                                                                               the number of its columns and rows and
+OpenSceneGraph16 development philosophy. All the above mentioned
+                                                                                              The elevation values of the projected in XY plane grid points begin-
+components do not maintain the geospatial aspect of the
+                                                                                               ning from the top left, crossing the grid by its rows and ending to the
+involved entities.
+                                                                                               bottom right, provided by a one dimensional table Z[] maintaining
+    X3DOM17 is composed of X3D (Extensible 3D Graphics), which de-
+                                                                                               coordinate values.
+notes a standard for declarative 3D graphics and DOM (Document Object
+Model), which describes hierarchy and interactivity issues associated
+                                                                                                The Geometry employed is a plane geometry as documented in Three.js
+with HTML content. Through this integration (Behr et al., 2009) it is
+                                                                                            JS library.20
+possible to develop interactive 3D scenes, using a structured, textual
+representation. X3D Geospatial is a very recent development which
+promises a niche between GIS and 3D graphics and inherent support of                        3.2. Locating a point over a motion path
+spatial reference systems (Plesch and McCann, 2015). OpenWebGlobe18
+is a WebGL virtual globe solution for creating custom applications, large                        Locating a point over a motion path is the most signiﬁcant calculation
+scale rendering and imagery data display and WebGL Globe19 is a plat-                       to deal with when simulating the motion of a moving object between two
+form for visualizing spatially referenced data and sophisticated cartog-                    given points of a 3D surface. This is because of the continuous changes
+raphies on the globe. Both of the above mentioned do not deal with                          that happen to the moving object's orientation as it passes through the
+motion effects on spatial objects.                                                          triangles of the 3D surface. Similar calculation is required when, for
+    The desired features of a visualization framework, with most impor-                     example, ﬁtting a polyline on a 3D terrain. At the present work, the 3D
+tant being the capability of creating custom 'living' geospatial worlds                     surface employed is regular, however, it should be stressed that such
+seem to be missing and therefore the vision of enriching existing ﬁndings                   calculations are generalized in the case of irregular TIN (triangular
+remains unaltered. Though, many of the above mentioned software items                       irregular networks) surfaces.
+                                                                                                 In this paragraph what is requested is the location R as expressed by
+                                                                                            its coordinates Rx, Ry, Rz, of a point representing the position of an object
+                                                                                            in a time instance, moving on a speciﬁed path as this is expressed by its
+ 13
+      https://plugins.qgis.org/plugins/Qgis2threejs/.                                       known starting S(Sx, Sy, Sz) and ending E(Ex, Ey, Ez) points. Point R always
+ 14
+      https://code.google.com/p/o3d/.                                                       belongs to a triangle of the plane geometry, expressed by its vertices
+ 15
+      http://osgjs.org/.
+ 16
+      http://www.openscenegraph.com/.
+                                                                                            A(Ax, Ay, Az), B(Bx, By, Bz) and C(Cx, Cy, Cz) which is crucial to
+ 17
+      http://www.x3dom.org/.
+ 18
+      http://www.openwebglobe.org/.
+ 19                                                                                         20
+      https://www.chromeexperiments.com/globe.                                                   http://threejs.org/docs/#Reference/Extras.Geometries/PlaneGeometry.
+
+
+                                                                                      202
+K. Evangelidis et al.                                                                                                     Computers and Geosciences 111 (2018) 200–212
+
+
+
+
+                            Fig. 1. Plane geometry.                                                  Fig. 2. Projection of plane geometry in XY plane.
+
+be identiﬁed.
+
+3.2.1. Identifying the containing triangle
+    The containing triangle ABC will be identiﬁed as a function of the               where (Bx - Ax) is the measure of the projection of triangle's line AB on
+known dimensions of the “Geospatial World” Xmin, Ymin, Xmax, Ymax, col-              plane XY and represents the grid step Xstep, on axis X, (Ay - Cy) is the
+umns, rows and table Z[] which maintains elevation values (x3.1) and also            measure of the projection of triangle's line AC on plane XY and represents
+the Rx and Ry components of the requested point R (x3.2.3).                          the grid step Ystep on axis Y. These steps are equal to the ratio of the map
+    Fig. 2 illustrates the world's projection on plane XY. Supposing that            extend (Xmax-Xmin and Ymax-Ymin) to the grid density (columns and rows) of
+the requested point R is located inside triangle ABC it is possible to reach         the “Geospatial World”.
+point R, by counting the intervening rectangles both horizontally (axis X)               The above CountX and CountY values reveal the rectangle on which
+and vertically (axis Y) beginning from the top left one. Then, the number            the requested point R lies on. To ﬁnd out on which of the two containing
+of the intervening rectangles - in real values – in axes X and Y are:                triangles is located (top left or bottom right) the following condition
+                                                                                     is applied:
+              Rx  Xmin Rx  Xmin         Rx  Xmin
+CountX ¼               ¼          ¼                                                      'If the summary of the decimal parts of the above numbers is less
+               Bx  Ax   StepðxÞ    ðXmax  Xmin Þ=columns
+                                                                                     than the unit then the requested point is located on the top left triangle
+                                                                                     ABC otherwise on the bottom right A'B'C', where B0 and C0 is identical to
+              Ymax  Ry Ymax  Ry        Ymax  Ry
+CountY ¼               ¼          ¼                                                  B and C respectively ':
+               Ay  Cy   StepðyÞ    ðYmax  Ymin Þ=rows
+
+
+
+
+                                                                               203
+K. Evangelidis et al.                                                                                                                                  Computers and Geosciences 111 (2018) 200–212
+
+                                                                                                                                       
+3.2.2. Calculating elevation Rz                                                                               Qx ¼ Rx þ d R'xy ; Qxy
+   The elevation Rz of the requested point will be calculated as a                                            Qy ¼ Ay
+function of the vertices of the triangle ABC at which it is located (x3.2.1)
+and also its Rx and Ry components (x3.2.3). Two additional points P and                                       Px ¼ Ax
+Q, where initiated to assist this calculation and are deﬁned as follows:                                                             
+                                                                                                              Py ¼ Ry  d R''xy ; Pxy
+
+   P is the intersection of a line, which is parallel to triangle's hypotenuse                                  Fig. 4 illustrates triangle projections on planes XZ and YZ.
+    and is crossing point R, with the triangle's side which is parallel to                                       Triangles AxzQ'xzQxz and AxzB'xzBxz are similar; hence the ratios of the
+    plane ZY                                                                                                  corresponding sides are equal:
+                                                                                                                 Axz Q'xz ¼ Axz B'xz and the value of segment QxzQ'xz is:
+                                                                                                                 Qxz Q'xz   Bxz B'xz
+   Q is the intersection of a line, parallel to triangle's hypotenuse
+    crossing point R, with the triangle's side which is parallel to plane ZX                                                                           
+                                                                                                                                           ðBz  Az Þ 
+                                                                                                              dðQxz ; Q'xz Þ ¼ ðQx  Ax Þ
+    Fig. 3 shows the requested point R along with points P and Q on                                                                         ðBx  Ax Þ
+triangle ABC as well as their projection on plane XY.                                                             Finally the Qz is obtained by adding the above value at Az, in case Az is
+    In the following documentation a segment is notated either geomet-                                        less than Bz, or at Bz in the opposite case:
+rically, e.g. AB, or with its algebraic value, e.g. d(A,B). Triangles RxyR'-
+                                                                                                                                                
+xyQxy and CxyAxyBxy are similar; hence the ratios of the corresponding                                                              ðBz  Az Þ 
+                                                                                                              Qz ¼ Az þ ðQx  Ax Þ                                                           (5)
+sides are equal:
+    R'xy Qxy  R'xy Rxy
+                                                                                                                                     ðBx  Ax Þ
+    Axy Bxy ¼ Axy Cxy and the value of segment R'xyQxy is:
+                                                                                                                                              
+                                                                                                                                    ðBz  Az Þ 
+                     ðBx  Ax Þ                                                                       Qz ¼ Bz þ ðQx  Ax Þ                                                           (6)
+d R'xy ; Qxy ¼  Ry  Ay                                                                       (1)                                ðBx  Ax Þ
+                            Cy  Ay 
+                                                                                                                  Similarly Pz is calculated:
+     Therefore, the hypotenuse of the right triangle RxyR'xyQxy (Fig. 4a) is:                                                                                         
+                vﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ                           Pyz P'yz Ayz A'yz                      ðAz  Cz Þ 
+                u                                                        !2 !                                         ¼         ⇒d Pyz ; P'yz ¼  Py  Cy          
+                u                2                  ðBx  Ax Þ                                              Cyz P'yz Cyz A'yz                            Ay  Cy 
+dðRxy ; Qxy Þ ¼ t Ry  Ay                 1þ                                                    (2)
+                                                        Cy  Ay
+                                                                                                                 Pz is calculated by adding the above value at Cz, in case is Cz is less
+    Similarly the value of segment R                           00                                             than Az, or at Az in the opposite case:
+                                                                    xyQxy   and the hypotenuse of the
+right triangle RxyR00 xyPxy (Fig. 4a) is:                                                                                                     
+                                                                                                                                ðAz  Cz Þ 
+                                                                                                                     
+                                                                                                             Pz ¼ Cz þ  Py  Cy                                                           (7)
+                            By  Ay                                                                                           Ay  Cy 
+d R''xy ; Pxy ¼ ðRx  Ax Þ                                                                      (3)
+                             ðCx  Ax Þ 
+                                                                                                                                              
+                                                                                                                                ðAz  Cz Þ 
+               vﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ                                       
+               u                                                   2 !                                    Pz ¼ Az þ  Py  Cy                                                           (8)
+               u                                      Cy  Ay                                                                      Ay  Cy 
+               t
+dðRxy ; Pxy Þ ¼ ðRx  Ax Þ 1 þ     2
+                                                                                                  (4)
+                                                    ðBx  Ax Þ
+                                                                                                                  Now, having calculated (equations (2) and (4)) the distances between
+                                                                                                              the projected in plane XY points P, Q and R and also having the z com-
+     Having equations (1) and (3) the values of Qxy, Pxy can be calculated:
+                                                                                                              ponents of points Q and P (equations (5)–(8)) it is possible to calculate
+                                                                                                              the requested Rz component by equalizing the corresponding ratios of the
+                                                                                                              projected line segments, as shown in Fig. 5:
+                                                                                                                    Rz Pz         Qz Pz
+                                                                                                                  dðRxy ;Pxy Þ ¼ dðQxy ;Pxy Þ and the requested elevation Rz is given by equation
+
+
+
+
+      Fig. 3. Points R, P and Q over triangle ABC and their projections on plane XY.                                                    Fig. 4. Projections of triangle ABC.
+
+
+                                                                                                        204
+K. Evangelidis et al.                                                                                                                                                     Computers and Geosciences 111 (2018) 200–212
+
+                                                                                                                                                                                 
+(9) if Pz is less than Qz, or equation (10) otherwise:                                                                                              Ex  Sx
+                                                                                                                      Rx ¼ Sx þ d Sxy ; Rxy sin a tan
+                                                                                                                                                   Ey  Sy
+           d R ; P ðQ  P Þ 
+                                   
+Rz ¼ Pz þ              
+                  xy  xy  z      z
+                                                                                                         (9)                                                  
+          d Rxy ; Qxy þ d Rxy ; Pxy                                                                                                                Ex  S x
+                                                                                                                      Ry ¼ Sy þ d Sxy ; Rxy cos a tan
+                                                                                                                                                       Ey  S y
+                                    
+           d R ; P ðQ  P Þ 
+                                                                                                                      To calculate d(Sxy, Rxy) the following assumption is considered: let the
+Rz ¼ Qz þ              
+                  xy  xy  z      z
+                                                                                                       (10)
+          d Rxy ; Qxy þ d Rxy ; Pxy                                                                                 projected on plane XY distance traveled be equal to d(S, R), as shown
+                                                                                                                      in Fig. 7.
+    To express elevation Rz as a function of the vertices of the triangle                                                 Then, the elevation value R'z may be calculated by employing the
+ABC at which it is located and also its Rx and Ry components the above                                                algorithm analyzed in paragraph 3.2.2. Subsequently, the slope of the
+equations are transformed by use of equations (2), (4) and (5)–(8) as                                                 object's orientation which is the angle formed by SE and plane XY, is
+follows:                                                                                                                                z Sz
+                                                                                                                      equal to a tan R'dðS;RÞ and ﬁnally the requested is:
+
+
+
+                                                                                  
+                                                    By Ay                  Az Cz 
+Rz ¼ U1 þ Ry  Rx Ax ⋅                                       C       ⋅                          þ
+                                                    ðCx Ax Þ                  Ay Cy 
+                                                                      y
+
+"v ﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ                                                                                                                                                                     
+ u                                               2 !#                          
+                                                                                                       !
+                                                                                                                              
+                                                                                                                                    !              !                                                             #
+ u                                  C     A                                                              ðB    A       Þ         B    A                                                         B  A         A  C    
+ tðRx Ax Þ ⋅ 1þ    2                   y       y
+                                                             ⋅ U2 þ Rx þ Ry Ay ⋅
+                                                                                                                 x        x
+                                                                                                                            Ax ⋅       z       z
+                                                                                                                                                         U1 þ Ry  Rx Ax ⋅
+                                                                                                                                                                                                           y   y  Cy ⋅  z   z   
+
+                                     Bx Ax                                                                Cy Ay                  Bx Ax                                                          ðCx Ax Þ       Ay Cy  
+                                                             0v   ﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ                                                                                                    
+                                                               u                                                      !2 !ﬃ1 0v      u                                                2 !ﬃ1
+                                                                                                                                        ﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ                                
+                                                               u                                   ðB     A      Þ                u                                          A                                                 
+                                                             @ t                   2
+                                                                                                          x       x
+                                                                                                                                A   @t                  2                  C  y       y
+                                                                                                                                                                                                     A                              
+                                                                    Ry Ay ⋅ 1þ                                                   þ    ðRx Ax Þ ⋅ 1þ                                                                              
+                                                                                                      Cy Ay                                                             ðBx Ax Þ                                                 
+
+
+
+
+where U1 ¼ Cz if (Cz <¼ Az), Az otherwise and U2 ¼ Az if (Az <¼ Bz),                                                                                         
+                                                                                                                                                   R'z  Sz
+Bz otherwise.                                                                                                         d Sxy ; Rxy ¼ dðS; RÞcos a tan
+                                                                                                                                                     dðS; RÞ
+3.2.3. Calculating Rx and Ry components
+                                                                                                                      3.3. Transforming design coordinates to geographic
+    Given the starting point S and the ending point E of an object's
+movement over a line segment SE and the measure d(S, R) of the distance
+                                                                                                                         When deﬁning the dimensions of the 'Geospatial World' the user is
+traveled, as derived from the speed of the object and the time lapse, the
+                                                                                                                      actually deﬁnes its spatial reference by setting its XYZ projected coor-
+requested Rx and Ry components, are easily provided by simple geo-
+                                                                                                                      dinate system. Whenever an external spatial dataset is imported, in order
+metric formulas, where d(Sxy, Rxy) is the projection of the slant distance
+                                                                                                                      to be designed and overlaid with the “Geospatial World” a trans-
+d(S, R) on plane XY, as shown in Fig. 6, below:
+                                                                                                                      formation of its spatial coordinates to design coordinates (pixels) takes
+                                                                                                                      place. On the other side whenever the user clicks on the “Geospatial
+                                                                                                                      World” in order to specify paths or insert 3D models, a reverse trans-
+                                                                                                                      formation happens. To transform the design coordinates in real world
+                                                                                                                      geographic coordinates the following equations were employed:
+                                                                                                                                                     
+                                                                                                                                         mapWidthðpxÞ
+                                                                                                                      Rx ¼      RxðpxÞ þ                pixelSize þ Xmin
+                                                                                                                                             2
+
+
+
+
+                           Fig. 5. P, Q and R projections on plane XY.                                                                           Fig. 6. Calculation of Rx and Ry components.
+
+
+                                                                                                                205
+K. Evangelidis et al.                                                                                                        Computers and Geosciences 111 (2018) 200–212
+
+
+                                                                                       yi ¼ bi where bi ¼ ymin þ istepy
+                                                                                           The intersection of the polygon segments (yj ¼ aj xj þ bj ) with the
+                                                                                       aforementioned parallel lines, is expressed by the following group
+                                                                                       of equations:
+
+                                                                                                                        bi  bj
+                                                                                       yi ¼ yj ⇒bi ¼ aj xj þ bj ⇒xj ¼
+                                                                                                                           aj
+                                                                                           The solutions of the above group of equations provide a number of xj
+                                                                                       values which may lead to the calculation of the corresponding yj values.
+                                                                                       The results are ﬁltered so that the intersection points belong to the spe-
+                                                                                       ciﬁc polygon segments and not to the extensions of these segments along
+                                                                                       the lines to which they belong. To achieve this, a simple condition is
+                 Fig. 7. Assumption considered for calculating d(Sxy, Rxy).            applied, requiring that the coordinate values of the accepted intersection
+                                                                                       points, for each stepy, have to be between the coordinate values of the
+                                                                                     respective polygon segment endpoints. A table is created, populated with
+                        mapHeightðpxÞ                                                  pairs of intersection points coordinates for each line parallel to X axis.
+Ry ¼       RyðpxÞ þ                     pixelSize þ Ymin
+                            2                                                              From the above mentioned table it is possible to retrieve the pair of
+                                                                                       intersection points forming each, parallel to axis X, segment: the n-
+Rz ¼ RzðpxÞ pixelSize                                                                  segment is formed by the (n*2-2, n*2-1) pair of intersection points. The
+                                                                                       pair of x values for every, parallel to X axis, segment is sorted ascending
+where pixelSize is easily determined by the “Geospatial World”                         and ﬁnally by considering the desired placement density on the X axis,
+dimensions:                                                                            expressed by stepx value it is possible to calculate the ﬁnal locations.
+
+                Xmax  Xmin   Ymax  Ymin
+pixelSize ¼                 ¼                                                          3.5. Calculating orientation changes on moving objects
+                mapWidthðpxÞ mapHeightðpxÞ
+    The above are illustrated in Fig. 8.                                                   A moving object is geometrically represented by a model and main-
+                                                                                       tains a local coordinate system which is dynamically adjusted so that in
+3.4. Determining locations inside a polygon                                            every time instance (rendering), its X axis is always parallel to its
+                                                                                       orientation axis, as depicted in Fig. 10:
+    To calculate coordinate values of point locations inside a polygon is                  Orientation changes of a moving object are reﬂected to rotations
+useful in geospatial applications where an area has to be homogeneously                around its axes and therefore occur in the following cases:
+populated with a set of objects (e.g. a cultivated land, a forest etc.). Given
+a polygon, ﬁrstly a surrounding rectangle is created by considering the                   (1) Whenever the moving object is turning left or right, this is re-
+minimum and the maximum values of the polygon vertices xmin, xmax, ymin                       ﬂected with a rotation around the model's Z axis. In fact, such
+and ymax. Then, the density placement of the point locations inside the                       turnings occur every time the moving object reaches a vertex of its
+polygon area is speciﬁed for both X and Y axis by values stepx and stepy                      motion path. By knowing the coordinates of the vertices of the
+respectively, as depicted in Fig. 9:                                                          motion path (polar or Cartesian) it is easy to calculate the turning
+    Then a number of line segments, depending on the desired density of                       angle φ.
+the requested locations on Y axis, expressed by stepy, are designed parallel              (2) Whenever the moving object is directed upwards or downwards,
+to X axis, and are deﬁned by the following series of equations:                               this is reﬂected with a rotation around the model's Y axis. In this
+                                                                                              case, the angle of slope φ, which is the angle formed by the model's
+
+
+
+
+            Fig. 8. Transformation between design and geographic coordinates.
+                                                                                                         Fig. 9. Calculating locations inside a polygon.
+
+
+
+                                                                                 206
+K. Evangelidis et al.                                                                                                                    Computers and Geosciences 111 (2018) 200–212
+
+
+
+
+                                                                                                                          Fig. 12. Assigning elevation values.
+
+
+
+
+        Fig. 10. Rotations around the axes of a model's local coordinate system.
+
+
+
+
+                                                                                                              Fig. 13. Matching a texture simulating the geospatial world.
+
+
+
+                                                                                                         moving with their model's Z axis always vertical on the underlying
+                                                                                                         triangle.
+
+                                                                                                  4. Application
+
+                                                                                                      The application of the method introduced in the previous paragraph
+  Fig. 11. A 2  2 plane geometry containing 9 grid points without elevation values.              includes the development of an experimental 'Geospatial World' in order
+                                                                                                  to simulate on it, placement of stable living or inanimate spatial objects
+                                                                                                  (e.g. plants, house) or motion of animated moving objects (e.g. animals).
+         orientation axis and axis Z of the global coordinate system,
+         changes. In this case, the slope angle between two time instances
+                                                                                                  4.1. Creating a 'geospatial world' for testing purposes
+         t1 and t2, is identiﬁed by use of the fundamental surveying for-
+                                   Rt2z Rt1z
+         mula, tan ϕ ¼ pﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ
+                                          2
+                                                                ﬃ where the components of
+                                                                2                                     The creation of a 'Geospatial World' is the initial action required and
+                              ðRt2x Rt1x Þ þðRt2y Rt1y Þ
+
+       points Rt1 and Rt2 are calculated according to x 3.2. This formula is                      practically includes the development of a 3D terrain upon which so-
+       used to rotate only alive models (e.g. horse). For inanimate objects                       phisticated visualizations and animation and motion effects on spatial
+       this kind of rotation is covered in the next case.                                         objects, take place. Therefore, a testing 'Geospatial World' with an extend
+   (3) Whenever the moving object is acting like an airplane that tilts                           of width 100 and height 50 pixels and dimensions of 2 columns and 2
+       when turning, this is reﬂected to a rotation around its model's X                          rows, contains 9 grid points as shown in Fig. 11
+       axis. Practically, this kind of rotation happens only in inanimate                             By assigning to the ﬁfth point (central point) a random elevation
+       models (e.g. car), since the alive objects (e.g. man, horse etc.) are                      value and to all other grid points, the value of zero results to the 3D
+       moving so that the horizontal component of their weight force                              terrain shown in Fig. 12.
+       tends to be zero. For the inanimate objects this rotation along with                           Finally the texture of the geospatial world created is loaded via a
+       the rotation around their model's Y axis examined in the previous                          raster image and arranged appropriately by matching its pixels with the
+       case, is satisﬁed through algorithms that provide the vertical                             corresponding grid nodes of the geometry (Fig. 13).
+       vector of the surface they lie on. Such way these objects are always                           To make things simple, it should be noted that the real world di-
+                                                                                                  mensions of the 'Geospatial World' is 100 m width and 50 m height,
+
+                                                                                            207
+K. Evangelidis et al.                                                                                                                       Computers and Geosciences 111 (2018) 200–212
+
+
+
+
+                                                     Fig. 14. Oversized model exceeding map limits is scaled to ﬁt speciﬁed boundary box.
+
+
+
+
+                                                                                                                         Fig. 18. Object moving over motion paths.
+
+                        Fig. 15. Placing models at user-selected positions.
+                                                                                                   resulting to a pixel size of 1 m.
+
+
+                                                                                                   4.2. Scaling 3D models to ﬁt world dimensions
+
+                                                                                                       Once the 'Geospatial World' is created, next step is to collect the
+                                                                                                   desired spatial objects that are going to populate it. Plenty of 3D models
+                                                                                                   representing inanimate or lively animated objects of real world may be
+                                                                                                   found around 21,22. As expected, the models have been deployed in
+                                                                                                   arbitrary scale, resulting to a size which is normally disproportional to
+                                                                                                   the geographic dimensions of the world to which they are about to be
+                                                                                                   placed. For this reason each time a 3D model is inserted to the 'Geospatial
+                                                                                                   World' it is resized appropriately in order to occupy a reasonable space
+                                                                                                   according to its actual dimensions.
+                          Fig. 16. Placing models at speciﬁed polylines.                               To achieve this, a bounding box with dimensions capable to ﬁt the
+                                                                                                   inserted model is created. For example in the case of a horse the box is
+                                                                                                   2.5 m wide which corresponds to an average horse length. Then the
+                                                                                                   model under scaling is inserted so that it is clear with naked eyes if the
+                                                                                                   size of the model ﬁts within the box. As long as the inserted model ex-
+                                                                                                   ceeds the predeﬁned dimensions, an automatic size reduction is per-
+                                                                                                   formed, until it is completely contained within the bounding box as
+                                                                                                   shown in Fig. 14.
+                                                                                                       Further techniques for simplifying the related mesh after resizing may
+                                                                                                   be employed (Luebke, 2003), however such a process is out of the scope
+                                                                                                   of the present work.
+
+
+                                                                                                   4.3. Placing models at selected locations
+
+                                                                                                       Selected locations are considered those resulting from user targeted
+                                                                                                   or random clicks over the terrain or those imported by an external geo-
+                                                                                                   spatial ﬁle containing point features. Selected locations are then popu-
+                                                                                                   lated with the desired 3D model (Fig. 15).
+
+
+                                                                                                   21
+                                                                                                        http://blender-archi.tuxfamily.org/Greenhouse.
+                                                                                                   22
+                          Fig. 17. Populating an area with 3D models.                                   http://www.turbosquid.com.
+
+
+                                                                                             208
+K. Evangelidis et al.                                                                                                      Computers and Geosciences 111 (2018) 200–212
+
+
+
+
+                                                            Fig. 19. Major GIS-based functionalities.
+
+
+
+
+      Such functionality is partially offered by Three.js library functions         'Raycaster'23 and 'Loader'.24 However, in order to store the exact
+
+
+
+ 23                                                                                 24
+      http://threejs.org/docs/#Reference/Core/Raycaster.                                 http://threejs.org/docs/#Reference/Loaders/JSONLoader.
+
+
+                                                                              209
+K. Evangelidis et al.                                                                                                    Computers and Geosciences 111 (2018) 200–212
+
+
+
+
+                                                 Fig. 20. Some snapshots of the demonstrative 'Geospatial World'.
+
+
+
+
+geographic coordinates of the located models, or in order to place a set of          area, either manually by clicking in the desired polygon vertices or via a
+external geographic points in the appropriate pixels of the terrain, a               spatial dataset containing polygon features, with models of his choice.
+transformation of the design coordinates to geographic coordinates and               The method introduced in paragraph 3.4 was employed to implement
+vice versa is required.                                                              this functionality (Fig. 17).
+
+4.4. Placing models along polylines                                                  4.6. Implementing motion effects
+
+    Speciﬁed polylines are considered either those resulting by user clicks              The ultimate geospatial functionality with the seemingly most real-
+or those inserted via spatial datasets. Given the coordinates of the poly-           istic simulation achievement is that of multiple animated 3D models (e.g.
+line vertices a number of intermediate points are identiﬁed and alto-                horses and cars) moving over user speciﬁed (or externally predeﬁned)
+gether are populated with the desired 3D model (Fig. 16).                            motion paths (Fig. 18). This functionality is implemented by use of the
+                                                                                     methodological approach introduced for locating a point over a motion
+4.5. Placing models inside polygons                                                  path (x 3.2) combined with that for calculating changes in the orientation
+                                                                                     of a moving object (x 3.5). Especially in the case of inanimate objects (e.g.
+    With this functionality the user is capable of populating a polygon              car) the composite rotation around their model's X and Y axis is
+
+                                                                               210
+K. Evangelidis et al.                                                                                                           Computers and Geosciences 111 (2018) 200–212
+
+
+implemented by employing “look at” and “up” properties of a 3D object               coupling is the interaction between external feature layers (e.g. areas,
+provided by three.js 25.                                                            paths, points in KML format) with 3D model layers. For example the
+                                                                                    homogeneous ﬁlling of spatial objects in a polygon area may not be
+4.7. Incorporating GIS-based functionalities                                        actually met. In such real cases a further subdivision of the area in sub-
+                                                                                    areas with different density values for the requested 3D model, speciﬁed
+    The above deployed individual functionalities have to be offered in a           by an external feature layer may result to more realistic views of the
+way that the 'Geospatial World' creator can combine different 3D model              geospatial world.
+types with various motion effects on dynamically deﬁned paths. Major                    Finally, the extended geospatial user capabilities may be proved
+GIS functionalities are employed for this reason providing typical capa-            utilitarian for a wide range of multi-disciplinary activities which may be
+bilities of importing feature layers, deﬁning coordinate system, speci-             offhandedly classiﬁed into two general sections: a) navigation, and b)
+fying points, paths and areas and overlaying the thematic layers.                   simulation. Regarding the navigational activities these may include vi-
+Furthermore, capabilities of manipulating attribute tables and managing             sualizations of natural resources or historical events for educational
+3D models are offered as shown in Fig. 19.                                          purposes. For example, one could demonstrate troops movements be-
+                                                                                    tween involved countries, during a signiﬁcant World War II ﬁght, by
+                                                                                    simply overlaying multiple layers of 3D military-related models moving
+4.8. Combining all to make living 'geospatial worlds'                               over the globe in speciﬁed paths. Simulation activities may include
+                                                                                    modeling phenomena with signiﬁcant research interest for geosciences
+    All functionalities so far implemented provide excellent capabilities           such as those concerning ﬂoods, landslides, earthquakes etc. For
+for creating special 'Geospatial Worlds' with animated or ﬁxed, stable or           example, the simulation of a strong rainfall and the progressive covering
+moving 3D spatial objects (Fig. 20). To boost up performance, object                of the basin with water and its potential overﬂow, or the fall of a rock
+pooling pattern (Kircher and Jain, 2002) was adopted.                               from a hill due to a landslide generate extreme geospatial visualization,
+    To assist demonstration of the presented work a video has been                  animation and motion challenges. However to implement this, requires a
+prepared and is available at:                                                       signiﬁcant enrichment of the existing JS libraries with special function-
+    https://www.youtube.com/watch?v¼f5x-                                            alities provided by physics engines, and this reveals an additional chal-
+XRCxml8&feature¼youtu.be.                                                           lenge of the presented work.
+
+5. Discussion and further developments                                              Acknowledgements
+
+    The present work employed the technologies related to 3D computer                   The authors wish to acknowledge ﬁnancial support provided by the
+graphics and the existing visualization frameworks and libraries to ach-            Research Committee of the Technological Educational Institute of Cen-
+ieve sophisticated geospatial world simulations associated with major               tral Macedonia under grant SAT/GS/171214-263/23.
+GIS functionalities. There are of course several other interrelated issues
+beyond the scope and the central intentions of the whole venture that               References
+raise reasonable concerns. First of all, the algorithmic calculations were
+performed over a regular 3D terrain while the general case would be to be           Batty, M., Hudson-Smith, A., Milton, R., Crooks, A., 2010. Map mashups, Web 2.0 and the
+performed over a TIN. In addition there are many interesting level of                    GIS revolution. Ann. GIS 16 (1), 1–13.
+                                                                                    Behr, J., Eschler, P., Jung, Y., Z€
+                                                                                                                      ollner, M., 2009. X3DOM: a DOM-based HTML5/X3D
+detail (LOD) terrain algorithms, such as ROAM (Turner, 2000), for                        integration model. In: Spencer, S.N. (Ed.), Proceedings of the 14th International
+creating a land which is a major issue in 3D virtual worlds. This paper is               Conference on 3D Web Technology. ACM, Darmstadt, Germany. New York,
+not focused on providing the best algorithm for terrain creation. How-                   pp. 127–135, 16-17 June 2009.
+                                                                                    Billen, M.I., Kreylos, O., Hamann, B., Jadamec, M.A., Kellogg, L.H., Staadt, O.,
+ever, Three.js library supports almost all types of geometries and some of               Sumner, D.Y., 2008. A geoscience perspective on immersive 3D gridded data
+them can implement various algorithms including ROAM.26 There are                        visualization. Comput. Geosci. 34 (9), 1056–1072.
+also various other interesting algorithms for searching the location of a           Christen, M., Nebiker, S., Loesch, B., 2012. Web-based large-scale 3D-geovisualisation
+                                                                                         using WebGL: the OpenWebGlobe project. Int. J. 3 D Inf. Model. (IJ3DIM) 1 (3),
+point, calculating distances, getting the bounding box of a randomly
+                                                                                         16–25.
+positioned point, etc27 and most of them have been written in C pro-                Eha, B., 2013. An Accelerated History of Internet Speed (Infographic). Enterpreneur.
+gramming language for its memory handling capabilities. The presented                    Available from: http://www.entrepreneur.com/article/228489. (Accessed 7
+is a purely surveying approach employing basic trigonometry for calcu-                   November 2015).
+                                                                                    Evangelidis, K., Ntouros, K., Makridis, S., Papatheodorou, C., 2014. Geospatial services in
+lating distances, rotations etc., and aimed to make these algorithms                     the cloud. Comput. Geosci. 63, 116–122.
+available in the JS community.28 The selection of JS was based due to its           Gesquiere, G., Manin, A., 2012. 3D visualization of urban data based on CityGML with
+ability to perform directly over the web and be interpreted just in time by              WebGL. Int. J. 3 D Inf. Model. (IJ3DIM) 1 (3), 1–15.
+                                                                                    Haklay, M., Singleton, A., Parker, C., 2008. Web mapping 2.0: the neogeography of the
+the web browser. Testing and comparing the presented algorithms with                     GeoWeb. Geogr. Compass 2 (6), 2011–2039.
+other existing and/or transforming the last mentioned in JS, is a real              Hobona, G., James, P., Fairbairn, D., 2006. Web-based visualization of 3D geospatial data
+challenge and interesting subject of a future work, dealing with time                    using Java3D. Comput. Graph. Appl. IEEE 26 (4), 28–33.
+                                                                                    Huang, B., Jiang, B., Li, H., 2001. An integration of GIS, virtual reality and the internet for
+processing issues. Additional similar issues, concerning processing ca-                  visualization, analysis and exploration of spatial data. Int. J. Geogr. Inf. Sci. 15 (5),
+pacity and visualization efﬁciency may be examined. For example,                         439–456.
+designing a complicated scene with plenty of moving objects after                   Huang, B., Lin, H., 2002. A Java/CGI approach to developing a geographic virtual reality
+                                                                                         toolkit on the internet. Comput. Geosci. 28 (1), 13–19.
+locating their position in each rendering is a costly process. Resizing             Kahkonen, J., Lehto, L., Kilpelainen, T., Sarjakoski, T., 1999. Interactive visualisation of
+techniques based on the locations of objects with regard to the gravity                  geographical objects on the internet. Int. J. Geogr. Inf. Sci. 13 (4), 429–438.
+center, or bilinear interpolation would simplify things. Other simpliﬁ-             Kircher, M., Jain, P., 2002. Pooling pattern. In: Proceedings of the 7th European
+                                                                                         Conference on Pattern Languages of Programms (EuroPLoP '2002), 3–7 July 2002.
+cations processes may increase processing capacity such as for example
+                                                                                         UVK - Universitaetsverlag Konstanz, Irsee, Germany, ISBN 978-3-87940-784-2, 2003.
+mesh simpliﬁcation after 3D models resizing.                                        Kr€amer, M., Gutbell, R., 2015. A case study on 3D geospatial applications in the web using
+    A signiﬁcant advantage of the above mentioned technologies                           state-of-the-art WebGL frameworks. In: Proceedings of the 20th International
+                                                                                         Conference on 3D Web Technology. ACM, Heraklion, Greece. New York,
+                                                                                         pp. 189–197, 18–21 June 2015.
+                                                                                    Krooks, A., Kahkonen, J., Lehto, L., Latvala, P., Karjalainen, M., Honkavaara, E., 2014.
+ 25
+      http://threejs.org/docs/#Reference/Core/Object3D.                                  WebGL visualisation of 3D environmental models based on Finnish open geospatial
+ 26
+      https://threejs.org/docs/index.html#Reference/Core/BufferGeometry.                 data sets. ISPRS Int. Arch. Photogrammetry Remote Sens. Spatial Inf. Sci. 1, 163–169.
+ 27
+      https://www.geometrictools.com/Samples/Geometrics.html.                       Luebke, D.P., 2003. Mesh Simpliﬁcation. Level of Detail for 3D Graphics. Morgan
+ 28
+      https://github.com/Prieston/3dav.                                                  Kaufmann, pp. 38–44.
+
+
+                                                                              211
+K. Evangelidis et al.                                                                                                                     Computers and Geosciences 111 (2018) 200–212
+
+Oxera, 2013. What is the economic impact of geoservices? Prepared for Google. Available         Rumor, M., Roccatello, E., Scotta, A., 2014. A standard-based framework for real-time 3D
+    from: http://www.oxera.com/Latest-Thinking/Publications/Reports/2013/What-is-                   large-scale geospatial data generation and visualisation over the web. In: Lee, D.J.,
+    the-economic-impact-of-Geo-services.aspx. (Accessed 7 November 2015).                           Dias, E., Scholten, H.J. (Eds.), Geodesign by Integrating Design and Geospatial
+Plesch, A., McCann, M., 2015, June. The X3D geospatial component: X3DOM                             Sciences. Springer International Publishing, Switzerland, pp. 259–269.
+    implementation of GeoOrigin, GeoLocation, GeoViewpoint, and                                 Turner, B., 2000, April 3. Real time dynamic LOD terrain render with ROAM. Retrieved
+    GeoPositionInterpolator nodes. In: Proceedings of the 20th International Conference             from http://www.gamasutra.com/view/feature/131596/realtime_dynamic_level_of_
+    on 3D Web Technology. ACM, pp. 31–37.                                                           detail_.php. .
+Resch, B., Wohlfahrt, R., Wosniok, C., 2014. Web-based 4D visualization of marine geo-          Vance, T.C., Merati, N., Moore, C., 2005. Integration of Java and GIS for visualization and
+    data using WebGL. Cartogr. Geogr. Inf. Sci. 41 (3), 235–247.                                    analysis of marine data. Int. Arch. Photogrammetry Remote Sens. Spatial Inf. Sci.
+                                                                                                    ISPRS 239–281.
+
+
+
+
+                                                                                          212
+
+
+
+    View publication stats
+

@@ -1,0 +1,1336 @@
+                                              3D Graphics on the Web: a Survey
+
+                                Alun Evans∗, Marco Romeo, Arash Bahrehmand, Javi Agenjo, Josep Blat
+                                       Interactive Technologies Group, Universitat Pompeu Fabra, Barcelona, Spain
+
+
+
+
+Abstract
+In recent years, 3D graphics has become an increasingly important part of the multimedia web experience. Following on from the
+advent of the X3D standard and the definition of a declarative approach to presenting 3D graphics on the web, the rise of WebGL
+has allowed lower level access to graphics hardware of ever increasing power. In parallel, remote rendering techniques permit
+streaming of high-quality 3D graphics onto a wide range of devices, and recent years have also seen much research on methods
+of content delivery for web-based 3D applications. All this development is reflected in the increasing number of application fields
+for the 3D web. In this paper, we reflect this activity by presenting the first survey of the state of the art in the field. We review
+every major approach to produce real-time 3D graphics rendering in the browser, briefly summarise the approaches for remote
+rendering of 3D graphics, before surveying complementary research on data compression methods, and notable application fields.
+We conclude by assessing the impact and popularity of the 3D web, reviewing the past and looking to the future.
+Keywords: 3D, Graphics, Web, Survey, Internet, Browser, WebGL, X3D, X3DOM, Three.JS, Rendering, Meshes
+
+
+1. Introduction                                                               2D animations into a Flash executable file, which was then ex-
+                                                                              ecuted by the browser-plugin installed on the user machine, al-
+    The Web has come a long way since its humble beginnings.                  most completely bypassing the browser itself. Flash-based ap-
+Initially existing as a means of sharing remote pages of static               plications typically required (relatively) long download times,
+text via the internet, bound together by a new markup language,               and this fact, coupled with the later lack of availability for Ap-
+HTML, the release of the Mosaic browser allowed users to                      ple’s iOS platform, meant that Flash lost some of its initial pop-
+’browse’ remote ’web-pages’ which featured a mixture of both                  ularity [3].
+text and images [1]. Following the release of the Netscape Nav-                   Meanwhile, the potential for creating interactive, multime-
+igator and Microsoft’s Internet Explorer in the mid nineteen                  dia rich web pages, using open standards methods, grew during
+nineties, development in web-technology exploded. Cascading                   the early part of the new millennium. Firstly, Scalable Vector
+Style Sheets (CSS), Secure Sockets Layer (SSL), cookies, Java                 Graphics (SVG) was introduced into browsers, allowing com-
+and Javascript, Adobe Flash, XML, and AJAX (to name but a                     plex 2D drawing in a manner which fit in with the existing
+few of the enabling technologies); all were to be incorporated                style of HTML. Then the canvas element was introduced, also
+into the web model during the following years. By the turn                    allowing 2D drawing, but differing from SVG in being con-
+of the millennium, the web was full of professionally designed                trolled via Javascript. First introduced by Apple as part of the
+pages, rich in visual content - recovering fully and to an un-                WebKit framework, canvas later became incorporated into the
+expected extent both of initial goals of the web: browsing and                draft HTML5 standard [4] (along with SVG). HTML5 is (be-
+editing content.                                                              ing) specifically designed to adapt HTML in a way such that it
+    Yet full interactive multimedia content was invariably heav-              can be used to make web applications i.e. dynamic interactive
+ily reliant on Adobe Flash. As a proprietary system, Adobe                    pages which are rich in multimedia content.
+had free reign to define the functionalities of its browser plugin                This consistent expansion of the scope, power, and com-
+[2], without necessarily making any reference to the series of                plexity of the web has meant that technology previously re-
+standards that were being gradually undertaken and adopted by                 served for custom software (or even hardware) is now being
+the World Wide Web Consortium (W3C). Adobe’s closed sys-                      used via the web. Once example of such technology is 3D
+tem allowed developers to embed interactive audio, video, and                 graphics. While efforts have been made to implement real time
+                                                                              3D graphics over the internet since the mid-nineties (see Sec-
+   ∗ Correspondingauthor                                                      tion 2 below), recent years have seen a rapid growth in its avail-
+    Email addresses: alun.evans@upf.edu (Alun Evans),                         ability and distribution. This paper presents a survey of the
+marco.romeo@upf.edu (Marco Romeo), arash.bahrehmand@upf.edu                   current state of the art in real-time 3D graphics on the web,
+(Arash Bahrehmand), javi.agenjo@upf.edu (Javi Agenjo),                        covering rendering techniques, scene description methods, 3D
+josep.blat@upf.edu (Josep Blat)
+    URL: http://gti.upf.edu (Josep Blat)                                      specific data delivery, and relevant application fields.
+
+Preprint submitted to Computers & Graphics                                                                                      February 24, 2014
+     Why a survey into 3D web graphics? We see the first of               Scene features one or more objects, which can be represented in
+its kind timely due to a new maturity in the subject. With all            an implicit manner (such as using NURBS) or, more commonly,
+modern versions of major browsers now supporting plugin-free              as polygonal Meshes. Object appearance (colour, reflectivity,
+access to dedicated graphics hardware, and the ever-increasing            transparency etc.) is described by an associated Material. Ma-
+power of this hardware, web-based 3D graphics applications fi-            terials frequently define colours according to textures: arrays
+nally have the opportunity to become a ubiquitous part of the             of colour values usually loaded from 2D image files. These
+web environment, accessible to everyone. Our goal in this pa-             image files, along with any other file which is loaded into the
+per is to both provide historical context in addition to assessing        scene (for example, to specify the structure or the behaviour of
+the current state of the art, which we attempt to do by review-           a Mesh), are frequently called Assets. A Scene also contains a
+ing the academic literature, assessing trends in the commercial           viewpoint or camera, as well as one or more light sources, and
+sector, and drawing on our direct experience in using 3D web              may be organised into structure called a Scene Graph, where
+technology. Our hope is that the results of our survey will allow         the contents of the scene are organised logically (e.g. imposing
+future developers and researchers to have a more complete un-             a hierarchy) and spatially. Scene Graphs are frequently used
+derstanding of the field as they proceed with their endeavours.           in 3D rendering engines to group scene objects together such
+     For the purposes of this survey, we define 3D graphics to be         that different rendering processes may be applied to different
+the use of 3D geometric data (usually through Cartesian coordi-           groups.The components of a fixed pipeline programme use al-
+nates) to perform certain calculations (for example, changes of           gorithms predefined by the 3D programming API to calculate
+form, animation, collision detection etc.) and to create 2D im-           the position and colour of the assets in the Scene, depending
+ages suitable for display on a standard computer screen or mon-           on the point of view of the camera and location of any light
+itor. The term rendering describes the process of converting the          sources. A programmable pipeline approach requires the pro-
+3D data into a 2D image on a screen. Rendering techniques                 grammer to carry out such calculations manually in a shader,
+vary greatly in terms of their complexity, speed, photorealism            which is a separate programme compiled at run-time and ex-
+and application. Photorealism is usually judged according the             ecuted on the GPU. It follows therefore, that a programmable
+realism of the 3D shape being rendered, and also how that shape           pipeline approach requires the programmer to have deeper un-
+is shaded (a synonym, in graphics terms, for coloured) with               derstanding of the underlying mathematics, while also allow-
+respect to light sources in the scene. Complex shading tech-              ing a much finer level of control of the appearance of the final
+niques, such as ray-tracing and radiosity, produce 2D images              scene.
+which are more photorealistic, at the cost of increased calcula-               The remainder of this survey is organised as follows. We
+tion time. By reducing the complexity of the algorithms used              first review the state of the art in web based 3D rendering, in-
+to simulate the effect of light in the scene, rendering time can          cluding historical approaches (Section 2), before presenting an
+be shortened to enable applications where the 2D image is up-             overview of the field of remote rendering (Section 3) and how it
+dated at framerates fast enough to be undetectable (or barely             applies to the 3D web. We then review techniques of data com-
+detectable) to the human eye. One factor common to most 3D                pression and content delivery (Section 4), of vital importance
+graphics is the use of perspective projection, where the pro-             to any client-server based scenario, but especially relevant to
+jected size of any 3D object onto a 2D image is inversely pro-            3D applications where file sizes are typically large. Following
+portional to its distance from the eye. The use of perspective            this we present a selection of standout applications, grouped by
+projection, homogenous coordinates, and heavy use of 3D vec-              application field, which have contributed to the state of the art
+tors in Cartesian coordinates to represent 3D objects, means              (Section 5). Finally, Section 6 discusses the rise in the popular-
+that most 3D graphics applications make extensive use of ma-              ity of 3D web and concludes the paper.
+trix mathematics to both simplify and speed up computation.
+     The requirement to perform calculations on multiple data             2. Browser-based Rendering
+points (either for calculating the projection of 3D data points, or
+for calculating the colour of each pixel in a rendered 2D image)               Jankowski et al [5] classify browser-based 3D rendering
+has led to development of specific class of hardware, the Graph-          (i.e. where the client browser/machine executes the rendering
+ics Processing Unit (GPU) which is designed to process several            process) into declarative and imperative techniques, creating a
+operations in parallel. The introduction of the modern GPU                matrix which classifies 2D and 3D graphics according to the
+heralded an unprecedented reduction in the time taken to render           different paradigms. Figure 1 is an adaptation of their classifi-
+3D graphics in widespread systems, thus allowing more com-                cation. For example, it is possible to draw 2D graphics within
+plex and photorealistic techniques to be applied in real-time. To         the browser using both SVG and the HTML5 canvas element:
+harness the power of the GPU, access is usually facilitated via a         SVG [6] is an XML-based file format for two dimensional vec-
+low-level API such as OpenGL or Direct3D. OpenGL bindings                 tor graphics - drawing and image filter effects are coded in a
+exist for most major programming languages and most major                 declarative manner. By contrast, similar drawing and image
+platforms; whereas Direct3D is typically restricted to Microsoft          processing can be achieved by using the <canvas> element in
+platforms (Windows or Microsoft games consoles).                          an imperative way using Javascript. Jankowski et al extend this
+     In this survey we repeatedly make reference to several ba-           declarative/imperative distinction into the world of 3D browser-
+sic terms. Although all of these will be familiar to the graph-           based graphics, referencing some of the approaches which we
+ics community, for clarity we define them here. A real-time 3D            discuss below.
+                                                                      2
+    Approach                  Requires Plugin         Part of HTML         DOM Integra-         Inbuilt Scene        Customisable          Standards-
+                                                      Document             tion                 Graph                Pipeline*             based
+    X3D                       yes                     no                   no                   yes                  no                    yes
+    X3DOM                     no                      yes                  yes                  yes                  no                    yes
+    XML3D                     no                      yes                  yes                  yes                  no                    partial
+    CSS Transformsj           no                      partial              yes                  no                   no                    yes
+    O3D                       no longer               no                   no                   yes                  no                    partial=
+    Three.JS                  no                      no                   no                   yes                  yes                   partial=
+    Stage3D (Flash)           yes                     no                   no                   no                   yes                   no
+    Java                      yes                     no                   no                   yesC                 yesC                  no
+    Silverlight               yes                     no                   no                   no                   yes                   no
+    Native WebGL              no                      no                   no                   no                   yes                   yes
+    Unity3D v                 yes                     no                   no                   yes                  no                    no
+
+Table 1: Approaches to browser-based 3D rendering, classified according to level of declarative behaviour. * A customisable pipeline is one where the programmer
+has low-level control over the render targets, render order, scene graph, materials and associated shaders. j While CSS transforms are not true rendering per se,
+they are included for completeness. = Both O3D and Three.JS can render via WebGL, which is standards based. C Only certain Java libraries and APIs have these
+functionalities. v Unity3D is included as a (popular) example of proprietary games engines (see section 2.12)
+
+
+                                                                                       • It has a high level of platform interoperability
+
+                                                                                       Other important characteristics, such as the requirement for
+                                                                                   plugins, and whether the approach is standards based or not, are
+                                                                                   also listed in the table. The remainder of this section surveys
+                                                                                   each of these technologies in turn.
+
+                                                                                   2.1. VRML, X3D and ISO Standards
+                                                                                  In 1994, David Raggett, in parallel with Mark Pesce and
+                                                                              Tony Parisi called for development the Virtual Reality Mod-
+                                                                              eling Language (VRML) file format to describe a 3D scene
+                                                                              [7], and the format (in its second version) became an ISO stan-
+                                                                              dard (ISO/IEC 14772-1:1997) in 1997. VRML97, as it became
+                                                                              known, uses text to specify the both the contents and appear-
+Figure 1: Declarative vs Imperative approaches to web-based graphics (adapted
+from [5])
+                                                                              ance of a scene (i.e. associating a mesh with a particular ma-
+                                                                              terial) but does not allow the specification of more advanced
+                                                                              3D concepts such as NURBS (implicit surfaces) or complex
+    The declarative/imperative distinction for web-based 3D graph- animation. Shortly after the definition of VRML97, and in or-
+ics is useful, particularly as it allows comparison to the equiva-            der to protect it as an open standard, the Web3D consortium
+lent 2D cases. Nevertheless, when considering the broad spec-                 was formed, as a cross-section of businesses, government agen-
+trum of browser-based 3D rendering techniques, it becomes dif-                cies, academic institutes and individuals. Several applications
+ficult to impose such a strict classification. For example, many              and browser plugins were developed to enable the display of
+of the approaches surveyed in this section are based on pro-                  VRML scenes in the browser, such as Cosmo Player, World-
+gramming languages which follow an imperative paradigm, yet                   View, VRMLView, and Blaxxun Contact. In many respects,
+some of them also make heavy use of a Scene Graph, which                      these applications formed the first efforts to bring 3D graphics
+could be considered a declarative construct. Table 1 shows a                  to the internet.
+comparative summary of the browser-based 3D rendering ap-                         Despite these efforts, support for the format was intermit-
+proaches surveyed in this paper, particularly from the point of               tent [7], and in 2004 VRML was replaced by X3D (ISO/IEC
+view of their classification as declarative or imperative. An ap-             19775/19776/19777). While designed to be backward compat-
+proach can be said to be more declarative than imperative if:                 ible with VRML, it provides more advanced APIs, additional
+                                                                              data encoding formats, stricter conformance, and a componen-
+     • It is part of the HTML document (i.e. it uses a text format
+                                                                              tized architecture [8]. The most immediate difference to VRML
+        to declare content without direct context)
+                                                                              is the syntax: while X3D still supports the traditional VRML
+     • It is capable of integrating with the Document Object                  ’C-like’ syntax, it also adds support for binary and XML for-
+        Model (DOM)                                                           mats. The latter is important as it is a standard format widely
+                                                                              used in web-technologies, and thus brings X3D closer to the
+     • It features a scene graph                                              web. X3D supports a multi-parent scene-graph and a runtime,
+     • It does not allow overloading of the rendering pipeline                event and behaviour model; as well as a dataflow system which
+
+                                                                               3
+integrates sensor, interpolation and visualisation nodes. All this
+permits the description of animated scenes in a declarative man-
+ner and without using imperative scripting techniques. X3D
+is designed to be used in both web and non-web applications;
+in that sense, it can be said more precisely that X3D is con-
+cerned with internet-based 3D as opposed to purely web-based.
+As such, an X3D enabled application (whether standalone soft-
+ware, or browser plugin) is required to view and interact with
+X3D scenes. Web browser integration involves the browser
+holding the scene internally, allowing the plugin developer to
+control and update content via a Scene Access Interface.
+
+2.2. X3DOM
+    In an attempt to extend browser support for X3D, in 2009
+Behr et al [9], introduced X3DOM. X3DOM provides native
+browser, plugin-free (where possible) and independent 3D ca-
+pabilities, and is designed to integrate closely with standard
+web techniques such as AJAX. It maintains the declarative na-
+ture of X3D and is, in effect, an attempt to code X3D directly
+into a web page, without the need for a browser plugin. X3DOM
+is defined as a front-end and back-end system, where a connec-
+tor component transforms a scene defined in the front-end (the
+                                                                          Figure 2: Screenshot taken from a Mozilla Firefox browser window executing
+DOM) to the backend (X3D). The connector then takes respon-               the X3DOM code shown above.
+sibility for synchronising any changes between the two ends of
+the model. X3DOM defines an XML namespace [10], to enable
+an <x3d> tag (and all of its children) to be used in a standard           object in the scene, within which the objects properties (such as
+HTML or XHTML page. An example of the code required to                    the mesh and appearance) are defined in parallel. The mesh in
+draw a scene featuring a sample mesh is shown below, starting             this scene is defined as a set of indexed faces; no normal vec-
+from the initial <body> tag of an XHTML file (vertex data of              tors are supplied so X3DOM calculates them to enable lighting
+the object is redacted for brevity). The result of this code, when        effects.
+loaded in a web browser, is shown in Figure 2:                                 For rendering the scene X3DOM defines a fallback model
+                                                                          [11], trying to initialise preferred renderers first, and using al-
+<body>                                                                    ternative technology if required. Currently the fallback model
+ <X3D                                                                     first checks whether the user application is capable of rendering
+  xmlns="http://www.web3d.org/specifications/x3d-namespace"               X3D code natively, and is so, passes the contents of the <x3d>
+  width="400px" height="400px">
+  <Scene DEF=’scene’>
+                                                                          tag to the X3D rendering engine defined by the host application.
+   <Viewpoint position=’0 0 300’                                          If native X3D rendering is not detected, or an X3D browser plu-
+         orientation="0 0 0 1" />                                         gin is not installed, the application tries to create a WebGL ren-
+   <Background skyColor=’0.6 0.6 0.6’/>                                   dering context, and build the X3D scene graph on top of that.
+   <Transform translation=’0 10 0’ >
+    <Shape>                                                               With the partial integration of WebGL into Microsoft Internet
+     <Appearance DEF=’App_0’>                                             Explorer 11 [12], the majority of modern browsers now support
+      <Material diffuseColor="0 1 0" shininess=’0.15625’/>                browser based 3D rendering via WebGL (see below). If WebGL
+     </Appearance>                                                        is not supported, X3DOM tries to render with Stage 3D (see
+     <IndexedFaceSet creaseAngle=’4’ coordIndex=’
+       [indexed vertex coordinates for model]                             Section 2.10 below) before finally presenting a non-interactive
+       ’/>                                                                image or video if no 3D rendering is possible.
+     </IndexedFaceSet>                                                         X3DOM is designed to integrate with the DOM and thus
+    </Shape>
+                                                                          can be modified in the same manner as any DOM object. For
+   </Transform>
+  </Scene>                                                                example, if the programmer wished to modify the position of
+ </X3D>                                                                   the shape at runtime (for example, in response to user input), the
+  <script type="text/javascript" src="x3dom.js"></script>                 translation attribute of the <transform> tag can be modified at
+</body>
+                                                                          runtime using Javascript, and the scene will update accordingly.
+    This code snippet uses hierarchical declaration to create a                3D models can be loaded into X3D/X3DOM by defining
+3D <scene>. A viewpoint position and orientation is set, as is            vertex geometry as in the example above, or by importing an
+the background colour. A <transform> tag defines translation,             X3D (or VRML) scene defined in a separate file. This scene
+rotation and scaling transforms which apply to the tag contents           file can be coded manually or, for complex objects and scenes,
+(in this case all the content defined within it should be is trans-       it can be created using custom export plugins for 3D digital
+lated by 10 units in the y-axis). The <shape> tag defines an
+                                                                      4
+content creation (DCC) packages (such as Blender, Autodesk                    <float3 name="intensity">1.0 1.0 1.0</float3>
+Maya, and Autodesk 3D Studio Max). Basic shading (such as                 </lightshader>
+                                                                          <shader id="Material" script="urn:xml3d:shader:phong">
+diffuse or specular shading) is supported in a declarative man-            <float name="ambientIntensity">0.0</float>
+ner. Schwenk et al [13] [14] added a declarative shader to X3D,            <float3 name="diffuseColor">0.4 0.12 0.18</float3>
+enabling advanced 3D effects and lighting (such as multi tex-              <float3 name="specularColor">0.5 0.5 0.5</float3>
+turing, reflections and other lighting effects), this is now par-          <float name="shininess">0.2</float>
+                                                                          </shader>
+tially supported in X3DOM. Custom shaders are supported via              </defs>
+the ComposedShader node; this allows the programmer to write
+their own shader code as long as uniform data is restricted to a         <view id="defaultView" position="0 0 300"></view>
+supported set and naming conventions. In 2011, Behr et al ex-
+                                                                         <group shader="#Material" transform="#t_Bunny">
+tended their framework with various functionalities [15]. Sev-            <mesh src="#mesh_bunny_noMat" type="triangles"/>
+eral camera navigation methods were introduced, defining a               </group>
+Viewpoint node (seen in the above example) and several different
+navigation patterns (definition of custom camera navigation is           <group transform="#t_Light">
+                                                                          <light shader="#ls_Spot"></light>
+also supported via manipulation of the equivalent DOM node,              </group>
+for example, via Javascript). Also introduced was simple ob-
+ject animation, either via CSS transforms and animations (see           </xml3d>
+below) or by the X3D Interpolators.                                         In this example, a <defs> tag allows the definition of var-
+                                                                        ious transforms, the data for the mesh to be displayed, and
+2.3. XML3D                                                              shaders and their uniforms, along with a light (position and in-
+    XML3D [16] is similar to X3DOM, in that it is an extension          tensity), and the eye view position. Transforms are defined as a
+to HTML designed to support interactive 3D graphics in the              tag, as in X3DOM, although they could be specified using CSS
+browser, requiring the use of XHTML. Its stated goal is to try to       transforms (see below) for those browsers that support them,
+find the minimum set of additions that fully support interactive        fulfilling the authors’ goal to reuse existing features as much as
+3D content as an integral part of 2D/3D web documents. It takes         possible. Shaders can also be defined using a fixed number of
+a similar high-level approach to 3D programming as X3DOM:               CSS properties (again, with the goal of extending existing func-
+both use declarative language to define a 3D scene, and both            tionality). Once all the definitions are finished, the viewpoint is
+expose all elements of the 3D to the DOM (with the benefits             defined, and mesh and light added to the scene. In this case, the
+of DOM manipulation that arise thereafter). The central dif-            3D mesh is defined in line, but 3D objects can also be loaded
+ference between the two approaches is that X3DOM grew out               from an external file with the mesh data - stored, for example,
+of an attempt to natively embed an existing framework (X3D)             in a JSON, XML or binary file.
+into a browser context, whereas XML3D proposes to extend                    XML3D also introduces another level of abstraction, seen
+the existing properties of HTML wherever possible, embedding            in the example above, by using Data Containers, defining a
+3D content into a web page with the maximum reuse of exist-             <data> tag which wraps the primitive data [17]. This definition
+ing features. The sample XML3D code below draws a similar               of a declarative data containers allows the piping of the data
+scene to the X3D code above (for brevity, standard html code            to processing modules (see Section 2.4 below) which in turn
+such as the body and head tags are excluded, along with lines           permits the complex geometry transformations required for dy-
+to load XML3D libraries and the data for the mesh):                     namic meshes and certain graphical effects.
+<xml3d id="BunnyXML3D" activeView="#defaultView"                            XML3D rendering is implemented both in WebGL and also
+class="xml3d"   style="width: 400px; height: 400px;" >                  as a native component for the Mozilla browser framework (sup-
+                                                                        porting Firefox) and Webkit-based browsers (supporting Google
+ <defs id="mainDef">
+  <transform id="t_Light" rotation="20 22 92 190"
+                                                                        Chrome and Apple Safari). The native component was ap-
+    scale="1.0 1.0 1.0" translation="400 100 600">                      parently implemented in order to avoid any performance issue
+    </transform>                                                        with the Javascript/WebGL implementation (specifically, slow
+  <transform id="t_Bunny" rotation="0.0 0.0 0.0 0"                      Javascript parsing of the DOM, and limitations of the OpenGL
+    scale="1.0 1.0 1.0" translation="0.0 0.0 0.0">
+    </transform>                                                        ES 2.0 specification).
+
+  <data id="mesh_bunny">                                                2.4. Xflow
+   <float3 name="position">[vertex coordinates for model]
+   </float3>                                                                The needs of interactive 3D graphics applications go be-
+   <float3 name="normal">[normals for model]                            yond simply drawing and shading meshes. Techniques such as
+   </float3>                                                            character animation, physical material simulation, and render-
+   <int name="index">[indices for model]</int>
+  </data>
+                                                                        ing complex effects such as smoke or fire typically require a
+                                                                        considerable amount of runtime data processing. X3DOM, as
+  <lightshader id="ls_Spot"                                             previously mentioned, passes such issues to the X3D backend
+    script="urn:xml3d:lightshader:point">                               and synchronises the results to the DOM front end, yet this op-
+      <bool name="castShadow">true</bool>
+      <float3 name="attenuation">1.0 0.03 0.00</float3>
+                                                                        tion is hamstrung by Javascript’s slow parsing of the DOM, and
+
+                                                                    5
+furthermore is not available to alternative approaches such as
+XML3D. Thus, in 2010 Klein et al. proposed a declarative solu-
+tion to intensive data processing on the web, called Xflow [17].
+Xflow is a system for exposing system hardware in a declarative
+manner and allowing dataflow programming. Examples of 3D
+graphics applications for this technique are modifying vertex
+data for animated or otherwise dynamic meshes, animation of
+shader parameters, and image processing and post-processing.
+    In essence, Xflow can be thought of as a data processing ex-
+tension to XML3D. Xflow is integrated into XML3D and pro-
+vides a crucial extension by defining a compute attribute for
+defined data containers. This attribute is used to provide pro-           Figure 3: Screenshot from the Barcelona World Race browser-based MMO
+cessing operators to the data defined within a container (for ex-         game [23], rendered using O3D (reproduced with permission)
+ample, for skeletal animation).
+
+2.5. CSS 3D Transforms                                                    or X3DOM), whereas Collada is designed purely to be a format
+                                                                          for data interchange, and is agnostic as to the rendering engine
+     CSS transforms are a part of the W3C specification which             used to draw the scene. In 2013, the Collada working group an-
+allow elements styled with CSS code to be transformed in two              nounced the project to define and create the glTF format [21],
+or three dimensional space. Originally developed by Apple as              which is designed to better match WebGL processing require-
+part of the WebKit framework [18] (and thus functional in Sa-             ments (for example, using typed arrays, and storing geometry
+fari and Chrome browsers), these transforms are now fully sup-            and texture assets in binary format
+ported by Mozilla based browsers and almost fully supported in
+Internet Explorer.                                                        2.7. Javascript access to graphics hardware
+     3D transforms work by initially setting a perspective to the
+scene (using transform: perspective(value ); or more sim-                     In contrast to declarative or functional programming, the
+ply perspective: value ;). Once set, standard 3D transforms               paradigm of imperative programming describes computation as
+such as translation, rotation and scale can all be applied in three       a series of statements which change a programme’s state. It
+axes. By using CSS Transitions [19], simple animation between             could be argued that most computer programming must even-
+different states can be achieved. Object shading must be spec-            tually reduce to imperative code, in the sense that most low
+ified manually by defining colour or texture information (as an           level hardware programming (for example with Assembly lan-
+image) as with standard CSS.                                              guage) is imperative. The traditional language for executing
+     CSS 3D transforms provide a very fast, easy to understand            non-declarative code in the web browser is Javascript, which
+method of coding simple 3D effects into a webpage. One in-                has elements of the imperative, object-orientated, and functional
+teresting aspect of their use is that existing 3D content, such           programming paradigms. According to Tony Russell, the Chair
+as a DOM element (for example, a canvas) which features 3D                of the WebGL working group, one of the biggest contributing
+graphics rendered by other techniques, can be further trans-              factors to rise of imperative 3D web programming are the huge
+formed using CSS 3D. Nevertheless, the lack of true lighting              performance increases in the Javascript Virtual Machine, allow-
+and shading capabilities means CSS 3D is very limited in what             ing fast control and manipulation of thousands of vertices in 3D
+can be achieved with more powerful declarative solutions such             space, in every drawn frame [22].
+as X3DOM or XML3D.                                                            Although it is possible to create a web-based software ren-
+                                                                          dering algorithm using SVG [24] or the HTML5 Canvas, to-
+2.6. Collada                                                              wards the end of the first decade of the 21st century efforts were
+                                                                          being made to allow imperative programming access to dedi-
+     Collada [20] it is a declarative file format used for describ-       cated graphics hardware. Principal among these was Google’s
+ing a 3D scene, and while it does not feature any form of run-            O3D library [25] [26]. Developed as a cross-platform plugin
+time or event model, its popularity as an interchange format for          for all major browsers and operating systems, O3D originally
+web based 3D graphics means that it is included in this sec-              provided a Javascript API to enable access to its plugin code
+tion for completeness. Initially developed by Sony and Intel,             (written in C/C++), which in turn allowed programming of the
+it is now managed by the Khronos Group (see WebGL section                 graphics hardware, either via Direct3D or OpenGL (the deci-
+below) and is an open standard with ISO/PAS 17506. Apart                  sion was hidden from the final user). In order to popularise
+from describing basic object parameters such as shape and ap-             the technology and to act as tutorials, Google published an ex-
+pearance, Collada also stores information about animation and             tensive suite of demo web applications made using O3D [25].
+physics. Superficially, it is similar to X3D, in that both define         Perhaps one of the most visible applications of the technology,
+XML schemas for describing 3D scenes, and were specifically               in terms of number of users, was the official MMO game for
+designed for transfer of digital assets in a standardised man-            the Barcelona World Race sailing regatta, which used O3D to
+ner. X3D scenes, however, are designed to rendered with spe-              power its 3D component (see Figure 3). The game developers
+cific X3D capable software (such as browser browser plugins
+
+                                                                      6
+noted [23] that O3D support for multi pass rendering (impor-            uniform data; bind data buffers and pass data (for vertices, and
+tant for post-processing effects such as shadows, reflections and       optionally normals, colours and texture coordinates); control
+weather) were critical in the decision to use the API ahead of          camera and perspective using standard model-view-projection
+other options such as the nascent Stage 3D from Adobe (see              matrices; and finally draw.
+below). This conclusion was in agreement with Sanchez et                    The Khronos group provides several helper Javascript files
+al. [27], who concluding that O3D demonstrated better perfor-           which assist in the setup and debugging of WebGL applications,
+mance than X3DOM, both in terms of rendering performance                which are contained within many of the public demos publicly
+(where frustum culling was possible) and animation. With the            available on the Khronos site [32]; nevertheless, as mentioned
+advent of WebGL, the O3D plugin was discontinued, and the               above, WebGL is clearly aimed at the more experienced graph-
+API was ported to use the WebGL renderer; non-rendering ele-            ics programmer. Directly comparing it to the declarative tech-
+ments of O3D (for example, the Scene-Graph and Events API)              niques is not particularly worthwhile, as they target different
+are still accessible and usable.                                        sections of the developer/artist communities.
+    Besides O3D, other efforts were made to allow access to                 A detailed analysis of WebGL is beyond the scope of this
+the GPU via Javascript. Canvas3D was a Firefox plugin from              paper, and the reader is directed to several recent books [22]
+Mozilla which allowed the creation of an OpenGL context within          [33] [34]. However, it is interesting to introduce several Javascript
+a HTML5 canvas element, and was essentially the precursor to            libraries, whose goal is to abstract WebGL inner workings and
+WebGL (see below). Canvas3D JS [28] [29] was an mid-layer               produce higher level code, which have proliferated as a result of
+API designed to simplify its use, and was later adapted to make         WebGL’s steep learning curve. One of the first of these libraries
+use of WebGL (see below). Opera Software (creators of the               to appear was SpiderGL [35] [36]. Its original version consists
+Opera web-browser) also released a similar plugin [30] which            of five libraries: GL, which abstracts core WebGL functionali-
+allowed access to OpenGL calls via the HTML5 canvas.                    ties; MESH, defining and rendering 3D meshes; ASYNC, to load
+    All of the above efforts use some form of browser plugin,           content asynchronously; UI, to draw the user interface within
+usually programmed in C or C++, which essentially acts as               the GL context; and SPACE, a series of mathematics and ge-
+a Javascript wrapper for accessing the graphics hardware via            ometry utilities. Despite abstracting many WebGL functions,
+OpenGL or Direct3D. By 2009, the need to standardise meth-              programming an application in SpiderGL still requires knowl-
+ods for accessing the GPU via the browser had become clear.             edge of 3D concepts (more than those required to use XML3D,
+Thus, the Khronos Group (the not-for-profit organisation re-            for example) and requires at least some basic knowledge of
+sponsible for, among other things, the OpenGL specification)            OpenGL. After its initial impact as the first comprehensive ab-
+started the WebGL working group, and with input from Mozilla,           straction of WebGL, SpiderGL entered a period of extensive
+Apple, Google, Opera and others, released the version 1.0 of            refactoring, from which it emerged with several lower level im-
+WebGL in 2011 [31].                                                     provements [36], such as custom extensions and better integra-
+                                                                        tion with other libraries.
+2.8. WebGL & Associated Libraries                                           LightGL is a low-level wrapper which abstracts many of the
+    Khronos describes WebGL thus:                                       more code intensive WebGL functionalities, while still requir-
+    WebGL is a cross-platform, royalty-free web standard for            ing shader programming and matrix manipulation. Agenjo et
+a low-level 3D graphics API based on OpenGL ES 2.0, ex-                 al. [37] modify LightGL to use the popular GLMatrix library
+posed through the HTML5 Canvas element as Document Object               [38] to create a tiered API with several layers of abstraction.
+Model interfaces [31].                                                  OSG.JS [39] is a WebGL framework which aims to mimic an
+    OpenGL ES (”Embedded Systems”) 2.0 is an adaptation                 OpenSceneGraph [40] approach to 3D development. Other li-
+of the standard OpenGL API, designed specifically for devices           braries of note are SceneJS [41], PhiloGL [42], and GLGE [43];
+with more limited computing power, such as mobile phones or             the latter providing a declarative method of programming a 3D
+tablets. WebGL is designed to use, and be used in conjunction           scene, much like X3DOM or XML3D.
+with, standard web technology; thus while the 3D component
+of a web page is drawn with the WebGL API via Javascript, the           2.9. Three.JS
+page itself is built with standard HTML.                                    Perhaps the most famous library/API for web-based 3D graph-
+    WebGL is purposefully built to be a lean, reasonably low            ics is ThreeJS [44] [45]. Although originally developed in Ac-
+level API - indeed, the two principal declarative methods men-          tionScript (see below), it is now an open-source Javascript li-
+tioned above (X3DOM and X3D) both use or have used WebGL                brary which enables high-level programming of browser-based
+to some extent in their implementations. WebGL is targeted at           3D scenes, such as that shown in Figure 4. Its modular structure
+the experienced graphics programmer, who has a good knowl-              means that several different rendering engines (WebGL, Canvas
+edge of core graphics concepts such as matrix and vector math-          and SVG) have been developed to render scene content, and
+ematics, shading, and preferably organisation of 3D scenes with         the library can be (and is being) extended in a distributed man-
+Scene Graphs [22]. The process required to create a simple box          ner by several dozen individual contributors. Three.JS features
+is very similar to that for any OpenGL ES 2.0 renderer: create          a scene graph, several types of camera and navigation modes,
+a WebGL context (in this case, on a HTML5 Canvas element);              several pre-programmed shaders and materials (and the ability
+define and load a vertex and a fragment shader and bind any             to program custom shaders), Level-of-Detail mesh loading and
+
+                                                                    7
+                                                                                    animate();
+                                                                                    function animate() {
+                                                                                        requestAnimationFrame(animate);
+                                                                                        renderer.render(scene, camera);
+                                                                                    }
+
+                                                                                        Beyond the obvious changes in language syntax, the Three.JS
+                                                                                    approach is not dissimilar to those of X3D and XML3D de-
+                                                                                    scribed above, particularly XML3D. A Material, a Mesh, a Cam-
+                                                                                    era and Light must all be defined by being added to the scene. In
+                                                                                    this example the mesh is loaded from an external file (using the
+                                                                                    ubiquitous Wavefront Object format) via an asynchronous load-
+                                                                                    ing method. Once the mesh file has been downloaded and the
+                                                                                    mesh object created, it is assigned a material and added to the
+                                                                                    scene using a callback function. This ability to call functions
+                                                                                    is a major difference in comparison with declarative examples
+                                                                                    above, and is seen again in the final few lines, which are specific
+                                                                                    instructions to request a new animation (or drawing) frame from
+                                                                                    the browser, and render. Without this final imperative part, the
+Figure 4: Car visualisation running in Mozilla Firefox, created using ThreeJS       code would download the mesh object correctly and add it the
+by Plus 360 Degrees [46] (reproduced with permission)                               scene, but nothing would appear in the viewport, as there would
+                                                                                    have been no command to render the scene executed after the
+                                                                                    object was downloaded.
+rendering, and an animation component allowing skeletal and
+morph-target animation.
+                                                                                    2.10. Stage 3D
+    The sample code below demonstrates the steps required to
+load a mesh with a simple material, similar to the previous two                          As mentioned above, Adobe’s Flash plugin is a proprietary
+code examples (code is Javascript/JQuery, and HTML setup left                       system which allows multimedia content to run inside a web
+out for brevity):                                                                   page which has the Flash plugin enabled. Although there were
+                                                                                    initial attempts to embed 3D graphics into Flash (such as the
+var WIDTH = 400, HEIGHT = 400;
+var $container = $(’#container’);                                                   now disappeared Papervision [9]) these relied on software ren-
+var scene = new THREE.Scene();                                                      dering techniques which did not allow access to the GPU. Stage
+                                                                                    3D is Adobe’s proprietary 3D engine [47], with the key differ-
+var renderer = new THREE.WebGLRenderer();                                           ence being that it allows allows Flash and AIR applications to
+renderer.setSize(WIDTH, HEIGHT);
+$container.append(renderer.domElement);                                             draw hardware accelerated 3D graphics. Stage 3D applications
+                                                                                    are written in ActionScript, an object-oriented language devel-
+var VIEW_ANGLE = 45, ASPECT = WIDTH / HEIGHT;                                       oped to write Flash-based applications. Stage3D is marketed as
+var NEAR = 0.1, FAR = 10000;
+                                                                                    a medium-low language for 3D graphics programming, allow-
+var camera = new
+  THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);                           ing platform independent programming of applications that are
+camera.position.z = 300;                                                            fully compatible with existing Flash libraries. It is quite low
+                                                                                    level in that a sample application must deal directly with vertex
+var sphereMaterial = new THREE.MeshLambertMaterial(
+{
+                                                                                    and index buffers, shaders, and the Model/View/Projection ma-
+    color: 0xCC0000                                                                 trices common to many 3D applications, and there is no built-in
+});                                                                                 scene graph. The application code is compiled against rela-
+                                                                                    tively high level libraries, allowing drawing to contexts which
+var pointLight = new THREE.PointLight( 0xFFFFFF );
+pointLight.position.x = 10;
+                                                                                    allow seamless merging with 2D Flash, and/or Flash Video con-
+pointLight.position.y = 50;                                                         tents; this means that many low-level hardware aspects are hid-
+pointLight.position.z = 130;                                                        den from the programmer by proprietary libraries. Shaders in
+                                                                                    Stage 3D are written in Adobe Graphics Assembly Language
+var loader = new THREE.OBJLoader( );
+loader.load( ’bunny.obj’, function ( object ) {                                     (AGAL), a very low level assembly language, which makes
+        object.traverse( function ( child ) {                                       writing shaders for Stage 3D a more laborious task compared
+                if ( child instanceof THREE.Mesh ) {                                with writing shaders in a higher level language such as GLSL
+                        child.material = sphereMaterial;                            or HLSL, which are the shading languages for OpenGL and
+                }
+        } );                                                                        Direct3D, respectively. Adobe has made efforts to develop a
+        scene.add( object );                                                        higher level shader creation package called Pixel Bender, though
+} );                                                                                as of 2013, development of this tool appears to have stalled.
+scene.add(camera);
+scene.add(pointLight);
+
+                                                                                8
+2.10.1. Silverlight
+    Microsoft Silverlight is an API for developing web-based
+applications, not dissimilar to Adobe Flash. It facilitates the
+creation of interactive multimedia applications and their dis-
+tribution via web, with client side execution depending on a
+browser plugin which the user must install. Silverlight applica-
+tions are created using Microsoft’s .NET framework. Version 3
+of Silverlight introduced basic 3D transforms (similar to mod-
+ern CSS 3D transforms), but the current version (version 5) now
+features a full programmable graphics pipeline, allowing access
+to the GPU and shader programming.
+
+2.11. Java
+    The Java platform, developed initially by Sun Microsys-
+tems before its merger with Oracle, is now an established part
+of modern computing. From a web perspective, the ability to
+                                                                           Figure 5: The Unity IDE and game engine has become a popular way to quickly
+launch a Java applet (a small application which is executed                embed 3D graphics into a web-browser
+within the Java Virtual Machine) within the browser, was one
+of the earliest ways to programme more computation-expensive
+visualisations [48]. In particular, it is possible to allow Java ap-       this paper. Unity’s technology is split into two applications - an
+plets to access the GPU which, prior to the advent of WebGL,               Integrated Development Environment (IDE) (see Figure 5) for
+was one of the earlier methods of accessing hardware accel-                the creation of a scene/game, and a Player plugin/standalone
+eration from a web page without relying on a custom browser                application which allows Unity scenes/applications developed
+plugin.                                                                    with the IDE to be executed on a target platform. At its most
+    In 1998, the Java3D API was released to facilitate 3D devel-           basic level, creating a 3D scene for the web in Unity involves
+opment with Java [49]. Java3D features a full scene graph and              dragging and dropping 3D assets into a viewport, optionally
+is able to render using Direct3D or OpenGL. Development on                 setting material, light and camera settings, and then exporting
+Java3D was abandoned in 2008 as Sun Microsystems moved to                  the scene to a custom file format. The Unity web-browser plu-
+push its new JavaFX platform, though development on Java3D                 gin (available for all major browsers) reads this file and display
+has been restarted by the JogAmp community [50]. For lower                 the scene in the browser window. Beyond the drag and drop
+level access (i.e. wrapping OpenGL functions directly) other               capabilities of the IDE, a Unity scene can be modified (or even
+libraries exist such as JOGL [50] or LWJGL [51]. The latter is             created) entirely in code, either via Javascript, C# or Boo. Unity
+the basis of the popular multiplatform game, Minecraft, whose              also allows exporting applications to other platforms, including
+well documented success demonstrates that a Java based ap-                 mobile platforms such as iOS and Android.
+proach to web 3D graphics can be a viable option for many                      Other companies have made short-term efforts to present
+developers.                                                                video games as browser-based experience; for example Epic
+                                                                           Games’ Unreal Engine has in the past featured a web player
+2.12. Proprietary Videogame Engines                                        component and now has a HTML5/WebGL-based demo avail-
+    The video game industry has long been a showcase for the               able [54]; while the game Battlefield Heroes [55] from DICE is
+latest graphics technology (and a driving force for the constant           a purely browser based experience which requires downloading
+performance increases and lower prices of GPUs), and it is not             a plugin.
+surprising that there have been commercial efforts to make 3D
+video games available via the browser. However, the historical             3. Remote Rendering
+lack of full cross-browser support for WebGL (only recently
+overcome with the release of Microsoft Internet Explorer 11),                  The concept of remote rendering involves the server-based
+and the natural desire of companies to target the widest possible          generation of data, which is then passed to a client for visualisa-
+user base, has meant that WebGL-based 3D gaming is still in its            tion. Much of the research in this field does not apply directly
+infancy (see also Section 5.3).                                            to web-based 3D graphics, in that it focuses on client-server
+    Unity is a cross-platform game engine featuring advanced               rendering systems where the client is usually a non-web appli-
+3D graphics capabilities [52]. Compared to the other technolo-             cation. However, the increasing use of the web-browser as a
+gies described thus far, Unity is much higher level, aiming to be          3D graphics client (as demonstrated in this paper) means that
+an application for creating video games (and, thus, more than              we consider it appropriate to include a brief survey of remote
+simply a 3D engine for the web). Nevertheless, Unity’s ease of             rendering techniques.
+use in creating a 3D scene and exporting it to a webpage, and                  Commercially, remote rendering of 3D graphics for video
+popularity among the public web (225 million claimed installs              game purposes has been exploited by at least two startup com-
+of the web-player plugin, as of 2013 [53]) merits its inclusion in         panies, Onlive [56] and Gaikai [57], the latter being purchased
+
+                                                                       9
+by Sony in 2012 [58] for $380 million. From a research per-               real-time to multiple users, via either a client-server model,
+spective, it is possible to roughly classify the different approaches     a peer-to-peer model, or a hybrid of the two. The Resource-
+to remote rendering into three areas: Graphics Commands, Pix-             Aware Visualisation Environment (RAVE) [75] was created in
+els, and Primitives or Vectors. A fourth server-based process,            order to demonstrate whether web services were capable of sup-
+that of parsing, segmenting and/or simplifying 3D objects, also           porting collaborative visualisation (not dissimilar to the Games
+falls under the remote rendering definition, but is not included          @Large approach). It uses a Java applet on the client to deter-
+in this section as it is reviewed in detail in section 4 below.           mine the client’s rendering capabilities - less powerful clients
+                                                                          receive a video-feed from a remotely rendered scene, whereas
+3.1. Graphics Commands                                                    more powerful clients receive the polygonal dataset to render it
+    Low-level draw calls to the server GPU are intercepted and            locally. The system was extended to support the X3D format
+passed to the client [59], which then renders and displays the            with ShareX3D [76], which was the first implementation of a
+final image. This technique has been adapted by Glander et al.            collaborative 3D viewer based on HTTP communication. A
+[60] for parallel WebGL visualisation of existing 3D desktop              more comprehensive survey of collaborative visualisation sys-
+applications, using AJAX to synchronise the two rendering ap-             tems, including some applications to the 3D web, is presented
+plications. Furthermore, there are efforts being made to directly         in [77].
+convert C/C++ code (via LLVM bytecode) to Javascript [61].
+                                                                          4. Data Compression & Delivery
+3.2. Pixels
+     The server renders the image and passes it directly to the               For the majority of the techniques for browser-based 3D
+client for display [62] [63] [64]. This basic method of remote            graphics described above, the 3D data are represented by poly-
+rendering can be viewed as a generic data transfer issue, essen-          gon (usually triangle) meshes, composed of vertices and faces.
+tially sampling the remote system graphics buffer and sending             Such data, when describing an object in great detail, can be rel-
+it to the client as a video stream [65]. Several optimisations            atively large in size if unoptimised. For example, a laser scan
+can be made to this technique, such as synchronising a high-              of a large 3D object will result in a file which is hundreds of
+end server render with a low-end client render [66], selectively          megabytes in size. Large file size has serious performance im-
+transmitting pixels [67], or optimising the video encoding to             plications (both in terms of parsing and rendering the data); to
+take advantage of GPU-rendered scenes [68].                               offset/reduce these implications, there has been considerable re-
+                                                                          search effort made into mesh optimisation techniques [78] [79],
+3.3. Primitives or Vectors                                                and mesh segmentation [80]. However, many mesh compres-
+                                                                          sion methods are highly geared towards dealing with specific
+    Feature extraction techniques are used on the server to ob-
+                                                                          type of data, and are not designed to handle arbitrary meshes
+tain vectors to be passed to the client to render, either in 2D
+                                                                          including normal and texture information i.e. meshes for the
+[69] or 3D [70]. The advantage of this method is that it that
+                                                                          web [81].
+client devices which do not have any native 3D capabilities can
+render 3D objects from the passed vector data, as the costly 3D
+                                                                          4.1. Compression & Optimization
+transformations are being executed by the server.
+                                                                              Progressive Meshes (PM), proposed originally in 1996 by
+3.4. Combined Techniques                                                  Hoppe [82], allow continuous, progressive refinement of a polyg-
+                                                                          onal mesh during data transmission over a network. PM works
+     Finally there have been efforts which combine several of
+                                                                          by initially transferring a coarse mesh from server to client, then
+these techniques, such as the parallel client-server image-based
+                                                                          progressively refining the mesh using a stream of vertex-split
+rendering by Yoon [71], or the Games@Large platform [72].
+                                                                          operations, until the high resolution mesh has been recreated.
+The latter captures the rendering instructions of an application
+                                                                          Limper et al. [81] summarise reported decode times and com-
+at run-time, and sends changes in that scene to the remote client,
+                                                                          pression performance for the original PM technique and several
+which is rendering the scene locally. If the client is not capable
+                                                                          of its subsequent refinements. They found that Hoppe’s 1998
+of rendering the scene locally, a video stream is sent instead.
+                                                                          implementation of Progressive Meshes [83] still provides the
+     As scientific datasets become ever larger, the challenge of
+                                                                          fastest decompression time, despite several attempts to improve
+viewing and interacting with them locally has increased, and
+                                                                          upon it, and not taking into account the improvements in hard-
+there has been a move to storing the data on central parallel
+                                                                          ware capabilities since 1998. On the other hand, the compres-
+clusters, and interacting with data via remote clients. ParaView
+                                                                          sion factor (i.e. how many bits each vertex occupies) is an order
+[73] is a multi platform, open source data analysis and visual-
+                                                                          of magnitude less for more modern techniques - for example,
+isation application, built on top of VTK and extended to sup-
+                                                                          that of Maglo et al. [84]. The conclusion therefore is that mesh
+port parallel cluster rendering. Recently it has been extended
+                                                                          compression research over the last decade has focused more on
+to enable 3D visualisation via a web-based context, called Par-
+                                                                          improving pure compression (rate-distortion) performance, and
+aViewWeb [74], which allows a user to access a ParaView ren-
+                                                                          less on its speed. With this in mind, and combining the con-
+dering cluster from within a web page.
+                                                                          clusion of both Limper et al. [81] and Lavoué et al. [85], it is
+     One concrete application of remote rendering is in collab-
+                                                                          possible to draw a series of requirements for mesh compression
+orative visualisation, as the same scene must be rendered in
+                                                                     10
+for web-based 3D rendering, separate from the requirements of             compression has been carried out by King and Rossignac [89],
+more general mesh compression:                                            who use a shape-complexity measure to optimise distortion for
+                                                                          a given bit rate; and by Payan and Antonini [90] who use a
+Rate distortion versus decompression speed Mesh compres-                  wavelet based method; although neither of these techniques are
+     sion techniques for web-based 3D graphics present a spe-             adapted for progressive transmission [91].
+     cial case where both decompression speed and download                     While several methods for encoding colour information ex-
+     speed contribute to the overall performance of a given               ist (for example, Ahn et al. [92], who encode indices of each
+     technique. An algorithm which achieves very high com-                vertex in a colour mapping table; or Yoon et al. [93] who intro-
+     pression rates (for example, that of Valette et al [86])             duce a predictive method based on geometry information), only
+     may not be suitable for a web-based system, in that the              in recent years have efforts been made for progressive meshes.
+     decompression rates are comparatively slow [81]. This                Cirio et al [94] propose a technique that allows any property
+     problem is particularly relevant currently, where despite            or set of properties (such as vertex colours or normals) to drive
+     increasing network bandwidth (allowing rapid data trans-             a compression algorithm based on kd-trees. Lee et al. [91]
+     fer), there has been a parallel increase in low-power mo-            propose a progressive algorithm which is based on the valence-
+     bile devices which may struggle to execute complex de-               driven progressive connectivity encoding from Alliez and Des-
+     compression algorithms.                                              brun [95], and this technique is further optimised for the web
+Browser-based decompression On the other hand, plugin-free                by Lavou et al. [85]. A mesh is encoded by progressive steps
+     browser-based 3D may necessitate decompression using                 of decimation and cleansing, and colour components are quan-
+     Javascript. For all the improvement in Javascript exe-               tised adaptively according to level of details. Lavou et al [85]
+     cution time in recent years, it is still slower than native          also present several implementational details specific to decom-
+     code [87]. Given that much of the literature on progres-             pression using Javascript, such as the use of Array Buffers and
+     sive meshes reports results with native code, and despite            the minimisation of garbage collection, as it was found that the
+     possibilities to speed up decompression using the GPU                latter process used blocked performance in unacceptable ways.
+     techniques, the requirement to implement the code with               Gobbetti et al. [96] convert input meshes to equally sized quad
+     Javascript is not to be underestimated.                              patches, each one storing vertex, colour and normal informa-
+                                                                          tion, and which are then stored in an image format. This allows
+Multiple scene objects A typical 3D scene for web-based ren-              to use the atlas images for multi-resolution, and fast rendering
+     dering may feature several objects of varying topological            using simple mip-map operations. Limper et al. [97] present a
+     complexity and size. It may also feature modification or             progressive encoding scheme for general triangle soups, using
+     animation of these objects. Classic Progressive Meshes               a hierarchy of quantisation to reorder the original primitive data
+     algorithms work well with regularly-sampled, closed sur-             into nested levels of detail.
+     faces, and as a result may not function correctly or effi-                Mesh compression faces further problems when the cho-
+     ciently in many use-cases for the 3D web - or at the very            sen rendering framework relies on declarative markup, such
+     least, some form of pre-processing step is required to split         as X3D/X3DOM or XML3D, as one of advantages of those
+     and classify the meshes before compression.                          frameworks (the ability to describe a scene with clear, human-
+Various data sources for a single object Basic PM does not                readable code) causes difficulties when loading scenes with very
+     take into account vertex properties other than position.             large meshes - parsing text files of hundreds of megabytes is ef-
+     While vertex position is naturally the most important com-           fectively impossible for web browsers (although applying HTTP’s
+     ponent of any mesh(as it describes the shape), a mesh                GZIP compression can greatly reduce file sizes). Behr et al.
+     object may store several other components which are im-              [98] counter this by taking advantage of Javascript Typed Ar-
+     portant for display, such as normal vectors, texture coor-           rays to introduce a BinaryGeometry component to X3DOM, al-
+     dinates and colour values.                                           lowing the scene to be described in a declarative manner, but the
+                                                                          content geometry to be passed to the client as raw binary data.
+     In recent, years, however, there have been several research          Once the data has been downloaded, it can be passed immedi-
+efforts to address these four points and create a viable method           ately to the GPU memory, which effectively eliminates the rel-
+for mesh compression more suitable to web-based contexts. Tian            atively slow Javascript parsing of the data. Transmission speed
+and AlRegib [88] present a method to compress texture resolu-             of binary data can be reduced by compressing it, for example
+tion in parallel with mesh vertex resolution. The authors note            using the OpenCTM format [99], which is designed specifically
+that geometric inaccuracies in the compressed mesh may be ei-             to compress mesh data. The downside of using compression for
+ther enhanced or dissimulated by errors in the compressed tex-            web-based methods is, as always, the associated decompression
+ture; however, refining first the mesh and then the texture is not        cost in the Javascript layer.
+efficient, as either a full resolution mesh with a coarse texture              In 2011, Google launched the Google Body project [100],
+or a full resolution texture with a coarse mesh will not generally        an interactive browser-based visualisation of the human body.
+provide good visualisation for the textured model. Thus, they             The development of this work also resulted in the creation of
+propose a progressive solution which attempt to refine both the           WebGL-Loader [101], a minimalistic Javascript library for com-
+mesh and the texture in the same bit-stream, by proposing a bit-          pact 3D mesh transmission. It takes full advantage of in-built
+allocation framework. More research on bit-allocation for mesh            browser features, such as support for GZIP and the UTF-8 file
+                                                                     11
+format, to attempt to enable fast decompression of mesh data in                Nevertheless, Mouton et al [77] argue that web applications
+Javascript, using predictive techniques. Limper et al. [81] con-            have major benefits with respect to desktop applications, for
+ducted a case-study to compare WebGL loader with OpenCTM                    two main reasons:
+[99], X3DOM’s Binary Geometry [98] and standard X3D. Their
+results demonstrated the balance between file-transmission size                • Web browsers are available for all major platforms, in-
+and decompression rate; at low bandwidths, techniques which                      cluding mobile devices. This means that cross-platform
+minimised file size (such as CTM compression) provided bet-                      compatibility is almost guaranteed, and there is no need
+ter results, while at high bandwidths, the speed of transfer of                  to spend resources in developing for different platforms.
+Binary Geometry to the GPU ensured best performance. While
+                                                                               • Application deployment is much more straightforward,
+this initial result is not surprising, in the mobile context the re-
+                                                                                 as a web application typically does not require the user to
+sult was different: the decreased power of the hardware meant
+                                                                                 install or update any software or libraries (other than the
+that any technique which relied on heavy decompression suf-
+                                                                                 web browser).
+fered in comparison, even at high bandwidths.
+                                                                                These advantages, combined with a greater understanding
+4.2. Selective Transmission of Geometry
+                                                                            of how users interact with web-based 3D content [107], have
+     In 1996, Schmalstieg and Gervautz [102] proposed an early              spurred application development in the field. In this section we
+approach to optimising the transmission of geometry for dis-                present an overview of the different application fields for 3D
+tributed environments, arguing that the network transmission                web graphics, which we have grouped into different areas: data
+rate is the bottleneck in such a system (perhaps as true in the             visualisation and medical applications, digital content creation,
+current day as it was in 1996). The authors proposed a sys-                 video games, e-learning, and engineering, architecture and cul-
+tem of demand-driven geometry transmission as a method for                  tural heritage.
+efficient transmission of geometric models, which was later ex-                 The overview does attempt to be exhaustive, but rather to
+panded by Hesina [103]. A server stores data for all the objects            provide the reader with an understanding of the breadth and
+(and their positions) for a given scene. Client viewer applica-             depth of applications that have been, and are currently being,
+tions can make server requests only for the objects that are in             developed using 3D web technology.
+the client area of interest. Thus, if geometry can be delivered
+from the server to the client ”just in time”, there is no need to           5.1. Data Visualisation and Medical Applications
+transfer the entire scene geometry to the client.
+     While not directly related to web-based 3D graphics, there                 3D graphics have long been used as a technique for data vi-
+has been considerable research effort made into selective trans-            sualisation [109], and the introduction of a 3D context to the
+mission of the 3D data for online virtual worlds and Massive                web is now facilitating access to the field. A remote render-
+Multiplayer Online (MMO) games, such as World of Warcraft                   ing example for visualizing scientific information already men-
+[104] and Eve Online [105]. Such systems feature dedicated                  tioned is ParaViewWeb [74]. Yet as Marion and Jomier point
+client-server systems which also employ Peer-to-Peer technol-               out [110], a downside of many of these frameworks (from a web
+ogy for the transfer of 3D assets. For further information, we              point-of-view) is that many require a customised client setup,
+direct the interested ready to a recent comprehensive survey pa-            either with plugins or external applications. Thus, [110] pro-
+per by Yahyavi [106].                                                       pose a system which uses Three.JS and WebSockets to counter
+                                                                            these issues. The WebSockets specification [111] introduces
+                                                                            a full-duplex socket connection created in Javascript, designed
+5. Applications                                                             to allow real-time synchronisation between multiple browsers.
+    Despite the clear growth of 3D graphics applications across             Marion et al extend their work in [112] and compare a We-
+multiple platforms in the last two decades, the initial approaches          bGL/WebSocket implementation of a molecular visualisation
+to bring this growth to the internet have either stalled or did             with an identical ParaViewWeb scene; their results suggesting
+not gain traction [9]. In an attempt to research the reasons be-            better performance of the WebGL version. Other approaches
+hind this, Jankowski [107] surveyed the different tasks and ac-             to visualisation of molecular structures are presented by Zollo
+tions carried out by users when viewing web pages, and also                 et al. [113], who use X3DOM to enable users to interact in
+when interacting with 3D content. The result is a taxonomy                  real-time with molecular models built in X3D, and molecular
+of 3D web use, which demonstrates that there are very few                   visualisation in WebGL developed by Callieri et al [114] (see
+actions which are shared between what might be considered                   Figure 6).
+’Web Tasks’ (e.g ’Click on Hyperlink’, ’Find on Page’) and                      Limberger et al [115] use WebGL to visualise source code
+’3D tasks’ (’Spatial Navigation’, ’Object Selection’). This lack            repositories using software maps (see Figure 7), which link 3D
+of shared tasks leads to the conclusion that switching between              tree-maps, software system structure and performance indica-
+textual (hypertext) and spatial (3D graphics) spaces can be po-             tors, used in software engineering processes. Software map
+tentially disorientating to the user, and any interface should take         visualisations typically feature large number of vertices, each
+this separation into account. This research eventually resulted             of which requires linking to several attributes in order to pre-
+in [108], which presents a hybrid 2D/3D interface, designed to              cisely control the visualisation. The authors thus propose a cus-
+avoid confusing the user.                                                   tomised structure for vertex arrays that allows rapid drawing of
+
+                                                                       12
+                                                                                      velopment. Moreover, the user is given some basic control such
+                                                                                      as pause, rewind, and fast forward.
+                                                                                          A new mobile learning tool [120] provides users with an in-
+                                                                                      teractive 3D visualization of medical imaging to teach anatomy
+                                                                                      and manual therapy. The authors implement a new volume ren-
+                                                                                      dering method specialized for mobile devices that defines the
+                                                                                      color of each pixel through a ray casting method. Jacinto et
+                                                                                      al [121] bring the medical application field into the modern
+                                                                                      HTML5/WebGL paradigm with an application that allows re-
+                                                                                      altime visualisation and segmentation of medical images, using
+                                                                                      a client-server approach. Data is processed using VTK [122]
+                                                                                      on the server side, with segmentation of medical images being
+                                                                                      converted into 3D surfaces and sent to the client to be rendered
+                                                                                      using Three.JS. Mani and Li [123] present a surgical training
+                                                                                      system built with X3D and WebGL, allowing real-time updates
+Figure 6: Superposition of molecular structure and underlying atomic structure        from trainees and experienced surgeons. Congote et al. [124]
+in WebGL (reproduced with permission from [114])                                      use WebGL for volume rendering of scientific data, using a ray-
+                                                                                      casting method to visualise both medical data and meteorolog-
+                                                                                      ical data.
+
+                                                                                      5.2. Digital Content Creation
+                                                                                          A clear application of web-based 3D is the creation, editing,
+                                                                                      and revision of 3D assets which are destined for other applica-
+                                                                                      tions or productions. There have been several academic efforts
+                                                                                      at proposing and creating solutions for digital content creation
+                                                                                      [125] [126], annotation [127] [128], and scene and programme
+                                                                                      creation [37] [129]; yet with the continual success of digital ani-
+                                                                                      mation and video game production, it is perhaps no surprise that
+                                                                                      the commercial sector is a the forefront for using the 3D web in
+                                                                                      a production environment. The digital production industry has
+                                                                                      now become global involving many companies working on dif-
+                                                                                      ferent aspects of a production from any place around the globe.
+                                                                                      Modern digital production deals with 3D assets on a daily basis,
+Figure 7: WebGL used to visualise software maps from Web-based source code            and there are now 3D applications on the web which are being
+repositories (reproduced with permission from [115])                                  used to ease the production pipeline of these digital media.
+                                                                                          One of the most important tasks for such production is cre-
+                                                                                      ating tools that are able to properly access 3D assets, review
+geometry and avoids issues arising from WebGL current 16-bit
+                                                                                      them and properly annotate any change. Such tools may be
+limitation for its vertex index buffers.
+                                                                                      applied to varying facets of the authoring process, such as mod-
+    Medical science and education have also benefitted by in-
+                                                                                      eling, shading or even animation and lighting/rendering. The
+creasing accessibility to 3D software, through the 3D visualiza-
+                                                                                      success of such tools is encapsulated by Tweak Software’s RV
+tion of medical data. According to [116], visualization tech-
+                                                                                      [130]. RV is a desktop offline tool that allows users to review
+niques in medicine fall in two main categories: surface extrac-
+                                                                                      and annotate still frames, image sequences and 3D contents us-
+tion and volume rendering. The result of the surface represen-
+                                                                                      ing OpenGL technology. As an industry tool it includes a fea-
+tations, in both techniques, can be stored in a 3D format such
+                                                                                      ture that allows users to share the RV workspace through the
+as X3D and then rendered in a web real-time fashion in by tak-
+                                                                                      internet in order to collaborate on the same data and watch the
+ing advantages of 3D web recent developments. Warrick and
+                                                                                      results of any change in real time even if in different places in
+Funnell [117] are the pioneers of using network technologies in
+                                                                                      the world.
+medical education, by rendering the surface of the anatomical
+                                                                                          With the increased maturity of web-based technology for
+representation stored in a VRML file. In [118] animation ca-
+                                                                                      creating advanced user interfaces, there are several web appli-
+pabilities in the form of rotational and slicing movements were
+                                                                                      cations attempting to replicate RV’s success in a web-based en-
+added to the learning modules. In addition, the authors tried
+                                                                                      vironment. Sketchfab [131] is a web tool and community, de-
+to address issues under low bandwidth through using lattices as
+                                                                                      veloped with WebGL, for 3D modeling and texturing, and is
+an extension for X3D, representing high quality surface shape
+                                                                                      designed to allow 3D artists to share their creations seamlessly
+with minimal data. [119] propose an approach for modelling of
+                                                                                      via the web. Commonly, 3D models are showcased through pre-
+developmental anatomy and pathology that provides users with
+                                                                                      rendered turnaround videos or still images but with tools like
+a UI for a narrative showing different stages of anatomical de-
+
+                                                                                 13
+                                                                            The tool can also manage lights in real time for rapid develop-
+                                                                            ment of the scenes and includes a state-of-the-art photorealis-
+                                                                            tic rendering engine. The latter uses all the information pro-
+                                                                            vided by the users in the scene and makes all the computation
+                                                                            on servers provided by Lagoa itself. In this way, the user is not
+                                                                            bounded by computational constraints of his/her computer and
+                                                                            can render rapidly even on lower end hardware. The rendering
+                                                                            is performed using progressive refinement global illumination
+                                                                            algorithms that shows the user a gradually enhanced version
+                                                                            of the entire scene (opposite to standard renderers which show
+                                                                            image tiles only when completed). This permits creative users
+                                                                            (e.g. a lighting artist, or the director of photography) to start
+      Figure 8: Screenshot of the Sketchfab 3D web application [131]        commenting on the work even before rendering is finished.
+                                                                                 3DTin [135] is a tool for rapid creation of simple 3D geome-
+                                                                            tries, which was recently purchased by Lagoa. Unfortunately,
+the Sketchfab it is possible to share the results in a 3D web con-
+                                                                            the resulting mesh is very basic and too simple to be used in
+text, so that the viewer can interact with the scene, rotating the
+                                                                            general production, but the tool demonstrates that there is an
+camera and even interacting with the content. Additional fea-
+                                                                            effort to work in this direction.
+tures such as the ability to write comments and the possibility
+                                                                                 Autodesk, the leader in 3D authoring software development,
+to view the model in three different combined ways (wireframe,
+                                                                            has also shown interest in developing 3D applications for the
+shaded and textured) make it suitable for use as a review tool
+                                                                            web and is working on different solutions. 123Design [136] is
+for media production companies. It could be enhanced with a
+                                                                            a modelling tool similar to 3DTin but, more than just creating
+sketching tool, allowing reviewers to rapidly add corrections or
+                                                                            simple geometries out of primitives, it also allows users to im-
+notes, and to relate a comment to a particular part of the geom-
+                                                                            port their own models and modify them. It requires a plugin to
+etry.
+                                                                            be installed and does not use WebGL. Despite Autodesk back-
+    Clara.io [132] is an online tool (currently in Beta) for the
+                                                                            ing, 123Design does not yet achieve the quality required for
+creation and sharing of 3D content. It features a suite of mod-
+                                                                            general industry use. However, Autodesk has announced a plat-
+elling tools for mesh creation, and also allows key-frame ani-
+                                                                            form for hosting servers running their applications, allowing
+mation and annotation of meshes for sharing and collaborative
+                                                                            users to connect and interact with the applications through an
+creation.
+                                                                            internet connection. This solution would unleash all the power
+                                                                            of current high-end Autodesk products, together with the possi-
+                                                                            bilities of working on the cloud. Although this solution would
+                                                                            not involve direct rendering of 3D graphics on the web, it evi-
+                                                                            dence of the interest in building 3D applications for the indus-
+                                                                            try, running through the web and on the cloud.
+
+                                                                            5.3. Games
+                                                                                It is beyond doubt that video games have contributed to the
+                                                                            very cutting edge of computer graphics since their invention,
+                                                                            with several annual conferences (such as the Games Develop-
+                                                                            ers Conference) bringing together companies, researchers and
+                                                                            individuals in the field. Videogames are also indelibly associ-
+       Figure 9: Screenshot of the Lagoa 3D web application [133]           ated with the web thanks to the ubiquity of Adobe Flash, which
+                                                                            has provided a platform for many 2D-based games. However,
+    Lagoa [133] is a ”web based platform for photoreal 3D vi-               the contribution of the games field to the 3D web is less ob-
+sualization and rendering” developed using WebGL. It offers                 vious, as many popular online games, such as World of War-
+the possibility to work on 3D scenes through the web browser                craft [104] or Eve Online [105] use custom, platform specific
+in a collaborative way by creating workgroups and simultane-                clients. The rise of the free-to-play model has seen some efforts
+ously interacting with the contents and commenting them with                to produce 3D games within the browser [55] [137]; there have
+other members. It enables users to upload assets directly from              been some been open-source efforts to port older 3D games to
+their computer or access them from the cloud asset manager                  WebGL [138]; and Epic Games have created a demo of their
+that Lagoa offers. This asset manager is also based on work-                Unreal Engine working with WebGL [54]. Perhaps the greatest
+groups and allows users to see only the scenes they are permit-             breakthrough in the enabling of 3D gaming via the web so far
+ted to work on, partially mimicking the industry standard tool              has been by Unity [52] [53], discussed in detail above. With
+for cloud asset management, Shotgun [134]. All the accessible               the rise of web-enabled 3D digital content creation tools (men-
+assets can be placed, moved around and previewed in 3D space.               tioned above), it is perhaps only a matter of time before more
+
+                                                                       14
+commercial attention is paid to 3D games running natively in
+the browser.
+
+5.4. E-learning
+    It is acknowledged that students only fully absorb the learn-
+ing material once they have applied it in practice; yet learning
+through Virtual Reality (VR) provides a simulated learning ex-
+perience [139] which attempts to enhance learning by joining
+theory and practice. The application of 3D virtual platforms
+on the web has become an increasingly popular research topic
+since Wickens analyzed the advantages of learning in VR en-
+vironment [140]. He stated that VR can be defined based on
+five main concepts: 3D perspective, real-time rendering, closed
+loop interaction, inside-out perspective, and enhanced sensory
+feedback. At the same time, [141] assessed the merits and faults
+of VR’s conceptual and technical future. Due to the special soft-         Figure 10: Screenshot of the Ruthwell Cross and associated narrative (repro-
+                                                                          duced with permission from [153]
+ware and hardware requirements of VR systems, the develop-
+ment of these types of systems have a high cost associated with
+them [142], while in the past few years, we have witnessed the            graphics into their platform allowed a complete and meaning-
+creation and proliferation of 3D virtual frameworks through the           ful interaction with the e-learning services, benefitting the user
+web that can be used by lower end computers.                              experience.
+    Initially, the growth of 3D multi-user virtual worlds (MUVE)
+faced the challenge of motivating learners to utilize this kind of        5.5. Geography, Architecture and Virtual Heritage
+3D capability to learn courses with greater precision. In light               Geography and architecture are natural application fields of
+of recent developments of web capabilities (as surveyed in this           3D technology, and this is reflected in related research in the
+paper), this particular type of e-learning has received a great           web context. Over et al. [154] provide a summary of efforts
+deal of attention as a compelling means of resolving traditional          made to use OpenStreetMap (OSM) data as a basis for creating
+teaching issues. One of the first attempts [143] in this area was         3D city models, which are then viewed in a web-based context.
+launched by Linden Labs with Second Life [144], originally                Many of the developments in this field [155][156][157] create
+a 3D virtual world presented as an educational framework for              and use 3D data stored in the CityGML format [158] an XML-
+simulating social interactions. The programming language of               based open format and information model for the representation
+Second Life was Linden Scripting Language. However, this ap-              of urban objects. 3DNSITE [159] streams large hybrid data
+plication suffers from two main drawbacks: poor performance               (georeferenced point clouds and photographs) to client hard-
+due to network latency and the prohibition of sharing the con-            ware, with the goal of assisting crisis managers and first respon-
+tent outside of the virtual environment. Later, OpenSim [145]             ders to familiarise themselves with an environment either dur-
+expanded on this concept, improving the quality of the learning           ing an emergency or for training purposes. Lamberti [160] use
+environment and making it free and open rather than propri-               web-based 3D to visualise real-world LED-based street light-
+etary. In addition, it allowed user-created content to be exported        ing. Geographical Information Systems (GIS) (such as Google
+in a portable format called OAR and shared within the commu-              Earth) are increasingly being augmented with 3D data [161],
+nity. The advantages and disadvantages of these two systems               and there have been several efforts to aid in the streaming and
+are specifically discussed in [146] [143]. Second Life has itself         visualisation of such data [162] [163].
+become a platform for research, with several authors using it                 The rise of Virtual Heritage (VH) represents the equiva-
+as a base for e-learning research [147] [148]; and now it has a           lent rise in the ability of technology to digitise real 3D ob-
+web-based client, bringing it inline with the current trends for          jects (in this case, of cultural value), and display them in a vir-
+browser-based 3D.                                                         tual environment. Thus VH has been an important application
+    [149] analysed the application of Second Life as a 3D plat-           of internet based 3D graphics and has been since the days of
+form on the web that offers potential as a tourism educational            VRML [164] [165] [166]. Efforts at using modern, browser
+tool by providing interactive experiences for students. In this           based declarative 3D techniques in VH are presented in [167].
+study, Self-Determination Theory (SDT) [150] [151] is applied             Manferdini and Remondino [128] outline a method to semanti-
+as a metric to recognise significant factors which influence stu-         cally segment 3D models in order to facilitate annotation, and
+dent learning motivations in 3D world on the web. The results             demonstrate the new possibilities with architectural and archae-
+revealed that a positive emotional state had a positive and sig-          ological heritage structures. Callieri et al [153] demonstrate
+nificant impact on students’ intrinsic motivation when learning           how 3D visualisation for VH can be combined in a narrative
+in a 3D virtual world.                                                    way with standard HTML to create narrative experiences and
+    Di Cerbo et al [152] make specific efforts to integrate a 3D          provide greater understanding of the artwork or cultural object
+web interface into an avatar-based e-learning platform. They              in question (see Figure 10). Other modern efforts for web-based
+conclude that the addition of high-performance, plugin-free 3D
+                                                                     15
+virtual heritage have involved adaptation of systems specifically                 Keyword             GitHub         ACM Digital           IEEEXplore
+for mobile contexts [168] [169].                                                                      stars          Library
+    Finally, Autodesk has recently worked in conjunction with                X3DOM (X3D)              143 (n/a)      71 (547)              9 (127)
+the Smithsonian Foundation to deliver the Smithsonian X 3D                     Three.JS               13616          14                    1
+[170], a WebGL virtual heritage tool for the online visualization
+                                                                            Table 2: Popularity of X3D and Three.JS in different online platforms. Github
+of 3D scans. It has many features common to 3D tools, such
+                                                                            is an online source code repository used for collaboratively creating software
+as the choice between wireframe or shaded view, textures, and               projects, ’stars’ are can be given by users to a particular project (maximum one
+advanced real time materials, but it also provides the possibility          star per project per registered user). The ACM and IEEE digital libraries are
+to alter the lighting of the scene in a very direct and easy way            databases of academic papers published in journals and affiliated conferences
+                                                                            for these two institutions.
+by defining light sources around the surface of a virtual dome.
+
+
+6. Discussion                                                               iPad), despite clear evidence that the functionality is present (in
+                                                                            both hardware and software) [171].
+    In 2010, Ortiz [26] stated that there were several major hur-                Efforts towards a standard for web-based 3D graphics have
+dles which needed to be overcome before ”the 3D web can truly               achieved mixed results. Table 2 summarises some very basic
+flower”:                                                                    statistics on the relative popularity of X3D/X3DOM (proposed
+                                                                            standard) and Three.JS (non-standard library built on the We-
+    • The requirement for web browsers to use plugins in or-                bGL). Three comparison measures are used: (a) the number of
+      der to view and interact with 3D content; not only be-                ’stars’ (recommendations by users) the projects have received
+      cause plugin-installation is a barrier to installation, but           on the popular GitHub online repository; and (b) and (c) the
+      because plugins are prone to cause browser crashes and                number of returned hits for published papers when searching
+      other problems.                                                       on two major academic portals, the ACM Digital Library and
+                                                                            the IEEEXplore Digital Library respectively. While not rig-
+    • The reliance on plugins also damages cross-platform com-              orous in terms of assessment, they show a clear difference in
+      patibility and contributes to the inability of 3D to work             popularity between the academic community on one hand and
+      on all browsers and operating systems.                                the wider development community on the other. The X3D stan-
+    • The lack of standardisation may lead to the web becom-                dard, and its younger, browser-integrated cousin, X3DOM, are
+      ing a tangled mess of incompatible formats and technolo-              featured in dozens of academic articles, whereas Three.JS is
+      gies, forcing the developers to create multiple versions of           barely mentioned in any. The Github stars show that Three.JS
+      the same technology.                                                  is clearly much more popular among developers than X3DOM.
+                                                                            This presents a quandary for the standards community, as while
+    • The long authoring times for 3D content on the web are                there has clearly been considerable research effort put into cre-
+      a barrier to entry, both for web developers and end users.            ating a standard for declarative 3D, most developer community
+                                                                            attention has been paid to an open source library which has
+    • Proponents are not designing online 3D technology for                 grown in a less formal way (not forgetting that both Three.JS
+      the average user (which, it is claimed, led to the per-               and X3DOM depend heavily on WebGL, itself a standard of
+      ceived failure of VRML)                                               the Khronos group). The appearance of XML3D muddies the
+    • The rise in use of low-power devices means that running               water yet further for 3D web standards - while it shares many
+      3D content on the client side is increasingly difficult               of the overall goals of the declarative 3D paradigm favoured by
+                                                                            X3D/X3DOM, its existence somewhat undermines the latter’s
+    Referring to the work surveyed in this paper, we can now                goal to become a web standard. Nevertheless, the community
+attempt to conclude whether any progress has been made on                   is making efforts to tread carefully through this minefield, with
+any of these points, and whether any new issues have arisen.                Jankowski et al [5] proposing a common PolyFill layer for all
+    Firstly, it is clear that the need to use plugins for web-based         declarative 3D approaches, and the development of interoper-
+3D content is now diminishing. The release of WebGL, now                    ability tools such as those by Berthelot et al. [172]. Through
+supported by all major browsers, means that developers can ac-              this open dialogue and collaboration, then, there is hope that
+cess graphics hardware acceleration via the browser, without                Ortiz’ [26] ”tangled mess of standards” can yet be avoided.
+requiring the user to install a third party plugin. This flexibility             Our survey on Digital Content Creation for the 3D web (see
+is reflected in the number of libraries which abstract and add              Section 5.2) has demonstrated that there is now real effort into
+functionality to the core WebGL specification, chief of which               the task of democratising the creation of 3D content. Both from
+is Three.JS. The removal of plugins means that cross-platform               academic field (see Figure 11) and the commercial fields, there
+compatibility is also greatly enhanced. The only current re-                are now several tools and interfaces that are bringing the power
+maining stumbling block to the general acceptance of WebGL is               of 3D content and scene creation within a web context, par-
+the continuing reluctance of Apple to enable official support on            tially removing the need for installation of large and/or expen-
+its Mobile Safari browser (the default browser on all the com-              sive desktop software (though we have yet to see the release of
+panies internet capable mobile devices, such as the iPhone and              a fully-featured 3D modelling tool).
+
+                                                                       16
+                                                                                        [9] Behr J, Eschler P, Jung Y, Zöllner M. X3DOM: a DOM-based
+                                                                                            HTML5/X3D integration model. Proceedings of the 14th International
+                                                                                            Conference on 3D Web Technology 2009;:127–36.
+                                                                                       [10] W3C .              Namespaces in XML.               1998.         URL:
+                                                                                            http://www.w3.org/TR/REC-xml-names/.
+                                                                                       [11] Behr J, Jung Y, Keil J, Drevensek T. A scalable architecture for
+                                                                                            the HTML5/X3D integration model X3DOM. In: Proceedings of
+                                                                                            the 15th International Conference on 3D Web Technology. ISBN
+                                                                                            9781450302098; 2010, p. 185–94.
+                                                                                       [12] Microsoft       .            WebGL.             2013.             URL:
+                                                                                            http://msdn.microsoft.com/en-us/library/ie/
+                                                                                            bg182648%2528v=vs.85%2529.aspx.
+                                                                                       [13] Schwenk K, Jung Y, Behr J, Fellner DW. A modern declarative surface
+                                                                                            shader for X3D. In: Proceedings of the 15th International Conference
+                                                                                            on Web 3D Technology - Web3D ’10. 2010, p. 7.
+                                                                                       [14] Schwenk K, Jung Y, Voß G, Sturm T, Behr J. CommonSurfaceShader
+                                                                                            revisited: improvements and experiences. In: Proceedings of the 17th
+Figure 11: WebGLStudio is an example of how web 3D tools are being used
+                                                                                            International Conference on 3D Web Technology. ISBN 1450314325;
+to democratise the process of 3D scene creation (reproduced with permission
+                                                                                            2012, p. 93–6.
+from [37])
+                                                                                       [15] Behr J, Jung Y, Drevensek T, Aderhold A. Dynamic and interactive as-
+                                                                                            pects of X3DOM. In: Proceedings of the 16th International Conference
+                                                                                            on 3D Web Technology - Web3D ’11. 2011, p. 81.
+    It is clear that the rise of low-power devices, such as mobiles                    [16] Sons K, Klein F, Rubinstein D, Byelozyorov S, Slusallek P. XML3D.
+phones and tablets, is not presenting a large barrier to adoption                           In: Proceedings of the 15th International Conference on Web 3D Tech-
+of the 3D web. Modern mobile devices can execute 3D content                                 nology - Web3D ’10. 2010, p. 175.
+                                                                                       [17] Klein F, Sons K, Rubinstein D, Slusallek P.               XML3D and
+in the browser, and Section 3 references several efforts made to                            Xflow: Combining Declarative 3D for the Web with Generic Data
+offset the downsides of a mobile context, particularly regarding                            Flows. IEEE Computer Graphics and Applications 2013;33(5):38–47.
+processing power and bandwidth consumption.                                                 doi:10.1109/MCG.2013.67.
+    Our general conclusion from this survey is that the world of                       [18] W3C .              CSS 3D Transforms.               2012.         URL:
+                                                                                            http://www.w3.org/TR/css3-transforms/.
+web-based 3D graphics is vibrant and exciting, both in the aca-                        [19] W3C .                CSS Transitions.             2009.           URL:
+demic and wider developer communities. Each passing year                                    http://www.w3.org/TR/css3-transitions/.
+brings further developments which are shared online, in the                            [20] Arnaud R, Barnes M. COLLADA: sailing the gulf of 3D digi-
+general academic press and conferences, and in specific gath-                               tal content creation. CRC Press; 2006. ISBN 1568812876. URL:
+                                                                                            http://www.lavoisier.fr/livre/notice.asp?ouvrage=1828050.
+erings such as the International Conference on 3D Web Tech-                            [21] Khronos . glTF. 2013.
+nology, which in 2013 was staged for the 18th time.                                    [22] Parisi T. WebGL: Up and Running. O’Reilly Media; 2012. ISBN
+                                                                                            144932357X.
+                                                                                       [23] Evans A, Agenjo J, Abadia J, Balaguer M, Romeo M, Pacheco D, et al.
+Acknowledgements                                                                            Combining educational MMO games with real sporting events. 2011.
+                                                                                       [24] Tautenhahn L.               SVG-VML-3D.            2002.          URL:
+   The authors would like to acknowledge the support of the                                 http://www.lutanho.net/svgvml3d/.
+                                                                                       [25] Google . O3D. 2008. URL: https://code.google.com/p/o3d/.
+IMPART Project, funded by the ICT - 7th Framework Program                              [26] Ortiz Jr. S. Is 3D Finally Ready for the Web? Computer 2010;43(1):14–
+from the European Commission (http://impart.upf.edu).                                       6.
+                                                                                       [27] Sánchez JR, Oyarzun D, Dı́az R. Study of 3D web technologies for
+                                                                                            industrial applications. In: Proceedings of the 17th International Con-
+References                                                                                  ference on 3D Web Technology - Web3D ’12. 2012, p. 184.
+                                                                                       [28] C3DL . Canvas 3D JS. 2008. URL: http://www.c3dl.org/.
+  [1] Schatz BR, Hardin JB. NCSA Mosaic and the World Wide Web:                        [29] Leung C, Salga A, Smith A. Canvas 3D JS library. In: Proceedings of
+      Global Hypermedia Protocols for the Internet. Science (New York, NY)                  the 2008 Conference on Future Play Research, Play, Share - Future Play
+      1994;265(5174):895–901.                                                               ’08. ISBN 9781605582184; 2008, p. 274.
+  [2] Curtis H. Flash Web Design: The Art of Motion Graphics. New Riders               [30] Johansson T.       Taking the canvas to another dimension.        2008.
+      Publishing; 2000. ISBN 0735708967.                                                    URL:             http://my.opera.com/timjoh/blog/2007/11/13/
+  [3] Nielsen J. Designing Web Usability. New Riders; 1999. ISBN                            taking-the-canvas-to-another-dimension.
+      156205810X.                                                                      [31] Khronos .             WebGL Specification.           2011.        URL:
+  [4] W3C .              HTML5 Specification.              2009.         URL:               http://www.khronos.org/registry/webgl/specs/latest/1.0/.
+      http://www.w3.org/TR/html5/.                                                     [32] Khronos .          WebGL Demo Repository.             2013.       URL:
+  [5] Jankowski J, Ressler S, Jung Y, Behr J, Slusallek P. Declarative Integra-             http://www.khronos.org/webgl/wiki/Demo Repository.
+      tion of Interactive 3D Graphics into the World-Wide Web: Principles,             [33] Cantor D, Jones B. WebGL Beginner’s Guide. Packt Publishing; 2012.
+      Current Approaches, and Research Agenda. In: Proceedings 18th In-                     ISBN 184969172X.
+      ternational Conference on 3D Web Technology (Web3D’13). 2013, p.                 [34] Matsuda K, Lea R. WebGL Programming Guide: Interactive 3D Graph-
+      39–45.                                                                                ics Programming with WebGL (OpenGL). Addison-Wesley Profes-
+  [6] W3C .            Scalable Vector Graphics.            2001.        URL:               sional; 2013. ISBN 0321902920.
+      http://www.w3.org/Graphics/SVG/.                                                 [35] Di Benedetto M, Ponchio F, Ganovelli F, Scopigno R. SpiderGL.
+  [7] Geroimenko V, Chen C. Visualizing Information Using SVG and X3D.                      In: Proceedings of the 15th International Conference on Web 3D
+      Springer; 2004. ISBN 1852337907.                                                      Technology - Web3D ’10. ISBN 9781450302098; 2010, p. 165.
+  [8] Web3D        .             X3D.                2013.               URL:               doi:10.1145/1836049.1836075.
+      http://www.web3d.org/x3d/specifications/                                         [36] Di Benedetto M, Ganovelli F, Banterle F. Features and Design Choices
+      x3d specification.html.                                                               in SpiderGL. In: Cozzi P, Riccio C, editors. OpenGL Insights. CRC
+
+
+                                                                                  17
+     Press. ISBN 978-1439893760; 2012, p. 583–604.                                  [72] Jurgelionis A, Fechteler P, Eisert P, Bellotti F, David H, Laulajainen
+[37] Agenjo J, Evans A, Blat J. WebGLStudio. In: Proceedings of the 18th                 JP, et al. Platform for Distributed 3D Gaming. International Journal of
+     International Conference on 3D Web Technology - Web3D ’13. ISBN                     Computer Games Technology 2009;2009:1–15.
+     9781450321334; 2013, p. 79.                                                    [73] Squillacote A. The Paraview Guide. Kitware, Inc.; 2008. ISBN
+[38] GlMatrix . glMatrix v2.2.0. 2013. URL: http://glmatrix.net/.                        1930934211.
+[39] Pinson C. OSG.JS. 2013. URL: http://osgjs.org/.                                [74] Jourdain S, Ayachit U, Geveci B. Paraviewweb, a web framework for 3d
+[40] Osfield R, Burns D.           Open scene graph.         2004.     URL:              visualization and data processing. In: IADIS International Conference
+     http://www.openscenegraph.org/.                                                     on Web Virtual Reality and Three-Dimensional Worlds; vol. 7. 2010,
+[41] Kay L. Scene.js. 2010. URL: http://www.scenejs.org/.                                p. 1.
+[42] Belmonte      N.             PhiloGL.            2013.            URL:         [75] Grimstead IJ, Avis NJ, Walker DW. RAVE: the resourceaware visual-
+     http://www.senchalabs.org/philogl/.                                                 ization environment. Concurrency and Computation: Practice and Ex-
+[43] Brunt P. GLGE.org. 2010. URL: http://www.glge.org/.                                 perience 2009;21(4):415–48.
+[44] Cabello R. Three.JS. 2010. URL: http://threejs.org/.                           [76] Jourdain S, Forest J, Mouton C, Nouailhas B, Moniot G, Kolb F, et al.
+[45] Dirksen J. Learning Three.js: The JavaScript 3D Library for WebGL.                  ShareX3D, a scientific collaborative 3D viewer over HTTP. In: Pro-
+     Packt Publishing; 2013. ISBN 1782166289.                                            ceedings of the 13th international symposium on 3D web technology.
+[46] Degrees P.              Car Visualizer.            2013.          URL:              ISBN 1605582131; 2008, p. 35–41.
+     http://carvisualizer.plus360degrees.com/threejs/.                              [77] Mouton C, Sons K, Grimstead I. Collaborative visualization: current
+[47] Adobe      .            Stage     3D.            2011.            URL:              systems and future trends. In: Proceedings of the 16th International
+     http://www.adobe.com/devnet/flashplayer/stage3d.html.                               Conference on 3D Web Technology. ACM. ISBN 1450307744; 2011, p.
+[48] Boese ES. An Introduction to Programming with Java Applets. Jones &                 101–10.
+     Bartlett Learning; 2009. ISBN 0763754609.                                      [78] Peng J, Kim C, Kuo CJ. Technologies for 3D mesh compression: A
+[49] Oracle . Java3D. 2008. URL: https://java3d.java.net/.                               survey. Journal of Visual Communication and Image . . . 2005;.
+[50] JogAmp . JogAmp. 2013. URL: http://jogamp.org/.                                [79] Alliez P, Gotsman C. Recent advances in compression of 3D meshes. In:
+[51] LWJGL . LWJGL - Lightweight Java Game Library. 2013. URL:                           Advances in Multiresolution for Geometric Modelling. Springer Berlin
+     http://lwjgl.org/.                                                                  Heidelberg. ISBN 978-3-540-21462-5; 2005, p. 3–26.
+[52] Unity . Unity3D. 2013. URL: http://www.unity3d.com.                            [80] Shamir A. A survey on mesh segmentation techniques. Computer graph-
+[53] Unity . Web Player Statistics. 2013.                                                ics forum 2008;27(6):1539–56.
+[54] Epic Games .               Unreal Engine.            2013.        URL:         [81] Limper M, Wagner S, Stein C, Jung Y, Stork A. Fast delivery of 3D
+     http://www.unrealengine.com/html5/.                                                 web content: a case study. In: Proceedings of the 18th International
+[55] DICE .              Battlefield Heroes.            2013.          URL:              Conference on 3D Web Technology. ISBN 145032133X; 2013, p. 11–7.
+     http://www.battlefieldheroes.com/.                                             [82] Hoppe H. Progressive meshes. Proceedings of the 23rd annual con-
+[56] OnLive . OnLive. 2013. URL: http://www.onlive.com/.                                 ference on Computer graphics and interactive techniques SIGGRAPH
+[57] Gaikai . Gaikai. 2013. URL: http://www.gaikai.com.                                  1996;:99–108.
+[58] Engadget      .             Sony      buys    Gaikai     cloud    gam-         [83] Hoppe H. Efficient implementation of progressive meshes. Computers
+     ing service for $380 million.                      2012.          URL:              & Graphics 1998;22(1):27–36.
+     http://www.engadget.com/2012/07/02/sony-buys-gaikai/.                          [84] Maglo A, Courbet C, Alliez P, Hudelot C. Progressive compression of
+[59] Humphreys G, Eldridge M, Buck I, Stoll G. WireGL: a scalable graphics               manifold polygon meshes. Computers & Graphics 2012;36(5):349–59.
+     system for clusters. Proceedings of the 28th annual conference on Com-         [85] Lavoué G, Chevalier L, Dupont F. Streaming Compressed 3D Data on
+     puter graphics and interactive techniques (SIGRAPH) 2001;:129–40.                   the Web using JavaScript and WebGL. In: ACM International Confer-
+[60] Glander T, Moreno A, Aristizabal M, Congote J, Posada J, Garcia-                    ence on 3D Web Technology (Web3D), San Sebastian, Spain. 2013, p.
+     Alonso A, et al. ReWeb3D. In: Proceedings of the 18th International                 19–27.
+     Conference on 3D Web Technology - Web3D ’13. 2013, p. 147.                     [86] Valette S, Chaine R, Prost R. Progressive lossless mesh compres-
+[61] Emscripten . Emscripten. 2014. URL: http://emscripten.org.                          sion via incremental parametric refinement. Computer Graphics Forum
+[62] Lamberti F, Zunino C, Sanna A, Fiume A, Maniezzo M. An accelerated                  2009;28(5):1301–10.
+     remote graphics architecture for PDAS. In: Proceeding of the eighth in-        [87] Charland A, Leroux B. Mobile application development: web vs. native.
+     ternational conference on 3D web technology - Web3D ’03. 2003, p. 55.               Communications of the ACM 2011;54(5):49–53.
+[63] Noimark Y, Cohen-Or D. Streaming scenes to MPEG-4 video-enabled                [88] Tian D, AlRegib G. Batex3: Bit allocation for progressive transmission
+     devices. Computer Graphics and Applications, . . . 2003;.                           of textured 3-d models. Circuits and Systems for Video Technology,
+[64] Tizon N, Moreno C, Cernea M, Preda M. MPEG-4-based adaptive re-                     IEEE Transactions on 2008;18(1):23–35.
+     mote rendering for video games. In: Proceedings of the 16th Interna-           [89] King D, Rossignac J. Optimal bit allocation in compressed 3D models.
+     tional Conference on 3D Web Technology - Web3D ’11. 2011, p. 45.                    Computational Geometry 1999;14(1):91–118.
+[65] Richardson T, Stafford-Fraser Q, Wood KR, Hopper A. Virtual network            [90] Payan F, Antonini M. An efficient bit allocation for compressing normal
+     computing. Internet Computing, IEEE 1998;2(1):33–8.                                 meshes with an error-driven quantization. Computer Aided Geometric
+[66] Levoy M. Polygon-assisted JPEG and MPEG compression of synthetic                    Design 2005;22(5):466–86.
+     images. In: Proceedings of the 22nd annual conference on Computer              [91] Lee H, Lavoué G, Dupont F. Rate-distortion optimization for progres-
+     graphics and interactive techniques - SIGGRAPH ’95. s; 1995, p. 21–8.               sive compression of 3D mesh with color attributes. The Visual Computer
+[67] Mann Y, CohenOr D. Selective pixel transmission for navigating in                   2012;28(2):137–53.
+     remote virtual environments. Computer Graphics Forum 1997;.                    [92] Ahn JH, Kim CS, Ho YS. Predictive compression of geometry, color
+[68] Fechteler P, Eisert P. Depth map enhanced macroblock partitioning for               and normal data of 3-D mesh models. Circuits and Systems for Video
+     H. 264 video coding of computer graphics content. In: Image Pro-                    Technology, IEEE Transactions on 2006;16(2):291–9.
+     cessing (ICIP), 2009 16th IEEE International Conference on. ISBN               [93] Yoon YS, Kim SY, Ho YS. Color data coding for three-dimensional
+     1424456533; 2009, p. 3441–4.                                                        mesh models considering connectivity and geometry information. In:
+[69] Diepstraten J, Gorke M, Ertl T. Remote line rendering for mobile de-                Multimedia and Expo, 2006 IEEE International Conference on. IEEE;
+     vices. In: Computer Graphics International. 2004, p. 454–61.                        2006, p. 253–6.
+[70] Quillet JC, Thomas G, Granier X, Guitton P, Marvie JE. Using expres-           [94] Cirio G, Lavoué G, Dupont F. A Framework for Data-driven Progressive
+     sive rendering for remote visualization of large city models. In: Pro-              Mesh Compression. In: GRAPP. 2010, p. 5–12.
+     ceedings of the eleventh international conference on 3D web technology         [95] Alliez P, Desbrun M. Progressive compression for lossless transmis-
+     - Web3D ’06. 2006, p. 27.                                                           sion of triangle meshes. In: Proceedings of the 28th annual confer-
+[71] Yoon I, Neumann U. Web-Based Remote Rendering with IBRAC                            ence on Computer graphics and interactive techniques. ACM. ISBN
+     (Image-Based Rendering Acceleration and Compression). Computer                      158113374X; 2001, p. 195–202.
+     Graphics Forum 2000;19(3):321–30.                                              [96] Gobbetti E, Marton F. Adaptive quad patches: an adaptive regular struc-
+
+
+                                                                               18
+        ture for web distribution and adaptive rendering of 3D models. In: Pro-                iotherapy laboratory. Computers & Education 2013;69:96–108.
+        ceedings of the 17th International Conference on 3D Web Technology.              [121] Jacinto H, Kéchichian R, Desvignes M, Prost R, Valette S. A Web In-
+        2012, p. 9–16.                                                                         terface for 3D Visualization and Interactive Segmentation of Medical
+ [97]   Limper M, Jung Y, Behr J, Alexa M. The POP Buffer: Rapid Progres-                      Images. In: Proceedings of the 17th International Conference on 3D
+        sive Clustering by Geometry Quantization. Computer Graphics Forum                      Web Technology. Web3D ’12. ISBN 978-1-4503-1432-9; 2012, p. 51–
+        2013;32(7):197–206.                                                                    8. doi:10.1145/2338714.2338722.
+ [98]   Behr J, Jung Y, Franke T, Sturm T. Using images and explicit binary              [122] Schroeder W, Martin K, Lorensen B. Visualization Toolkit: An Object-
+        container for efficient and incremental delivery of declarative 3D scenes              Oriented Approach to 3D Graphics, 4th Edition. Kitware; 2006. ISBN
+        on the web. In: Proceedings of the 17th International Conference on 3D                 193093419X.
+        Web Technology. 2012, p. 17–26.                                                  [123] Mani G, Li W. 3D web based surgical training through comparative
+ [99]   Geelnard M. OpenCTM, the Open Compressed Triangle Mesh file for-                       analysis. In: Proceedings of the 18th International Conference on 3D
+        mat. 2010. URL: http://openctm.sourceforge.net/.                                       Web Technology - Web3D ’13. 2013, p. 83.
+[100]   Blume A, Chun W, Kogan D, Kokkevis V, Weber N, Petterson RW, et al.              [124] Congote J, Segura A, Kabongo L, Moreno A, Posada J, Ruiz O. In-
+        Google body: 3d human anatomy in the browser. In: ACM SIGGRAPH                         teractive visualization of volumetric data with WebGL in real-time. In:
+        2011 Talks. ACM. ISBN 1450309747; 2011, p. 19.                                         Proceedings of the 16th International Conference on 3D Web Technol-
+[101]   Chun W. WebGL models: End-to-End. In: Cozzi P, Riccio C, editors.                      ogy - Web3D ’11. 2011, p. 137.
+        OpenGL Insights. CRC Press. ISBN 1439893764; 2012, p. 431–52.                    [125] Doboš J, Steed A. 3D Revision Control Framework. In: Proceedings of
+[102]   Schmalstieg D, Gervautz M. DemandDriven Geometry Transmis-                             the 17th International Conference on 3D Web Technology. Web3D ’12;
+        sion for Distributed Virtual Environments. Computer Graphics Forum                     New York, NY, USA: ACM. ISBN 978-1-4503-1432-9; 2012, p. 121–9.
+        1996;15(3):421–32.                                                               [126] Ulbrich C, Lehmann C. A DCC pipeline for native 3D graphics in
+[103]   Hesina G, Schmalstieg D. A network architecture for remote rendering.                  browsers. In: Proceedings of the 17th International Conference on 3D
+        In: Proceedings. 2nd International Workshop on Distributed Interactive                 Web Technology - Web3D ’12. ACM. ISBN 9781450314329; 2012, p.
+        Simulation and Real-Time Applications (Cat. No.98EX191). 1998, p.                      175. doi:10.1145/2338714.2338744.
+        88–91.                                                                           [127] Lehmann C. Annotating 3D Content in Interactive , Virtual Worlds.
+[104]   Blizzard .            World of Warcraft.              2013.         URL:               In: Proceedings 18th International Conference on 3D Web Technology.
+        http://www.worldofwarcraft.com/.                                                       ISBN 9781450321334; 2013, p. 67–70.
+[105]   CCP . Eve Online. 2013. URL: http://www.eveonline.com/.                          [128] Manferdini AM, Remondino F. Reality-based 3D modeling, segmenta-
+[106]   Yahyavi A, Kemme B.            Peer-to-peer architectures for massively                tion and web-based visualization. In: Digital Heritage. Springer. ISBN
+        multiplayer online games: A survey. ACM Computing Surveys                              3642168728; 2010, p. 110–24.
+        2013;1:8022980.                                                                  [129] Abadia J, Evans A, Gonzales E, Gonzales S, Soto D, Fort S,
+[107]   Jankowski J, Hachet M. A Survey of Interaction Techniques for Interac-                 et al.      Assisted animated production creation and programme
+        tive 3D Environments. In: Eurographics 2013-State of the Art Reports.                  generation.      In: Proceedings of the International Conference
+        ISBN 1017-4656; 2012, p. 65–93.                                                        on Advances in Computer Enterntainment Technology ACE
+[108]   Jankowski J, Decker S. A dual-mode user interface for accessing 3D                     09. ACM Press. ISBN 9781605588643; 2009, p. 207. URL:
+        content on the world wide web. In: Proceedings of the 21st international               http://portal.acm.org/citation.cfm?doid=1690388.1690423.
+        conference on World Wide Web - WWW ’12. 2012, p. 1047.                                 doi:10.1145/1690388.1690423.
+[109]   Weiskopf D. GPU-Based Interactive Visualization Techniques (Mathe-               [130] Tweak Software        .           RV.             2013.              URL:
+        matics and Visualization). Springer; 2006. ISBN 3540332626.                            http://www.tweaksoftware.com.
+[110]   Marion C, Jomier J. Real-time collaborative scientific WebGL visualiza-          [131] SketchFab . SketchFab. 2013. URL: http://sketchfab.com/.
+        tion with WebSocket. Proceedings of the 17th International Conference            [132] Exocortex . Clara.io. 2013. URL: http://clara.io/.
+        on 3D Web Technology 2012;:47–50.                                                [133] TeamUp Technologies .               Lagoa.            2013.          URL:
+[111]   W3C .             Websocket Specification.            2009.         URL:               http://home.lagoa.com/.
+        http://www.w3.org/TR/websockets/.                                                [134] Shotgun Software .               Shotgun.            2013.           URL:
+[112]   Marion C, Pouderoux J, Jomier J, Jourdain S, Hanwell M, Ayachit                        http://www.shotgunsoftware.com/.
+        U. A Hybrid Visualization System for Molecular Models. In: Pro-                  [135] TeamUp Technologies .               3DTin.            2013.          URL:
+        ceedings of the 18th International Conference on 3D Web Technol-                       http://www.3dtin.com/.
+        ogy. Web3D ’13; ACM. ISBN 978-1-4503-2133-4; 2013, p. 117–20.                    [136] Autodesk      .            123Design.             2013.              URL:
+        doi:10.1145/2466533.2466558.                                                           http://www.123dapp.com/design.
+[113]   Zollo F, Caprini L, Gervasi O, Costantini A. X3DMMS. In: Proceedings             [137] Id Software . Quake Live. 2007.
+        of the 16th International Conference on 3D Web Technology - Web3D                [138] Cromwell R, Webber J. Quake 2 HTML5 Port. 2010. URL:
+        ’11. ISBN 9781450307741; 2011, p. 129.                                                 https://code.google.com/p/quake2-gwt-port/.
+[114]   Callieri M, Andrei RM, Di Benedetto M, Zoppè M, Scopigno R. Visu-               [139] Herrington J, Oliver R. Critical characteristics of situated learning: Im-
+        alization methods for molecular studies on the web platform. In: Pro-                  plications for the instructional design of multimedia. In: Proceeding
+        ceedings of the 15th International Conference on Web 3D Technology -                   ASCILITE 1995. 1995, p. 253–62.
+        Web3D ’10. 2010, p. 117.                                                         [140] Wickens CD. Virtual reality and education. In: IEEE International Con-
+[115]   Limberger D, Tr J. Interactive Software Maps for Web-Based Source                      ference on Systems, Man and Cybernetics. IEEE. ISBN 0780307208;
+        Code Analysis. In: Proceedings 18th International Conference on 3D                     1992, p. 842–7.
+        Web Technology. ISBN 9781450321334; 2013, p. 91–8.                               [141] Helsel S. Virtual Reality and Education. Educational Technology
+[116]   John NW. The impact of Web3D technologies on medical education and                     1992;32(5):38–42.
+        training. Computers & Education 2007;49(1):19–31.                                [142] Chittaro L, Ranon R. Web3D technologies in learning, education and
+[117]   Warrick PA, Funnell WRJ. A VRML-based anatomical visualization                         training: Motivations, issues, opportunities. Computers & Education
+        tool for medical education. Information Technology in Biomedicine,                     2007;49(1):3–18.
+        IEEE Transactions on 1998;2(2):55–61.                                            [143] Allison C, Miller A, Oliver I, Michaelson R, Tiropanis T. The Web in
+[118]   Wakita A, Hayashi T, Kanai T, Chiyokura H. Using lattice for web-                      education. Computer Networks 2012;56(18):3811–24.
+        based medical applications. In: Proceedings of the sixth international           [144] Linden Labs .               Second Life.             2003.           URL:
+        conference on 3D Web technology. ISBN 1581133391; 2001, p. 29–34.                      http://www.secondlife.com.
+[119]   Brenton H, Hernandez J, Bello F, Strutton P, Firth T, Darzi A. Web               [145] OpenSimulator .                OpenSim.             2013.            URL:
+        based delivery of 3D developmental anatomy. In: Proceedings of the                     http://opensimulator.org.
+        LET-WEB3D 2004 workshop on Web3D technologies. 2004, p. 53–7.                    [146] Allison C, Miller A, Sturgeon T, Nicoll JR, Perera I. Educationally
+[120]   Noguera JM, Jiménez JJ, Osuna-Pérez MC. Development and evalua-                      enhanced virtual worlds. In: Frontiers in Education Conference (FIE),
+        tion of a 3D mobile application for learning manual therapy in the phys-               2010 IEEE. IEEE. ISBN 1424462614; 2010, p. T4F–1.
+
+
+                                                                                    19
+[147] De Lucia A, Francese R, Passero I, Tortora G. Development and                           ACM. ISBN 978-1-4503-1432-9; 2012, p. 113–6.
+      evaluation of a system enhancing Second Life to support synchronous               [169] Rodrı́guez MB, Gobbetti E, Marton F, Tinti A. Compression-domain
+      rolebased collaborative learning. Software: Practice and Experience                     seamless multiresolution visualization of gigantic triangle meshes on
+      2009;39(12):1025–54.                                                                    mobile devices. In: Proceedings of the 18th International Conference
+[148] Zhang Q, Marksbury N, Heim S. A case study of communication                             on 3D Web Technology - Web3D ’13. ACM Press; 2013, p. 99.
+      and social interactions in learning in second life. In: System Sciences           [170] SmithsonianX3D .         Smithsonian X 3D.            2013.     URL:
+      (HICSS), 2010 43rd Hawaii International Conference on. IEEE. ISBN                       http://3d.si.edu/.
+      142445509X; 2010, p. 1–9.                                                         [171] Benin A, Leone GR, Cosi P. A 3D talking head for mobile devices based
+[149] Huang YC, Backman SJ, Chang LL, Backman KF, McGuire FA. Ex-                             on unofficial iOS WebGL support. In: Proceedings of the 17th Interna-
+      periencing student learning and tourism training in a 3D virtual world:                 tional Conference on 3D Web Technology. ACM. ISBN 1450314325;
+      An exploratory study. Journal of Hospitality, Leisure, Sport & Tourism                  2012, p. 117–20.
+      Education 2013;13:190–201.                                                        [172] Berthelot RB, Royan J, Duval T, Arnaldi B. Scene graph adapter. In:
+[150] Deci EL, Ryan RM. SelfDetermination. Wiley Online Library; 1985.                        Proceedings of the 16th International Conference on 3D Web Technol-
+      ISBN 0470479213.                                                                        ogy - Web3D ’11. New York, New York, USA: ACM Press; 2011, p. 21.
+[151] Ryan RM, Deci EL. Self-determination theory and the facilitation of in-
+      trinsic motivation, social development, and well-being. American psy-
+      chologist 2000;55(1):68.
+[152] Di Cerbo F, Dodero G, Papaleo L. Integrating a Web3D interface into
+      an e-learning platform. In: Proceedings of the 15th International Con-
+      ference on Web 3D Technology - Web3D ’10. ISBN 9781450302098;
+      2010, p. 83.
+[153] Callieri M, Leoni C, Dellepiane M, Scopigno R. Artworks narrating
+      a story: a modular framework for the integrated presentation of three-
+      dimensional and textual contents. In: ACM WEB3D - 18th International
+      Conference on 3D Web Technology. ACM; ACM; 2013, p. 167–75.
+[154] Over M, Schilling A, Neubauer S, Zipf A. Generating web-based 3D
+      City Models from OpenStreetMap: The current situation in Germany.
+      Computers, Environment and Urban Systems 2010;34(6):496–507.
+[155] Rainer J, Goetz M. Towards Interactive 3D City Models on the Web.
+      International Journal of 3D Information Modelling 2012;1(3).
+[156] Christen M, Nebiker S, Loesch B. Web-Based Large-Scale 3D-
+      Geovisualisation Using WebGL: The OpenWebGlobe Project. Interna-
+      tional Journal of 3-D Information Modeling (IJ3DIM) 2012;1(3):16–25.
+[157] Gesquière G, Manin A. 3D Visualization of Urban Data Based on
+      CityGML with WebGL. International Journal of 3-D Information Mod-
+      eling (IJ3DIM) 2012;1(3):1–15.
+[158] Kolbe T, Gröger G, Plümer L. CityGML: Interoperable Access to 3D
+      City Models. In: Oosterom P, Zlatanova S, Fendel E, editors. Geo-
+      information for Disaster Management SE - 63. Springer Berlin Heidel-
+      berg. ISBN 978-3-540-24988-7; 2005, p. 883–99.
+[159] Pintore G, Gobbetti E, Ganovelli F, Brivio P. 3DNSITE: A networked
+      interactive 3D visualization system to simplify location awareness in cri-
+      sis management. In: Proceedings of the 17th International Conference
+      on 3D Web Technology. ISBN 1450314325; 2012, p. 59–67.
+[160] Lamberti F, Sanna A, Henao Ramirez EA. Web-based 3D visualization
+      for intelligent street lighting. In: Proceedings of the 16th International
+      Conference on 3D Web Technology. ISBN 1450307744; 2011, p. 151–4.
+[161] Rakkolainen I, Vainio T. A 3D city info for mobile users. Computers &
+      Graphics 2001;25(4):619–25.
+[162] Cellier F, Gandoin PM, Chaine R, Barbier-Accary A, Akkouche S. Sim-
+      plification and streaming of GIS terrain for web clients. In: Proceed-
+      ings of the 17th International Conference on 3D Web Technology. ACM.
+      ISBN 1450314325; 2012, p. 73–81.
+[163] Prieto In, Izkara JL. Visualization of 3D city models on mobile devices.
+      In: Proceedings of the 17th International Conference on 3D Web Tech-
+      nology. ISBN 1450314325; 2012, p. 101–4.
+[164] Walczak K, Cellary W, White M. Virtual museum exbibitions. Com-
+      puter 2006;39(3):93–5.
+[165] Patel M, White M, Walczak K, Sayd P. Digitisation to Presentation:
+      Building Virtual Museum Exhibitions. Vision, Video and Graphics 2003
+      2003;.
+[166] Wojciechowski R, Walczak K, White M, Cellary W. Building virtual
+      and augmented reality museum exhibitions. In: Proceedings of the ninth
+      international conference on 3D Web technology. ISBN 1581138458;
+      2004, p. 135–44.
+[167] Jung Y, Behr J, Graf H. X3DOM as Carrier of the Virtual Heritage. In:
+      International Society for Photogrammetry and Remote Sensing (ISPRS),
+      Proceedings of the 4th ISPRS International Workshop 3D-ARCH. 2011,
+      p. 475–82.
+[168] Michaelis N, Jung Y, Behr J. Virtual Heritage to Go. In: Proceedings of
+      the 17th International Conference on 3D Web Technology. Web3D ’12;
+
+
+                                                                                   20
+

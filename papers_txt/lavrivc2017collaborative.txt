@@ -1,0 +1,283 @@
+        Collaborative view-aligned annotations in
+        web-based 3D medical data visualization
+                                        Primož Lavrič, Ciril Bohak, Matija Marolt
+                University of Ljubljana, Faculty of Computer and Information Science, Ljubljana, Slovenia
+                      pl9506@student.uni-lj.si, ciril.bohak@fri.uni-lj.si, matija.marolt@fri.uni-lj.si
+
+
+ Abstract - the paper presents our web-based 3D medical data
+ visualization framework with emphasis on user collaboration.
+ The framework supports visualization of volumetric data and
+ 3D meshes in web browsers. The paper focuses on integration
+ of user-shareable 3D view-aligned hand drawn or written an-
+ notations into the visualization framework. Annotations are
+ created on separate transparent canvases which are aligned
+ with selected views. View parameters are part of annotations
+ and can be shared with other users over the network. Our im-
+ plementation allows for real-time sharing of annotations dur-
+ ing creation. Annotations from the same or different users
+ can be overlaid within the same view. Annotations were im-        Figure 1: User interface of Med3D - a web based volumetric data
+ plemented through adaptation of the framework’s rendering         visualization framework.
+ pipeline, which allows for combining multiple visualization
+ layers into a unified final render. View aligned annotations           It is commonly accepted that user collaboration aids
+ were added in addition to text annotations pinned to 3D loca-     problem solving, and this is also the case in medical diagno-
+ tions on the displayed model. In the framework, users can list    sis, where second or even third opinions from experienced
+ through all annotations, whereby upon selection of a 3D view-     colleagues may be needed. In general, doctors with similar
+ aligned annotation the camera is positioned according to the      expertise rarely work in the same institution or even coun-
+ stored parameters and the annotation is displayed.                try, making collaboration slow and ineffective.
+                                                                        We have previously presented the benefits of remote
+                                                                   collaboration integrated in our web-based 3D medical vi-
+                                                                   sualization framework [14] that allows for sharing: (1) vi-
+                     I.   I NTRODUCTION                            sualization data, (2) camera view, (3) 3D localized user an-
+                                                                   notations and (4) text-based chat.
+ Visualization of 3D data is an already well established                In this paper we present an extension of the Med3D
+ way of supporting work in many different fields, includ-          framework. We first describe the implementation of render
+ ing medicine. In the paper we are focusing on visualization       passes and render queue in Section II., in Section III. view-
+ of volumetric data, which can be obtained with techniques         aligned hand-drawn annotations, in Section IV. the imple-
+ such as: Computed Tomography - CT [1, 2], Magnetic Res-           mentation of annotation sharing, in Section V. we describe
+ onance Imaging - MRI [3], Ultrasound [4] and Positron             how multiple users can concurrently produce annotations
+ Emission Tomography - PET [5]. Different techniques are           aligned with same view and in Section VI. we present the
+ suitable for capturing details of different tissues. The com-     conclusions and future work.
+ mon property of all volumetric data is that the data is pre-
+ sented as three dimensional scalar or vector field containing
+                                                                          II.   R ENDER PASSES AND RENDER QUEUE
+ property values for individual blocks of the scanned vol-
+ ume.
+                                                                   To be able to easily extend the visualisation framework and
+     Such data can be visualized with indirect or direct ren-      achieve good performance, it is of crucial importance that
+ dering techniques. In first case the data is first converted to   the underlying rendering pipeline is well designed and im-
+ 3D mesh models [6, 7, 8] and then rendered [9], while with        plemented efficiently.
+ direct rendering, different volumetric rendering techniques           In Med3D framework we extended the basic render-
+ can be used [10, 11, 12].                                         ing with multiple render pass design. This design empha-
+     Most of 3D medical visualization systems were de-             sises the deferred rendering approach and allows us to eas-
+ veloped as standalone applications and require high-              ily define the input data (uniforms, buffers and textures),
+ performance hardware for real-time display of data. In the        the output (textures, screen) and the shader for each ren-
+ past, we have developed a web-based volumetric medical            der pass. Data binding and shader selection is performed
+ visualization framework - Med3D [13], which allows users          in the prepossessing function that executes prior to the ren-
+ to visualize volumetric data in a web browser. The frame-         dering. This step also allows us to reflect the input data on
+ work exploits the use of local and remote processing power        the user input, the output data of previous render passes and
+ for processing as well as rendering purposes. It’s user inter-    the global state of the framework. Render passes can be
+ face is presented in Figure 1.                                    grouped together in the render queue as shown in Figure 2.
+
+
+27                                                                                                       MIPRO 2017/DC VIS
+ Formed render queues allow us to execute the render passes           good, but that we should add the possibility of hand-drawn
+ in the desired order. Each render pass also has access to the        sketches on top of the visualized data.
+ queue’s global intermediate render data which allows the                 We therefore expanded the Med3D framework with
+ data such as textures and other variables to be forwarded to         a drawing functionality where the user can either use a
+ the subsequent render passes. The last render pass can ei-           mouse, drawing tablet or touch screen to sketch the annota-
+ ther output the texture to the screen or return it as a queue        tions. To start the sketching, the user first needs to create a
+ execution result along the global render data.                       new drawn annotation in the annotation sidebar shown left
+                                                                      in the Figure 4. This sidebar contains a list of all the anno-
+                                                                      tations that can be shown, as well as the brush tools such
+                                                                      as color, thickness and hardness selector. To create a new
+                                                                      drawn annotation user first needs to align the view to cap-
+                                                                      ture the point of interest and then create a new annotation.
+                                                                      Upon creating the annotation the view is fixated on the cur-
+                                                                      rent position and camera parameters (position and rotation)
+                                                                      are stored so that the view can later be realigned. If the
+                                                                      user wishes to view any of the previously created annota-
+                                                                      tions, they can select them from the sidebar. Upon selecting
+                                                                      the annotation the view is animated to the right orientation
+                                                                      by interpolating the camera parameters (position, rotation)
+                                                                      from the current to target values. After the camera is cor-
+                                                                      rectly positioned and oriented, the drawn annotation starts
+                                                                      rendering on top of the data. This gives a smooth user ex-
+                                                                      perience when reviewing previously drawn annotations.
+                                                                          Each annotation can hold up to 20 drawing layers. Each
+                                                                      layer holds a texture on which the data is rendered. When
+                                                                      rendering the final render to the screen these textures are
+ Figure 2: Figure presents the structure of the rendering queue im-   overlaid based on the order (bottom to top) in which lay-
+ plemented in the Med3D framework.                                    ers are listed in the sidebar. The user can reorder this list
+                                                                      using the arrows that appear next to the listed layer while
+     Our rendering pipeline design allows us to easily add            hovering over it with the cursor, consequently changing the
+ new and expand the existing visualisation functionalities of         overlaying order. Layers can be added, deleted, renamed
+ the Med3D framework. Example of such functionality is                and hidden/shown using the provided user interface. To be-
+ the overlay multi-layer drawing which we integrated in the           gin sketching, the user needs to select the target layer by
+ framework.                                                           pressing the ”pen button” present on all the layers that are
+                                                                      not hidden.
+         III.   V IEW- ALIGNED HAND - DRAWN USER
+                             ANNOTATIONS
+
+ The Med3D framework allows users to add annotations on
+ the displayed 3D data. Originally we implemented the tex-
+ tual annotations, which can be pinned on to desired spot
+ on 3D data, making annotation connected with specific part
+ of the visualized data. We have already presented such an-
+ notations implementation in [14] and an example of such
+ annotations is presented in Figure 3.
+
+
+
+
+                                                                      Figure 4: Figure shows several hand-drawn annotations sketched
+                                                                      on different layers and on the left the drawn annotations side bar.
+                                                                      On the top of the sidebar is a list of annotations and a list of layers
+                                                                      for the selected annotation. On the bottom are brush tools that are
+                                                                      used to configure brush color, thickness and hardness.
+                                                                     The user can draw by dragging the mouse or pen across
+                                                                 the canvas. While dragging, a line segment is drawn be-
+                                                                 tween each pair of points representing the current and pre-
+ Figure 3: Figure shows annotations pinned to the selected loca-
+                                                                 vious cursor position. To draw a line segment, we need to
+ tions on the model of data.
+                                                                 transform the points to the texture coordinate system and
+      When we interviewed end users (doctors) about the ini- pass them to a shader which renders the line segment to a
+ tial implementation of annotations in the Med3D frame- texture with the selected color, thickness (determines line
+ work, they suggested that the implemented annotations are width) and hardness (determines the distance from the line
+
+
+MIPRO 2017/DC VIS                                                                                                                         277
+ after which it starts to fade off). Color is selected from a       existing annotations are uploaded to the server. The data
+ color picker located in the bottom part of the annotation          consists of a list of annotations where each annotation con-
+ sidebar (brush settings) which also holds two sliders that         tains a title, camera parameters (position and rotation) and
+ are used to configure thickness (ranging from 1 to 32 pix-         the list of all layers. Each layer also contains a title, a list of
+ els) and hardness (ranging from 0 to 1 where 0 represents          lines where each line consists of color, thickness, hardness
+ the maximal fade off).                                             and points. Because the drawn annotation data is composed
+      Because we might need to redraw the lines (in case of         of only Javascript objects and primitives, we can easily
+ window resizing, undoing and annotation sharing) we store          send the data to the server using Websockets2 . Because of
+ the points in a line structure. This line structure represents     the simplicity we’re using the Socket.io3 framework, which
+ the combined line segments from cursor press to cursor re-         handles the transmission of binary data in an efficient man-
+ lease and their color, thickness and hardness. Each layer          ner. After all the data are uploaded, other users may join
+ may contain multiple lines. We also need to normalise the          the session. When a new user joins, the session data (vi-
+ stored points with the current aspect ratio as the aspect ratio    sualization data and annotations) are downloaded from the
+ might not be the same after resizing or on a device of a dif-      server. The downloaded annotations and layers are stored
+ ferent user with whom we shared the annotation. We only            and equipped with an additional field that holds the user-
+ need to normalise the x coordinate as the view projection is       name of the owner. By default the shared annotations are
+ set so that it scales the height to fit the whole canvas whereas   not shown right after they are downloaded. The user first
+ the width must always be equal to the height to represent all      needs to select them for display. At this point the layers are
+ of the coordinates in a normalised space. Normalised x po-         rendered to a new texture that binds to each shared layer and
+ sition can be obtained as xn = (x 0.5) ⇤ w/h where x               is used for all of the subsequent drawing. Because the line
+ represents the position in a texture coordinate system and         points are aspect ratio normalised, we can easily transform
+ w and h represent the current width and height of the can-         the positions to match the window aspect ratio.
+ vas. When we need to redraw the point, the normalised                  After the user is synchronised with a server, he may add
+ position xn is transformed back to the texture position as         new annotations or layers to his own or to the shared anno-
+ x = xn ⇤ w0 /h0 + 0.5 where h0 and w0 represent the new            tations. All the changes that are made are being recorded
+ canvas dimensions. Using this process we can store the line        and sent to the server in a dynamic time interval based on
+ segments that are invariant to the screen aspect ratio.            connection quality. After the server receives the changes
+      Any layer can be redrawn at any time using the stored         it applies them to its copy of the data and broadcasts them
+ information. We do the redrawing using multiple render             to all of other session users. This reduces the work of the
+ passes where in each pass up to 251 line segments are              clients as they only need to send the data to the server and
+ drawn. This limitation comes due to the fact that we can           allows for new users to get the data directly from the server
+ only pass up to 1024 float uniforms into the shader to sup-        without requesting them from the session host. The whole
+ port all of the devices that are compatible with WebGL 2.01 .      communication process is presented in the figure 5.
+ But even with this limitation the redrawing process is still
+ very fast and the redrawing itself does not need to occur
+ very often so it does not affect users on slower devices.
+      Our implementation of the drawn annotations allows
+ users to easily manipulate their sketches. It is designed so
+ that it is intuitive and easy for the user to add or delete the
+ annotations or the layers. This results in good user expe-
+ rience and can be easily extended to allow for sharing of
+ annotations between users.
+
+                IV.   A NNOTATION SHARING
+
+ The Med3D framework already has many user collabora-
+ tion functionalities such as the sharing of visualization data,
+ views and text annotations. Sharing of hand drawn annota-
+ tions is implemented as an extension of the latter function-
+ ality. It allows users to present their opinion in an intuitive
+ way and share it with others.
+      Similar to other Med3D collaboration functionalities,         Figure 5: Figure shows the communication process of sharing the
+ sharing of hand-drawn annotations is done over a remote            hand-drawn annotations. On the top left there is the session host,
+ server on which all of the shared data is stored for easy and      which already synchronised the data with the server (bottom) and
+ fast access. To start sharing the annotations, users must first    is now sending recent annotation changes. In the middle (top)
+ create or join an existing session. This is already supported      there is a participant of the session that already downloaded all
+ by the Med3D framework. Creating a session allows mul-             of the data and is now listening for changes as well as sending his
+ tiple users to view and interact with the same data in real        own. On the top right is a new session participant that is down-
+ time.                                                              loading all of the latest data from the server without straining the
+      When the user creates a new session, all of the already       session host.
+     1 https://www.khronos.org/registry/webgl/specs/latest/2.0/
+     2 https://www.websocket.org/
+     3 http://socket.io/
+
+
+
+
+27                                                                                                            MIPRO 2017/DC VIS
+      Our implementation of communication used for remote future we also intend to add a voice chat that will in com-
+ collaboration allows users to share their data and annotation bination with hand-drawn annotations further improve the
+ changes in real time. This provides good user experience usefulness of the framework.
+ and efficient collaboration between multiple users with very
+ little delay mostly dependent on the quality of the network                            VI. C ONCLUSION
+ connection.
+                                                                  In this work we presented an implementation of view-
+                                                                  aligned hand drawn annotations into our Med3D visualiza-
+             V. C OLLABORATIVE ANNOTATION
+                                                                  tion framework. The sharing of such annotations greatly
+                                                                  improves the usability of remote collaboration and is an
+ The most important aspect of hand-drawn annotations is
+                                                                  intuitive way for the end users (doctors) to express their
+ that the users can make short notes and markings on the vi-
+                                                                  views.
+ sualization, as well as interact with other users in real-time.
+                                                                      The next step in our work will be to evaluate the an-
+ This is also emphasised by allowing multiple users that are
+                                                                  notation interface with the doctors and implement improve-
+ participating in the same collaboration session to overlay
+                                                                  ments based on their feedback. We also aim to add a voice
+ their layers and combine their sketches. Layers of current
+                                                                  chat to further enhance the collaboration options.
+ and all other users are listed together below the correspond-
+ ing annotation. Each user can discern layers of other users
+ by the user button that replaces the delete button. Hovering                              R EFERENCES
+ over this button displays the username of the layer owner in
+ a tooltip as shown in image 6. Each user can, independently [1] C. R. Crawford and K. F. King. Computed tomography scan-
+ of other users, select the layers that he wants to see by click-       ning with simultaneous patient translation. Medical Physics,
+ ing on the sidebar layer item. Users can also order the layers         (17):967 – 982, 1990.
+ of each annotation using the arrow keys that appear while [2] W. A. Kalender, W. Seissler, E. Klotz, and P. Vock. Spiral
+ hovering over the layer to produce the desired overlay order.          volumetric CT with single-breath-hold technique, continu-
+ This allows for comparison of the data present on multiple             ous transport and continuous scanner rotation. Radiology,
+ annotation layers. Users can also use different colors, thick-         (176):181 – 183, 1990.
+ ness and hardness allowing them to more easily emphasise [3] P. A. Rinck. Magnetic Resonance in Medicine. The Basic
+ the importance of different parts of the annotation as well            Textbook of the European Magnetic Resonance Forum. 9th
+ as to distinguish between different parts of annotation.               edition, volume 9.1. TRTF, 2016. E-Version.
+                                                                        [4] D. Krakow, J. Williams, M. Poehl, D. L. Rimoin, and L. D.
+                                                                            Platt. Use of three-dimensional ultrasound imaging in the
+                                                                            diagnosis of prenatal-onset skeletal dysplasias. Ultrasound
+                                                                            in Obstetrics and Gynecology, 21(5):467–472, 2003.
+                                                                        [5] J. M. Ollinger and J. A. Fessler. Positron-emission tomog-
+                                                                            raphy. IEEE Signal Processing Magazine, 14(1):43–55, Jan
+                                                                            1997.
+                                                                        [6] W. E. Lorensen and H. E. Cline. Marching cubes: A high
+                                                                            resolution 3d surface construction algorithm. SIGGRAPH
+                                                                            Comput. Graph., 21(4):163–169, August 1987.
+                                                                        [7] D. Lesage, E. D. Angelini, I. Bloch, and G. Funka-Lea. A re-
+                                                                            view of 3d vessel lumen segmentation techniques: Models,
+                                                                            features and extraction schemes. Medical Image Analysis,
+                                                                            13(6):819 – 845, 2009.
+                                                                        [8] M. T. Dehkordi, S. Sadri, and A. Doosthoseini. A review
+                                                                            of coronary vessel segmentation algorithms. J Med Signals
+                                                                            Sens, 1(1):49–54, 2011.
+                                                                        [9] W. J. Bouknight. A procedure for generation of three-
+                                                                            dimensional half-toned computer graphics presentations.
+                                                                            Commun. ACM, 13(9):527–536, September 1970.
+                                                                       [10] R. A. Drebin, L. Carpenter, and P. Hanrahan. Volume render-
+                                                                            ing. SIGGRAPH Comput. Graph., 22(4):65–74, June 1988.
+                                                                       [11] M. Levoy. Display of surfaces from volume data. Computer
+ Figure 6: Figure shows a list of drawn annotations in the sidebar.         Graphics and Applications, IEEE, 8(3):29–37, 1988.
+ The second annotation in the list is selected and its three layers
+                                                                       [12] E. P. Lafortune and Y. D. Willems. Bi-directional path
+ are displayed. Two layers are local and belong to the current user,
+                                                                            tracing. In Proceedings if Third International Conference
+ while and one is shared by the user ”John Doe”.
+                                                                            on Computational Graphics and Visualization Techiques
+     Because the layers are updated with short delay, users                 (COMPUGRAPHICS ’93, pages 145–153, 1993.
+ can see the changes being made in real-time. They can thus            [13] C. Bohak, P. Lavrič, and M. Marolt. Web based visualisation
+ interact with each other while sketching with either concur-               framework with remote collaboration support. In Proceed-
+ rent drawing on different parts of the visualization or chat-              ings of 25th ERK 2016, pages 43–46, Portorož, Slovenia,
+ ting via the text chat provided by the framework. In the                   September 2016.
+
+
+
+MIPRO 2017/DC VIS                                                                                                                    27
+ [14] C. Bohak, P. Lavrič, and M. Marolt. Remote interaction in     International Multiconference Information Society - IS 2016,
+      web-based medical visual application. In Human-computer        pages 5–8, Ljubljana, Slovenia, October 2016.
+      interaction in information society : proceedings of the 19th
+
+
+
+
+2 0                                                                                                     MIPRO 2017/DC VIS
+

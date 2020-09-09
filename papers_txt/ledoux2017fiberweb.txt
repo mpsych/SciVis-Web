@@ -1,0 +1,555 @@
+                                                                                                                                           ORIGINAL RESEARCH
+                                                                                                                                         published: 18 August 2017
+                                                                                                                                     doi: 10.3389/fninf.2017.00054
+
+
+
+
+                                             Fiberweb: Diffusion Visualization and
+                                             Processing in the Browser
+                                             Louis-Philippe Ledoux 1*, Felix C. Morency 2 , Martin Cousineau 1, 3 ,
+                                             Jean-Christophe Houde 1, 2 , Kevin Whittingstall 4, 5, 6 and Maxime Descoteaux 1, 2, 4*
+                                             1
+                                               Sherbrooke Connectivity Imaging Lab, Computer Science Department, Faculty of Science, University of Sherbrooke,
+                                             Sherbrooke, QC, Canada, 2 Imeka, Sherbrooke, QC, Canada, 3 Videos & Images Theory and Analytics Laboratory, University
+                                             of Sherbrooke, Sherbrooke, QC, Canada, 4 Centre de Recherche CHUS, University of Sherbrooke, Sherbrooke, QC, Canada,
+                                             5
+                                               Department of Nuclear Medecine and Radiobiology, University of Sherbrooke, Sherbrooke, QC, Canada, 6 Department of
+                                             Diagnostic Radiology, University of Sherbrooke, Sherbrooke, QC, Canada
+
+
+
+                                             Data visualization is one of the most important tool to explore the brain as we know
+                                             it. In this work, we introduce a novel browser-based solution for medical imaging data
+                                             visualization and interaction with diffusion-weighted magnetic resonance imaging (dMRI)
+                                             and tractography data: Fiberweb. It uses a recent technology, WebGL, that has yet to
+                                             be fully explored for medical imaging purposes. There are currently very few software
+                                             tools that allow medical imaging data visualization in the browser, and none of these
+                                             tools support efficient data interaction and processing, such as streamlines selection
+                                             and real-time deterministic and probabilistic tractography (RTT). With Fiberweb allowing
+                                             these types of interaction, it is no longer the case. We show results of the visualization
+                                             of medical imaging data, and demonstrate that our new RTT probabilistic algorithm can
+                            Edited by:
+                                             compare to a state of the art offline algorithm. Overall, Fiberweb pushes the boundary
+                           Xi-Nian Zuo,
+  Institute of Psychology (CAS), China       of interaction combined with scientific visualization, which opens great perspectives for
+                       Reviewed by:          quality control and neurosurgical navigation on browser-based mobile and static devices.
+                        Daniel Haehn,
+                                             Keywords: diffusion MRI, tractography, medical visualization, interaction, web, WebGL
+     Harvard University, United States
+                 Graham J. Galloway,
+      Translational Research Institute,
+                              Australia      1. INTRODUCTION
+                   *Correspondence:
+                 Louis-Philippe Ledoux
+                                             In recent years, the world has seen a huge increase in the use of mobile devices and web
+louis-philippe.ledoux@usherbrooke.ca         technologies. It is becoming more and more important that all resources are always available
+                   Maxime Descoteaux         at anytime, anywhere (e.g., Dropbox, GoogleDrive, iCloud, OneDrive, and many other such
+       m.descoteaux@usherbrooke.ca           providers). Currently, in the field of medical imaging, there are a lot of software tools to view and
+                                             interact with data. However, only a few exist for the browser, even with all the recent possibilities
+           Received: 02 March 2017           that the Web Graphics Library (WebGL) enables. Having the possibility to simply load a web page
+            Accepted: 31 July 2017           to start interacting with brain imaging data would open possibilities for the whole field.
+          Published: 18 August 2017              There are a few existing software tools that are currently available and offer visualization of
+                            Citation:        medical imaging data in the web browser. First, there is Slice:Drop (Haehn, 2013). It allows its
+             Ledoux L-P, Morency FC,         users to visualize anatomies, streamlines and volumes that are on their computer, and the file types
+            Cousineau M, Houde J-C,
+                                             it supports cover most of the standard medical imaging formats (e.g., NIFTI, TrackVis, .trk, etc.).
+    Whittingstall K and Descoteaux M
+            (2017) Fiberweb: Diffusion
+                                             Then, there are two web applications that were developed by the Max Planck Institute. In 2011,
+   Visualization and Processing in the       they made an interactive web page covering an article by Friederici (Friederici, 2011; Friederici
+  Browser. Front. Neuroinform. 11:54.        et al., 2012). It allows the user to view the various fiber bundles presented in said article. In
+       doi: 10.3389/fninf.2017.00054         2014, they developed Brain Networks (Heuer et al., 2014), which allows exploring structural and
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                               1                                             August 2017 | Volume 11 | Article 54
+Ledoux et al.                                                                              Fiberweb: Diffusion Visualization and Processing in the Browser
+
+
+
+functional connectivity data provided by the application. Finally,         two dimensional views, representing the axial, coronal and
+the AFQ Browser (Richie-Halford et al., 2016) was created to               sagittal views (Figure 1). The 3D view can be manipulated
+visualize the results obtained by Automated Fiber Quantification           through translations, rotations and zooms. For the 2D views, only
+(AFQ; Yeatman et al., 2012). Specific results can be selected from         translations and zooms are available (see video at www.imeka.ca/
+desired white matter bundles and subjects. All of those tools are          fiberweb).
+strictly for visualization. An interesting evolution would be to               “Anatomies” are any 3D volume datasets, such as T1, T2,
+allow interaction with the data. For instance, one could want              fractional anisotropy (FA), mean diffusivity (MD), and colored
+to virtually dissect a tractogram, or rapidly explore tractography         FA (4D image). They are represented by plane buffer geometries.
+results of a tumor patient in real-time.                                   These are simple textured planes, both in 3D and 2D. These
+    In this work, we propose Fiberweb, a web-based visualization           textures are computed during the initialization. They can be
+tool with additional processing and interaction capabilities. The          navigated through with the help of different sliders for each view.
+contributions of this work are:                                            When a slice change is made, planes are simply translated, and
+                                                                           a simple texture swap is applied since they are already loaded in
+• Full-brain tractogram (up to 75,000 “streamlines”) loading
+                                                                           memory.
+  and smooth interaction using a selection object. This enables
+                                                                               Next are the “peaks,” which are 4D volumes. The first three
+  virtual dissection manipulations directly in Fiberweb.
+                                                                           represent the coordinates of a peak (X, Y, Z). The fourth one
+• Real-time web-based fiber tractography.
+                                                                           contains the directions extracted from the fiber ODFs (X, Y,
+• A novel probabilistic algorithm for real-time tracking, which
+                                                                           Z, N where N = (x1 , y1 , z1 , ..., x5 , y5 , z5 )). Up to 5 directions
+  is the main contribution.
+                                                                           can be kept per fiber ODF. The peaks can have an additional
+These features allow the user to interact and process his data in          α parameter to represent the maxima’s uncertainty (described
+ways that were not previously possible in the browser. This means          later for probabilistic tracking, see Figure 5) if the dataset is
+no installation is required for the user, and no server is required        probabilistic (X, Y, Z, α). Peaks are represented by another object
+for backend computation. This opens great perspectives for                 provided by Three.js called line segments (Figure 2). However,
+quality control and neurosurgical navigation on browser-based              the geometry as well as the colors need to be recomputed for each
+mobile and static devices.                                                 new rendered slice, since this is computed only for the currently
+                                                                           displayed slice (see video at www.imeka.ca/fiberweb).
+                                                                               Finally, there are the “streamlines”. A streamline
+2. METHODS                                                                 is a set of 3D points (pi = (xpi , ypi , zpi ), where i ∈
+2.1. Visualization in the Web                                              (1, N) and N is the number of points in the streamline). The
+WebGL is the driving technology that enabled the creation of               distance between two consecutive points is called the step size,
+Fiberweb. WebGL’s creation was made possible by the arrival of             and is usually regular, though not required. Each pair of points
+HTML5, and more specifically one of its new features, the canvas           of a streamline is represented by a line segment. During the
+element. This element allows the creation of a drawable region             initialization process, the color for each segment is computed.
+in the browser, which can then be modified using JavaScript.               In the 3D view, line segments are simply drawn. However, in
+WebGL is a low-level graphics library for 3D rendering in the              the multiple 2D views available, only the part of the streamlines
+browser and is functional with all the major players, such as              matching the currently displayed anatomy slice are drawn. This
+Chrome, Firefox, Edge and Safari.                                          is implemented through a shader which calculates the volume
+                                                                           in which lines will be displayed, as seen on Figure 3. This also
+2.1.1. Three.js                                                            means that whenever the slice is changed, only the parameters
+To simplify the development of Fiberweb, a high-level library              sent to the shader are changed, making it extremely efficient
+called Three.js (Cabello, 2010) was used. This library wraps               and fast. As it will be discussed later, Fiberweb currently works
+WebGL calls and makes it more convenient to use shaders,                   best with streamlines datasets of up to 75,000 streamlines, which
+manage scenes and render primitives (e.g., lines). According to            on average have 100 points per streamline. To sum up, there
+stats.js.org (as of january 2017), Three.js is one of the most used        are currently two ways to visualize streamlines: viewing all the
+WebGL library (it is used by AFQ Browser), and has a very active           streamlines in 3D, or viewing only the intersected streamlines
+community, leading to constant updates. This will make it easier           with the planes of the anatomies in the 2D views, as seen in
+to upgrade Fiberweb over time. It is also lower level than the X           Figure 3 (see video at www.imeka.ca/fiberweb).
+toolkit (Haehn et al., 2014, used by Slice:drop), making it a better
+choice for this implementation, since basic objects need to be
+directly manipulable for performance reasons.                              2.2. Interactions and Processing
+                                                                           Fiberweb supports various interaction mechanisms: streamlines
+2.1.2. Visualization Techniques                                            selection and real-time tractography.
+Fiberweb can currently display three types of medical imaging
+data: anatomies (peaks) and streamlines. These datasets can be             2.2.1. Selection
+visualized both from a 3D perspective as well as a 2D one,                 Fiberweb provides a streamlines selection mechanism based on
+as seen in Figure 1. This is implemented using four different              a points inclusion test. All streamlines having at least one point
+renderers, one for the three dimensional view, and three for               inside the selection box will be displayed.
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                    2                                             August 2017 | Volume 11 | Article 54
+Ledoux et al.                                                                                    Fiberweb: Diffusion Visualization and Processing in the Browser
+
+
+
+
+ FIGURE 1 | Anatomy visualization in 3D and 2D views inside Fiberweb.
+
+
+
+
+ FIGURE 2 | Anatomy and peaks visualization in 3D and 2D views inside Fiberweb.
+
+
+
+
+   To reduce complexity and increase performance (trying to                          Even though an octree was already available in Three.js, a
+ensure that feedback is provided in real time), an octree is                      new implementation was done in Fiberweb. The main reason
+used to classify streamlines points. An octree is a data structure                was that the octree of Three.js dynamically transforms the
+that recursively subdivides space in eight smaller regions until                  octree every time a new element is added to it. Since a full
+a certain level of simplification is obtained. Once the space is                  dataset of streamlines contains a high number of points, it was
+divided, each point is classified into the octree. This results in a              unnecessarily slow to initialize, especially since the position of the
+much smaller search space and fewer points to search through.                     points is static and known a priori.
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                           3                                            August 2017 | Volume 11 | Article 54
+Ledoux et al.                                                                                            Fiberweb: Diffusion Visualization and Processing in the Browser
+
+
+
+
+ FIGURE 3 | Anatomy and streamlines visualization inside Fiberweb, with the intersected streamlines in the 2D views.
+
+
+
+
+2.2.2. Menu and Parameters
+From the data drop-down menu (see Figure 1), the user can
+select which anatomy and which map of peaks are selected as
+a reference for the real-time tractography. The box size can be
+modified by the user both for the selection and the tractography,
+as seen on Figure 4. The rest of the parameters are specifically
+for the latter (Chamberland et al., 2014). Fiber length changes
+the minimum and maximum span a fiber must have to be valid.
+The fiber angle is the maximum angle a new direction can have
+with the previous one. The fiber mask parameter is the minimum
+value the voxel needs to have to continue tracking. The step size
+is the distance the tracking travels at every step of the algorithm.
+The number of seeds determines the quantity of streamlines
+the results will have. Finally, the fiber puncture is a variable
+that weighs the incoming direction of the tracking as well as
+the next one (Chamberland et al., 2014). The equation that the
+deterministic RTT algorithm follows is:
+
+                                                                                       FIGURE 4 | Fiber bundle (part of the corpus callosum), result of the real-time
+           Vn+1 = (f Vn ) + (1 − f )((1 − g)Vn−1 + gVn ),                   (1)        tractography, with the initialization box (red) in the mid-sagittal slice of the CC
+                                                                                       and the following parameters: angle threshold of 50◦ , fiber length minimum of
+                                                                                       10 mm and maximum of 200 mm, FA threshold of 0.1, a step size of 0.5 mm,
+                                                                                       10 seeds per axis and a puncture value (g) of 0.2.
+where f is the FA (or GFA, AFD, or any other underlying scalar
+map or mask) at the current voxel, g is the puncture value that
+was mentionned previously and V ∈ R3 is the direction (x, y, z)                       2.2.3. Deterministic Real-Time Tractography (RTT)
+which the algorithm follows (n − 1 is the previous direction, n is                    Chamberland et al. (2014) deterministic RTT algorithm, which
+the current direction and n + 1 is the next direction to follow).                     was originally implemented in the Fibernavigator (Vaillancourt
+   Additionally, the user can save the computed/extracted                             et al., 2010), was implemented in Fiberweb. In order to use it,
+streamlines, from both the selection and the real-time                                the first step is to load a precomputed map of peaks. These
+tractography. The parameters are also saved, making it easier for                     peaks are extracted from a map of fiber ODFs (Tournier et al.,
+a user to recreate its selection or tracking.                                         2007; Descoteaux et al., 2009) or any other diffusion model
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                               4                                                  August 2017 | Volume 11 | Article 54
+Ledoux et al.                                                                                         Fiberweb: Diffusion Visualization and Processing in the Browser
+
+
+
+(multi-compartment models, DSI, etc.) (Wedeen et al., 2008;
+Seunarine and Alexander, 2009; Descoteaux, 2015, etc.) and
+correspond to the maximas found in each voxel. Once the peaks
+are computed offline, the tracking starts by seeding randomly
+inside a small selection box. This seeding strategy is known
+as region-of-interest (ROI) seeding, which was chosen over
+complete seeding, which seeds everywhere in the tracking mask
+(Basser et al., 2000; Catani et al., 2002; Descoteaux, 2010). For
+each seed, a random peak is selected from the voxel at its current
+position. The tracking consists in taking the current position,
+comparing the current tracking direction with all the peaks
+of the current voxel, and selecting the one with the smallest
+angular difference. Then, the current direction as well as the
+next direction are weighted with a user-defined variable. The
+algorithm then moves a step in this resulting direction. These                        FIGURE 5 | Illustration of the uncertainty alpha parameter at 95% (red), 75%
+steps are repeated until various possible end criteria are met, such                  (yellow), and 35% (green) of the maxima. The script to compute these alpha
+as fiber length. As can be seen at www.imeka.ca/fiberweb, one can                     values for each fODF peak is given in the Appendix.
+change the tracking parameters in real time (FA threshold, step
+size, curvature θ angle, puncture). This allows one to explore his
+peaks in real time for quality assurance or exploration purposes.
+Chamberland et al. (2014) have shown the power of such an                            α. Pseudo-code of the implementation of the algorithm can be
+approach for surgical planning and exploring the white matter                        found in the annex.
+architecture around the tumor.
+                                                                                     2.2.5. Dataset
+2.2.4. Probabilistic RTT                                                             The dataset used for the evaluation of the probabilistic
+FiberWeb also introduces a new probabilistic real-time tracking                      tracking algorithm is found on the SCIL website (http://scil.dinf.
+technique, building on the already existing deterministic RTT                        usherbrooke.ca/?page_id=822&lang=en) and came originally
+technique. Instead of loading the standard peaks file containing                     from the Max Planck Institute (Anwander et al., 2007;
+only the directions of the maximas, the user needs to load a                         Descoteaux et al., 2009). The data was collected on a 3T
+peaks file also containing the uncertainty αi (X, Y, Z, N where                      Magnetom Trio scanner (Siemens, Erlangen) using a spin-echo
+N = (x1 , y1 , z1 , α1 , ..., x5 , y5 , z5 , α5 )). The αi could come from any       echo-planar-imaging sequence (TE/TR = 100 ms / 12 s) with a b-
+source, but in this work, a Dipy script (Supplemental Material)                      value of 1000 s/mm2 and 60 diffusion encoding gradients (Jones
+that computes the full width half max (FWHM) of each fODF                            et al., 1999). The dimensions are 93 × 116 × 93 isotropic voxel
+peak is provided. As seen in Figure 5, one can play with the                         resolution of 1.72 mm for both the T1-anatomy and the fODF
+percentage at which the FWHM is computed to have a more or                           map. The data comes from 8 healthy right-hand volunteers (4
+less conservative α value around each fODF peak. To do this,                         males, 4 females), from whom written consent was obtained.
+the fODF is mapped onto a sphere of the user’s choice, a 724                         fODFs were estimated with Dipy (Garyfallidis et al., 2014) using
+vertices symmetric one in our case (Garyfallidis et al., 2014).                      a maximal spherical harmonics order of 8. Peaks were extracted
+Then, starting from the different maximas of the sphere, the                         using a tessellated sphere with 724 points.
+neighbouring vertices are traversed until reaching the desired
+fraction of the peak. The angle between that vertex and the one                      2.2.6. Evaluation and validation
+from the maxima is then computed and saved along with the                            To determine the validity of our new real-time tracking
+peak.                                                                                algorithm, the evaluation was done in two ways, as similarly
+   The first part of the tracking algorithm is the same as for the                   done in Chamberland et al. (2014). First, streamlines generated
+deterministic version. Seeds are chosen randomly in the selection                    by our algorithm were qualitatively compared to the results of
+box. Then, a random peak associated to the voxel at the current                      an offline probabilistic tracking algorithm, as implemented in
+position is chosen. Next, instead of simply following that tracking                  Girard et al. (2014) and MRtrix (Tournier et al., 2012). The
+direction, the uncertainty angle associated with that peak is                        tracking was done on the same dataset. Then, a quantitative
+fetched. Then, a random direction in the “cone of uncertainty”                       evaluation is done using the Dice coefficient (Dice, 1945), as done
+formed by the uncertainty angle and the peak is chosen. Then,                        in Cousineau et al. (2016). Using the arcuate fasciculus, corpus
+the algorithm continues executing normally, with the extra step                      callosum and corticospinal tract, the reconstructed bundles from
+of modifying the direction by an angle of uncertainty every time.                    our RTT algorithm vs the offline one are compared using a
+Equation 1 then becomes:                                                             weighted version of the Dice coefficient to account for the density
+ Vn+1 = (f · θ (Vn , α)) + (1 − f )((1 − g)Vn−1 + g · θ (Vn , α)), (2)               of streamlines traversing each voxel (see Supplemental Material
+                                                                                     for details). The evaluation of the framerate of the application
+where θ () represents the function modifying the direction V by                      was done on a laptop with the following system: Windows 8 64-
+picking a random direction in a cone formed by its uncertainty                       bit, Video card (GPU): NVIDIA GeForce GTX 675MX (4GB),
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                              5                                               August 2017 | Volume 11 | Article 54
+Ledoux et al.                                                                             Fiberweb: Diffusion Visualization and Processing in the Browser
+
+
+
+CPU: Intel(R) Core(TM) i7-3740QM @ 2.70 GHz (4 cores), 16                   are shown. This is because of the use of a specific shader to
+GB RAM.                                                                     show only the portion intersecting the anatomy. This means
+                                                                            that rendering the intersected streamlines is just like rendering
+3. RESULTS                                                                  standard streamlines.
+                                                                                The selection also has little impact on the framerate due to
+3.1. Visualization                                                          the use of an octree, and this data structure does not impact the
+In this work, it is considered that the baseline performance for the        loading time of the streamlines. However, when loading bigger
+visualization part of the tool is to display an anatomical dataset.         streamline datasets, the framerate can drop when in areas of high
+Displaying a peaks dataset does not affect the framerate in any             streamline density during the selection. The framerate is only
+noticeable way. In Figure 3, the Fiberweb interface is shown                affected when moving the selection box, going back to normal
+simultaneously displaying an anatomical dataset and a set of                once it is stopped.
+streamlines. In Figure 2, Fiberweb shows an anatomical dataset                  Real-time tractography can have a bigger impact on the
+and its corresponding peaks dataset too. Currently, the 3D view             framerate of Fiberweb. A noticeable reduction in framerate is
+directly allows for picking, interaction and selection. In the 2D           obtained when getting close to 1,000 seeds (10 seeds per axis).
+renderers (axial/coronal/sagittal), streamlines intersecting with           This drop is more present when tracking longer bundles. In
+the anatomical dataset are shown (Figure 3).                                general, the number of seeds is the limiting factor. The rest of
+    The main bottleneck of Fiberweb is the display of streamlines           the parameters do not negatively impact the framerate. However,
+in general. The framerate and the maximal streamlines capacity              using stricter parameters can speed up the algorithm since the
+are directly affected by the number of streamlines and the                  streamlines will be shorter in general. Furthermore, just like
+number of points per streamline. To avoid any potential bias,               the selection, the problems with the framerate only exist when
+all the streamlines datasets that were used are raw and have                moving the box around, since this is when the tractography is
+roughly the same average number points per streamline (100                  computed.
+points). In Figure 6, it can be seen that doubling the number of
+streamlines approximately halves the framerate per second (fps).
+With 25,000 streamlines, the framerate stops being affected in a            3.3. Probabilistic Tractography : Online vs.
+noticeable way, but memory issues become problematic. With                  Offline
+80,000 streamlines, major memory issues arise due to browser                The proposed probabilistic real-time tractography algorithm
+limitations. This makes it impossible to currently load very large          is based on a field of vectors (cartesian coordinates) of
+datasets. One could circumvent that problem by using a browser              directions and their associated uncertainty angle. This data is
+with a much higher memory limit (like the Firefox Nightly                   extracted from fiber ODFs and is compared to probabilistic
+version: https://nightly.mozilla.org/). Other options are to use            tracking based on fODF (Girard et al., 2014). In the case of
+streamline compression (Presseau et al., 2015; Rheault et al.,              the data that was used in this work, the uncertainty angles
+2015) and grouping of similar streamlines (Garyfallidis et al.,             were extracted at 35% of their respective maxima value (see
+2012) would help the framerate and fluidity of the application in           Figure 5).
+the future since it equates to showing less points per streamline,              To determine whether or not this proposed tracking was
+thus pushing the limit of the current maximum number of                     valid, both probabilistic algorithms were used to generate
+streamlines.                                                                1,000 streamlines from the same regions (Figure 7), represented
+                                                                            by a box of 2 × 2 × 2 voxels. This was done with the
+3.2. Streamline Interactions                                                help of a selection box in Fiberweb and with the use of a
+Every interaction in Fiberweb works in real time. The framerate             seeding mask for the offline algorithm. The parameters for
+is not impacted whether or not the intersected streamlines                  both algorithms were the default ones. This was performed
+                                                                            for three different bundles. The first bundle compared is the
+                                                                            corticospinal tract (CST). It is important to note that both
+                                                                            CSTs have projections to the cerebellum, which are most likely
+                                                                            part of the corticopontine tract. These are not filtered out. All
+                                                                            streamlines produced from the seed region are shown. The
+                                                                            second compared bundle is a part of the corpus callosum (CC)
+                                                                            under the primary motor cortex. The last bundle is the arcuate
+                                                                            fasciculus (AF). In each case, the reconstructed bundles are
+                                                                            qualitatively very similar. Overall, the online version always
+                                                                            seems to produce slightly smaller and conservative bundles, with
+                                                                            less fanning.
+                                                                                Bundles similarities were also quantitatively scored using a
+                                                                            weighted Dice ratio. Table 1 shows the overlap ratio between the
+                                                                            offline and online versions of each bundle that was evaluated.
+ FIGURE 6 | Mean framerate [in frames per second (fps)] vs. number of
+                                                                            All three scores range between 81 and 93%. These are very
+ streamlines.
+                                                                            good overlap scores, considering the fact that both tracking
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                     6                                           August 2017 | Volume 11 | Article 54
+Ledoux et al.                                                                                               Fiberweb: Diffusion Visualization and Processing in the Browser
+
+
+
+
+ FIGURE 7 | Various bundles resulting from probabilistic tractography (real-time in the Fiberweb vs offline). Dice coefficients are: CST (0.865), CC (0.928), and
+ AF (0.811). The yellow arrows show the location of seeding regions. (A) Results of the Fiberweb algorithm for the corticospinal tract. (B) Results of the offline algorithm
+ for the corticospinal tract. (C) Results of the Fiberweb algorithm for the corpus callosum. (D) Results of the offline algorithm for the corpus callosum. (E) Results of the
+ Fiberweb algorithm for the arcuate fasciculus. (F) Results of the offline algorithm for the arcuate fasciculus.
+
+
+
+
+algorithms use a different tracking equation and that the real-                           4. DISCUSSION
+time Fiberweb version only uses peaks and their uncertainty
+as opposed to the full fODF. This is also the reason why                                  Medical imaging software tools are often hard to install and hard
+it is not expected to find a perfect agreement between the                                to use for non-technical users. Fiberweb bypasses that problem
+two algorithms. Also, this indicates that overall, the two                                by being built for the web. This makes the application cross-
+techniques share an excellent overlap varying slightly depending                          platform, and ready to use without the need for the installation
+on the bundle being reconstructed. This means that our real-                              of anything outside of having a web browser that is up-to-date.
+time probabilistic tractography algorithm rapidly produces an                             Furthermore, out of the few visualization web applications that
+excellent approximation to a state of the art offline probabilistic                       already exist, none allow for real-time interaction and processing
+tractography.                                                                             such as selection or real-time tractography.
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                                   7                                                 August 2017 | Volume 11 | Article 54
+Ledoux et al.                                                                                         Fiberweb: Diffusion Visualization and Processing in the Browser
+
+
+
+TABLE 1 | Comparison between offline and online algorithms using the Dice             make it easier to validate and check smaller datasets. For instance,
+coefficient.                                                                          suppose one has 1,000 subjects in a tract-based white matter
+Bundles                                               Weighted Dice coefficient       study. One can imagine using the FiberWeb to rapidly inspect
+                                                                                      tractograms through a web quality control interface such a
+CST                                                            0.865                  CBRAIN (Sherif et al., 2014). Alternatively, before doing a full-
+CC                                                             0.928                  brain tractography of a million streamlines, it would be possible
+AF                                                             0.811                  to explore smaller sets of 25,000 streamlines beforehand really
+                                                                                      quickly, especially since parameters used for tractography can
+                                                                                      change depending on the subject or region (Pierpaoli et al., 1996;
+                                                                                      Chamberland et al., 2014). Furthermore, with the help of the
+4.1. New Probabilistic Algorithm                                                      selection feature, it would be possible to validate the presence of
+In this article, a modified version of an existing real-time                          certain bundles.
+tractography algorithm was introduced, making it possible to use                         Fiberweb could also be used as a teaching tool. For example,
+it in a probabilistic way. This allows for a new way to visualize                     one could imagine a scenario where a teacher in medical school
+data in real time. It was validated qualitatively and quantitatively                  would want to illustrate a few fiber bundles to his class without
+against a state of the art offline tractography algorithm. When                       having prepared for it. This could be achieved simply by opening
+compared visually, one can see that the offline version of the                        a web page, loading his medical brain data and using the
+bundles recreated tend to look more probabilistic (more fanning                       visualization, selection or real-time tracking features of Fiberweb
+and more spurious streamlines). This is due to multiple factors.                      to display the bundles. Then, by just sharing the data he used
+It is also important to remember that both algorithms use a                           for the demonstration, every student could be able to review and
+different tracking equation and that the real-time FiberWeb                           explore it on their own device without the need to install an
+version only uses peaks and an uncertainty as opposed to the full                     external software.
+fODF.                                                                                    The new probabilistic algorithm allows for a new way to
+    The uncertainty angle has the biggest impact on how                               explore data without the need of having huge streamlines
+probabilistic the algorithm will be. Using a 100% threshold, the                      datasets, especially in the case where a specific region of interest is
+tractography would give results identical to the deterministic                        the sole object of the exploration. For example, in neurosurgical
+version of the algorithm. Inversely, using a 0% threshold, the                        planning, it could be of great interest to use Fiberweb. Around
+tracking would take any random direction part of the fiber                            regions of oedema, necrosis and mass effect due to the presence
+ODF. In our case, 35% was used because it yielded the best                            of a tumor, standard tracking parameters no longer hold. It is
+Dice quantitative scores, while still looking probabilistic. In                       important to be able to reduce the FA threshold, change the step
+Figure 8, it can be noted that lowering the uncertainty threshold                     size and explore the uncertainty of the fODF peaks to present a
+induces more jaggy streamlines, while also adding more spurious                       more realistic representation of the data to the surgeon. Having
+streamlines.                                                                          both deterministic and probabilistic RTT could help more easily
+    The puncture parameter of the real-time tractography                              assess the effect of the tumor mass effect and oedema on
+algorithm can modify the effect of the uncertainty angle since                        the peaks, diffusion measures and corresponding reconstructed
+it differently weighs the incoming and next directions. A higher                      streamlines. It could be the first step towards showing the surgeon
+puncture value will make it look more probabilistic, but also                         the most probable and improbable streamlines around and inside
+generate more noisy spurious streamlines. Results in this paper                       the tumor region of interest.
+were generated using a value of 0.2 since it is the suggested
+value for the deterministic real-time tractography algorithm                          4.3. Future Work
+(Chamberland et al., 2014). In Figure 9, it can be seen that the                      The first goal of Fiberweb is to support larger datasets.
+changes of direction are much smoother when the puncture                              Unfortunately, it is mostly tied with the evolution of the varying
+value is of 0.2.                                                                      browsers. Another main goal is making Fiberweb work just as
+    The resolution of the sphere on which the fiber ODFs are                          well on tablets as in the browser. With the recent release of
+mapped affects the accuracy of the uncertainty angle, even                            WebGL 2.0, one of the first task that will need to be done is to
+though it is the factor that has the least impact on the final result.                upgrade Fiberweb to use this version, mainly through the Three.js
+Results presented in this paper were generated using a sphere                         library. WebGL 2.0 will bring performance upgrades compared to
+with 724 symmetrical vertices. A sphere with a lower resolution                       the 1.0 version. For example, it will enable the use of 3D textures
+would give us uncertainty angles that are less representative of                      instead of only 2D, which is great considering anatomies are just
+the user-inputted percentage value of a maxima, and not even                          like 3D textures. Currently, WebGL 2.0 was only announced, and
+an accurate maxima. The difference between two different sphere                       it will probably be a while before it is widely available. Another
+resolutions to display the same fODF can be seen in Figure 10.                        major focus of Fiberweb will be to add new features. Currently,
+                                                                                      only selection is available to interact with streamlines datasets.
+4.2. Applications                                                                     It would be interesting to add the possibility to use more than
+One of the applications of FiberWeb is quality assurance. With                        one selection box to make the streamlines selection possibly more
+the possibility to access a medical visualization tool anywhere                       precise. It would also be interesting to add exclusion boxes for
+or on any platform, without the need for anything else, it will                       the same reason. Additionally, it would be great to add segment
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                               8                                             August 2017 | Volume 11 | Article 54
+Ledoux et al.                                                                                          Fiberweb: Diffusion Visualization and Processing in the Browser
+
+
+
+
+ FIGURE 8 | CST bundles resulting from probabilistic tractography, with a varying uncertainty percentage threshold. (A) Results of the Fiberweb algorithm for 100%
+ uncertainty. (B) Results of the Fiberweb algorithm for 50% uncertainty. (C) Results of the Fiberweb algorithm for 35% uncertainty. (D) Results of the Fiberweb
+ algorithm for 25% uncertainty. (E) Results of the Fiberweb algorithm for 15% uncertainty. (F) Results of the Fiberweb algorithm for 0% uncertainty.
+
+
+
+based filtering (Houde et al., 2015) to Fiberweb to make sure the                     is usable, it still needs improvements. This will be addressed by
+selection would work well with compressed streamlines. Since                          consulting the actual users of the software to pinpoint exactly
+performance is key, making Fiberweb multi-threaded would be                           what is expected of them.
+a good way to gain a lot of optimization, like splitting the
+rendering and the algorithms into separate threads. Also, it would                    5. CONCLUSION
+be interesting to add streamlines compression and clustering
+during load time (Rheault et al., 2015), allowing us to load bigger                   In this article, Fiberweb, a new browser-based medical dMRI
+datasets. Finally, the last goal of Fiberweb will be to allow more                    tractography visualization tool, was presented. This web
+file types to be used, since currently, only NIFTI and TrackVis                       application, unlike others of its kind, allows the user to interact
+files are supported. Additionally, while Fiberweb’s user interface                    with his data through virtual dissection with the help of a
+
+Frontiers in Neuroinformatics | www.frontiersin.org                               9                                               August 2017 | Volume 11 | Article 54
+Ledoux et al.                                                                                            Fiberweb: Diffusion Visualization and Processing in the Browser
+
+
+
+
+ FIGURE 9 | Probabilistic RTT of the CST for different puncture values. (A) Results of the Fiberweb algorithm with a puncture value of 0.2. (B) Results of the Fiberweb
+ algorithm with a puncture value of 0.8.
+
+
+
+
+ FIGURE 10 | fODF represented by spheres of different resolutions. (A) fODF represented by a sphere of 100 vertices. (B) fODF represented by a sphere of 724
+ vertices.
+
+
+
+selection box, and through streamlines reconstruction in real                          are sometimes restricted to a specific platform. Fiberweb aims to
+time. Furthermore, it introduces a new real-time probabilistic                         be a free to use quality assurance tool. You can see Fiberweb in
+tractography algorithm. It was shown to perform very closely                           action at: www.imeka.ca/fiberweb.
+to a state of the art probabilistic algorithm, both qualitatively
+and quantitatively. This makes data exploration efficient, simple                      AUTHOR CONTRIBUTIONS
+and fast. This is especially appropriate when you want to
+look at a smaller region in the brain, or know the effect of                           LL has implemented both Fiberweb and the new RTT
+anomalies, like a tumor, lesion or oedema. This new tool will                          probabilistic algorithm presented by the paper. FM has
+be particularly important to do quick quality validation imaging                       participated in the development of Fiberweb. MC has helped
+datasets, without the need to install any external software, which                     generating the results regarding the new RTT algorithm. JH
+
+Frontiers in Neuroinformatics | www.frontiersin.org                               10                                                August 2017 | Volume 11 | Article 54
+Ledoux et al.                                                                                                 Fiberweb: Diffusion Visualization and Processing in the Browser
+
+
+
+has participated in the development of Fiberweb. KW and MD                                 and Jean-René Bélanger for his constant support. We would also
+supervised the project, helping design Fiberweb and its goals, as                          like to thank the funding sources that made this work possible:
+well as the new algorithm. All authors mentionned previously                               Imeka, CRSNG, and FRQNT.
+drafted or revised the article.
+                                                                                           SUPPLEMENTARY MATERIAL
+ACKNOWLEDGMENTS
+                                                                                           The Supplementary Material for this article can be found
+We would like to thank Matthieu Dumont and Nil Goyette for                                 online at: http://journal.frontiersin.org/article/10.3389/fninf.
+their help with the logic behind the implementation of Fiberweb,                           2017.00054/full#supplementary-material
+
+
+
+REFERENCES                                                                                    of: International Society of Magnetic Resonance in Medicine (ISMRM),
+                                                                                              (Toronto, ON).
+Anwander, A., Tittgemeyer, M., von Cramon, D. Y., Friederici, A. D., and Knösche,          Jones, D., Horsfield, M., and Simmons, A. (1999). Optimal strategies for measuring
+   T. R. (2007). Connectivity-based parcellation of broca’s area. Cereb. Cortex 17,           diffusion in anisotropic systems by magnetic resonance imaging. Magn. Reson.
+   816–825. doi: 10.1093/cercor/bhk034                                                        Med. 42, 512–525. doi: 10.1002/(SICI)1522-2594(199909)42:3<515::AID-
+Basser, P. J., Pajevic, S., Pierpaoli, C., Duda, J., and Aldroubi, A. (2000). In              MRM14>3.0.CO;2-Q
+   vivo fiber tractography using dt-mri data. Magn. Reson. Med. 44, 625–632.               Pierpaoli, C., Jezzard, P., Basser, P. J., Barnett, A., and Di Chiro, G. (1996).
+   doi: 10.1002/1522-2594(200010)44:4<625::AID-MRM17>3.0.CO;2-O                               Diffusion tensor mr imaging of the human brain. Radiology 201, 637–648.
+Cabello, R. (2010). Three. js. Available online at: http://threejs.org/                       doi: 10.1148/radiology.201.3.8939209
+Catani, M., Howard, R. J., Pajevic, S., and Jones, D. K. (2002). Virtual in vivo           Presseau, C., Jodoin, P.-M., Houde, J.-C., and Descoteaux, M. (2015). A new
+   interactive dissection of white matter fasciculi in the human brain. Neuroimage            compression format for fiber tracking datasets. Neuroimage 109, 73–83.
+   17, 77–94. doi: 10.1006/nimg.2002.1136                                                     doi: 10.1016/j.neuroimage.2014.12.058
+Chamberland, M., Whittingstall, K., Fortin, D., Mathieu, D., and Descoteaux,               Rheault, F., Houde, J.-C., and Descoteaux, M. (2015). “Real time interaction with
+   M. (2014). Real-time multi-peak tractography for instantaneous connectivity                millions of streamlines,” in Proceedings of: International Society of Magnetic
+   display. Front. Neuroinformat. 8:59. doi: 10.3389/fninf.2014.00059                         Resonance in Medicine (ISMRM) (Toronto, ON).
+Cousineau, M., Garyfallidis, E., Côté, M.-A., Jodoin, P.-M., and Descoteaux, M.            Richie-Halford, A., Rokem, A., Smith, J., and Yeatman, J. D. (2016). Afq Browser.
+   (2016). “Tract-profiling and bundle statistics: a test-retest validation study,”           Available online at: https://github.com/yeatmanlab/AFQ-Browser
+   in Proceedings of: International Society of Magnetic Resonance in Medicine              Seunarine, K. K., and Alexander, D. C. (2009). “Multiple fibers: beyond the
+   (ISMRM). Singapore.                                                                        diffusion tensor,” in Diffusion MRI: From Quantitative Measurement to In vivo
+Descoteaux, M. (2010). High Angular Resolution Diffusion MRI: From Local                      Neuroanatomy, ed B. T. Johansen-Berg H (London: Academic Press), 55–72.
+   Estimation to Segmentation and Tractography. PhD thesis, INRIA Sophia                   Sherif, T., Rioux, P., Rousseau, M.-E., Kassis, N., Beck, N., Adalat, R.,
+   Antipolis.                                                                                 et al. (2014). CBRAIN: a web-based, distributed computing platform
+Descoteaux, M. (2015). “High angular resolution diffusion imaging (hardi),” in                for collaborative neuroimaging research. Front. Neuroinform. 8:54.
+   Wiley Encyclopedia of Electrical and Electronics Engineering (EEEE), 1–25.                 doi: 10.3389/fninf.2014.00054
+Descoteaux, M., Deriche, R., Knosche, T. R., and Anwander, A. (2009).                      Tournier, J., Calamante, F., and Connelly, A. (2012). Mrtrix: diffusion
+   Deterministic and probabilistic tractography based on complex fibre                        tractography in crossing fiber regions. Int. J. Imaging Sys. Technol 22, 53–66.
+   orientation distributions. IEEE Trans. Med. Imag. 28, 269–286.                             doi: 10.1002/ima.22005
+   doi: 10.1109/TMI.2008.2004424                                                           Tournier, J.-D., Calamante, F., and Connelly, A. (2007). Robust determination
+Dice, L. R. (1945). Measures of the amount of ecologic association between species.           of the fibre orientation distribution in diffusion mri: non-negativity
+   Ecology 26, 297–302. doi: 10.2307/1932409                                                  constrained super-resolved spherical deconvolution. Neuroimage 35, 1459–
+Friederici, A. D. (2011). The brain basis of language processing: from structure to           1472. doi: 10.1016/j.neuroimage.2007.02.016
+   function. Physiol. Rev. 91, 1357–1392. doi: 10.1152/physrev.00006.2011                  Vaillancourt, O., Boré, A., Girard, G., and Descoteaux, M. (2010). “A fiber
+Friederici, A. D. (2012). “The Product (implementation),” in The Brain Basis of               navigator for neurosurgical planning (neuroplanningnavigator),” in Proceedings
+   Language Processing: From Structure to Function (Interactive version), eds T. R.           of IEEE Visualization (Utah).
+   Knösche and R. W. Schurade. Available online at: http://onpub.cbs.mpg.de/               Wedeen, V. J., Wang, R., Schmahmann, J. D., Benner, T., Tseng, W.,
+Garyfallidis, E., Brett, M., Amirbekian, B., Rokem, A., Van Der Walt, S.,                     Dai, G., et al. (2008). Diffusion spectrum magnetic resonance imaging
+   Descoteaux, M., et al. (2014). Dipy, a library for the analysis of diffusion mri           (dsi) tractography of crossing fibers. Neuroimage 41, 1267–1277.
+   data. Front. Neuroinformat. 8:8. doi: 10.3389/fninf.2014.00008                             doi: 10.1016/j.neuroimage.2008.03.036
+Garyfallidis, E., Brett, M., Correia, M. M., Williams, G. B., and Nimmo-Smith,             Yeatman, J. D., Dougherty, R. F., Myall, N. J., Wandell, B. A., and Feldman,
+   I. (2012). Quickbundles, a method for tractography simplification. Front.                  H. M. (2012). Tract profiles of white matter properties: automating
+   Neurosci. 6:175. doi: 10.3389/fnins.2012.00175                                             fiber-tract quantification. PLoS ONE 7:e49790. doi: 10.1371/journal.pone.
+Girard, G., Whittingstall, K., Deriche, R., and Descoteaux, M. (2014). Towards                0049790
+   quantitative connectivity analysis: reducing tractography biases. Neuroimage
+   98, 266–278. doi: 10.1016/j.neuroimage.2014.04.074                                      Conflict of Interest Statement: The authors declare that the research was
+Haehn, D. (2013). “Slice: drop: collaborative medical imaging in the browser,”             conducted in the absence of any commercial or financial relationships that could
+   in ACM SIGGRAPH 2013 Computer Animation Festival (Anaheim, CA:                          be construed as a potential conflict of interest.
+   ACM), 1–1.
+Haehn, D., Rannou, N., Ahtam, B., Grant, E., and Pienaar, R. (2014). Neuroimaging          Copyright © 2017 Ledoux, Morency, Cousineau, Houde, Whittingstall and
+   in the Browser using the X Toolkit. Front. Neuroinform. Conference Abstract:            Descoteaux. This is an open-access article distributed under the terms of the Creative
+   5th INCF Congress of Neuroinformatics. doi: 10.3389/conf.fninf.2014.08.00101            Commons Attribution License (CC BY). The use, distribution or reproduction in
+Heuer, K., Schurade, R., and Anwander, A. (2014). Brain Networks. Available online         other forums is permitted, provided the original author(s) or licensor are credited
+   at: http://openscience.cbs.mpg.de/brainnetworks/                                        and that the original publication in this journal is cited, in accordance with accepted
+Houde, J.-C., Côté, M.-A., and Descoteaux, M. (2015). How to avoid biased                  academic practice. No use, distribution or reproduction is permitted which does not
+   streamlines-based metrics for streamlines with variable step sizes. Proceedings         comply with these terms.
+
+
+
+
+Frontiers in Neuroinformatics | www.frontiersin.org                                   11                                                   August 2017 | Volume 11 | Article 54
+

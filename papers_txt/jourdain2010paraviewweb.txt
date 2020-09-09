@@ -1,0 +1,608 @@
+International Journal of Computer Information Systems and Industrial Management Applications.
+ISSN 2150-7988 Volume 3 (2011), pp. 870–877
+ c MIR Labs, http://www.mirlabs.net/ijcisim/index.html
+
+
+
+
+            ParaViewWeb: A Web Framework for 3D
+               Visualization and Data Processing
+                                 Sebastien Jourdain, Utkarsh Ayachit and Berk Geveci
+                 sebastien.jourdain@kitware.com, utkarsh.ayachit@kitware.com, berk.geveci@kitware.com
+
+                                                        Kitware Inc.
+                                      28 Corporate Drive, Clifton Park, NY 12065, USA
+
+
+Abstract: Since the early days of the Internet, web technolo-
+gies have been at the forefront of innovation with many tradi-
+tional desktop applications migrating to the web and new ones
+continually being invented. In this paper, we present a 3D visu-
+alization framework, ParaViewWeb, which enables interactive
+large data processing and visualization over the web. To enable
+large data processing, ParaViewWeb uses ParaView, an open-
+source, parallel data visualization framework, to generate visu-
+alizations on the server-side while rapidly delivering images to
+the client. ParaViewWeb makes it easier to develop customized
+applications for the web that cater to a wide variety of scien-
+tists and domain experts who can use such a web-based sys-
+tem to analyze their datasets without leaving the familiar and
+omnipresent environment of a web browser. In this paper, we
+present the ParaViewWeb framework and its features and dis-
+cuss some of the application fields that can benefit from it.
+Keywords: Web3D, Scientific visualization, Collaboration, Re-
+mote rendering, VTK, ParaView                                                 Figure. 1: Ray-casting web application
+
+
+                                                                   II. Objectives
+I. Introduction
+                                                                   The web has been evolving rapidly since its inception. It has
+In recent years, organizations across the globe have increased     permeated the modern way of life so much that people are
+development efforts on high performance computing infras-          now migrating traditional desktop applications to the web,
+tructures. These are often distributed across several sites.       e.g. document editing [2], finance management [3] and tax
+This enhanced compute power has made it possible to run            filing [4]. Part of the appeal of the web is its ease of ac-
+large simulations, producing large datasets. The data sizes        cess. One simply types the URL in the web browser and
+have made distance visualization a necessity; it is no longer      can access the application, regardless of location or type of
+possible to copy datasets to your desktop for analysis. Par-       device. Additionally, web makes it easier to share and collab-
+aView [1] is an open-source, multi-platform data analysis          orate with other users no matter where they are located. The
+and visualization application. ParaView was developed to           same is true for visualization over the web. There are several
+analyze extremely large datasets using distributed memory          frameworks that have been developed that focus on visual-
+computing resources. It can be run on supercomputers to an-        ization, e.g. Protovis [5] and Many Eyes [6]. However, most
+alyze datasets of terascale as well as on laptops for smaller      of these are dealing with 2D visualization and use client-side
+data. In this paper, we present an exciting new approach           rendering to generate the visualizations, which works well
+for visualizing data over the web. We present a ParaView-          for smaller data sizes but is not feasible with large datasets.
+based web-visualization framework that allows developers           Our main objective is to leverage that growing usage and
+to build custom web applications that incorporate interactive      be able to easily access HPC resources and allow cross do-
+3D visualization. These web applications can leverage Par-         main expertise on large scale simulation projects where ex-
+aView’s parallel data processing and rendering capabilities        pert teams may be scattered across the globe.
+on the server side, while presenting easy-to-use, highly cus-      Moreover ParaViewWeb aims to provide a set of web-
+tomized webpages to the users to control and interact with         oriented components to allow web designers to easily de-
+their visualizations; all without leaving the familiar and om-     velop their own ad-hoc visualization applications for the web
+nipresent environment of a web browser.                            or extend their existing portals or monitoring tools with inter-
+
+
+                                                                                                  Dynamic Publishers, Inc., USA
+871                                                                                              Jourdain, Utkarsh and Geveci
+
+
+
+active 3D data analysis capabilities. The Figure 1 illustrates
+                                                                                      Client Applications
+a simple 3D web application that use the ray-tracer rendering
+engine of ParaView through the ParaViewWeb framework.                    JavaScript           Java              Flash
+The rest of this paper is organized as follows. In the Section
+3, we give a general overview of the system and the different
+components involved. Section 4 covers the different compo-                                        HTTP
+nents of the framework in detail, while in Section 5 we will
+demonstrate the use of the framework in different applica-
+tions.                                                                                    Web Server
+                                                                              PWService              Web Applications
+III. Architecture Overview
+To address the need for visualizing large datasets in 3D, we                               TCP
+have developed a framework based on ParaView. We can
+leverage all of ParaView’s visualization and data processing
+                                                                                           JMS Broker
+features such as parallel processing and rendering, volume
+rendering and ray-casting. To provide interactive 3D con-
+tent in real time to the client, we use server-side rendering.                            TCP
+This approach makes it possible to render large geometries
+without putting any requirement on the client’s devices and
+
+
+
+
+                                                                                                                        M
+enables the use of mobile devices such as iPhone and iPad.             PWServer           PWServer         PWServer
+
+
+
+
+                                                                                                                         PI
+                                                                                                            PWServer
+To manage the 3D rendered content on the client side, the                                                    PWServer
+                                                                                                              PWServer
+framework provides a set of components for viewing it in
+an interactive manner. Those components are available in                              Visualization Nodes
+Java [7], Flash [8] and JavaScript [10] and can be used to
+rotate, zoom or pan the 3D data.                                 Figure. 2: Schematic of the ParaViewWeb Visualization
+As a framework, ParaViewWeb uses proven technologies and         System
+standards such as Java Servlet, Java Server Pages (JSP) [12],
+Java Messaging Service (JMS) [11], and Java Persistence
+API (JPA) [13] on the server side to do most of the binding      open-source, freely available implementation.
+between the browser and the ParaView framework. We use           In the next section we will see each of these components in
+JavaScript and JSON-RPC [14] for communication protocol          detail.
+on the client side. Being a web-based application, all com-
+munication follows either HTTP or HTTPS protocols which          IV. Components
+make it easier to manage firewall and proxy issues. Par-
+aViewWeb provides a collection of components that can be         As described earlier, there are 3 major components in the
+used directly or easily integrated into an existing web por-     ParaViewWeb architecture.
+tals. These components range from server side to client side.      •   Web Service provides the facade exposed to the external
+Figure 2 gives an overview of the complete system.                     network including the web browsers. It enables access-
+On the server side, the visualization server (PWServer) is a           ing visualization as a service over the network.
+ParaView-based engine that does the actual visualization ei-
+ther by itself or by connecting to a remote ParaView server        •   JavaScript Visualization API is used by web-browser to
+running over a cluster with MPI. Then, the web service com-            create and update visualization pipelines. Internally, it
+ponent named PWService manages communication between                   uses the services provided by the Web Service to per-
+remote visualization servers (PWServer) and clients. It also           form the requested tasks.
+includes administration webpages, allowing a user to mon-
+                                                                   •   Visualization Engine is a ParaView application that runs
+itor running visualization session as well as browsing logs
+                                                                       on the visualization nodes to do the actual data analysis
+and information of the previous ones. On the client side, a
+                                                                       and processing.
+JavaScript library is provided for creating remote visualiza-
+tions and managing them. It also contains several visualiza-
+                                                                 A. Web Service
+tion components enabling users to look at 3D content in the
+browser interactively.                                           The crux of a typical web framework is its collection of web
+Using these components, developers can build websites or         services. The web services provide the facade that is ac-
+web portals with visualization and data processing capa-         cessible by the client applications including the webpages
+bilities. These components can be easily integrated into         loaded in web browsers. The collection of services pro-
+Rich Internet Applications (RIAs) developed using popular        vided by ParaViewWeb framework are called PWService.
+web design infrastructures including qooxdoo [15], Dojo [9],     PWService is a web application that is deployed on the web
+Google Web Toolkit [16], jQuery [17], Flex [8], and Java [7].    server accessed using a particular URL that is determined
+Figure 2 gives a schematic of the various components in-         at configuration time. Using JSON-RPC [14], which is a
+volved. Our implementation requires any supporting Java-         simple JSON [18] (JavaScript Object Notation) based pro-
+based Web Application server, such as Apache Tomcat, an          tocol for remote procedure calls, clients can make calls on
+ParaViewWeb: A Web Framework for 3D Visualization and Data Processing                                                                                    872
+
+
+
+PWService to start new instances of PWServer, monitor run-                                    1) Image delivery for JavaScript renderer
+ning PWServer instances, and even send JSON messages
+                                                                                              The standard polling technique allows the client to fetch
+to PWServer. The messages sent to PWServer range from
+                                                                                              server data periodically with some overhead and latency. In
+those constructing the visualization pipeline to those that
+                                                                                              order to reduce that latency and to allow JavaScript clients
+communicate the mouse interactions. PWService is respon-
+                                                                                              to fetch binary content such as images, we implemented a
+sible for delivering responses from the visualization engine
+                                                                                              long-polling communication style, which is also known as
+(PWServer) to the web clients.
+                                                                                              Comet programming [23]. Instead of using this technique for
+The PWService also makes it possible for the clients to re-
+                                                                                              small payload messages, we used it for image delivery in the
+quest rendered images from the PWServer. To address the
+                                                                                              JavaScript renderer. Figure 3 illustrates the communication
+concerns of highly secure domains, we do not expose any
+                                                                                              between the JavaScript renderer of ParaViewWeb through the
+additional ports through which the clients can communi-
+                                                                                              web service and the ParaView rendering engine.
+cate with the PWServer. Hence, their only access is via
+                                                                                              Moreover, that technique has an interesting side effect for
+the PWService. This provides an interesting challenge es-
+                                                                                              heterogeneous clients: the image delivery is driven by each
+pecially when providing rendered images as the latency be-
+                                                                                              individual client. Therefore, the ParaViewWeb service has
+comes critical. Any overhead inherent in the web service or
+                                                                                              been designed to deliver only the latest image available to
+the HTTP protocol itself can adversely affect the perceived
+                                                                                              the client and keep the connection open if nothing new is
+framerate on the client side. HTTP protocol [19] in itself
+                                                                                              available since the last data transfer. In this manner, each
+does not support the server sending data to the client, un-
+                                                                                              client gets the best possible framerate without affecting other
+less the client requested it. This implies that the client has
+                                                                                              clients. For example, if the server is able to produce 80
+to periodically check with the server if a new rendered im-
+                                                                                              frames per second for a given visualization, some clients may
+age is available and then fetch it. Also every time there are
+                                                                                              get only 30 frames per second compared to others who would
+new requests, a handshake as per the protocol ensues, which
+                                                                                              receive 60 frames per second.
+can affect the latency. To address these issues a few tech-
+niques are gaining widespread acceptance in the community
+                                                                                              2) Image delivery for Java Applet renderer
+under the umbrella term of server push [20] techniques. Each
+of rendering components uses a different technique to get                                     Java Applet [7] is not the most supported platform on the
+the best performance. The long-polling [21] (for JavaScript                                   web but compared to JavaScript or Flash, it provides more
+rendering) and streaming (for Java rendering) techniques                                      advanced capability. In order to provide the most efficient en-
+are the two mechanisms currently implemented inside Par-                                      vironment for user interactivity, we developed a renderer for
+aViewWeb. ParaViewWeb uses Abodes BlazeDS [22] remot-                                         ParaViewWeb written in Java that could be used as an embed-
+ing technology for the Flash renderer which also employes                                     ded applet inside a webpage or any other standard Java appli-
+similar techniques under the covers. Next we’ll see the tech-                                 cation. In order to improve the communication between this
+niques employed by each of the renderers implementation.                                      component and the server side we used the multi-threading
+                                                                                              capability of the environment to better separate the image
+                                                                                              management from the user interaction. Moreover, as Java has
+                                                                                              some built-in tools for stream management, we used custom
+                                Client computer                   WebServer (Tomcat)
+                                                                                              protocol on top of the HTTP one. For the mouse interaction,
+                                     JavaScript                        PWService              the web service allows the clients to use an up-stream persis-
+                                      renderer                           (Java)               tent network connection where interaction events are written
+                                                                                              using an XML structure. This allows any client to use a sin-
+                                                           loadImage(1)             image
+                           updateImage()                                           received   gle up-stream channel for the user interaction and by doing
+                                                         loadImage(2)                         so prevents the client from creating new connections while
+                                                                                              the user is interacting. For the image stream, the web service
+                                                            Same network
+                                                             connection                       is producing a single zip stream where the images are pushed
+   Image in the web page
+
+
+
+
+                                                                                    image     one after the other as a separate entry in the stream. Using a
+                           updateImage()                                           received
+                                                                                              zip stream is also another standard way to communicate with
+                                                           loadImage(3)
+                           updateImage()                                                      a client a stack of binary content. This allows any other heavy
+                                                           loadImage(4)                       client to benefit from that existing communication channel.
+                                                                                              The up-stream channel is only established at the beginning of
+                                                           The connection                     the user interaction and gets released when the user stop its
+                                                             is still alive
+                                                                                              interaction. Conversely, the down-stream connection stays
+                                                                                              live for the entire session.
+                                                  Communication
+
+
+
+
+                                                                                              By using a separate up-stream and down-stream communi-
+                                                    over HTTP
+
+
+
+
+                                                                                              cation channel we almost mimic a standard socket commu-
+                                                                                              nication. But even with that communication capability, if we
+                                                                                              do not provide any extra care in the image management, we
+                                                                                              could get a poor interactivity result with that design. In fact,
+Figure. 3: Image delivery with the long-polling technique                                     if all the images produced on the server side are sent through
+for JavaScript renderer                                                                       the web, we might simply overflow the bandwidth and induce
+                                                                                              an increasing lag between the current user interaction and the
+                                                                                              image that is currently rendered locally. So depending on the
+873                                                                                              Jourdain, Utkarsh and Geveci
+
+
+network capability of the client connection, if we do not drop    proprietary as well as open source implementations available
+images we will create an increasing image stack that will still   for the both the relaying server (known as the JMS Broker)
+be playing after the user has stopped its interaction. There-     as well as the message sending and receiving libraries. The
+fore, in the same way as we did for the image delivery for the    protocol employed is still JSON-RPC-based even though the
+JavaScript client, we allow the service to skip images on the     communication is over JMS.
+server side. As the client and the server remain connected        PWServer is the visualization engine. It can be set up to use
+all the time, it is unnecessary to write all the images on the    MPI to perform parallel data processing and rendering over a
+communication socket. Therefore what we are doing is only         cluster or as a single process and it does all the data process-
+writing or waiting for the latest image available after each      ing and rendering. For each separate visualization session,
+image has been fully written on the stream. That technique        we created a separate PWServer process. PWService handles
+prevents this buffering lag and reduces the bandwidth usage.      the management of these instances of PWServer, whether
+                                                                  they are local or working on a remote cluster and involving
+3) Image delivery for Flash/Flex renderer                         MPI internal communication.
+                                                                  To ensure that the client application perceives the best pos-
+Flash [8] is a commonly used technology on the web to de-         sible framerate when interacting, the PWServer employs a
+liver rich and interactive content. It was the first choice for   couple of optimizations.
+ParaViewWeb for its rendering component since all the in-
+frastructure existed and is widely used. BlazeDS [22] is
+                                                                  1) Asynchronous Processing
+the technology developed by Adobe [24] to support asyn-
+chronous messages between client and server communica-            As most users would expect in remote rendering, every user
+tion and specifically in a server push [20] paradigm. Based       interaction that affects the 3D scene should trigger the ren-
+on those technologies the ParaViewWeb Flash rendering             dering of an image which should be immediately shipped to
+component has been designed to exchange both mouse inter-         the clients. However, there undoubtedly is some delay be-
+actions and server images. Unfortunately, we did not imple-       tween the client requesting an image and the server deliv-
+ment any image dropping technique along the image deliv-          ering one. If the server continuously processes the requests
+ery chain which induces some lag with low connection band-        received from the client while the user interacts, the user is
+width during interaction.                                         bound to see a lag in the movement. To overcome the is-
+                                                                  sue, the client send asynchronous requests to the server. The
+4) Future Extensions                                              server receives the first requests and start rendering. While
+                                                                  the rendering is happening, it keeps on receiving any addi-
+Web standards are rapidly evolving and new ones will be-          tional interaction updates in a separate thread, from the client
+come available with the new HTML 5 [25] standards. Par-           and combines them into a single update. Once the rendering
+aViewWeb could benefit from several of these either for im-       is over the image is dispatched and the server starts process-
+age delivery or client side rendering. The communication          ing the most recent update.
+mechanism in the JavaScript layer could be even more ef-
+ficient than the current Java one by using WebSocket [26].
+                                                                  2) Image Resolution/Quality Tweaks
+On the other hand, WebGL [26] could allow the browser to
+directly render small geometry models without heavy com-          Another trick to improve the perceived frame rate on the
+munication payload.                                               client side is interactively adapt the image resolution and/or
+Those standards are making their way into the current web         quality during interaction. As one interacts on the client side,
+browsers and some early implementations are available in          the image resolution and/or quality is reduced. Once the in-
+advanced browser such as Chrome or Safari. Some exper-            teraction is stopped, the server sends the optimal quality and
+imentation has been done using those new standards [26] to        resolution image.
+render a 3D scene that has been generated by ParaView into a      In our implementation, we have chosen to reduce the image
+web browser using the WebGL framework. This work could            quality via two parameters. The first one is the image size
+easily be used to extend ParaViewWeb to support such client-      and the second one is the JPEG [29] compression option. By
+side rendering mechanisms.                                        reducing each dimension by two and by setting the quality
+                                                                  to 50 for the JPEG compression, we can produce images that
+B. Visualization Engine                                           could be 70% smaller than full size.
+The actual data analysis and visualization in the Par-
+                                                                  C. The JavaScript library
+aViewWeb framework is done by the visualization engine,
+called PWServer. PWServer is a ParaView-based process             JavaScript has become the language of choice for develop-
+that can be thought of as a headless ParaView application         ing web applications for the browser. ParaViewWeb pro-
+that responds to the JSON messages relayed via the PWSer-         vides a JavaScript API that can be used within web browsers
+vice. In typical configurations, the web-server and the visu-     to access the PWService as well as communicate with the
+alizations nodes are separate machines. This means that the       PWServer. The JavaScript library provides remoting capa-
+PWService has to use network communication to relay the           bilities, enabling the web browser to access remote visual-
+messages to PWServer. In our design, we use Java Message          ization objects present on the PWServer.
+Service (JMS) for this communication. JMS is an API for           ParaView is a post-processing application that can either
+sending messages between two or more clients which was            work on laptops or larger distributed computers [30]. Par-
+proposed as part of the Java Platform. There are several          aView is using the VTK [31] library for its data processing
+ParaViewWeb: A Web Framework for 3D Visualization and Data Processing                                                       874
+
+
+
+but the client side code never directly manipulates those VTK      <html>
+objects. Instead the client is using proxies to abstract the         <head>
+                                                                       <meta http-equiv="content-type"
+communication and the deployment of those VTK objects.                           content="text/html; charset=ISO-8859-1">
+                                                                       <script src="seb_files/ParaViewWeb.js"
+Thanks to that design, ParaView is using the same code on                      type="text/javascript"></script>
+the client side to work either in a standalone manner or in a        </head>
+                                                                     <body onunload="paraview.disconnect();">
+distributed mode across several nodes of a super computer.
+                                                                      <div id="renderer">
+On the client side, ParaView uses proxies to abstract the man-           <!-- Renderer will be inserted here-->
+                                                                      </div>
+agement of objects on the server side. The ParaViewWeb
+JavaScript library allows the user to create and manipulate           <script type="text/javascript">
+                                                                        var url = "http://paraviewweb.kitware.com/PWService";
+the ParaView proxies directly inside JavaScript code. This
+                                                                         // Create a paraview session
+facilitates the definition and the configuration of visualiza-          var paraview = new Paraview(url);
+tion pipelines. Figure 4 illustrates how proxies can be cre-            paraview.createSession("name", "comment");
+                                                                        var view = paraview.CreateIfNeededRenderView();
+ated and how we can retrieve and set their properties in                var viewId = view.__selfid__;
+
+JavaScript. Alternatively, Figure 5 illustrates how a full inte-        // Load 3D file
+                                                                        var cow = paraview.OpenDataFile(
+gration of ParaViewWeb can be achieved inside a static web-                              {filename:'/server-path/cow.vtp'});
+page, which embeds a 3D interactive renderer.                           // Cut data
+                                                                        var normal = [1,2,10];
+                                                                        var origin = [0,0,0];
+ /* Let’s start by creating a Cone object: */                           // Red side of the cow
+ var cone = paraview.Cone();                                            var clipRed = paraview.Clip({Input:cow});
+                                                                        var planRed = clipRed.getClipType();
+ /* Get the full list of properties. */                                 planRed.setNormal(normal);
+ var propertiesArray = cone.ListProperties();                           planRed.setOrigin(origin);
+                                                                        var repClipRed = paraview.Show({proxy:clipRed});
+ /* Get the resolution of the cone */                                   repClipRed.setDiffuseColor(1,0,0);
+ var resolution = cone.getResolution();                                 // Blue side of the cow
+                                                                        var clipBlue = paraview.Clip({Input:cow,InsideOut:1});
+ /* Double the resolution of the cone */                                var planBlue = clipBlue.getClipType();
+ cone.setResolution(resolution * 2);                                    planBlue.setNormal(normal);
+                                                                        planBlue.setOrigin(origin);
+ /* Creating another cone with a resolution of 64 */                    var repClipBlue = paraview.Show({proxy:clipBlue});
+                                                                        repClipBlue.setDiffuseColor(0,0,1);
+ var cone2 = paraview.Cone( { Resolution:64 } );
+                                                                        // Make sure we update the view once
+ /* Assign an array value */                                            paraview.Render();
+ cone2.setCenter(4, 5, 6);
+                                                                        // Add a green bell to the cow
+ /* Apply a shrink filter and show the result */                        cone = paraview.Cone({Center:[4.5,0.25,0],
+ var shrinkFilter = paraview.Shrink( {Input:cone} );                                    Direction:[0,1,0], Resolution:16 });
+                                                                        var repCone = paraview.Show({proxy:cone});
+                                                                        repCone.setDiffuseColor(0,1,0);
+ /* Getting data information of the shrink filter */
+ var dataInformation =                                                   // Create and bind 3D interactive renderer
+     paraview.GetDataInformation({proxy:shrinkFilter});                  var renderer = new JavaScriptRenderer("0",url);
+                                                                         renderer.init(paraview.sessionId, viewId);
+ var   numberOfCells = dataInformation.NbCells;                          renderer.setSize('400','400');
+ var   numberOfPoints = dataInformation.NbPoints;                        renderer.bindToElementId("renderer");
+                                                                         renderer.start();
+ var   bounds = dataInformation.Bounds;                                </script>
+ var   memoryUsage = dataInformation.Memory;                         </body>
+ var   dataType = dataInformation.Type;                            </html>
+
+ /* Show the result of the shrink filter */
+ paraview.Show( {proxy:shrinkFilter} );                                  Figure. 5: Sample HTML & JavaScript code
+ /* Manage camera and view */
+ paraview.ResetCamera();
+ var view = paraview.CreateIfNeededRenderView();
+ view.setCenterOfRotation(view.getCameraFocalPoint());
+
+
+        Figure. 4: Sample JavaScript pipeline setting
+
+By providing the full access to the Proxy Manager of Par-
+aView, we allow web developers to design any kind of appli-
+cation, which could range from a very simple application like
+the one illustrated in Figure 5 and 6 to a more complex one
+that could mimic the current Qt one. On the other hand, de-
+veloping ad-hoc applications that target a very specific com-
+munity on web could be a valuable endeavor. Moreover, it
+might be easier to develop several simple applications and
+have a dedicated URL for each of them.
+
+1) Plugins for server side API extension
+Managing Proxies with the JavaScript layer may result in a
+lot of communication overhead where you only want a de-
+fault setting to be applied on a large number of proxy objects.
+                                                                       Figure. 6: View of the HTML & JavaScript code
+To overcome this limitation we designed a server-side plugin
+875                                                                                               Jourdain, Utkarsh and Geveci
+
+
+mechanism that allows the user to call any custom remote           are the one supported by ParaView which range from sim-
+methods like they could do with proxies.                           ple geometry one such as VRML and PLY to real simulation
+Those plugins are python module that lie on the server side        dataset using VTK, Exodus, Xdmf or other formats. Once
+and get wrapped into a JavaScript object at runtime. Due to        the data is loaded on the server, it can be processed by a
+that extension capability, the client code written in JavaScript   set of classical scientific visualization filters such as clip-
+can use a simplified and dedicated API to implement com-           ping plane, slicer, iso-contours and, depending on the data,
+plex behavior that could be painful to do on the client side.      a stream tracer which is used to see the flow based on the
+However, this also allows the web developer to build smaller       integration of a vector field. Moreover, interactive 3D ob-
+and simpler JavaScript code where the most complex code            jects can be used to move or rotate the plan used by the slicer
+stays and gets executed on the server-side with no network-        and the clipping plane filter as well as the line seed where
+ing overhead.                                                      streaming lines start their computation.
+
+V. Applications                                                    B. Knowledge Sharing
+                                                                   Web visualization also presents exciting new possibilities for
+Web visualization has several real world applications. As
+                                                                   modern classrooms. Students no longer have to look at static
+mentioned earlier, it facilitates development of web por-
+                                                                   images in a textbook. They can study the fluid flow proper-
+tals for job submission and then result analysis using Par-
+                                                                   ties, for example, by interacting with a visualization online.
+aViewWeb for supercomputing sites. These visualization ap-
+                                                                   Similarly, with online journals, instead of merely presenting
+plications can be customized to the types of datasets that are
+                                                                   static images in papers, we can develop online journals and
+being visualized, making them easier to use for the domain
+                                                                   publication establishments that enable the reader to simply
+experts.
+                                                                   click on the image to start interacting with the real dataset.
+In order to help web designers benefit from this library, sev-
+eral basic applications have been developed to either illus-
+trate the capability of the framework or to provide some tu-
+torial code on how the framework works and how it can be
+used through several contexts and third-party JavaScript li-
+braries.
+
+A. Post Processing
+As a demonstration prototype, Figure 7 illustrates a web ap-
+plication that has been developed using the framework. That
+application has been designed to illustrate how ParaView can
+be used as a backend for relatively complex 3D data process-
+ing on the web. The Google GWT [16] JavaScript toolkit has
+been used to build this application. The purpose of that ap-
+plication is to illustrate what can be done on the web in terms
+of interactivity with data processing involved. It has not been
+built as a ParaView replacement, but as an example of what              Figure. 8: State based generated Web application
+can be done with the ParaViewWeb framework.
+                                                                   In fact, an advanced web application has been developed
+                                                                   along the framework to allow users to build a standalone web
+                                                                   application based on a ParaView state file. That state file is
+                                                                   used to load and set up the full processing pipeline. More-
+                                                                   over, if that state file has been extended with some additional
+                                                                   information, a control panel can be shown to enable users to
+                                                                   configure at runtime some filters parameters. Figure 8 illus-
+                                                                   trates a running state application where the user can interact
+                                                                   with the 3D scene and, by enabling the control panel on the
+                                                                   left, change the iso-contour value of that scanned mummy
+                                                                   skull with a slider.
+
+                                                                   C. Online Data Publishing
+                                                                   ParaViewWeb can also be used as a rendering engine for on-
+                                                                   line 3D databases. Through ParaViewWeb, users will be able
+                                                                   to browse datasets and visualize them directly inside their
+      Figure. 7: Simple post processing Web application            browser. In fact, some first integration steps have been done
+                                                                   with MIDAS [32], a multimedia server for storing massive
+In regards to data, the user can either select a dataset on        collections of scientific data where users can now explore
+the server or upload their own. The supported data types           their data interactively.
+ParaViewWeb: A Web Framework for 3D Visualization and Data Processing                                                      876
+
+
+D. Visualization on Mobile Devices                                  [6] Many Eyes, 2004.
+                                                                        http://manyeyes.alphaworks.ibm.com/manyeyes/
+Since most modern mobile devices come with built-in web-
+browsers, its very easy to develop web apps accessible from         [7] Sun, 1995. Java-Oracle. http://java.sun.com
+devices such as iPhone and iPad. The JavaScript renderer
+supports multi-touch capability of the devices and allows the       [8] Adobe Flex, 2006. Adobe.
+user to zoom with the appropriate gesture. Also since the               http://www.adobe.com/products/flex
+web browser using simple JSON based protocol to communi-
+                                                                    [9] Dojo, 2009. Dojo foundation.
+cate with the web service, its possible to create custom Apps
+                                                                        http://www.dojotoolkit.org/
+for the mobile platform using the native SDK.
+To this end, we developed a prototype running on                   [10] Ecma, 1999. Standard ECMA-262,
+AndroidT M [33] phones and tablets that use the JSON-RPC                ECMAScript Language Specification, 3rd edition
+protocol to set up the visualization pipeline and use the ad-
+vanced streamed image delivery channel that the Java applet        [11] JSR-914, 2002. Java Message Service.
+is using to reduce the communication overhead.                          http://jcp.org/en/jsr/summary?id=914
+
+                                                                   [12] JSR-245, 2006. JavaServerT M Pages.
+VI. Conclusions                                                         http://jcp.org/en/jsr/summary?id=245
+In this paper, we have presented ParaViewWeb, a framework          [13] JSR-220, 2006. Enterprise JavaBeans 3.0.
+for large data visualization over the web. ParaViewWeb is a             http://jcp.org/en/jsr/summary?id=220
+parallel visualization framework that is comprised of compo-
+nents that make it easier to develop websites that enable in-      [14] JSON-RPC, 2006. http://json-rpc.org
+teractive analysis of large datasets. It is based on ParaView, a
+popular open-source visualization tool which uses distributed      [15] Qooxdoo, 2005. 1&1 Internet AG.
+data processing and rendering. ParaViewWeb uses server-                 http://qooxdoo.org
+side rendering to avoid complications with delivering large        [16] GWT, 2007. Google Web Toolkit.
+geometries to the client and complications with rendering 3D            http://code.google.com/webtoolkit
+geometries in a web-browser in a cross-browser and cross-
+platform manner. To provide a responsive 3D visualization          [17] jQuery, 2009. Software Freedom Conservancy.
+system, we optimized image processing and delivery to re-               http://jquery.com
+duce latency.
+ParaViewWeb is not just a visualization framework; it is a         [18] JSON, 1999. http://json.org
+web extension of ParaView. This allows any web devel-              [19] Hypertext Transfer Protocol, 1990,
+oper to build applications inside a web page that leverage the          http://www.w3.org/Protocols/rfc2616/rfc2616.html
+computation and rendering capability of ParaView. Although
+ParaViewWeb has a focus on remote rendering for large data         [20] Server Push.
+visualization, some of its first usage has been done on small           http://en.wikipedia.org/wiki/Push technology
+data models where WebGL technology could have been used.
+However, this evolution can still be achieved once WebGL is        [21] Jourdain Sebastien, Forest Julien, Mouton Christophe,
+mature enough and if the community feels the need for it.               Mallet Laurent, Chabridon Sophie, ShareX3D, a scien-
+Like ParaView, ParaViewWeb will be released under a BSD                 tific collaborative 3D viewer over HTTP, Web 3D sym-
+license, enabling anyone to extend and customize it to their            posium, 2008.
+specific needs.
+                                                                   [22] Blazeds, 2008.
+                                                                        http://opensource.adobe.com/wiki/display/blazeds
+Acknowledgments
+                                                                   [23] Comet, 2006.
+Portions of this work were supported by DOE SBIR Phase II               http://en.wikipedia.org/wiki/Comet (programming)
+Award DE-FG02-08ER85143.
+                                                                   [24] Adobe, 2010.
+                                                                        http://opensource.adobe.com/wiki/display/site/Home
+References
+                                                                   [25] HTML 5, 2011.
+ [1] Henderson A. et al, 2007. ParaView Guide. A Parallel               http://dev.w3.org/html5/spec/
+     Visualization Application. Kitware Inc.
+                                                                   [26] WebSocket, 2011.
+ [2] Google Docs, 2010. http://docs.google.com                          http://dev.w3.org/html5/websockets/
+ [3] Mint Software, 2007. Mint, Inc. http://www.mint.com           [27] WebGL, 2011.
+                                                                        http://www.khronos.org/registry/webgl/specs/latest/
+ [4] TurboTax, 1997. Intuit, Inc. http://www.turbotax.com
+                                                                   [28] x3dom sample, http://www.x3dom.org/?p=821
+ [5] Bostock M., Heer J., 2009. Protivis: A graphical toolkit
+     for visualization. http://vis.stanford.edu/protovis           [29] JPEG, http://en.wikipedia.org/wiki/JPEG
+877                                                                    Jourdain, Utkarsh and Geveci
+
+
+[30] SANDIA Report, September 2010.
+     http://www.cs.unm.edu/ kmorel/documents/MilestoneFY10Sandia.pdf
+[31] The Visualization Toolkit. http://www.vtk.org/
+[32] Midas, 2009. Kitware Inc.
+     http://www.kitware.com/products/midas.html
+
+[33] AndroidTM, http://www.android.com/
+
+
+Author Biographies
+             Sebastien Jourdain received a Master’s De-
+             gree in Computer Science, from the ESSTIN
+             Engineering School (France) in 2002. Since
+             then he worked in software development in-
+             volving high performance, 3D scientific visu-
+             alization and collaboration. In February 2010,
+he joined Kitware where he is currently working as Research
+and Development engineer on ParaView and its collaborative
+aspects.
+
+              Utkarsh Ayachit Mr. Ayachit is a technical
+              lead at Kitware Inc. He is one of the leading de-
+              velopers of the ParaView visualization aplica-
+              tion and leads the ParaViewWeb development
+              team. Mr. Ayachit received his Master’s De-
+              gree in Compture Science from Univerity of
+Maryland, Baltimore County in 2004. His interests include
+large scale parallel data analysis and visualization, collabo-
+rative remote visualization and application frameworks.
+
+              Berk Geveci Dr. Geveci leads the scientific
+              visualization and infomatics teams at Kitware
+              Inc. He is one of the leading developers of
+              the ParaView visualization application and the
+              Visualization Toolkit (VTK). His research in-
+              terests include large scale parallel computing,
+computational dynamics, finite elements and visualization al-
+gorithms. Dr. Geveci regularly publishes and teaches courses
+at conferences including IEEE Visualization and Supercom-
+puting conferences.
+Dr. Geveci received his B.S. in Mechanical Engineering from
+Bogazici University in 1994, his M.S. and Ph.D. in Mechan-
+ical Engineering from Lehigh University in 1996 and 1999,
+respectively. While at Lehigh University he conducted re-
+search on subsonic and supersonic flow induced nonlinear vi-
+brations, developing a new procedure for the solution of cou-
+pled flow and structural equations. In addition, he authored
+software for the study of separation in unsteady boundary
+layer flows and the visualization of the numerical and ex-
+perimental results. After graduating from Lehigh University,
+Dr. Geveci completed a post-doctoral fellowship at the Uni-
+versity of Pennsylvania during which he worked in the area
+of optimal control investigating applications in the control of
+hydrothermal instabilities.
+

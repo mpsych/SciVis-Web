@@ -1,0 +1,1538 @@
+A Survey of Interactive Remote Rendering Systems
+SHU SHI, AT&T Labs Research
+CHENG-HSIN HSU, National Tsing-Hua University
+
+
+Remote rendering means rendering 3D graphics on a computing device and displaying the results on another
+computing device connected through a network. The concept was originally developed for sharing computing
+resources remotely. It has been receiving increasing attention from researchers in both academia and indus-
+try in recent years due to the proliferation of cloud computing and mobile devices. In this article, we survey           57
+the interactive remote rendering systems proposed in the literature, analyze how to improve the state of
+the art, and summarize the related technologies. The readers of this article will understand the history of
+remote rendering systems and obtain some inspirations of the future research directions in this area.
+Categories and Subject Descriptors: H.5.1 [Multimedia Information System]: Video
+General Terms: Design, Algorithms, Performance
+Additional Key Words and Phrases: Cloud computing, cloud games, cloud rendering, distributed rendering,
+video streaming, QoS, QoE
+ACM Reference Format:
+Shu Shi and Cheng-Hsin Hsu. 2015. A survey of interactive remote rendering systems. ACM Comput. Surv.
+47, 4, Article 57 (May 2015), 29 pages.
+DOI: http://dx.doi.org/10.1145/2719921
+
+
+1. INTRODUCTION
+1.1. What is Remote Rendering?
+A remote rendering system runs rendering applications on one computing device, which
+is referred to as rendering server or server, and displays the rendering results on an-
+other network-connected computing device, which is referred to as client. An interactive
+remote rendering system is capable of accepting user controls through the input devices
+on a client to interact with the rendering applications running on a server (Figure 1).
+In this survey, we focus on the interactive remote rendering systems that are designed
+specifically for 3D graphics. Unless otherwise noted, the short term “remote rendering”
+is used herein to indicate “interactive remote rendering for 3D graphics.”
+   The concept of remote rendering appeared early when PCs were not powerful enough
+to process 3D graphics rendering. Initial research in this area investigated the potential
+of sharing a dedicated graphics workstation over networks to provide remote rendering
+services [Ohazama 1999]. In recent years, the wide deployment of high-speed wireless
+networks and the rising prosperity of mobile cloud computing have brought more re-
+search interests into remote rendering. Beermann and Humphreys [2003] predicted
+
+
+Authors’ addresses: S. Shi, AT&T Labs Research, 1 AT&T Way, Bedminster, NJ 07921; email: shushi@
+research.att.com; C.-H. Hsu, Department of Computer Science, National Tsing Hua University, No. 101 Sec.
+2 Kuang-Fu Road Hsin-Chu City, Taiwan; email: chsu@cs.nthu.edu.tw.
+Permission to make digital or hard copies of part or all of this work for personal or classroom use is granted
+without fee provided that copies are not made or distributed for profit or commercial advantage and that
+copies show this notice on the first page or initial screen of a display along with the full citation. Copyrights for
+components of this work owned by others than ACM must be honored. Abstracting with credit is permitted.
+To copy otherwise, to republish, to post on servers, to redistribute to lists, or to use any component of this
+work in other works requires prior specific permission and/or a fee. Permissions may be requested from
+Publications Dept., ACM, Inc., 2 Penn Plaza, Suite 701, New York, NY 10121-0701 USA, fax +1 (212)
+869-0481, or permissions@acm.org.
+c 2015 ACM 0360-0300/2015/05-ART57 $15.00
+DOI: http://dx.doi.org/10.1145/2719921
+
+
+                                        ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:2                                                                              S. Shi and C.-H. Hsu
+
+
+
+
+                          Fig. 1. Basic remote rendering framework.
+
+that graphics rendering would become a remote service and this prediction came true
+with the emergence of cloud gaming [Ross 2009].
+  Compared to the conventional approach that performs rendering locally, remote ren-
+dering has several advantages. First, it can provide rich rendering experiences to
+“thin” clients (e.g., mobile devices) with limited computing resources (i.e., GPU, mem-
+ory, power). Second, the computing resources on a rendering server can be efficiently
+shared by multiple clients. Third, remote rendering is a simple but effective cross-
+platform solution. After developing the client programs for different platforms, all ap-
+plications need only be developed for the server and the same rendering experience will
+be achieved on all client platforms. Last but not least, a remote rendering system can be
+designed to prevent the source contents from leaking to malicious users by streaming
+only rendering results to clients. In cloud gaming, for example, the currently deployed
+remote rendering solutions can prevent pirating concerns because game contents are
+never sent to gamers.
+
+1.2. Key Challenges
+Different remote rendering systems have been designed to target various problems and
+challenges. In this survey, we give a broad overview of the different types of remote
+rendering designs that have been proposed over the years. Our discussion focuses on
+two fundamental problems: how to reduce interaction latency and how to transmit data
+from server to client effectively and efficiently.
+   We define “interaction latency” as the time from the generation of a user interaction
+request until the appearance of the first updated frame on the client screen. As an
+intrinsic problem of all network distributed systems, latency plays an important role in
+evaluating system performance and Quality of Experience (QoE) [Wang and Dey 2009].
+Long interaction latency can significantly impair user experience. For example, 100ms
+is the largest tolerable latency for an intensive first-person shooting game [Beigbeder
+et al. 2004]. Therefore, the minimization of interaction latency is a major concern and
+we will review all related latency reduction techniques that can be applied to remote
+rendering.
+   Data transmission is always the core module of any remote rendering system. In most
+cases, a data transmission module design should consider all sorts of constraints, such
+as limited bandwidth, various channel conditions, and real-time requirements. More
+importantly, the success of data streaming has a direct impact on the overall system
+performance. In this article, we mainly discuss three aspects of data transmission:
+compression, streaming protocols, and Quality of Service (QoS)/QoE evaluation.
+
+1.3. Related Work
+Thin Clients and Remote Sharing. Thin client systems (e.g., SLIM [Schmidt et al.
+1999], THiNC [Baratto et al. 2005]) and remote desktop sharing systems (e.g., VNC
+[Richardson et al. 1998], RDP [Cumberland et al. 1999]) allow users to access appli-
+cations remotely and share computing resources. Users on the client side can interact
+with the applications running on the server side. Nevertheless, there are key differences
+between those systems and the remote rendering systems surveyed in this article.
+
+                              ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                       57:3
+
+   First, most thin client and remote sharing systems appeared before 3D graphics
+rendering became popular. Early systems were only designed to support sharing desk-
+top elements and rendering 2D graphics. Only the recent approaches started to add
+support for 3D graphics (e.g., THiNC [Baratto et al. 2005], TurboVNC [Commander
+2007], etc.). Second, the main research goal of sharing 2D applications is to design
+protocols that can efficiently update regional changes on the screen. This is because
+2D rendering is considered lightweight, such that it can either happen on a server or a
+client. However, this assumption does not apply to 3D graphics due to the significantly
+increased rendering complexity. Last, 3D applications like video games usually refresh
+the whole screen at a much higher rate. Such applications also require different com-
+pression and streaming methods that are different from those used in conventional 2D
+thin client systems.
+   In this article, we will not include further detail on any specific thin client or remote
+sharing design (the systems that support 3D graphics will be briefly introduced in
+Section 2 for comparison with other remote rendering approaches). Therefore, readers
+are referred to other surveys [Yang et al. 2002; Lai and Nieh 2006] for information on
+those systems.
+   Distributed Graphics and Cluster Rendering. Another related work is distributed
+graphics. When the rendering computation is too complex for one server to ex-
+ecute, or the display system is a wall of multiple screens [Staadt et al. 2003],
+such as CAVE [DeFanti et al. 2011] and SAGE [Renambot et al. 2004], the ren-
+dering workload is divided and distributed to multiple servers for parallel execu-
+tions and the final rendering images of these servers are stitched together. Such
+systems share similar network distributed architecture to remote rendering sys-
+tems but solve a totally different research problem. Distributed rendering mainly
+focuses on how to divide computation for parallel rendering in a cluster, while
+remote rendering focuses on how server and client interact with each other. Ex-
+amples of distributed rendering efforts include WireGL [Humphreys et al. 2001],
+Chromium [Humphreys et al. 2002], OpenGL Multipipe SDK [Bhaniramka et al.
+2005], ParaView [Cedilnik et al. 2006], and Equalizer [Eilemann et al. 2009]. Al-
+though we are not going to cover distributed graphics or cluster rendering in more
+depth in this survey, we believe that the future remote rendering systems will adopt
+distributed graphics to improve the rendering performance for rendering-intensive
+applications.
+
+1.4. Overview of this Survey
+In Section 2, we survey some background information on rendering systems and review
+the remote rendering designs proposed for various applications. In Section 3, we use
+a specific example of the state-of-the-art cloud gaming systems to explain in detail
+the challenges of remote rendering. Next, we survey different techniques that can
+address two key challenges in Section 4 and Section 5, respectively. Section 6 shares
+our vision of the future research directions in this area, and Section 7 concludes the
+survey.
+
+2. REMOTE RENDERING SYSTEMS IN THE LITERATURE
+In this section, before we jump into the details of how remote rendering systems
+are built, we first review the rendering framework of X Window systems and how to
+modify X to a general-purpose remote rendering system. Next, we list the specialized
+remote rendering systems that have been designed for various applications. Last, we
+summarize with a novel classification method based on the type of data transmitted
+between server and client.
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:4                                                                              S. Shi and C.-H. Hsu
+
+
+
+
+                            Fig. 2. X Window server-client model.
+
+
+
+
+                                   Fig. 3. OpenGL and X.
+
+
+2.1. Rendering Basics
+We take Unix/Linux as an example to review some basic knowledge of rendering. The
+rendering system of Unix/Linux is managed by X [Scheifler and Gettys 1986]. Figure 2
+shows an illustration of this server-client based window system. Each X application
+runs as a client while the operating system hosts an X server that directly connects
+to the hardware driver. An X application (X client) sends low level XLib operation
+commands to an X server using X11 protocols and the X server executes the rendering
+operations and displays the final image. X is network transparent, meaning that an X
+application can connect to a remote X server by sending XLib operations over networks.
+   X was originally designed for 2D graphics. The evolution of 3D graphics rendering
+and OpenGL [Woo et al. 1999] makes the system more complex. The X server can
+directly interpret and execute XLib operations for 2D graphics, but not for 3D. The
+3D rendering operations comprise the commands for data description (including both
+geometry and texture) and 3D drawing. The rendering process requires the support of a
+3D graphics driver (Figure 3), which can consist of either graphics hardware or software
+libraries. The number and size of 3D operations for rendering one frame depend on the
+complexity of 3D data. For a complex scene with millions of polygons, rendering even
+one single frame requires passing a huge amount of data to the 3D graphics driver.
+In order to reduce the overhead of passing 3D rendering operations, X allows OpenGL
+programs to bypass the X server and send all 3D operations, including both drawing
+and data commands, to the OpenGL driver directly.
+
+                              ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                               57:5
+
+
+
+
+Fig. 4. Two general-purpose remote rendering solutions based on the X system: (a) GLX; (b) VirtualGL
+[Commander 2007].
+
+2.2. General-Purpose Solutions
+Apparently, the network-transparent nature of X makes it a good platform to implement
+remote rendering. GLX was designed as the OpenGL extension for X.1 It comprises an
+Application Programming Interface (API) that provides the OpenGL functions to X ap-
+plications, an extension of the X protocol that allows the X client to send 3D rendering
+operations to the X server, and an extension to the X server that can pass 3D rendering
+operations to the underlying OpenGL driver. GLX allows 3D graphics rendering
+applications to display on a remote X server like all other 2D applications (Figure 4(a)).
+   The problem with this command streaming approach is that 3D rendering is actu-
+ally performed on the client side. All geometry models, texture maps, and operation
+commands are streamed to the client before rendering can begin. For applications that
+perform complex graphics rendering, streaming all graphical data to the client may
+require excessive network bandwidth.
+   A different approach was introduced by Stegmaier et al. [2002, 2003]. Only 2D oper-
+ations are sent to the X server (on the client side) while 3D operations are rendered on
+the server side. The 3D rendering image is captured and streamed to the client, where
+it is merged with 2D rendering results. This image streaming approach led to an open-
+source project: VirtualGL [Commander 2007]. Figure 4(b) shows an illustration of the
+VirtualGL framework.
+   The bandwidth usage for the image streaming approach is predictable and bounded.
+This is because the streaming bandwidth is proportional to the display resolution and
+refresh rate. In the worst case when very complex 3D scenes are rendered, the image
+streaming approach may require much less network bandwidth than the command
+streaming approach mentioned earlier. Moreover, using the image streaming approach
+requires no special graphical hardware on the client side.
+   Both GLX and VirtualGL are two examples of general-purpose remote rendering
+solutions. They can support any OpenGL applications without extra efforts from de-
+velopers to modify the source code for remote rendering. There have also been several
+proprietary solutions belonging to this category, including SGI’s OpenGL Vizserver
+[Ohazama 1999], HP’s Remote Graphics Software (RGS) [HP 2006], and Mercury In-
+ternational Technology’s ThinAnywhere [Technology 2007].
+   The modern thin-client systems that support 3D graphics can also be considered to be
+general-purpose solutions. Both command streaming and image streaming approaches
+
+1 WGL  [Paik 2014] and CGL [Apple 2009] are similar interfaces provided for Windows and Mac OS X,
+respectively.
+
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:6                                                                                  S. Shi and C.-H. Hsu
+
+
+
+
+       Fig. 5. Four categories of specialized remote rendering systems and sample applications.
+
+
+have been applied in those systems. For example, THiNC [Baratto et al. 2005] took a
+command streaming approach. The server creates a pseudo video card driver to collect
+all low-level drawing operations, including both OpenGL and 2D drawing commands.
+On the other hand, TurboVNC [Commander 2007] was an image streaming approach.
+The server maintains a software frame buffer to save all graphical outputs and sends
+the updates to the frame buffer to the client with an open protocol, known as Remote
+Frame Buffer (RFB).
+  Although the general-purpose solution has the advantage of being compatible with
+any 3D application, it also loses the flexibility of customized optimization. Most remote
+rendering systems in the literature have not taken the general-purpose approach, but
+instead were designed and optimized for specific applications.
+
+2.3. Specialized Solutions
+We classify all specialized remote rendering solutions based on two dimensions
+(Figure 5). The 3D model data are either dynamic or static, depending on whether
+they are constantly updated during executions. The user interactions are either re-
+stricted or unrestricted, depending on whether users are totally free to change the
+camera position, orientation, and other actions. Remote rendering solutions in differ-
+ent categories impose different design considerations. Detailed descriptions of these
+four categories are given in the following.
+   Static Model and Restricted Interaction. The systems belonging to this category
+render static 3D models and support restricted user interactions. “Restricted user
+interaction” means a user can only interact with the 3D data in a few limited ways. For
+example, a user can view a 3D model only from a few predefined viewpoints or change
+the viewpoint within a limited range. Most remote visualization systems belong to
+this category. Visualization systems are widely demanded to present various types of
+data, such as medical images, scientific data, industry designs, and artworks. Many
+visualization systems perform rendering remotely due to the complexity of the source
+data or the limitations of presentation devices.
+   Bethel [2000] built a visualization system for large-volume scientific data visualiza-
+tion. Since the volume data is too large to be transmitted over a network, it is stored on
+a server and only the rendering results are transmitted to client devices. Ma and Camp
+[2000] addressed the issues of rendering time-varying volume data in parallel on mul-
+ticore servers. Engel et al. [2000] developed a system to visualize large-scale medical
+volume datasets by converting the volume data to 2D slices. Prohaska et al. [2004] de-
+signed an interactive Micro-CT scan exploration system to retrieve only subvolume data
+from the storage server and render a much smaller dataset locally. Ma and colleagues
+[Ma 2010; Tikhonova et al. 2010] adopted explorable images in remote visualization
+
+                                  ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                    57:7
+
+systems to allow users to manipulate rendering properties (e.g., color and opacity) on
+low-end hardware, such as mobile devices. The Deep Computing Visualization (DCV)
+system [Snell and Willard 2007] from IBM and the Chromium Render Server [Paul et al.
+2008] are two examples of using clusters to render large and complex data in parallel.
+  Remote visualization has also been applied to provide rich rendering experiences
+on less powerful devices. Diepstraten et al. [2004] suggested generating a simplified
+model with only line primitives for clients that have no 3D graphics hardware, but can
+run 2D rasterization operations. Duguet and Drettakis [2004] converted 3D models to
+downscaled point clouds for clients with small display screens. Levoy [1995] proposed
+a hybrid solution to generate a simplified low-quality polygon representation as well
+as a difference image, avoiding loss of rendering quality on the client side. Mann and
+Cohen-Or [1997] designed a similar system that streams both polygons and pixels, but
+focused on selecting the most important pixels to save bandwidth.
+  Web-based remote visualization addresses a special type of “thin” client. It enables
+any client to access the rendering services through a standard web browser. The limi-
+tations of such systems include the overhead of standard web communications and the
+unknown computational capability available on the client. The Reality Server [Nvidia
+2009] from Nvidia was released to provide photorealistic rendering services through
+the web. Yoon and Neumann [2000] designed a web-based system using Image-Based
+Rendering (IBR) techniques.
+  Mobile-based remote visualization addresses another type of “thin” client: mobile
+devices (e.g., smartphones and tablets). Woodward et al. [2002] and D’Amora and
+Bernardini [2003] were two early attempts to use a Personal Digital Assistant (PDA)
+as a Computer-Aided Design (CAD) viewer while the actual CAD application ran on a
+remote server. Chang and Ger [2002] proposed building Layered Depth Images (LDIs)
+[Shade et al. 1998] on the server. The mobile client runs IBR algorithms to synthesize
+the display image. Such studies may seem “outdated” now because mobile chips have
+been drastically improved over the last decade. Current mobile devices are equipped
+with relatively powerful multicore GPU chips for complex 3D graphics rendering. How-
+ever, the limitations on mobile devices still exist for computationally intensive appli-
+cations such as video games, which we will discuss in more depth in the following
+sections.
+  Remote visualization systems can serve other purposes. Koller et al. [2004] devel-
+oped a remote rendering system to prevent the valuable 3D model data scanned from
+famous artworks from leaking to malicious users. This system took an image streaming
+approach by sending only the rendering results to the user, effectively protecting the
+3D source data. Mark [1999] and Smit et al. [2009] are two examples of how remote
+rendering can help boost the rendering rate when the server is unable to render fast
+enough. In their designs, the server only renders the key frames and the client runs
+the IBR algorithm to interpolate new frames between key frames. As a result, the
+perceived frame rate on the client side can be doubled or tripled compared to the actual
+rendering frame rate on the server side.
+  Dynamic Model and Restricted Interaction. For some applications like 3D video or
+animation, the 3D data is dynamically generated or updated and the scene is constantly
+changing. Rendering such applications requires that every frame be processed in real
+time before the arrival of the next frame. No offline preparation or time-consuming
+server computation (e.g., running time-consuming polygon simplification algorithms
+or creating LDIs for the model) can be applied to this category of remote rendering
+systems.
+  Shi et al. [2008] proposed rendering depth images for 3D teleimmersive video (point
+cloud based), and exploited IBR algorithms to reduce the viewpoint change latency [Shi
+
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:8                                                                               S. Shi and C.-H. Hsu
+
+et al. 2009, 2010]. Lamberti et al. [2003] introduced an image-based remote rendering
+framework for mobile clients and proposed a more advanced approach in Lamberti
+and Sanna [2007]. Moreover, Humphreys et al. [2002] developed an improved video
+streaming system that employed rendering clusters for not only 3D rendering but also
+real-time video coding.
+   Static Model and Unrestricted Interaction. “Unrestricted interaction” means the user
+can freely change the viewpoint in the 3D space and even perform other actions that
+can change the 3D data. The representative application of this category is Virtual
+Environment (VE) navigation. VE navigation and walk-through systems have been
+commonly adopted in online games and Virtual Reality (VR) systems [Singhal and Zyda
+1999]. The major challenge of VE navigation is that the graphic model of the whole VE
+is considered too large to be transmitted fast enough for real-time interactive rendering.
+There are two main directions of VE research. One branch focuses on the peer-to-peer
+communications between multiple users to synchronously render the virtual world
+[Funkhouser 1995] and the other studies how to efficiently stream the virtual world
+from the central server to end users [Cohen-Or et al. 2003]. Here we survey the systems
+of the second branch that fall into the scope of remote rendering.
+   Schmalstieg [1997] proposed using a remote rendering pipeline to manage the geom-
+etry and bandwidth in a distributed VE. The pipeline uses the server as a graphic model
+database and transmits only the viewable models based on the user’s viewpoint. The
+server database organizes all 3D graphic models as different Levels of Detail (LODs)
+and stores them in Oct-Tree structures. For different zones of Areas of Interest (AOIs),
+different LODs are transmitted. Teler and Lischinski [2001] was a similar approach
+to streaming partial scenes in 3D format based on visibility, but it also took into con-
+sideration network condition and user motion pattern. However, it is not necessary
+to transmit all original 3D models to client because only the object surfaces are visi-
+ble in such walk-through applications. Lluch et al. [2005] constructed multiresolution
+meshes for remote rendering. Only the surface plus depth, also called 2.5D mesh, is
+created. Different techniques to build and store multiresolution meshes are surveyed
+in De Floriani and Magillo [2002]. A real-time system to extract a 2.5D mesh for remote
+rendering was proposed in Li et al. [2011].
+   There are also VE systems taking the image streaming approach. The QuickTime
+VR system [Chen 1995] creates a 360◦ panorama image of the world based on the
+user’s location. This environment map allows the client to pan around without any
+special graphical hardware or further updates from the server. Boukerche and Pazzi
+[2006] followed the same direction and developed a mobile VE navigation system based
+on panorama rendering. Bao and Gourlay [2004] designed a VE walk-through system
+using a different image-based approach. In their system, the server renders the virtual
+scene and sends the result image with the depth map to the client. The client can
+display the received images or run IBR algorithms to synthesize new images when the
+rendering viewpoint is changed. Noimark and Cohen-Or [2003] introduced an MPEG-
+4 streaming-based VE walk-through system. The VE scenes are constantly rendered
+on the server at a preset frame rate and encoded in real time using the MPEG-4
+standard. This approach does not need to analyze the source 3D models to determine
+LOD, but requires constant network bandwidth between server and client for video
+streaming. Lamberti et al. [2003] and Quax et al. [2006] both proposed similar video-
+based rendering frameworks for mobile users.
+  Dynamic Model and Unrestricted Interaction. Cloud gaming is the representative
+application of this last category. The emergence of cloud gaming services has moved the
+rendering computations of 3D video games to the cloud. Compared to other specialized
+remote rendering approaches, such as those introduced above, rendering video games
+
+                               ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                       57:9
+
+remotely is a much more challenging task. First, the latest video games require very
+complex 3D graphics rendering to present the virtual world, avatars, and animation
+effects. Cloud gaming therefore requires advanced graphical hardware for rendering.
+Second, games need to be rendered at a high frame rate (e.g., 30fps or higher) to
+accommodate the dynamically changing scenes and intensive motions. Last, but most
+importantly, long latency is intolerable. As we have mentioned in Section 1, 100ms
+is the largest tolerable interaction latency for first-person shooting games [Beigbeder
+et al. 2004].
+   Several companies have provided cloud gaming services and solutions, such as On-
+Live,2 which uses a video streaming approach that renders video games in the cloud and
+sends gameplay scenes as a 720p video stream to end users. Similar service providers
+include GaiKai,3 and G-Cluster.4 Another newly started company, Ciinow,5 claims to
+stream both video and graphics to the client. We believe these commercial cloud gaming
+systems are the state of the art in remote rendering systems, and we will discuss them
+in greater technical detail in the next section.
+   Researchers in academia have been working on the same topic. Game@Large
+[Eisert and Fechteler 2008; Nave et al. 2008] proposed to send 3D graphics data to
+the client. The graphics rendering operations and textures are effectively compressed
+and transmitted using Real-Time Transport Protocol (RTP). Jurgelionis et al. [2009]
+improved Game@Large with a hybrid approach. For “fat” clients, all graphics rendering
+operations and textures are streamed as the original Game@Large design. For “thin”
+clients that do not have enough 3D rendering resources, games are rendered on the
+server and the result images are compressed with H.264 [Wiegand et al. 2003] for the
+client. De Winter et al. [2006] proposed another hybrid approach: video streaming is
+used for intensive motion sequences, and graphics data is delivered to render static
+scenes. Tizon et al. [2011] and Wang and Dey [2013] both studied the issues of cloud
+gaming for mobile devices. GamingAnywhere [Huang et al. 2013] is an open cloud
+gaming platform, which may be used by researchers, developers, and gamers to set up
+testbeds. Various customizations on GamingAnywhere are possible, such as dropping
+in an H.264/MVC [Vetro et al. 2011] codec to support stereoscopic games.
+2.4. Classification and Summary
+In this section, we have given a brief overview of different remote rendering designs.
+Here, we propose a classification method to summarize those designs and highlight
+their pros and cons. Our classification method is inspired by the survey for distributed
+graphics systems [Zhou 2006], in which different systems are classified according to
+the stage at which the rendering pipeline is split between the server and the client
+[Prohaska et al. 2004]. However, that method is unable to classify the complex remote
+rendering designs, for example, the systems that generate environment maps or depth
+images. Thus, we propose a new classification method based on the type of data trans-
+mitted from the server to the client. It is sufficient to cover all remote rendering designs
+we have reviewed and characterize how rendering computations are distributed. For
+example, the remote rendering systems taking the image streaming approach belong to
+the Image category, because only the image frames of the rendering results are trans-
+mitted. It also indicates that the server performs all rendering computation, while the
+client only displays the received images. Interested readers are referred to Figure 6
+and Table I for complete information on our classification.
+
+2 http://www.onlive.com.
+3 http://www.gaikai.com.
+4 http://www.gcluster.com/.
+5 http://www.ciinow.com.
+
+
+
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:10                                                                                 S. Shi and C.-H. Hsu
+
+
+
+
+                               Fig. 6. Remote rendering classification.
+
+3. CASE STUDY: CLOUD GAMING
+In this section, we take OnLive as an example to explain in detail the key research
+problems of the remote rendering mentioned at the beginning of this article. We choose
+OnLive as our study case because the performance standard for cloud gaming is much
+higher than it is for any of the other remote rendering applications reviewed in Sec-
+tion 2. A cloud gaming system renders dynamic gaming contents at a high frame rate
+(e.g., 30fps or more) and responds to all types of user interactions in real time. Such
+a system can easily serve other applications that are more tolerant to latency or re-
+fresh at a lower rate. For example, OnLive provides the service of rendering desktop
+applications to business customers using the same cloud gaming system.
+   OnLive is a proprietary cloud gaming system. Some technical system details are
+revealed in Perlman et al. [2010] and the system performance has been measured and
+studied in Claypool et al. [2012] and Chen et al. [2014]. OnLive renders 3D games
+on a cloud server, extracts game scene images from the frame buffer, compresses the
+images with a customized video encoder, and streams the video to a game client through
+broadband networks. The game client simply receives, decodes, and displays the game
+video. Meanwhile, it collects user input signals (e.g., the events of mouse, keyboard, or
+game controller) and forwards them to the rendering server. Currently, the game client
+runs on PC, Mac, set-top box, or even mobile devices (e.g., iPad or Android tablets).
+Using such a rendering service, gamers can enjoy the most advanced video games
+without buying expensive game consoles. OnLive is highly optimized for satisfactory
+gaming experiences. However, it still struggles with two key problems: interaction
+latency and data transmission.
+  Interaction Latency. We first take a close look at the components of interaction la-
+tency. Figure 7 shows an illustration of the interaction latency of a video streaming–
+based remote rendering system. The overall interaction latency is comprised of the
+server processing time (trender + tencode ), the client processing time (tdecode + tpost proc ), the
+propagation delay (tup + tdown), and the transmission delay (ttrans ).
+  OnLive sets the target of interaction latency to be less than 80ms, so as not to affect
+user experience even in motion-intensive games [Beigbeder et al. 2004]. Their approach
+was to set strict requirements for networking. Users must have a broadband wired
+network connection to use OnLive services, which helps to control both propagation
+delay and transmission delay. Meanwhile, OnLive tries to save every single millisecond
+by optimizing every component of the system. Figure 8 elaborates the latency quota for
+each component in the interaction loop. In order to achieve this goal, OnLive has made
+special efforts not only on its own software, but also on its hardware and networking.
+For example, OnLive has tried to deploy cloud servers physically close to users because
+every 1000mi of physical distance adds 25ms round-trip delay to the overall interaction
+latency [Perlman et al. 2010].
+
+                                  ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                                        57:11
+
+
+                                 Table I. Summary of Remote Rendering Systems
+   Data Type                                                     Description
+                            Server: transmit all 3D data to client
+                            Client: perform 3D graphics rendering when all data is received
+   Original Model           Pros: general purpose
+                            Cons: “fat” client; excessive bandwidth for complex models
+                            Examples: Karlton et al. [2005] and Eisert and Fechteler [2008]
+                            Server: transmit all 3D data progressively to client, based on viewpoint or
+                            multi resolution representation
+                            Client: perform 3D graphics rendering upon the arrival of 3D data
+   Progressive Model        Pros: reduce the rendering “start” time; bandwidth control
+                            Cons: “fat” client; preprocessing to generate progressive models
+                            Examples: Schmalstieg [1997] and Lluch et al. [2005]
+                            Server: transmit simplified 3D models to client
+                            Client: perform 3D graphics rendering on the simplified models received
+   Simplified Model         Pros: reduce bandwidth usage; reduce rendering workloads on client
+                            Cons: rendering quality loss due to model simplification; preprocessing to
+                            generate simplified models
+                            Examples: Duguet and Drettakis [2004] and Li et al. [2011]
+                            Server: transmit reformed (usually simplified) 3D models and the difference
+                            image to client
+                            Client: perform 3D graphics rendering and apply the difference image
+   Model + Image            Pros: maintain rendering quality with low bandwidth and lightweight
+                            computation on client
+                            Cons: preprocessing to generate simplified models and render both original
+                            and simplified models for the difference image
+                            Examples: Levoy [1995] and Mann and Cohen-Or [1997]
+                            Server: perform 3D graphics rendering, transmit result images to client
+                            Client: display the images received
+   Image                    Pros: high rendering quality; low bandwidth usage; no rendering workloads
+                            on client; source secure
+                            Cons: interaction latency
+                            Examples: Commander [2007] and Huang et al. [2013]
+                            Server: perform 3D graphics rendering of the whole environment, generate
+                            an environment map (i.e., panorama), and transmit the environment map to
+                            client
+                            Client: project the received environment map to the correct viewpoint
+   Environment Map          Pros: pros of Image; no latency for some types of user interaction (e.g., pan,
+                            tilt)
+                            Cons: extra workloads on server to generate environment maps; interaction
+                            latency for other unsupported user interactions
+                            Examples: Chen [1995] and Boukerche and Pazzi [2006]
+                            Server: perform 3D graphics rendering one or multiple times, extract depth
+                            maps together with result images, and send all result images and depth maps
+                            to client
+                            Client: display the result images received; if necessary, run IBR algorithms to
+                            synthesize images at new viewpoints
+   Image + Depth            Pros: pros of Image; reduce latency for most user interactions that only
+                            change rendering viewpoint
+                            Cons: extra workloads on server to generate multiple depth images; extra
+                            bandwidth needed to transmit all depth images; IBR artifacts; interaction
+                            latency for other unsupported user interactions
+                            Examples: Chang and Ger [2002] and Shi et al. [2012a]
+
+
+
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:12                                                                                 S. Shi and C.-H. Hsu
+
+
+
+
+                              Fig. 7. Illustration of interaction latency.
+
+
+
+
+    Fig. 8. Latency analysis of different system components in cloud gaming [Perlman et al. 2010].
+
+
+   Despite all of these efforts, OnLive is still unable to make any guarantees regard-
+ing latency. The current approach relies considerably on the connection quality and
+network condition. Due to the “best effort” nature of the Internet, latency can easily
+fluctuate due to background network traffic. Unlike other video streaming services,
+OnLive cannot buffer video frames for smooth playback because the buffer delay adds
+to the overall interaction latency. Therefore, any large jitter or packet loss rate may
+directly affect users’ gaming experience.
+  Data Transmission. OnLive suffers from the coding inefficiency of using a real-time
+video encoder, that is, to achieve the same video quality, OnLive consumes a higher
+bandwidth than the latest codecs. The minimum requirement is to have at least 3Mbps
+broadband Internet connections to use the service. However, we have found that the
+
+                                  ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                                      57:13
+
+
+
+
+Fig. 9. Sample results from a first-person shooting game: (a) OnLive streaming rate, (b) coding efficiency of
+a general-purpose video coder in PSNR, and (c) in SSIM.
+
+actual bandwidth usage is much higher. We played Unreal Tournament III: Titan Pack,
+a first-person shooting game, for 60s, and captured all downlink network packets. From
+the network trace, we plot the OnLive streaming rate in Figure 9(a), which indicates
+that the real-time OnLive encoder produces a stream at a fairly high bit rate: 6.49Mbps
+on average. As a comparison, we played a similar first-person shooting game locally
+on our laptop and captured a 720p raw video, encoded the raw video at several bit
+rates using ×264 [Garrett-Glaser 2010] with typical coding parameters. We plot the
+resulting Rate-Distortion (R-D) curves on Peak Signal-to-Noise Ratio (PSNR) [Wang
+et al. 2001] and Structural SIMilarity (SSIM) [Wang et al. 2004] in Figures 9(b) and 9(c).
+These two figures show that ×264 achieves almost perfect video quality, 40+dB (PSNR)
+and 0.93+ (SSIM) at merely 1.5Mbps, which is much lower than that used on OnLive.
+The experiment reveals that the state-of-the-art OnLive video encoder suffers from
+suboptimal coding efficiency, which increases the burden of network streaming and
+client processing. More details on these experiments can be found in Shi et al. [2011a].
+  Moving to Mobile. Mobile gaming is playing an increasingly important role in the
+gaming industry as computing becomes more ubiquitous. Applying cloud gaming to
+mobile devices can readily boost the rendering quality of mobile games to the game
+console level and significantly reduce the complexity of developing the same game for
+different mobile devices.
+  However, applying the current cloud gaming system (e.g., OnLive) to mobile devices
+will make the latency issue even more challenging. Mobile devices connect to the Inter-
+net through wireless connections like WiFi or mobile networks (e.g., 3G, 4G/LTE, etc.).
+Unlike wired Internet connections, wireless connections suffer from longer network
+delays. According to the experiments in Huang et al. [2012], even the best technologies
+take more than a 60ms round-trip propagation delay, which alone exceeds the quota
+for all networking-related latency shown in Figure 8. This number does not count the
+factors of mobility, signal strength, or interference that can easily make the connection
+more fragile. Therefore, the current approach cannot be easily extended to wireless
+users.
+  In summary, latency and bandwidth are two issues that are not yet perfectly solved
+by the current remote rendering systems and will remain critical challenges for future
+systems serving mobile clients. In the next two sections, we will dig deeper into these
+two problems and survey proposed solutions.
+
+4. LATENCY REDUCTION
+With conventional optimization techniques, the overall interaction latency cannot
+break the lower bound of the network round-trip delay. However, there is a bypass.
+It is possible to generate the visual response frames on the client before any server re-
+sponses are received. In this case, the perceived interaction latency for the user is only
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:14                                                                                   S. Shi and C.-H. Hsu
+
+
+
+
+                          Fig. 10. Illustration of interaction latency reduction.
+
+the time it takes for the client to create a response frame (Figure 10). In this section,
+we survey the latency reduction techniques that are less affected by network delay.
+
+4.1. Local Rendering and Dead Reckoning
+The easiest method to create a response frame locally is to store 3D data on the client
+and perform 3D graphics rendering locally. Some VE walk-through [Lluch et al. 2005]
+and remote visualization systems [Duguet and Drettakis 2004] that stream meshes
+to the client can apply local rendering and reduce the interaction latency to the time
+needed for 3D graphics rendering on each client device. The cloud gaming provider
+Ciinow also claims that the integration of 3D graphics streaming [Dharmapurikar
+2013b] actually reduces the latency.6
+  One key issue in this approach is to keep the local rendering synchronized with
+the server. For visualization or walk-through applications, the server-client synchro-
+nization may only need to keep the rendering viewpoint consistent. Synchronization
+becomes more complicated for gaming applications because rendering game scenes
+requires knowledge of the game logic and user data (e.g., the speed and direction of
+moving objects).
+  Dead Reckoning, a strategy widely adopted in developing multiplayer online games
+[Pantel and Wolf 2002], can be applied to mitigate the synchronization problem. The
+basic notion of dead reckoning is to agree in advance on a set of algorithms that can
+be used by the client to extrapolate the behavior of entities in the game. There should
+also be agreement on how far reality should be allowed to get from these extrapolation
+algorithms before a correction is issued. In the scenario of remote rendering, the
+correction can be issued with the server updates after approximately a network
+round-trip delay.
+
+4.2. Prefetch
+For a system that cannot process 3D graphics rendering on the client side, prefetch
+is an intuitive but effective latency reduction approach. A client (or server) predicts
+
+6 http://www.ciinow.com/cloud-gaming-service-technology/.
+
+
+
+
+                                    ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                    57:15
+
+a user’s future moves and requests the server to transmit the images rendered for
+all possible moves. If the prediction hits, the client can simply display the prefetched
+images and no latency is noticed. If the prediction fails, the client should flush the
+prefetch buffer and wait for the correct images to arrive from the server.
+  Hesina and Schmalstieg [1998] introduced a prefetch framework for a networked
+VE. Chen et al. [2008] discussed how to prefetch images of multiple resolutions to
+cover different levels of detail. Boukerche and Pazzi [2006] is another example but the
+prefetched images are panoramas that are sufficient to cover any pan/tilt movements.
+Different motion prediction methods and prefetch protocols are introduced in Chan
+et al. [2001] and Lazem et al. [2007]. Touch [1995] introduced a source-driven presend-
+ing approach for general communications over high-speed networks. Presending helps
+to reduce the latency by half the time of a round-trip delay when bandwidth is not the
+bottleneck.
+  Prefetch works best for navigating within a static environment, the image of which
+can be saved for future use without expiration. The performance of prefetch techniques
+completely relies on the hit rate of motion prediction and the size of the prefetch
+buffer. The cost is the extra network bandwidth needed to transmit all prefetched scene
+images, most of which might never be used. Prefetch is inappropriate for applications
+that render dynamic data, such as games. Such applications refresh quickly and each
+frame expires upon the arrival of the next frame. Therefore, a client needs to prefetch
+for every new frame, which significantly increases the network bandwidth usage.
+4.3. Image-Based Rendering
+Image-based rendering falls between the 3D approach (local rendering) and the image
+approach (prefetch). It requires the server to send extra information with the rendering
+result images to the client. On the client side, when the user interaction changes
+the rendering viewpoint, the extra information can be used to run IBR algorithms to
+synthesize the display image at the new viewpoint. Therefore, the interaction latency
+is reduced to the time required to run IBR algorithms.
+   A well-known IBR algorithm is 3D image warping [McMillan 1997]. It takes a depth
+image, the viewpoint corresponding to the depth image, and the target viewpoint as
+inputs, and outputs the image at the target viewpoint (Figure 11). This algorithm can
+be efficiently executed on embedded CPUs/GPUs [Yoo et al. 2010] or on customized
+hardware [Popescu et al. 2000]. 3D image warping has been applied in several remote
+rendering systems [Chang and Ger 2002; Shi et al. 2012a; Mark 1999; Bao and Gourlay
+2004]. For every frame, the server needs to send a depth map with a result image to
+the client and the interaction latency for any viewpoint change can be reduced to the
+time required to run 3D image warping on the client device.
+   However, using 3D image warping creates the problem of exposure. The synthesis
+result image usually has hole artifacts because there are insufficient pixels in the input
+image to fill the surface at a new viewpoint. Various techniques have been proposed
+to fill warping holes. Depth filters [Redert et al. 2002] and splat warping [Mark 1999]
+are effective for small holes. Super view warping [Bao and Gourlay 2004] and wide
+field-of-view warping [Mark 1999] can partially solve the occlusion problem. View
+compensation [Bao and Gourlay 2004] requires a server to generate the difference
+image between the warping result and the actual rendering result. LDI [Shade et al.
+1998] and Double Warping [Shi et al. 2009, 2010] are both based on the idea of using
+multiple references to cover exposed holes.
+   Of all the techniques listed above, Double Warping is probably the most appropri-
+ate technique to reduce interaction latency in remote rendering systems. With this
+approach, a server renders not only the depth image at the current viewpoint, but mul-
+tiple depth images at other reference viewpoints. The client runs a 3D image warping
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:16                                                                                     S. Shi and C.-H. Hsu
+
+
+
+
+Fig. 11. (a) The game scene image and corresponding depth map, while playing game BZFlag (http://
+bzflag.org) at the current viewpoint v1 (the tank looks in the 12 o’clock direction); (b) the game scene at the
+target viewpoint v2 (the tank looks in the 1 o’clock direction); (c) the game scene image and corresponding
+depth map at the reference viewpoint v3 (the tank looks in the 2 o’clock direction); (d) 3D image warping
+result of warping (a) to viewpoint v2 ; (e) 3D image warping result of warping (c) to viewpoint v2 ; (f) compose
+(d) and (e) [Shi et al. 2012a].
+
+
+algorithm for all received depth images and composes all the results. The reference
+viewpoints are carefully selected based on a prediction of camera movement [Mark
+1999; Shi et al. 2010]. Note that the prediction here is slightly different from the mo-
+tion prediction for prefetch. It does not need to give the accurate position of the future
+viewpoint, but only a possible direction/area. With the predicted direction/area of mo-
+tion, references should be selected to cover that area so that a high-quality hole-free
+image can be synthesized by the client (Figure 11). Different reference selection algo-
+rithms have been studied in Mark [1999], Shi et al. [2009], Shi et al. [2012a], Hudson
+and Mark [1999], and Thomas et al. [2005]. Double Warping actually converts the
+network-dependent latency reduction problem to a content-based reference selection
+problem.
+
+4.4. Summary
+We have discussed three types of techniques that can successfully mitigate the influence
+of network delay on interaction latency. The pros and cons of each of these techniques
+are summarized in Table II. In practice, all three techniques can be combined into one
+system to achieve the best result. For example, in the scenario of cloud gaming, we
+can prefetch the panoramic image of the surrounding background environment, use
+3D image warping algorithms to render moving foreground objects, and download 3D
+data on the client side to handle other user interactions like firing a weapon.
+
+5. DATA TRANSMISSION
+We mainly focus on the data transmission module of remote rendering systems, and
+we classify all the studies in the literature into three groups. We first present the
+data compression techniques that are suitable for remote rendering systems. This is
+followed by the data streaming protocol and strategies that deliver the encoded data
+streams to clients. Finally, we present the latest work on QoS/QoE evaluations for
+
+                                      ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                                      57:17
+
+                               Table II. Summary of Latency Reduction Techniques
+    Approach                                                        Description
+                                   Pros: works for any user interactions
+    Local Rendering                Cons: requires 3D graphics rendering on the client side
+                                   Best for: lightweight rendering tasks, animations,
+                                   non-viewpoint-changing actions
+                                   Pros: simple image-based approach; no rendering computation on the
+                                   client side
+    Prefetch                       Cons: works only for static scenes and discrete viewpoint-changing
+                                   actions; relies on accurate motion prediction
+                                   Best for: static background environment navigation
+                                   Pros: works for both static and dynamic scenes; image-based approach;
+                                   lightweight computation workloads on the client side
+    Image-Based Rendering          Cons: works only for viewpoint-changing actions; hole artifacts
+                                   Best for: foreground moving objects
+
+remote rendering systems. The data transmission module has to satisfy stringent real-
+time constraints, and thus imposes a direct effect on the overall system performance.
+5.1. Data Compression
+In remote rendering systems, the data transferred between the server and client are
+compressed using various algorithms in order to reduce the network loads. We present
+the tools for common data compression, depth image compression, and joint coding.
+  Common Tools. There are many tools that can be used for compressing images,
+videos, and graphics, including lossless compression, lossy image/video compression,
+real-time video encoding, compound image encoding, and graphics encoding. We detail
+each of these common tools in the following paragraphs.
+  The lossless compression tools, such as LZO [Oberhumer 1996], BZIP [Seward 1996],
+and [Weinberger et al. 1996], harvest the repetitions in raw data for encoded data at a
+reduced bit rate. Uncompressing these encoded data results in perfect reconstruction
+identical to the input raw data. The lossless compression tools are general purpose
+and can be used to compress texts, executables, binaries, audio, images, and graphics.
+These lossless compression tools were used by the servers in early remote rendering
+systems [Ma and Camp 2000; Hege et al. 2000; Levoy 1995] to compress the rendered
+images before transferring them to the client.
+  Compared to the lossless compression tools, the lossy image compression tools drop
+the details that are unnoticeable to the human eye to further reduce bit rates. There
+are several early attempts to use lossy image compression tools for leveraging charac-
+teristics of human visual systems [Ikonomopoulos and Kunt 1985; Kunt et al. 1987;
+Egger et al. 1995; Campbell et al. 1986; Marcellin et al. 2000; Skodras et al. 2001; Du
+and Fowler 2007]. Although the lossy image compression tools may be used to compress
+videos as well, they cannot leverage the redundancy across multiple frames. The hybrid
+video coders [Wang et al. 2001] integrate lossy image compression tools with motion-
+compensation tools to exploit the temporal redundancy. The hybrid video coders have
+been standardized as, for example, MPEG-4 [Schafer 1998] and H.264/AVC [Wiegand
+et al. 2003], which (or their variations) are used by several modern remote render-
+ing systems [Noimark and Cohen-Or 2003; Lamberti and Sanna 2007; Jurgelionis
+et al. 2009; De Winter et al. 2006; Perlman et al. 2010; Shi et al. 2011a; Herzog et al.
+2008; Huang et al. 2013]. The video coding tools proposed in Tran et al. [1998], Bayazit
+[1999], and Liu et al. [2007] adopted some or all of the real-time coding constraints dis-
+cussed in Reddy and Chunduri [2006] and Schreier et al. [2006]. When extremely low
+coding delay, in the order of nanoseconds, is required, intraframe video coders [Lee and
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:18                                                                             S. Shi and C.-H. Hsu
+
+Song 2008; Nadeem et al. 2010], which essentially compress individual video frames
+independently, can be used at the expense of significantly lower coding efficiency.
+   Compound image coding tools target compressing computer desktops consisting of
+less motions, but a combination of texts, graphics, and natural images. Shape Prim-
+itive Extraction and Coding (SPEC) [Lin and Hao 2005] segments each image into
+texts/graphics and natural image regions, and encodes the texts/graphics regions us-
+ing a lossless compression algorithm, and the natural regions using JPEG. A similar
+idea was proposed by Maheswari and Radha in [2010]. Wang and Lin [2009] proposed
+to concurrently compress each macroblock using H.264 [Wiegand et al. 2003] and gzip
+[Gailly 1992], and choose the better compressed macroblock in the rate-distortion fash-
+ion; they later proposed a generalized system called United Coding (UC) [Wang and
+Lin 2012] based on multiple lossless coders, such as Run-Length Encoding (RLE), gzip,
+and Portable Network Graphics (PNG). Two new H.264 intramodes were proposed in
+Lan et al. [2010] to better exploit spatial redundancy in compound images. The first
+mode directly quantizes and entropy codes the intrapredicted residues and the second
+mode uses adaptive vector quantization. Han et al. [2010] extended H.264 [Wiegand
+et al. 2003] by adding a preprocessor, an adaptive quantization algorithm, and a rate
+control algorithm.
+   Graphics coding tools are used to compress geometric graphics data, for example,
+polygonal meshes, point clouds, and volume data. Compressing polygonal meshes was
+considered in an early geometry compression study [Deering 1995], which generated a
+linear stream of polygonal meshes before applying Huffman, delta, and VLC coding. In
+Li and Kuo [1998], the polygonal meshes were represented by topological and geomet-
+rical data, and different coding tools were applied to them. Local compression of polyg-
+onal meshes was proposed for low-complexity mesh compression algorithms [Gumhold
+and StraBer 1998]. A spectral compression method projects polygonal meshes onto an
+orthonormal basis for progressive mesh streaming [Karni and Gotsman 2000]. The
+multiresolution 3D Discrete Wavelet Transform (DWT) analysis was used for low bit-
+rate polygonal mesh compression [Payan and Antonini 2002]. CODDYAC [Vasa and
+Skala 2007] studied the mesh compression problem from both spatial and temporal do-
+mains. The error resilience problem of polygonal mesh streaming was investigated in
+Park et al. [2006]. The geometry compression algorithms for nonpolygonal meshes were
+studied in Gumhold et al. [1999]. The compression algorithms for normal maps were
+considered in Shi et al. [2012b]. Many more mesh compression algorithms are proposed
+in the literature. Interested readers are referred to a survey [Peng et al. 2005].
+  Depth Compression. Depth images play an important role in image-based rendering.
+The compression of depth images has been well studied in the literature. For example,
+regions-of-interest and dynamic range adjustments were considered in Krishnamurthy
+et al. [2001]. Surface shape prediction was used to compress some regions [Zanuttigh
+and Cortelazzo 2009]. LDI has been employed in some remote rendering systems
+[Chang and Ger 2002], which can be compressed by the algorithms introduced in Duan
+and Li [2003] and Cheng et al. [2007]. Other depth compression algorithms include
+Sarkis and Diepold [2009], Penta and Narayanan [2005], Kum and Mayer-Patel
+[2005], Yang et al. [2006], and Chai et al. [2002]. Studies [Milani and Calvagno 2010;
+Shi et al. 2011a; Oh and Ho 2006; Morvan et al. 2007] showed that the modified H.264
+[Wiegand et al. 2003] encoders can efficiently encode depth images. For example, Oh
+and Ho [2006] computed candidate motion modes by utilizing texture videos’ motion
+information for shorter encoding time yet higher coding efficiency. Morvan et al. [2007]
+concurrently employed block-based and 3D warping prediction modes. The rendering
+qualities of different depth image compression algorithms were given in Merkle et al.
+[2009]. Interested readers are referred to a survey of depth compression algorithms
+[Shum et al. 2003].
+
+                              ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                           57:19
+
+
+
+
+                      Fig. 12. Thin client and remote rendering [De Winter et al. 2006].
+
+   Jointly Encoding. In a remote rendering system, the encoder usually runs on the
+same server as the rendering engine. Researchers have found that better coding per-
+formance can be achieved by jointly encoding the rendered images with the metadata
+extracted from the rendering engine. Noimark and Cohen-Or [2003] used graphics in-
+formation to segment the background and foreground, applied different quantization
+parameters, detected scene cuts using motion information, and analyzed the optical
+flow to speed up motion estimation. All these steps help boost the performance of
+MPEG-4 encoding. Pajak et al. [2011] proposed compressing low-resolution depth im-
+ages using H.264 [Wiegand et al. 2003] and streaming the H.264 videos along with
+augmentation information such as edges and motions. Upon receipt, the depth images
+are upscaled to their original resolution with the assistance of edges and motions. Shi
+et al. [2011a] retrieved the runtime graphics rendering contexts, including rendering
+viewpoints, depth images, and camera movements, from the 3D game engine. These
+contexts can be used to increase the compression ratio of cloud gaming video streams.
+
+5.2. Data Streaming
+For data streaming, we survey the streaming protocols and several streaming
+strategies.
+  Protocols. Several network protocols have been proposed to stream compressed videos
+over the Internet. For example, GLX [Phil Karlton 2005] was designed as an extended
+X11 protocol for streaming 3D rendering operations, and NX [BerliOS 2008] was pro-
+posed to improve the remote rendering efficiency of X11/GLX. Compression, caching,
+and round-trip time suppression are included in the NX protocol to boost the overall
+speed of streaming XLib and OpenGL operations. RFB is an open network protocol
+used by Virtual Network Computing (VNC) systems [Richardson et al. 1998] to stream
+frame buffer updates. THiNC, introduced in Baratto et al. [2005], is another protocol
+that streams low-level drawing operations. Figure 12 compares the difference among
+these four protocols.
+  The network protocols proposed for video streaming [Li et al. 2013], such as RTP and
+DASH, may also be used in remote rendering systems. 3TP for graphics [AlRegib and
+Altunbasak 2005] is a network protocol for streaming 3D models over lossy channels
+on top of both TCP and UDP. 3TP combines source and channel characteristics to
+minimize end-to-end delay.
+  Progressive Streaming. Progressive streaming transmits lower-quality graphics/
+texture data, which are followed by refinements. Hoppe [1996] first proposed
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:20                                                                             S. Shi and C.-H. Hsu
+
+constructing progressive meshes. Rusinkiewicz et al. [2000, 2001] introduced QSplat to
+progressively divide large-scale dense graphic models for networked visualization. The
+cases where the geometry models are simple but the texture maps are complex have
+also been studied in Cohen-Or et al. [1999] and Marvie and Bouatouch [2003], in which
+the texture maps are organized based on user viewpoint for progressive transmission.
+Yu et al. [2004] and Tu et al. [2006] proposed using parallel Oct-trees to manage very
+large-scale (in the range of tera-scale) unstructured meshes. This type of structure al-
+lows the rendering processor to process data blocks at different resolutions. While pro-
+gressive streaming allows remote rendering systems to utilize available bandwidth for
+higher data transmission quality, it does not actively change the data representations.
+   Adaptive Streaming. Adaptive streaming dynamically adjusts the data representa-
+tions at the remote rendering server based on the current network conditions. Schnei-
+der and Martin [1999] and Martin [2000] proposed a performance model to evaluate
+client-server remote rendering systems. Their model selects a remote rendering ap-
+proach based on three components: transmission time, quality, and interactivity. Pas-
+man and Jansen [2003] developed a similar model for a client-server image-based ren-
+dering system to determine which graphical representation and graphics simplification
+technique should be used. Wang and Dey [2012] proposed an adaptive streaming ap-
+proach that jointly changes rendering the encoding parameters to adapt to the network
+conditions for mobile cloud gaming. Ciinow [Dharmapurikar 2013a] proposed several
+bandwidth adaption schemes for different types of data. For cases in which large-scale
+data is visualized, adaptive streaming should also consider the storage space available
+on the hard disk as well as network bandwidth [Malakar et al. 2010].
+
+5.3. QoS/QoE Evaluation
+The design space of data compression and data streaming in remote rendering sys-
+tems is large. Therefore, the QoS and QoE measurement techniques for remote ren-
+dering systems are important for system evaluation. We survey a few representa-
+tive measurement techniques below and discuss how they can be extended to better
+suit remote rendering systems in Section 6. Readers who are interested in more data
+streaming QoS/QoE measurement techniques are referred to Chikkerur et al. [2011].
+Serral-Gracia et al. [2010] surveyed the QoE measurement of video streaming systems.
+Stegmaier et al. [2003] discussed in depth how QoS parameters affect remote visualiza-
+tion. Paravati et al. [2011] studied the QoS and QoE measurements and performance
+monitoring for rendering VE remotely on mobile devices. Wang and Dey [2009] pro-
+posed a QoE model for mobile cloud gaming, which takes the game type, resolution,
+frame rate, video quality, delay, and packet loss into consideration, and their QoE mea-
+surement techniques were presented in Wang and Dey [2012]. Video Quality (VQ) [Nieh
+et al. 2003] is another metric to measure the actual video streaming performance of a
+thin-client system. Owing to the frame rate requirement of video playback, the system
+may actively drop video frames if they arrive late. Therefore, a slow motion benchmark
+that has a much lower frame rate requirement is applied to make sure that no frame
+is dropped by the testing system. VQ was also borrowed in the image-based remote
+rendering systems [De Winter et al. 2006].
+
+6. DISCUSSIONS
+The abundance and flexibility of cloud resources offer several incentives for mobile
+devices, which include CPU (processing), GPU (rendering), energy, storage, and security
+[Abolfazli et al. 2014]. Therefore, although mobile devices have become more powerful
+by themselves, we expect to see more seamless integration between mobile devices
+and cloud servers in computation-intensive tasks, and remote rendering will be an
+
+                              ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                     57:21
+
+important part of this evolution. In this section, we want to share our vision of the
+future research directions on remote rendering.
+   Mobile Cloud Gaming. According to Dinh et al. [2011], mobile cloud gaming is a major
+application of mobile cloud computing. We have already discussed the problems and
+difficulties of applying the current cloud gaming systems directly to mobile platforms
+in Section 3. New approaches are demanded to stream video games efficiently to mobile
+devices within strictly enforced latency restrictions.
+   After surveying all remote rendering related techniques, we believe the ideal mobile
+cloud gaming system should divide the rendering tasks based on rendering complexity
+and latency sensitivity, and process them differently. The tasks that are less sensitive
+to latency can be rendered on the server using an image-based approach. For the tasks
+that are sensitive to latency but easier to render, the 3D models can be streamed to the
+client to render locally. Only the tasks that are both sensitive to latency and complicated
+to render need to be treated specially. To be specific, we can choose to either generate
+a simplified 3D representation, or use IBR techniques for approximation, so that the
+rendering computation on the client can be managed with the available hardware
+resources. Finally, the image layers from different tasks are composed for the final
+display [Torborg and Kajiya 1996].
+   Remote Rendering Model, Library, and Service. Building a cloud gaming system
+alone may not solve all latency and bandwidth problems completely. This is because
+video games are designed to be rendered locally and game developers have no notion
+of large interaction latency in mind. In the long run, the success of cloud gaming relies
+on the adoption of the remote rendering model. Game developers should consider the
+network distributed architecture from the beginning stages of the development of new
+games. The concepts of two computers remotely connected by a delayed link, image
+streaming, graphics streaming, data synchronization, etc., should be integrated with
+the design of the game engine. At the same time, it is also necessary to encapsulate
+all the details of data compression, streaming protocols, IBR algorithms, etc., into, say,
+an Open Remote Graphics Library (similar to OpenGL), so that the developers can
+focus on game content. Another interesting topic is the provision of rendering as a
+cloud service so that any application with rendering requests can benefit from cloud
+computing.
+  Quantitative Performance Evaluations. Another interesting and important research
+topic involves defining a quantitative performance evaluation metric for remote ren-
+dering systems. Existing attempts [Wang and Dey 2009, 2012] studied the QoE model
+to evaluate the performance of remote rendering, but a quantitative metric like PSNR
+[Wang et al. 2001] or SSIM [Wang et al. 2004] that can be effectively calculated at
+runtime will be even more useful to help the rendering server to adjust encoding and
+streaming parameters for varying network conditions. For example, Shi et al. [2011b]
+proposed Distortion Over Latency (DOL) to evaluate the interactive performance of
+remote rendering systems. DOL is defined to combine both interaction latency and
+rendering quality into one score to measure the interactive performance. However,
+the metric can be improved by integrating more components and validated with both
+extensive objective and subjective tests.
+
+7. CONCLUSION
+In this article, we have provided background knowledge on remote rendering systems,
+surveyed the existing remote rendering designs from different perspectives, summa-
+rized the technologies that are applied to build key components of a real system, and dis-
+cussed the possible directions of future research. From the survey, we observe that the
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:22                                                                                      S. Shi and C.-H. Hsu
+
+state-of-the-art remote rendering designs are usually customized to meet the require-
+ments of specific applications. The direction of building a more general and scalable
+remote rendering system demands new frameworks, algorithms, and programming
+models that can guide developers in designing better distributed applications.
+
+
+
+REFERENCES
+S. Abolfazli, Z. Sanaei, E. Ahmed, A. Gani, and R. Buyya. 2014. Cloud-based augmentation for mobile devices:
+     Motivation, taxonomies, and open challenges. IEEE Commun. Surv. Tutorials, 16, 1 (1st Quarter 2014),
+     337–368.
+G. AlRegib and Y. Altunbasak. 2005. 3TP: An application-layer protocol for streaming 3-D models. IEEE
+     Trans. Multimedia 7, 6 (2005), 1149–1156.
+Apple. 2009. CGL Reference. http://developer.apple.com/library/mac/documentation/Graphics Imaging/
+     Reference/CGL_OpenGL/CGL_OpenGL.pdf. (2009).
+P. Bao and D. Gourlay. 2004. Remote walkthrough over mobile networks using 3-D image warping and
+     streaming. IEEE Proceedings on Vision, Image and Signal Processing, 151, 4 (Aug. 2004), 329–336.
+     DOI:http://dx.doi.org/10.1049/ip-vis:20040749
+R. A. Baratto, L. N. Kim, and J. Nieh. 2005. THINC: A virtual display architecture for thin-client computing.
+     In Proceedings of the20th ACM Symposium on Operating Systems Principles (SOSP’05). ACM, New
+     York, NY, 277–290. DOI:http://dx.doi.org/10.1145/1095810.1095837
+U. Bayazit. 1999. Macroblock data classification and nonlinear bit count estimation for low delay H.263 rate
+     control. In Proceedings of the IEEE International Conference on Image Processing (ICIP’99). 263–267.
+D. Beermann and G. Humphreys. 2003. Visual Computing in the Future: Computer Graphics as a Remote Ser-
+     vice. Technical Report CS-2003-16 25. University of Virginia, Computer Science Department, University
+     of Virginia .
+T. Beigbeder, R. Coughlan, C. Lusher, J. Plunkett, E. Agu, and M. Claypool. 2004. The effects of loss and
+     latency on user performance in unreal tournament 2003. In Proceedings of NetGames’04. 144–151.
+BerliOS. 2008. FreeNX-NX Components. Retrieved from http://openfacts2.berlios.de/wikien/index.php/
+     Berlios Project:FreeNX - NX Components.
+W. Bethel. 2000. Visapult: A prototype remote and distributed visualization application and framework. In
+     Proceedings of the SIGGRAPH Annual Conference (SIGGRAPH’00).
+P. Bhaniramka, P. C. D. Robert, and S. Eilemann. 2005. OpenGL multipipe SDK: A toolkit for scalable par-
+     allel rendering. In Visualization 2005 (VIS’05). IEEE, 119–126. DOI:http://dx.doi.org/10.1109/VISUAL.
+     2005.1532786
+A. Boukerche and R. W. N. Pazzi. 2006. Remote rendering and streaming of progressive panoramas for mobile
+     devices. In Proceedings of the 14th Annual ACM International Conference on Multimedia (MULTIME-
+     DIA’06). ACM, New York, NY, 691–694. DOI:http://dx.doi.org/10.1145/1180639.1180785
+G. Campbell, T. A. DeFanti, J. Frederiksen, S. A. Joyce, and L. A. Leske. 1986. Two bit/pixel full color encoding.
+     SIGGRAPH Comput. Graph. 20, 4 (Aug. 1986), 215–223. DOI:http://dx.doi.org/10.1145/15886.15910
+A. Cedilnik, B. Geveci, K. Moreland, J. Ahrens, and J. Favre. 2006. Remote large data visualization in
+     the paraview framework. In Proceedings of the 6th Eurographics Conference on Parallel Graphics and
+     Visualization (EG PGV’06). Eurographics Association, Aire-la-Ville, Switzerland, Switzerland, 163–170.
+B.-B. Chai, S. Sethuraman, and H. S. Sawhney. 2002. A depth map representation for real-time transmis-
+     sion and view-based rendering of a dynamic 3D scene. In Proceedings of the 1st International Sympo-
+     sium on 3D Data Processing Visualization and Transmission. 107–114. DOI:http://dx.doi.org/10.1109/
+     TDPVT.2002.1024050
+A. Chan, R. W. H. Lau, and B. Ng. 2001. A hybrid motion prediction method for caching and prefetching in
+     distributed virtual environments. In VRST. 135–142.
+C.-F. Chang and S.-H. Ger. 2002. Enhancing 3D graphics on mobile devices by image-based rendering. In
+     Proceedings of the 3rd IEEE Pacific Rim Conference on Multimedia: Advances in Multimedia Infor-
+     mation Processing (PCM’02). Springer-Verlag, London, UK, 1105–1111. http://portal.acm.org/citation.
+     cfm?id=648110.748578
+J. Chen, I. Yoon, and W. Bethel. 2008. Interactive, internet delivery of visualization via structured preren-
+     dered multiresolution imagery. IEEE Trans. Vis. Comput. Graph. 14, 2 (2008), 302–312.
+K.-T. Chen, Y.-C. Chang, H.-J. Hsu, D.-Y. Chen, C.-Y. Huang, and C.-H. Hsu. 2014. On the quality of service
+     of cloud gaming systems. IEEE Trans. Multimedia 16, 2 (Feb. 2014), 480–495.
+
+
+                                       ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                                      57:23
+
+S. E. Chen. 1995. QuickTime VR: An image-based approach to virtual environment navigation. In Proceedings
+     of the 22nd Annual Conference on Computer Graphics and Interactive Techniques (SIGGRAPH’95). ACM,
+     New York, NY, 29–38. DOI:http://dx.doi.org/10.1145/218380.218395
+X. Cheng, L. Sun, and S. Yang. 2007. A multi-view video coding approach using layered depth image. In
+     Proceedings of the IEEE 9th Workshop on Multimedia Signal Processing (MMSP’07). 143–146.
+S. Chikkerur, V. Sundaram, M. Reisslein, and L. J. Karam. 2011. Objective video quality assessment methods:
+     A classification, review, and performance comparison. IEEE Trans. Broad. 57, 2 (June 2011), 165–
+     182.
+M. Claypool, D. Finkel, A. Grant, and M. Solano. 2012. Thin to win? Network performance analysis of the
+     OnLive thin client game system. In Proceedings of the ACM Workshop on Network and Systems Support
+     for Games (NetGames’12). 1–6. DOI:http://dx.doi.org/10.1109/NetGames.2012.6404013
+D. Cohen-Or, Y. L. Chrysanthou, C. T. Silva, and F. Durand. 2003. A survey of visibility for walkthrough
+     applications. IEEE Trans. Visual. Comput. Graphics 9, 3 (2003), 412–431.
+D. Cohen-Or, Y. Mann, and S. Fleishman. 1999. Deep compression for streaming texture intensive animations.
+     In Proceedings of the 26th Annual Conference on Computer Graphics and Iinteractive Techniques. ACM
+     Press/Addison-Wesley, New York, NY, 261–267.
+D. R. Commander. 2007. VirtualGL: 3D Without Boundaries The VirtualGL Project. Retrieved from http://
+     www.virtualgl.org/.
+B. C. Cumberland, G. Carius, and A. Muir. 1999. Microsoft Windows NT server 4.0 terminal server edition
+     technical reference. Microsoft Press.
+B. D’Amora and F. Bernardini. 2003. Pervasive 3D viewing for product data management. IEEE
+     Comput. Graph. Appl. 23, 2 (March 2003), 14–19. DOI:http://dx.doi.org/10.1109/MCG.2003.1185575
+     DOI:http://dx.doi.org/10.1145/1378191.1378210
+M. Deering. 1995. Geometry compression. In Proceedings of the 22nd Annual Conference on Computer
+     Graphics and Interactive Techniques (SIGGRATH’95). 13–20.
+T. A. DeFanti, D. Acevedo, R. A. Ainsworth, M. D. Brown, S. Cutchin, G. Dawe, K.-U. Doerr, A. Johnson, C.
+     Knox, R. Kooima, F. Kuester, J. Leigh, L. Long, P. Otto, V. Petrovic, K. Ponto, A. Prudhomme, R. Rao, L.
+     Renambot, D. J. Sandin, J. P. Schulze, L. Smarr, M. Srinivasan, P. Weber, and G. Wickham. 2011. The fu-
+     ture of the CAVE. Cent. Eur. J. Eng. 1, 1 (2011), 16–37. DOI:http://dx.doi.org/10.2478/s13531-010-0002-5
+L. De Floriani and P. Magillo. 2002. Multiresolution mesh representation: Models and data structures.
+     Tutorials on Multiresolution in Geometric Modelling (2002), 363–418.
+D. De Winter, P. Simoens, L. Deboosere, F. De Turck, J. Moreau, B. Dhoedt, and P. Demeester. 2006. A hybrid
+     thin-client protocol for multimedia streaming and interactive gaming applications. In Proceedings of the
+     2006 International Workshop on Network and Operating Systems Support for Digital Audio and Video
+     (NOSSDAV’06). ACM, New York, NY, Article 15, 6 pages.
+M. Dharmapurikar. 2013a. Method and mechanism for efficiently delivering visual data across a network.
+     (Aug. 1 2013). US Patent App. 13/558,163. https://www.google.com/patents/US20130198794.
+M. Dharmapurikar. 2013b. Method and mechanism for performing both server-side and client-side ren-
+     dering of visual data. (Jan. 17 2013) US Patent App. 13/349,422. Retrieved from https://www.google.
+     com/patents/US20130016107.
+J. Diepstraten, M. Gorke, and T. Ertl. 2004. Remote line rendering for mobile devices. In Proceedings of
+     Computer Graphics International. IEEE, 454–461.
+H. T. Dinh, C. Lee, D. Niyato, and P. Wang. 2011. A survey of mobile cloud computing: Architecture, applica-
+     tions, and approaches. Wireless Commun. and Mobile Comput. 13, 18 (Dec. 2013), 1587–1611.
+Q. Du and J. E. Fowler. 2007. Hyperspectral image compression using JPEG2000 and principal component
+     analysis. IEEE Geosci. Remote Sens. Lett. 4, 2 (April 2007), 201–205.
+J. Duan and J. Li. 2003. Compression of the layered depth image. IEEE Trans. Image Process. 12, 3 (March
+     2003), 365–372.
+F. Duguet and G. Drettakis. 2004. Flexible point-based rendering on mobile devices. IEEE Comput. Graph.
+     Appl. 24, 4 (July 2004), 57–63. DOI:http://dx.doi.org/10.1109/MCG.2004.5
+O. Egger, W. Li, and M. Kunt. 1995. High compression image coding using an adaptive morphological subband
+     decomposition. Proc. IEEE 83, 2 (Feb. 1995), 272–287.
+S. Eilemann, M. Makhinya, and R. Pajarola. 2009. Equalizer: A scalable parallel rendering framework. IEEE
+     Trans. Visual. Comput. Graphics 15, 3 (May 2009), 436–452.
+P. Eisert and P. Fechteler. 2008. Low delay streaming of computer graphics. In 15th IEEE Interna-
+     tional Conference on Image Processing (ICIP 2008). 2704–2707. DOI:http://dx.doi.org/10.1109/ICIP.2008.
+     4712352
+
+
+
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:24                                                                                       S. Shi and C.-H. Hsu
+
+K. Engel, T. Ertl, P. Hastreiter, B. Tomandl, and K. Eberhardt. 2000. Combining local and remote vi-
+    sualization techniques for interactive volume rendering in medical applications. In Proceedings of
+    the Conference on Visualization (VIS’00). IEEE Computer Society Press, Los Alamitos, CA, 449–452.
+    http://portal.acm.org/citation.cfm?id=375213.375294
+T. A. Funkhouser. 1995. RING: A client-server system for multi-user virtual environments. In Pro-
+    ceedings of the 1995 Symposium on Interactive 3D Graphics (I3D’95). ACM, New York, NY, 85–ff.
+    DOI:http://dx.doi.org/10.1145/199404.199418
+J. Gailly. 1992. The gzip Home Page. Retrieved from http://www.gzip.org.
+J. Garrett-Glaser. 2010. ×264: The Best Low-Latency Video Streaming Platform in the World. Retrieved
+    from http://x264dev.multimedia.cx/archives/249.
+S. Gumhold, S. Guthe, and W. Straßer. 1999. Tetrahedral mesh compression with the cut-border machine. In
+    Proceedings of the Conference on Visualization (VIS’99). 51–58.
+S. Gumhold and W. Straßer. 1998. Real time compression of triangle mesh connectivity. In Proceedings of the
+    25th Annual Conference on Computer Graphics and Interactive Techniques (SIGGRATH’98). Orlando,
+    FL, 133–140.
+B. Han, D. Wu, and H. Zhang. 2010. Block-based method for real-time compound video compression. In
+    Proceedings of the SPIE Security and Applications of Mobile Multimedia/Image Processing.
+H.-C. Hege, A. Merzky, and S. Zachow. 2000. Distributed Visualization with OpenGL Vizserver: Practical
+    Experiences. Technical Report 00-31. ZIB, Takustr. 7, 14195 Berlin.
+R. Herzog, S. Kinuwaki, K. Myszkowski, and H. P. Seidel. 2008. Render2MPEG: A perception-based frame-
+    work towards integrating rendering and video compression. In Computer Graphics Forum, Vol. 27. Wiley
+    Online Library, 183–192.
+G. Hesina and D. Schmalstieg. 1998. A network architecture for remote rendering. In DIS-RT. IEEE Com-
+    puter Society, 88–91.
+H. Hoppe. 1996. Progressive meshes. In Proceedings of the 23rd Annual Conference on Computer Graph-
+    ics and Interactive Techniques (SIGGRAPH’96). ACM, New York, NY, 99–108. DOI:http://dx.doi.org/
+    10.1145/237170.237216
+HP. 2006. Remote Graphics Software. Retrieved from http://h20331.www2.hp.com/hpsub/cache/286504-0-0-
+    225-121.html.
+C. Huang, C. Hsu, Y. Chang, and K. Chen. 2013. GamingAnywhere: An open cloud gaming system. In
+    Proceedings of the ACM Multimedia Systems Conference (MMSys’13).
+J. Huang, F. Qian, A. Gerber, Z. M. Mao, S. Sen, and O. Spatscheck. 2012. A close examination of performance
+    and power characteristics of 4G LTE networks. In Proceedings of the 10th International Conference on
+    Mobile Systems, Applications, and Services. ACM, New York, NY, 225–238.
+T. C. Hudson and W. R. Mark. 1999. Multiple Image Warping for Remote Display of Rendered Images.
+    Technical Report. Chapel Hill, NC.
+G. Humphreys, M. Eldridge, I. Buck, G. Stoll, M. Everett, and P. Hanrahan. 2001. WireGL: A scalable
+    graphics system for clusters. In Proceedings of the 28th Annual Conference on Computer graphics and
+    Interactive Techniques (SIGGRAPH’01). ACM, New York, NY, 129–140.
+G. Humphreys, M. Houston, R. Ng, R. Frank, S. Ahern, P. D. Kirchner, and J. T. Klosowski. 2002. Chromium:
+    A stream-processing framework for interactive rendering on clusters. ACM Trans. Graph. 21, 3 (July
+    2002), 693–702. DOI:http://dx.doi.org/10.1145/566654.566639
+A. Ikonomopoulos and M. Kunt. 1985. High compression image coding via directional filtering. Elsevier
+    Signal Process. 8, 2 (April 1985), 179–203.
+A. Jurgelionis, P. Fechteler, P. Eisert, F. Bellotti, H. David, J. P. Laulajainen, R. Carmichael, V. Poulopoulos, A.
+    Laikari, P. Perälä, A. De Gloria, and C. Bouras. 2009. Platform for distributed 3D gaming. Int. J. Comput.
+    Games Technol. 2009, Article 1 (Jan. 2009), 15 pages. DOI:http://dx.doi.org/10.1155/2009/231863
+Z. Karni and C. Gotsman. 2000. Spectral compression of mesh geometry. In Proceedings of the 22nd Annual
+    Conference on Computer Graphics and Interactive Techniques (SIGGRATH’00). 279–286.
+D. Koller, M. Turitzin, M. Levoy, M. Tarini, G. Croccia, P. Cignoni, and R. Scopigno. 2004. Protected
+    interactive 3D graphics via remote rendering. ACM Trans. Graph. 23, 3 (August 2004), 695–703.
+    DOI:http://dx.doi.org/10.1145/1015706.1015782
+R. Krishnamurthy, B. Chai, H. Tao, and S. Sethuraman. 2001. Compression and transmission of depth maps
+    for image-based rendering. In Proceedings of the IEEE International Conference on Image Processing
+    (ICIP’01). 828–831.
+S.-U. Kum and K. Mayer-Patel. 2005. Real-time multidepth stream compression. ACM Trans. Multimedia
+    Comput. Commun. Appl. 1, 2 (May 2005), 128–150. DOI:http://dx.doi.org/10.1145/1062253.1062255
+
+
+
+
+                                        ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                                        57:25
+
+M. Kunt, M. Benard, and R. Leonardi. 1987. Recent results in high-compression image coding. IEEE Trans.
+     Circuits Syst. 34, 11 (Nov. 1987), 1306–1336.
+A. M. Lai and J. Nieh. 2006. On the performance of wide-area thin-client computing. ACM Trans. Comput.
+     Syst. 24, 2 (May 2006), 175–209. DOI:http://dx.doi.org/10.1145/1132026.1132029
+F. Lamberti and A. Sanna. 2007. A streaming-based solution for remote visualization of 3D graphics on
+     mobile devices. IEEE Trans. Vis. Comput. Graph. 13, 2 (2007), 247–260.
+F. Lamberti, C. Zunino, A. Sanna, F. Antonino, and M. Maniezzo. 2003. An accelerated remote graphics archi-
+     tecture for PDAS. In Proceedings of the 8th International Conference on 3D Web Technology (Web3D’03).
+     ACM, New York, NY, 55–ff. DOI:http://dx.doi.org/10.1145/636593.636602
+C. Lan, G. Shi, and F. Wu. 2010. Compress compound images in H.264/MPGE-4 AVC by exploiting spatial
+     correlation. IEEE Trans. Image Process. 19, 4 (April 2010), 946–957.
+S. Lazem, M. Elteir, A. Abdel-Hamid, and D. Gracanm. 2007. Prediction-based prefetching for remote render-
+     ing streaming in mobile virtual environments. In Proceedings of the 2007 IEEE International Symposium
+     on Signal Processing and Information Technology. IEEE, 760–765.
+Y. Lee and B. Song. 2008. An intra-frame rate control algorithm for ultra low delay H.264/AVC coding. In
+     Proceedings of ICASSP’08. 1041–1044.
+P. Karlton, P. Womack, and J. Leech. 2005. OpenGL Graphics with the X Window System (Version 1.4).
+     Retrieved from http://www.opengl.org/documentation/specs/.
+M. Levoy. 1995. Polygon-assisted JPEG and MPEG compression of synthetic images. In Proceedings of the
+     22nd Annual Conference on Computer Graphics and Interactive Techniques (SIGGRAPH’95). ACM, New
+     York, NY, 21–28. DOI:http://dx.doi.org/10.1145/218380.218392
+B. Li, Z. Wang, J. Liu, and W. Zhu. 2013. Two decades of internet video streaming: A retrospective
+     view. ACM Trans. Multimedia Comput. Commun. Appl. 9, 1s, Article 33 (Oct. 2013), 20 pages.
+     DOI:http://dx.doi.org/10.1145/2505805
+J. Li and C. Kuo. 1998. A dual graph approach to 3D triangular mesh compression. In Proceedings of the
+     International Conference on Image Processing (ICIP’98). 891–894.
+M. Li, A. Schmitz, and L. Kobbelt. 2011. Pseudo-immersive real-time display of 3D scenes on mobile devices.
+     In Proceedings of the 2011 International Conference on 3D Imaging, Modeling, Processing, Visualization
+     and Transmission (3DIMPVT’11). IEEE, 41–48.
+T. Lin and P. Hao. 2005. Compound image compression for real-time computer screen image transmission.
+     IEEE Trans. Image Process. 14, 8 (Aug. 2005), 993–1005.
+Y. Liu, Z. Li, and Y. Soh. 2007. A novel rate control scheme for low delay video communication of H.264/AVC
+     standard. IEEE Trans. Circ. Syst. Video Technol. 1, 17 (Jan. 2007), 68–78.
+J. Lluch, R. Gaitán, E. Camahort, and R. Vivó. 2005. Interactive three-dimensional rendering on mobile
+     computer devices. In Proceedings of the 2005 ACM SIGCHI International Conference on Advances
+     in Computer Entertainment Technology (ACE’05). ACM, New York, NY, 254–257. DOI:http://dx.doi.
+     org/10.1145/1178477.1178520
+Kwan-Liu Ma. 2010. A new approach to remote visualization of large volume data. SIGGRAPH Comput.
+     Graph. 44, 3 (Aug. 2010), 5:1–5:2.
+K.-L. Ma and D. M. Camp. 2000. High performance visualization of time-varying volume data over a wide-
+     area network status. In Proceedings of the 2000 ACM/IEEE Conference on Supercomputing (CDROM)
+     (Supercomputing’00). IEEE Computer Society, Washington, DC, Article 29. http://portal.acm.org/
+     citation.cfm?id=370049.370399
+D. Maheswari and V. Radha. 2010. Enhanced layer based compound image compression. In Proceedings of
+     the Amrita ACM-W Celebration on Women in Computing in India (A2CWiC’10). 40:1–40:8.
+P. Malakar, V. Natarajan, and S. S Vadhiyar. 2010. An adaptive framework for simulation and online remote
+     visualization of critical climate applications in resource-constrained environments. In Proceedings of the
+     2010 ACM/IEEE International Conference for High Performance Computing, Networking, Storage and
+     Analysis. IEEE Computer Society, 1–11.
+Y. Mann and D. Cohen-Or. 1997. Selective pixel transmission for navigating in remote virtual environments.
+     Comput. Graph. Forum 16, 3 (1997), 201–206.
+M. W. Marcellin, A. Bilgin, M. J. Gormish, and M. P. Boliek. 2000. An overview of JPEG-2000. In Proceedings
+     of the Conference on Data Compression (DCC’00). IEEE Computer Society, Washington, DC, 523.
+W. Mark. 1999. Post-Rendering 3D Image Warping: Visibility, Reconstruction, and Performance for Depth-
+     Image Warping. Ph.D. dissertation. University of North Carolina at Chapel Hill, Department of Com-
+     puter Science.
+I. M. Martin. 2000. Adaptive Rendering of 3D Models Over Networks Using Multiple Modalities. Technical
+     Report RC 21722. IBM Research.
+
+
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:26                                                                                    S. Shi and C.-H. Hsu
+
+J. E. Marvie and K. Bouatouch. 2003. Remote rendering of massively textured 3D scenes through progressive
+     texture maps. In Proceedings of the 3rd IASTED Conference on Visualisation, Imaging and Image
+     Processing, Vol. 2. 756–761.
+L. McMillan. 1997. An Image-Based Approach to Three Dimensional Computer Graphics. Ph.D. Dissertation.
+     University of North Carolina at Chapel Hill, Department of Computer Science.
+P. Merkle, Y. Morvan, A. Smolic, D. Farin, K. Muller, P. With, and T. Wiegand. 2009. The effects of multiview
+     depth video compression on multiview rendering. Signal Process. Image Commun. 24, 1–2 (Jan. 2009),
+     73–88.
+S. Milani and G. Calvagno. 2010. A cognitive approach for effective coding and transmission of 3D video.
+     In Proceedings of the International Conference on Multimedia (MM’10). ACM Press, New York, NY,
+     581–590. DOI:http://dx.doi.org/10.1145/1873951.1874009
+Y. Morvan, D. Farin, and P. With. 2007. Multiview depth-image compression using an extended H.264
+     encoder. In Springer Advances in Image and Video Technology. Delft, The Netherlands, 675–686.
+M. Nadeem, S. Wong, and G. Kuzmanov. 2010. An efficient realization of forward integer transform in
+     H.264/AVC intra-frame encoder. In Proceedings of SAMOS’10. Samos, Greece, 71–78.
+I. Nave, H. David, A. Shani, Y. Tzruya, A. Laikari, P. Eisert, and P. Fechteler. 2008. Games@large graphics
+     streaming architecture. In IEEE International Symposium on Consumer Electronics (ISCE 2008). 1–4.
+     DOI:http://dx.doi.org/10.1109/ISCE.2008.4559473
+J. Nieh, S. J. Yang, and N. Novik. 2003. Measuring thin-client performance using slow-motion benchmarking.
+     ACM Trans. Comput. Syst. 21, 1 (Feb. 2003), 87–115. DOI:http://dx.doi.org/10.1145/592637.592640
+Y. Noimark and D. Cohen-Or. 2003. Streaming scenes to MPEG-4 video-enabled devices. IEEE Comput.
+     Graph. Appl. 23, 1 (Jan. 2003), 58–64. DOI:http://dx.doi.org/10.1109/MCG.2003.1159614
+Nvidia. 2009. Reality Server. Retrieved from http://www.nvidia.com/object/realityserver.html.
+M. Oberhumer. 1996. LZO—A Real-Time Data Compression Library. Retrieved from http://www.oberhumer.
+     com/opensource/lzo/.
+H. Oh and Y. Ho. 2006. H.264-based depth map sequence coding using motion information of corresponding
+     texture video. In Springer Advances in Image and Video Technology. Hsinchu, Taiwan, 898–907.
+C. Ohazama. 1999. OpenGL Vizserver White Paper. Silicon Graphics, Inc.
+Samuel Paik. 2014. Microsoft OpenGL Information. Retrieved from http://www.opengl.org/resources/faq/
+     technical/mslinks.htm.
+D. Pajak, R. Herzog, E. Eisemann, K. Myszkowski, and H. P. Seidel. 2011. Scalable remote rendering with
+     depth and motion-flow augmented streaming. In Computer Graphics Forum, Vol. 30. Wiley Online
+     Library, 415–424.
+L. Pantel and L. C. Wolf. 2002. On the suitability of dead reckoning schemes for games. In Proceedings of the
+     1st Workshop on Network and System Support for Games. ACM, New York, NY, 79–84.
+G. Paravati, A. Sanna, F. Lamberti, and L. Ciminiera. 2011. An adaptive control system to deliver interactive
+     virtual environment content to handheld devices. Mobile Networks Appl. 16, 3 (2011), 385–393.
+S. Park, C. Kim, and S. Lee. 2006. Error resilient 3-D mesh compression. IEEE Trans. Multimedia 8, 5 (Oct.
+     2006), 885–895.
+W. Pasman and F. W. Jansen. 2003. Comparing simplification and image-based techniques for 3D client-
+     server rendering systems. IEEE Trans. Visual. Comput. Graphics, 9, 2 (April–June 2003), 226–240.
+B. Paul, S. Ahern, W. Bethel, E. Brugger, R. Cook, J. Daniel, K. Lewis, J. Owen, and D. Southard. 2008.
+     Chromium renderserver: Scalable and open remote rendering infrastructure. IEEE Trans. Visual. Com-
+     put. Graphics 14 (2008), 627–639. DOI:http://dx.doi.org/10.1109/TVCG.2007.70631
+F. Payan and M. Antonini. 2002. Multiresolution 3D mesh compression. In International Conference on Image
+     Processing (ICIP’02). Rochester, New York, 245–248.
+J. Peng, C. Kim, and C. Kuo. 2005. Technologies for 3D mesh compression: A survey. J. Visual Commun.
+     Image Rep. 16, 6 (Dec. 2005), 688–733.
+S. K. Penta and P. J. Narayanan. 2005. Compression of multiple depth maps for IBR. Visual Comput. 21, 8
+     (2005), 611–618. DOI:http://dx.doi.org/10.1007/s00371-005-0337-8
+S. G. Perlman, R. Van Der Laan, T. Cotter, S. Furman, R. McCool, and I. Buckley. 2010. System and Method
+     for Multi-Stream Video Compression Using Multiple Encoding Formats. US Patent No. 2010/0166068A1.
+     (1 July 2010).
+V. Popescu, J. Eyles, A. Lastra, J. Steinhurst, N. England, and L. Nyland. 2000. The warpengine: An archi-
+     tecture for the post-polygonal age. In Proceedings of the 27th Annual Conference on Computer Graphics
+     and Interactive Techniques. ACM Press/Addison-Wesley Publishing Co., New York, NY, 433–442.
+
+
+
+
+                                     ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                                       57:27
+
+S. Prohaska, A. Hutanu, R. Kahler, and H.-C. Hege. 2004. Interactive exploration of large remote micro-CT
+     scans. In Proceedings of the Conference on Visualization (VIS’04). IEEE Computer Society, Washington,
+     DC, 345–352. DOI:http://dx.doi.org/10.1109/VISUAL.2004.51
+P. Quax, B. Geuns, T. Jehaes, W. Lamotte, and G. Vansichem. 2006. On the applicability of remote rendering
+     of networked virtual environments on mobile devices. In Proceedings of the International Conference on
+     Systems and Networks Communications (ICSNC’06). IEEE, 16–21.
+H. Reddy and R. Chunduri. 2006. MPEG-4 Low Delay Design for HDTV with Multi-Stream Approach.
+     Master’s thesis. Swiss Federal Institute of Technology, Lausanne (EPFL).
+A. Redert, M. Op de Beeck, C. Fehn, W. IJsselsteijn, M. Pollefeys, L. J. Van Gool, E. Ofek, I. Sexton, and P.
+     Surman. 2002. ATTEST: Advanced three-dimensional television system technologies. In 3DPVT. IEEE
+     Computer Society, 313–319.
+L. Renambot, A. Rao, R. Singh, B. Jeong, N. Krishnaprasad, V. Vishwanath, V. Chandrasekhar, N. Schwarz,
+     A. Spale, C. Zhang, G. Goldman, J. Leigh, and A. Johnson. 2004. SAGE: The scalable adaptive graphics
+     environment. In Proceedings of the WACE.
+T. Richardson, Q. Stafford-Fraser, K. R. Wood, and A. Hopper. 1998. Virtual network computing. IEEE
+     Internet Comput. 2, 1 (Jan. 1998), 33–38. DOI:http://dx.doi.org/10.1109/4236.656066
+P. Ross. 2009. Cloud computing’s killer app: Gaming. IEEE Spectr. 46, 3 (2009), 14.
+S. Rusinkiewicz and M. Levoy. 2000. QSplat: A multiresolution point rendering system for large meshes.
+     In Proceedings of the 27th Annual Conference on Computer Graphics and Interactive Techniques (SIG-
+     GRAPH’00). ACM Press/Addison-Wesley Publishing Co., New York, NY, 343–352. DOI:http://dx.doi.org/
+     10.1145/344779.344940
+S. Rusinkiewicz and M. Levoy. 2001. Streaming QSplat: A viewer for networked visualization of large, dense
+     models. In Proceedings of the 2001 Symposium on Interactive 3D Graphics (I3D’01). ACM, New York,
+     NY, 63–68. DOI:http://dx.doi.org/10.1145/364338.364350
+M. Sarkis and K. Diepold. 2009. Depth map compression via compressed sensing. In Proceedings of the IEEE
+     International Conference on Image Processing (ICIP’09). 737–740.
+R. Schafer. 1998. MPEG-4: A multimedia compression standard for interactive applications and services.
+     Electron. Commun. Eng. J. 10, 6 (Dec. 1998), 253–262.
+R. W. Scheifler and J. Gettys. 1986. The X window system. ACM Trans. Graph. 5, 2 (April 1986), 79–109.
+     DOI:http://dx.doi.org/10.1145/22949.24053
+D. Schmalstieg. 1997. The Remote Rendering Pipeline— Managing Geometry and Bandwidth in Distributed
+     Virtual Environments. Ph.D. Dissertation. Institute of Computer Graphics and Algorithms, Vienna
+     University of Technology, Favoritenstrasse 9-11/186, A-1040 Vienna, Austria.
+B. K. Schmidt, M. S. Lam, and J. D. Northcutt. 1999. The interactive performance of SLIM: A stateless,
+     thin-client architecture. In Proceedings of the 17th ACM Symposium on Operating Systems Principles
+     (SOSP’99). ACM, New York, NY, 32–47. DOI:http://dx.doi.org/10.1145/319151.319154
+B.-O. Schneider and I. M. Martin. 1999. An adaptive framework for 3D graphics over networks. Comput.
+     Graphics 23, 6 (1999), 867–874.
+R. Schreier, A. Rahman, G. Krishnamurthy, and A. Rothermel. 2006. Architecture analysis for low-delay
+     video coding. In Proceedigns of ICME’06. 2053–2056.
+R. Serral-Gracià, E. Cerqueira, M. Curado, M. Yannuzzi, E. Monteiro, and X. Masip-Bruin. 2010. An overview
+     of quality of experience measurement challenges for video applications in IP networks. In Wired/Wireless
+     Internet Communications. Springer, 252–263.
+J. Seward. 1996. bzip2 and libbzip2, version 1.0.5: A Program and Library for Data Compression. Retrieved
+     from http://www.bzip.org.
+J. Shade, S. Gortler, L.-w. He, and R. Szeliski. 1998. Layered depth images. In Proceedings of the 25th Annual
+     Conference on Computer Graphics and Interactive Techniques (SIGGRAPH’98). ACM, New York, NY,
+     231–242. DOI:http://dx.doi.org/10.1145/280814.280882
+S. Shi, C.-H. Hsu, K. Nahrstedt, J. C. Hart, and R. H. Campbell. 2011a. Using graphics rendering contexts
+     to enhance the real-time video coding for mobile cloud gaming. In Proceedings of the International
+     Conference on Multimedia (MM’11).
+S. Shi, W. J. Jeon, K. Nahrstedt, and R. H. Campbell. 2009. Real-time remote rendering of 3D video for mobile
+     devices. In Proceedings of the 17th ACM International Conference on Multimedia (MM’09). ACM, New
+     York, NY, 391–400. DOI:http://dx.doi.org/10.1145/1631272.1631326
+S. Shi, M. Kamali, K. Nahrstedt, J. C. Hart, and R. H. Campbell. 2010. A high-quality low-delay remote
+     rendering system for 3D video. In Proceedings of the International Conference on Multimedia (MM’10).
+     ACM Press, New York, NY, 601–610. DOI:http://dx.doi.org/10.1145/1873951.1874011
+S. Shi, K. Nahrstedt, and R. Campbell. 2012a. A real-time remote rendering system for interactive mobile
+     graphics. ACM Trans. Multimedia Comput., Commun., Appl. (TOMCCAP) 8, 3s (2012), 46.
+
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+57:28                                                                                     S. Shi and C.-H. Hsu
+
+S. Shi, K. Nahrstedt, and R. H. Campbell. 2008. View-dependent real-time 3D video compression for mobile
+     devices. In Proceedings of the 16th ACM International Conference on Multimedia (MM’08). ACM Press,
+     New York, NY, 781–784. DOI:http://dx.doi.org/10.1145/1459359.1459485
+S. Shi, K. Nahrstedt, and R. H. Campbell. 2011b. Distortion over latency: Novel metric for measuring
+     interactive performance in remote rendering systems. In Proceedings of the 2011 IEEE International
+     Conference on Multimedia and Expo (ICME’11).
+Y. Shi, B. Wen, W. Ding, N. Qi, and B. Yin. 2012b. Realistic mesh compression based on geometry image. In
+     Picture Coding Symposium (PCS’12). 133–136.
+H. Shum, S. Kang, and S. Chan. 2003. Survey of image-based representations and compression techniques.
+     IEEE Trans. Circuits Syst. Video Technol. 13, 11 (Nov. 2003), 1020–1037.
+S. Singhal and M. Zyda. 1999. Networked Virtual Environments: Design and Implementation. ACM
+     Press/Addison-Wesley, New York, NY.
+A. Skodras, C. Christopoulos, and T. Ebrahimi. 2001. The JPEG 2000 still image compression standard.
+     IEEE Signal Process. Mag. 18, 5 (Sept. 2001), 36–58.
+F. A. Smit, R. van Liere, S. Beck, and B. Fröhlich. 2009. An image-warping architecture for VR: Low latency
+     versus image quality. In VR. IEEE, 27–34.
+A. Snell and C. G. Willard. 2007. IBM Deep Computing Visualization. Retrieved from http://www-06.ibm.
+     com/systems/jp/deepcomputing/pdf/idc_white_paper.pdf.
+O. G Staadt, J. Walker, C. Nuber, and B. Hamann. 2003. A survey and performance analysis of software
+     platforms for interactive cluster-based multi-screen rendering. In Proceedings of the Workshop on Virtual
+     Environments 2003. ACM Press, New York, NY, 261–270.
+S. Stegmaier, J. Diepstraten, M. Weiler, and T. Ertl. 2003. Widening the remote visualization bottleneck. In
+     Proceedings of the 3rd International Symposium on Image and Signal Processing and Analysis (ISPA
+     2003). Vol. 1. 174–179. DOI:http://dx.doi.org/10.1109/ISPA.2003.1296889
+S. Stegmaier, M. Magallón, and T. Ertl. 2002. A generic solution for hardware-accelerated remote visualiza-
+     tion. In Proceedings of the Symposium on Data Visualization (VISSYM’02). Eurographics Association,
+     Aire-la-Ville, Switzerland, Switzerland, 87–ff. http://portal.acm.org/citation.cfm?id=509740.509754
+Mercury Intl. Technology. 2007. ThinAnywhere. Retrieved from http:// www.thinanywhere.com.
+E. Teler and D. Lischinski. 2001. Streaming of complex 3D scenes for remote walkthroughs. Comput. Graph.
+     Forum 20, 3 (2001).
+G. Thomas, G. Point, and K. Bouatouch. 2005. A Client-Server Approach to Image-Based Rendering on Mobile
+     Terminals. Technical Report RR-5447. INRIA.
+A. Tikhonova, C. Correa, and K.-L. Ma. 2010. Explorable images for visualizing volume data. In Proceedings
+     of IEEE Pacific Visualization Symposium (PacificVis’10). 177–184.
+N. Tizon, C. Moreno, M. Cernea, and M. Preda. 2011. MPEG-4-based adaptive remote rendering for video
+     games. In Proceedings of the 16th International Conference on 3D Web Technology. ACM, New York, NY,
+     45–50.
+J. Torborg and J. T. Kajiya. 1996. Talisman: Commodity realtime 3D graphics for the PC. In Proceedings of
+     the 23rd Annual Conference on Computer Graphics and Interactive Techniques (SIGGRAPH’96). ACM,
+     New York, NY, 353–363. DOI:http://dx.doi.org/10.1145/237170.237274
+J. D. Touch. 1995. Defining high-speed protocols: Five challenges and an example that survives the challenges.
+     IEEE J. Sel. AreasCommun. 13, 5 (June 1995), 828–835. DOI:http://dx.doi.org/10.1109/49.391751
+T. Tran, L. Liu, and P. Westerink. 1998. Low-delay MPEG-2 video coding. In Proceedings of VCIP’98. 510–516.
+T. Tu, H. Yu, L. Ramirez-Guzman, J. Bielak, O. Ghattas, K.-L. Ma, and D. R. O’Hallaron. 2006. From mesh
+     generation to scientific visualization: An end-to-end approach to parallel supercomputing. In Proceedings
+     of the 2006 ACM/IEEE Conference on Supercomputing. ACM, New York, NY, 91.
+L. Vasa and V. Skala. 2007. CODDYAC: Connectivity driven dynamic mesh compression. In Proceedings of
+     3DTV Conference. 1–4.
+A. Vetro, T. Wiegand, and G. J. Sullivan. 2011. Overview of the stereo and multiview video coding ex-
+     tensions of the H.264/MPEG-4 AVC standard. Proc. IEEE 99, 4 (April 2011), 626–642. DOI:http://dx.
+     doi.org/10.1109/JPROC.2010.2098830
+S. Wang and S. Dey. 2009. Modeling and characterizing user experience in a cloud server based mobile
+     gaming approach. In IEEE Global Telecommunications Conference (GLOBECOM’09). IEEE, 1–7.
+S. Wang and S. Dey. 2012. Cloud mobile gaming: Modeling and measuring user experience in mobile wireless
+     networks. ACM SIGMOBILE Mobile Comput. Communica. Rev. 16, 1 (2012), 10–21.
+S. Wang and S. Dey. 2013. Adaptive mobile cloud computing to enable rich mobile multimedia applications.
+     IEEE Trans. Multimedia 15, 4 (June 2013), 870–883. DOI:http://dx.doi.org/10.1109/TMM.2013.2240674
+
+
+
+                                      ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+A Survey of Interactive Remote Rendering Systems                                                       57:29
+
+S. Wang and T. Lin. 2009. A unified LZ and hybrid coding for compound image partial-lossless compression.
+     In Proceedings of International Congress on Image and Signal Processing (CISP’09). 1–5.
+S. Wang and T. Lin. 2012. United coding method for compound image compression. Multimedia Tools Appl.
+     (Oct. 2012).
+Y. Wang, J. Ostermann, and Y. Zhang. 2001. Video Processing and Communications (1st ed.). Prentice Hall.
+Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli. 2004. Image quality assessment: From er-
+     ror visibility to structural similarity. IEEE Trans. Image Processing 13, 4 (April 2004), 600–612.
+     DOI:http://dx.doi.org/10.1109/TIP.2003.819861
+M. J. Weinberger, G. Seroussi, and G. Sapiro. 1996. LOCO-I: A low complexity, context-based, lossless image
+     compression algorithm. In Proceedings of the Data Compression Conference (DCC’96). 140–149.
+T. Wiegand, G. Sullivan, G. Bjntegaard, and A. Luthra. 2003. Overview of the H.264/AVC video coding
+     standard. IEEE Trans. Circuits Syst. Video Technol. 13, 7 (July 2003), 560–576.
+M. Woo, J. Neider, T. Davis, and D. Shreiner. 1999. OpenGL Programming Guide: The Official Guide to
+     Learning OpenGL, Version 1.2 (3rd ed.). Addison-Wesley Longman Publishing Co., Inc., Boston, MA.
+C. Woodward, S. Valli, P. Honkamaa, and M. Hakkarainen. 2002. Wireless 3D CAD viewing on a pda device.
+     In Proceedings of the 2nd Asian International Mobile Computing Conference (AMOC’02), Vol. 14. 17.
+S. Jae Yang, Jason Nieh, Matt Selsky, and Nikhil Tiwari. 2002. The performance of remote display mech-
+     anisms for thin-client computing. In Proceedings of the General Track of the Annual Conference on
+     USENIX Annual Technical Conference. USENIX Association, Berkeley, CA, 131–146.
+Z. Yang, Y. Cui, Z. Anwar, R. Bocchino, N. Kiyanclar, K. Nahrstedt, R. H. Campbell, and W. Yurcik. 2006. Real-
+     time 3D video compression for tele-immersive environments. In Proceedings of SPIE/ACM Multimedia
+     Computing and Networking (MMCN’06).
+W. Yoo, S. Shi, W. J. Jeon, K. Nahrstedt, and R. H. Campbell. 2010. Real-time parallel remote rendering for
+     mobile devices using graphics processing units. In ICME. IEEE, 902–907.
+I. Yoon and U. Neumann. 2000. Web-based remote rendering with IBRAC (image-based rendering accelera-
+     tion and compression). Comput. Graphics Forum 19, 3 (2000), 321–330.
+H. Yu, K.-L. Ma, and J. Welling. 2004. A parallel visualization pipeline for terascale earthquake simulations.
+     In Proceedings of the 2004 ACM/IEEE Conference on Supercomputing. IEEE Computer Society, 49.
+P. Zanuttigh and G. Cortelazzo. 2009. Compression of depth information for 3D rendering. In Proceedings of
+     the 3DTV Conference: The True Vision—Capture, Transmission and Display of 3D Video. 1–4.
+H. Zhou. 2006. A Survey on Ubiquitous Graphics. Technical Report. Hong Kong University of Science and
+     Technology. Retrieved from http://www.cse.ust.hk/zhouhong/publications.html/.
+
+Received March 2013; revised November 2014; accepted January 2015
+
+
+
+
+ACM Computing Surveys, Vol. 47, No. 4, Article 57, Publication date: May 2015.
+

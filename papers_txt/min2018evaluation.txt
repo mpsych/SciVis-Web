@@ -1,0 +1,817 @@
+Hindawi
+Journal of Healthcare Engineering
+Volume 2018, Article ID 1592821, 11 pages
+https://doi.org/10.1155/2018/1592821
+
+
+
+
+Research Article
+An Evaluation of HTML5 and WebGL for Medical
+Imaging Applications
+
+          Qiusha Min , Zhifeng Wang, and Neng Liu
+          Department of Digital Media Technology, Central China Normal University, Wuhan 430079, China
+
+          Correspondence should be addressed to Qiusha Min; minqiusha918@hotmail.com
+
+          Received 3 April 2018; Revised 22 June 2018; Accepted 18 July 2018; Published 29 August 2018
+
+          Academic Editor: Olivier Beuf
+
+          Copyright © 2018 Qiusha Min et al. This is an open access article distributed under the Creative Commons Attribution License,
+          which permits unrestricted use, distribution, and reproduction in any medium, provided the original work is properly cited.
+
+          Despite the fact that a large number of web applications are used in the medical community, there are still certain technological
+          challenges that need to be addressed, for example, browser plug-ins and eﬃcient 3D visualization. These problems make it necessary
+          for a speciﬁc browser plug-in to be preinstalled on the client side when launching applications. Otherwise, the applications fail to run
+          due to the lack of the required software. This paper presents the latest techniques in hypertext markup language 5 (HTML5) and web
+          graphics library (WebGL) for solving these problems and an evaluation of the suitability of the combination of HTML5 and WebGL
+          for the development of web-based medical imaging applications. In this study, a comprehensive medical imaging application was
+          developed using HTML5 and WebGL. This application connects to the medical image server, runs on a standard personal computer
+          (PC), and is easily accessible via a standard web browser. The several functions required for radiological interpretation were
+          implemented, for example, navigation, magniﬁcation, windowing, and ﬂy-through. The HTML5-based medical imaging application
+          was tested on major browsers and diﬀerent operating systems over a local area network (LAN) and a wide area network (WAN). The
+          experimental results revealed that this application successfully performed two-dimensional (2D) and three-dimensional (3D)
+          functions on diﬀerent PCs over the LAN and WAN. Moreover, it demonstrated an excellent performance for remote access users,
+          especially over a short time period for 3D visualization and a real-time ﬂy-through navigation. The results of the study demonstrate
+          that HTML5 and WebGL combination is suitable for the development of medical imaging applications. Moreover, the advantages
+          and limitations of these technologies are discussed in this paper.
+
+
+
+
+1. Introduction                                                            accessibility [13]. Unfortunately, the implementation of Java
+                                                                           is dependent on the preinstallation of the JVM. During the
+Internet technologies have evolved to a point where it is                  installation process, certain constraints such as adminis-
+possible to create web-based applications that are compa-                  trative permission prohibit changes to the computer. In this
+rable with those typically found on desktop computers and                  case, Java-based web applications fail to run due to the
+workstations. Web applications have been used in a wide                    unsuccessful installation of the JVM. This drawback leads to
+range of areas, including business, media, education, and the              several disadvantages in web-based applications. Moreover,
+medical community. Many radiologists recently participated                 a similar problem exists with ActiveX applications. If this
+in the development of these web applications for radiological              problem remains unsolved, radiologists may be unable to
+purposes [1]. Examples of web-based medical imaging ap-                    use the applications due to the lack of the required browser
+plications are presented brieﬂy in Table 1.                                plug-in, thereby discouraging them from implementing
+    Although these applications enable radiologists to share               remote access interpretations in the future.
+images and implement remote access interpretations, there                      Another challenge with respect to the development of
+are still certain technological challenges that need to be                 medical imaging applications is the lack of an eﬃcient
+addressed. As can be seen from Table 1, Java is the most                   approach for 3D visualization. Although recent studies have
+popular web technology for developing these applications                   proposed the application of AJAX or TypeScript to develop
+owing to its cross-platform compatibility and remote                       web-based medical imaging applications to solve the plug-in
+2                                                                                                      Journal of Healthcare Engineering
+
+                           Table 1: An overview of several previously published medical imaging applications.
+Group                            Year Client technology                           Functions                          Required plug-in
+                                                             Access to remote patient database, the compressed
+Slomka et al. [2]                2000          Java           image is transmitted to the local computer, and             JVMa
+                                                            several applets are available for diﬀerent study types
+                                                            Patient administration, 2D reconstruction and image
+Knoll et al. [3]                 2000          Java                                                                        JVM
+                                                            processing, interpretation and collaborative diagnosis
+Choi et al. [4]                  2002          Java                      Medical imaging conference                        JVM
+                                                             Access to remote medical image databases, image
+Zeng et al. [5]                  2003        ActiveX                                                                 ActiveX plug-in
+                                                                     presentation, and image processing
+                                                            Access to remote medical image databases and image
+Kaldoudi and Karaiskakis [6] 2006             XML                                                                         None
+                                                                                 presentation
+Mongeau et al. [7]               2008        VRMLb                             3D visualization                    VRML browser plug-in
+Kamauu et al. [8]                2008         Java                      Image display and processing                       JVM
+                                                            Access to remote medical image databases and image
+Costa et al. [9]                 2009        ActiveX                                                                 ActiveX plug-in
+                                                                                 presentation
+Mahmoudi et al. [10]             2010    AJAXc + VRML             Image processing; and 3D visualization           VRML browser plug-in
+                                                            Access to remote medical image databases and image
+Shen et al. [11]                 2014         AJAX                                                                        None
+                                                                                 presentation
+Qiao et al. [12]                 2015         AJAX               Image presentation and image processing                  None
+                                                            Access to remote medical image databases and image
+Looney et al. [13]               2016          Java                                                                       JVM
+                                                                                  processing
+Xiberta and Boada [14]           2016         AJAX               Image presentation and image processing                  None
+Doel et al. [15]                 2017          Java                     Medical imaging data sharing                      JVM
+                                                               Transmission performance improvement with
+Jiang et al. [16]                2017        Android        respect to batch transmission processing and image            None
+                                                                                 presentation
+                                                            Access to remote medical image databases and image
+Huang et al. [17]                2018         AJAX                                                                        None
+                                                                                 presentation
+                                                            Access to remote medical image databases and image
+Gøeg et al. [18]                 2018    TypeScript [19]                                                                  None
+                                                                                 presentation
+a
+ JVM is the acronym for Java virtual machine; bVRML is the acronym for virtual reality modeling language; cAJAX is the acronym for asynchronous
+JavaScript and XML.
+
+
+
+problem, it can be seen from Table 1 that these types of                  studies have therefore been conducted to exploit the potential
+applications lack three-dimensional (3D) visualization fea-               of HTML5 in speciﬁc areas, such as e-learning [22] and re-
+tures. Given that a series of medical images is typically larger          mote macromolecular visualization [23]. In the ﬁeld of
+than 200 MB, the rendering of the entire dataset requires                 medical imaging applications, Monteiro et al. used HTML5 to
+a signiﬁcant amount of memory and time. Certain re-                       develop a sophisticated web-based medical image viewer [24].
+searchers have proposed the use of VRML to achieve                        The experimental results revealed that the application suc-
+hardware-accelerated rendering over the Internet; however,                cessfully demonstrated basic interpretation functions, for
+this presents three severe drawbacks, which are the plug-in               example, measurement, annotation, windowing, image ro-
+problem, highly limited interface, and inconsistencies with               tation and ﬁltering, and zooming. The performance of the
+diﬀerent web browsers [20]. Due to the inherent limitation                HTML5-based medical image viewer was then improved by
+of the Internet technologies, web-based 3D visualization has              reducing the data access latency [25]. Although the HTML5-
+recently become an impediment to the development of                       based implementation solved the plug-in problem, it lacked
+medical imaging applications.                                             3D features, which presents a potential limitation of the study.
+    In 2014, the World Wide Web Consortium (W3C) of-                      Many studies have conﬁrmed the feasibility and clinical
+ﬁcially published a new version of HTML, referred to as                   beneﬁt of the 3D functions used in radiological interpretation
+HTML5 [21]. The previous version of HTML could only                       [26]. In particular, with the assistance of the 3D function, the
+display simple information and implement simple in-                       examiner performance with respect to sensitivity and in-
+teractions. These static web pages were not suitable for                  terpretation time is better than that in the case wherein only
+publishing variable data and were unable to provide rich                  a two-dimensional (2D) tool is used [27, 28]. Therefore, in
+interfaces over the Internet. To address this drawback, W3C               addition to 2D image processing tools, the remote medical
+updated the HTML standard. The latest version, HTML5,                     imaging application needs to provide 3D functions, to help
+provides a richer and more interactive user experience with               the examiner make timely and accurate decisions.
+many new advanced features, including interaction with local                   Visualization researchers proposed WebGL [29] as
+ﬁles, image pixel operations, and support for advanced 3D                 a solution for web-based 3D visualization, due to its capa-
+functionalities. With the upgrades in the latest standard,                bility to access OpenGL for Embedded System 2 (OpenGL
+HTML5 features are available in most browsers. A number of                ES2) using a JavaScript application programming interface
+Journal of Healthcare Engineering                                                                                                 3
+
+(API) [30–35]. The combination of the HTML5 <canvas>                colonoscopy, is designed to satisfy all criteria and is then
+element and WebGL enables hardware acceleration, without            used to conduct an evaluation of the HTML5 and WebGL
+plug-in requirements. WebGL was initially implemented at            combination as a development tool. The initial start page for
+Mozilla in 2006 and the nonproﬁt technology consortium,             the demo application is presented in Figure 1 and available at
+Khronos Group, worked on the WebGL standard in 2009. In             http://203.195.157.19/datatest/2D_Viewer.html. The opera-
+2011, the WebGL1.0 speciﬁcation was released, and most              tion ﬂow of radiological interpretation using this demo
+browsers supported it, for example, Chrome, Firefox, Safari,        application is as follows:
+and Opera. Thus far, there are several WebGL demos that
+                                                                         Step 1. Select a dataset to be interpreted and click the
+demonstrate its immense potential to incorporate 3D
+                                                                         Download button, which activates the download pro-
+graphics into web pages [32, 33]. Hence, Cantor-Rivery and
+                                                                         cess. The selected dataset is stored on the local
+Peters described how these new technologies (HTML5 and
+                                                                         computer.
+WebGL) can improve medical imaging web applications, with
+respect to 3D visualization [36], and presented a demo that              Step 2. Click the Choose ﬁle button and in the dialog
+demonstrates an excellent performance of this combination                box, select the downloaded ﬁle. As a result, the ﬁrst slice
+[37]. Unfortunately, a comprehensive quantitative evaluation             of the dataset is automatically displayed on the screen.
+of the application running in diﬀerent contexts was not                  Step 3. Navigate through the image dataset using the
+provided. More tests are required to conﬁrm the suitability of           Previous and Next buttons.
+HTML5 and WebGL for the development of remote access                     Step 4. Interpret the dataset using 2D image processing
+medical imaging applications. It can therefore be concluded              tools, for example, zoomin, zoomout, ﬁltering,
+from the literature that HTML5 and WebGL are not being                   threshold, edge detection, and windowing.
+extensively explored by the medical community, and there is
+                                                                         Step 5. Interpret the dataset using 3D visualization
+a need for a comprehensive qualitative and quantitative
+                                                                         tools, for example, 3D rendering and ﬂy-through.
+evaluation of these technologies.
+    In this paper, the latest revision of HTML (HTML5)                  This application provides remote access interpretation in
+combined with WebGL is discussed in the context of a po-            such a way that radiologists can view images from
+tential solution to the plug-in and 3D visualization problems.      a downloaded dataset and manipulate them using 2D or 3D
+As the new standard for the web, HTML5 is platform-                 functions.
+independent, and in combination with the promising                      This application can be placed as a client component in
+WebGL 3D web technology, it can create sophisticated 3D             a large teleradiology system. A typical teleradiology system
+applications. The aim of this study was to evaluate the per-        comprises two components: the server side and the client
+formance of an HTML5-based medical imaging application              side of the application. The server-side component is re-
+with respect to accessibility, functionality, and usability to      sponsible for retrieving the required image datasets and
+determine its appropriateness for remote viewing and the            sending them to the client. The client side is a medical
+interpretation of radiological images. The various functions of     imaging application. The application sends the request to the
+this application are covered in detail in the following sections,   server to download the selected dataset and displays the
+and a series of results are presented to conﬁrm the suitability     downloaded image. The radiological interpretations can be
+of HTML5 and WebGL for the development of remote access             assisted by the 2D and 3D functions in the application.
+medical imaging applications.                                           This paper focuses solely on the client application and
+                                                                    presents an evaluation of HTML5 and WebGL for the de-
+2. Materials and Methods                                            velopment of medical imaging applications. The following
+                                                                    section presents a demo application for CTC and a discus-
+2.1. Application Design. There are several common func-             sion on all the necessary implementation details.
+tionalities of medical imaging applications. First, it is pref-
+erable to initially transfer the medical dataset from the server
+to the client side so as to provide a short response time.          2.2. Application Implementation
+Therefore, the application is required to directly interact with
+the local ﬁle system. Furthermore, to facilitate radiological       2.2.1. Access to the Local File System. The application enables
+interpretation, the basic functions for image processing are        the user to choose a patient dataset to study (Figure 1). The
+necessary for radiologists to identify the useful information       selected dataset is transmitted to the client side and stored on
+contained in images. Finally, the interpretation may be             the local computer using a custom format. At present,
+supported by 3D functions so that the volumetric dataset can        HTML5 has added a new input type, <input type � “ﬁle”>,
+provide more details of patient anatomies and pathological          which provides a standard way to interact with local ﬁles.
+conditions. Thus, a comprehensive medical imaging appli-            The File Open dialog box that appears when the user clicks
+cation should include the following features: (1) interaction       the File button is used to access the local ﬁle system from the
+with the local ﬁle system, (2) basic functions for 2D image         browser. This new feature in HTML5 is a core requirement
+processing, and (3) 3D visualization of the region of interest      for the remote viewer application.
+within the dataset.                                                     Once the downloaded ﬁle has been opened, the ﬁrst slice
+    In this paper, a demo application for computed to-              in the dataset is automatically displayed on the screen
+mography colonography (CTC), also known as virtual                  (Figure 2).
+4                                                                                          Journal of Healthcare Engineering
+
+
+
+
+Figure 1: Screenshot of the initial start page for the demo                 Figure 2: Screenshot of an image display.
+application.
+
+
+                                                                      Based on the study by Cantor-Rivery and Peters [36, 37],
+2.2.2. Image Processing. Another crucial requirement for          in this study, WebGL was used for 3D functions realized
+this application is pixel-level manipulation. Owing to the        using HTML5 implementation. In addition, WebGL is the
+introduction of the <canvas> element in HTML5, it is              most promising technology to satisfy the criteria, which are
+possible to deﬁne the color of an image pixel in the canvas.      as follows:
+The application is therefore capable of implementing certain
+advanced image processing functions that could not be                  (i) Accessibility: the application should be supported
+achieved with previous versions of HTML. 2D image pro-                     by most web browsers, and the interface should
+cessing functions, for example, magniﬁcation, windowing,                   require no more than the interaction capabilities of
+ﬁltering, thresholding, and edge detection are provided by                 a standard PC. In this way, users can complete the
+the application and typical functions depicted in Figure 3.                remote access interpretation using their existing
+The implementation of accessing the local ﬁle and 2D image                 computers, without any additional software or
+processing comprises approximately 700 lines of JavaScript                 hardware requirements.
+code without support from other libraries.                            (ii) Functionality: the application should provide a 3D
+                                                                           visualization for the region of interest within the
+                                                                           dataset.
+2.2.3. 3D Visualization. It is well known that 3D visuali-
+                                                                     (iii) Usability: the application should be easy to use, and
+zation is extremely computationally intensive. Hence, this
+                                                                           a short response time is an important factor that
+task is normally implemented at a workstation equipped
+                                                                           aﬀects the user satisfaction.
+with a high-performance graphics processing unit (GPU).
+For a single CTC interpretation, the application is required          The following presents the 3D implementation based on
+to render approximately 1,000,000 polygons to generate the        HTML5 and WebGL used in this study.
+entire colon surface. As is expected, it is diﬃcult to complete       In this implementation, the 3D visualization is based on
+this 3D visualization on a personal computer (PC) that is not     surface rendering. Surface rendering generally involves two
+equipped with high-performance GPUs or to run it in               stages: surface extraction and 3D rendering. The marching
+a browser.                                                        cubes algorithm [38] is used to extract the isosurface from
+Journal of Healthcare Engineering                                                                                                      5
+
+
+
+
+                                    (a)                                                           (b)
+
+Figure 3: Screenshots of the user interface of the implementation of typical image processing functions: (a) a slice with adjusted window
+(parameters: center � 20 HU, width � 200 HU); (b) edge detection using the Sobel operator.
+
+
+a volumetric dataset. The preferred method for shortening             regarded as a time-eﬃcient method for colon cancer de-
+the rendering time is to perform the surface extraction once          tection. The same CTC dataset was used to implement a ﬂy-
+and store the vertex and normal ﬁles on the server. When the          through function. Figure 5 presents a captured image of the
+user sends the request to view the 3D data, the application           3D ﬂy-through within the colon, running in a browser.
+loads the corresponding vertex and normal ﬁles and renders
+the 3D content on the client side, without the need to                3. Results
+perform surface extraction. Once the vertex and normal ﬁles
+of a 3D model have been set, the 3D model surface can be              3.1. Experiment Design. The demo application enabled ra-
+deﬁned and WebGL renders the entire model according to                diologists to connect to an image server to download the
+the predeﬁned light and viewpoint. The total number of lines          selected dataset and then manipulate the images in a web
+of JavaScript code for 3D rendering is approximately 500,             browser. A range of appropriate tools, such as windowing,
+without support from other libraries. Figure 4 presents a 3D          zooming, and 3D visualization, were also provided by the
+colon model extracted from a CTC dataset using the ap-                application.
+plication described above. The user can also interact with                To evaluate the HTML5-based application, two types of
+this model and perform operations such as rotation and                experiments were conducted. The ﬁrst was used to de-
+translation using the mouse.                                          termine the performance of the application on multiple
+    Virtual ﬂy-through navigation is a feature used in ma-            platforms. The second was used to evaluate the performance
+nipulating the results of the 3D reconstruction. Moreover,            of the application using either a local area network (LAN) or
+WebGL provides a function to set the viewpoint location,              a wide area network (WAN). Three datasets were used in the
+which is an essential prerequirement for the camera                   experiments. The data were downloaded from the Cancer
+movement. The camera can therefore move along a planned               Imaging Archive (TCIA), which provides a freely accessible
+path, commonly referred to as the colon center line, to               and open archive of cancer-speciﬁc medical images to the
+render internal views. Using these advanced imaging                   research community [39]. A complete description of the
+techniques, the radiologist can examine the inner wall using          datasets is presented in Table 2, and the information about
+3D ﬂy-through in a virtual colon model which has been                 computers used in the experiments is presented in Table 3. It
+6                                                                                           Journal of Healthcare Engineering
+
+                                                                  that required rendering. Therefore, the experiments were
+                                                                  focused on Chrome, Firefox, Safari, and Microsoft Edge. The
+                                                                  details of the testing metrics in this study are presented in
+                                                                  Table 4.
+
+                                                                  3.2. Performance on Multiple Platforms. The ﬁrst experiment
+                                                                  was carried out using dataset 1 through LAN to evaluate the
+                                                                  performance of the application on multiple platforms. The
+                                                                  demo application was run on several computers to test the
+                                                                  performance on the Windows, Linux, and Mac platforms.
+                                                                  Each function in the application was implemented 20 times
+                                                                  on these platforms, using diﬀerent browsers. The average
+                                                                  performances for each function are presented in Figure 6. A
+                                                                  comparison of the performances on the diﬀerent platforms
+                                                                  reveals that Windows, Linux, and Mac could provide nearly
+                                                                  the same application performances, with the exception of
+                                                                  magniﬁcation and 3D rendering. Magniﬁcation imple-
+                                                                  mented on Linux was much slower than that implemented
+                                                                  on Windows and Mac, regardless of the browsers used;
+                                                                  whereas 3D rendering implemented on Linux and Mac was
+                                                                  much faster than that implemented on Windows. Although
+                                                                  diﬀerent platforms could provide nearly the same applica-
+Figure 4: Screenshot of a 3D model of the whole colon in the      tion performances, the performance of each browser on
+browser.                                                          diﬀerent platforms led to inconsistencies. For example,
+                                                                  Firefox on Windows and Mac provided faster windowing
+                                                                  than that on Linux, whereas Firefox on Linux and Mac
+                                                                  provided faster thresholding than that on Windows. Ad-
+                                                                  ditionally, the inconsistent performances on diﬀerent plat-
+                                                                  forms also occurred in Chrome. For example, the execution
+                                                                  time for viewing a slice on Windows and Linux was twice
+                                                                  that on Mac and the execution time for magniﬁcation on
+                                                                  Linux was twice that on Windows and Mac. However, on
+                                                                  Mac, Safari, Firefox, and Chrome provided nearly the same
+                                                                  2D and 3D performances.
+
+                                                                  3.3. Performance via LAN and WAN. In the second exper-
+                                                                  iment, the computer was used to test the application over
+                                                                  LAN and WAN. This computer was equipped with Win-
+                                                                  dows, and therefore had only three browsers, that is,
+                                                                  Microsoft Edge, Firefox, and Chrome, which were used to
+                                                                  implement the HTML5-based application. All three datasets
+                                                                  were used in the experiment. Dataset 1 was used to identify
+                                                                  which of the three browsers could oﬀer the best performance
+                                                                  for the HTML5-based application. Dataset 2 was used to
+                                                                  determine the performance diﬀerences in Chrome when
+                                                                  running the application via LAN and WAN. Dataset 3 was
+                                                                  used to determine the performance diﬀerences in Firefox
+                                                                  when running the application via LAN and WAN. In WAN,
+Figure 5: Screenshot of the implementation of the ﬂy-through in   the application accessed the medical image dataset and
+the browser.                                                      vertex/normal ﬁles on the remote server. The bandwidth of
+                                                                  the connecting network was 40 Mbps, and it had a download
+                                                                  speed of approximately 4.8 MB/s. The download sizes for the
+is evident that the computers were ordinary laptops for           medical image dataset, vertex ﬁle, and normal ﬁle are pre-
+regular users.                                                    sented in Table 2.
+    Thus far, all major browsers including Firefox, Chrome,           Each function in the application was implemented 20
+Safari, IE, and Microsoft Edge support HTML5 and WebGL.           times by Chrome, Firefox, and Microsoft Edge, either over
+However, when testing the application in diﬀerent browsers,       the LAN or WAN. The average performances for each
+IE returned a memory error, due to the large number of faces      function are presented in Table 5. The results of the
+Journal of Healthcare Engineering                                                                                                           7
+
+                                      Table 2: Description of the datasets used in the experiments.
+                                                                                                 3D visualization
+Dataset            Type                       Size
+                                                                         Vertex ﬁle           Normal ﬁle             The number of faces
+#1                 CT            512 × 512 × 610 (312,320 kB)            59,545 kB             59,545 kB                  1,693,700
+#2                 CT            512 × 512 × 628 (321,536 kB)            57,747 kB             57,747 kB                  1,642,580
+#3                 CT            512 × 512 × 500 (256,000 kB)            60,236 kB             60,236 kB                  1,713,372
+
+
+                                      Table 3: The details of computers using in the experiments.
+Computer              Type               Operation system             CPU                          Memory               GPU
+                                                         Intel(R) Core(TM) i5-6300HQ
+I                    Laptop         Windows 10 64-bit                                              8.00 GB NVIDIA GeForce GTX 950M
+                                                                CPU @ 2.30 GHz
+                                                         Intel(R) Core(TM) i5-6300HQ
+II                   Laptop           Ubuntu 16.04                                                 8.00 GB NVIDIA GeForce GTX 950M
+                                                                CPU @ 2.30 GHz
+III           Laptop (MacBook Pro) Mac OS Sierra 10.12.5 Intel Core Intel i5 @ 2.30 GHz            8.00 GB   Intel Iris Plus Graphics 640
+
+
+
+                                          Table 4: The details of testing metrics in this study.
+Function                      Label                              Description                                        Measurement
+                                              Execution time for downloading a medical image
+Data access                    M1                                                                               Manual measurement
+                                                                    dataset
+                                             Execution time for viewing a slice in a medical image
+                               M2                                                                            Measured by JavaScript code
+                                                                    dataset
+                                              Execution time for implementing windowing per
+                               M3                                                                            Measured by JavaScript code
+                                                                     slice
+                                             Execution time for implementing magniﬁcation per
+                               M4                                                                            Measured by JavaScript code
+                                                                     slice
+2D image processing
+                                              Execution time for implementing median ﬁltering
+                               M5                                                                            Measured by JavaScript code
+                                                               (3 × 3) per slice
+                                             Execution time for implementing thresholding per
+                               M6                                                                            Measured by JavaScript code
+                                                                     slice
+                                                Execution time for implementing Sobel edge
+                               M7                                                                            Measured by JavaScript code
+                                                              detection per slice
+                                               Execution time for downloading the vertex and
+                               M8                                                                               Manual measurement
+                                                   normal ﬁles of a medical image dataset
+3D visualization                             Execution time for rendering a 3D model based on
+                               M9                                                                            Measured by JavaScript code
+                                                  the downloaded vertex and normal ﬁles
+                              M10                         Frame rate of ﬂy-through                           Measured by JavaScript code
+
+
+performance tests of Chrome, Firefox, and Microsoft Edge               14 s (execution time on M8 and M9) was required. The user
+on dataset 1 revealed that Firefox and Chrome were superior            was then able to control the camera movement, resulting in
+to Microsoft Edge with respect to 2D image processing.                 the change of viewpoint in real time.
+However, for 3D visualization, Microsoft Edge achieved the
+highest frame rate with an increase of 20% when compared               4. Discussion
+with Firefox and 50% when compared with Chrome. Fur-
+thermore, the results presented in Table 5 reveal that the             At present, three alternatives to HTML5 for the development
+most signiﬁcant diﬀerence between the LAN and WAN was                  of web applications are Flash, Java, and Silverlight [40]. Circa
+the data transmission speed, as expected. After loading data           2000, Java was a popular web technology used in tele-
+to the local storage, the application performance over the             radiology applications. Slomka et al. developed a remote
+WAN was the same as that over the LAN.                                 viewer using Java applets [2]. In their system, the com-
+    The experiments revealed that the response time for the            pressed patient images were downloaded with a Java archive
+2D image processing functions was signiﬁcantly less than 1 s           ﬁle (JAR); thus, the client required only one connection to
+per slice on every computer. It can therefore be concluded             the server, which can dramatically reduce network traﬃc,
+that the application can demonstrate real-time performances            due to the decrease in the client-server communications.
+for all the provided 2D tools. For the 3D visualization,               Knoll et al. [3] and Choi et al. [4] also developed Java ap-
+approximately 1 min was required for the download of the               plications for teleradiology purposes. Recently, the ubiquity
+vertex and normal ﬁles and the generation of the entire 3D             and small size of Flash Player stimulated a growing trend
+model over the WAN, whereas over the LAN, approximately                toward the utilization of Flash. Arguiñarena et al. used this
+8                                                                                                                         Journal of Healthcare Engineering
+
+                    35                                                              0.0015
+                    30
+                                                                                    0.0012
+
+
+
+    M1 (seconds)
+
+
+
+
+                                                             M2 (seconds)
+                    25
+                    20                                                              0.0009
+                    15                                                              0.0006
+                    10
+                                                                                    0.0003
+                     5
+                     0                                                                            0
+                          Firefox (Win)    MS Edge (Win)                                                Firefox (Win)      MS Edge (Win)
+                          Chrome (Linux)   Firefox (Mac)                                                Chrome (Linux)     Firefox (Mac)
+                          Chrome (Win)     Firefox (Linux)                                              Chrome (Win)       Firefox (Linux)
+                          Safari (Mac)     Chrome (Mac)                                                 Safari (Mac)       Chrome (Mac)
+                                    (a)                                                                          (b)
+                   0.12                                                                    0.006
+                    0.1                                                                    0.005
+    M3 (seconds)
+
+
+
+
+                                                             M4 (seconds)
+                   0.08                                                                    0.004
+                   0.06                                                                    0.003
+                   0.04                                                                    0.002
+                   0.02                                                                    0.001
+                     0                                                                            0
+                          Firefox (Win)    MS Edge (Win)                                                Firefox (Win)      MS Edge (Win)
+                          Chrome (Linux)   Firefox (Mac)                                                Chrome (Linux)     Firefox (Mac)
+                          Chrome (Win)     Firefox (Linux)                                              Chrome (Win)       Firefox (Linux)
+                          Safari (Mac)     Chrome (Mac)                                                 Safari (Mac)       Chrome (Mac)
+                                    (c)                                                                          (d)
+                    0.5                                                                    0.12
+                    0.4                                                                     0.1
+    M5 (seconds)
+
+
+
+
+                                                                    M6 (seconds)
+
+
+
+
+                                                                                           0.08
+                    0.3
+                                                                                           0.06
+                    0.2
+                                                                                           0.04
+                    0.1                                                                    0.02
+                     0                                                                       0
+                          Firefox (Win)    MS Edge (Win)                                              Firefox (Win)       MS Edge (Win)
+                          Chrome (Linux)   Firefox (Mac)                                              Chrome (Linux)      Firefox (Mac)
+                          Chrome (Win)     Firefox (Linux)                                            Chrome (Win)        Firefox (Linux)
+                          Safari (Mac)     Chrome (Mac)                                               Safari (Mac)        Chrome (Mac)
+                                    (e)                                                                          (f )
+                    0.3                                                                    14
+                   0.25                                                                    12
+    M7 (seconds)
+
+
+
+
+                                                                            M8 (seconds)
+
+
+
+
+                    0.2                                                                    10
+                                                                                            8
+                   0.15
+                                                                                            6
+                    0.1                                                                     4
+                   0.05                                                                     2
+                     0                                                                      0
+                          Firefox (Win)    MS Edge (Win)                                              Firefox (Win)      MS Edge (Win)
+                          Chrome (Linux)   Firefox (Mac)                                              Chrome (Linux)     Firefox (Mac)
+                          Chrome (Win)     Firefox (Linux)                                            Chrome (Win)       Firefox (Linux)
+                          Safari (Mac)     Chrome (Mac)                                               Safari (Mac)       Chrome (Mac)
+                                    (g)                                                                          (h)
+                                                   Figure 6: Continued.
+Journal of Healthcare Engineering                                                                                                                    9
+
+                                     5                                                      70
+                                     4                                                      60
+
+
+
+
+                      M9 (seconds)
+                                                                                            50
+
+
+
+
+                                                                                M10 (fps)
+                                     3                                                      40
+                                     2                                                      30
+                                                                                            20
+                                     1
+                                                                                            10
+                                     0                                                       0
+                                         Firefox (Win)    MS Edge (Win)                          Firefox (Win)    MS Edge (Win)
+                                         Chrome (Linux)   Firefox (Mac)                          Chrome (Linux)   Firefox (Mac)
+                                         Chrome (Win)     Firefox (Linux)                        Chrome (Win)     Firefox (Linux)
+                                         Safari (Mac)     Chrome (Mac)                           Safari (Mac)     Chrome (Mac)
+                                                    (i)                                                     (j)
+
+Figure 6: Application performances on diﬀerent platforms. The computational time required for (a) downloading the selected dataset; (b–g)
+implementing 2D image processing per slice; (h–j) implementing 3D visualization.
+
+
+                      Table 5: Comparison of the proposed application performances over the WAN and LAN.
+
+                                               Data access                   2D image processing                                  3D visualization
+Dataset           Browser
+                                                 M1 (s)      M2 (s)    M3 (s) M4 (s) M5 (s) M6 (s)                M7 (s)    M8 (s) M9 (s) M10 (fps)
+             Firefox (WAN)                        18.6       0.0008    0.066   0.002    0.456    0.070            0.040       4.7     3.61       49.54
+#1           Chrome (WAN)                         27.1       0.0014    0.024   0.002    0.150    0.021            0.089      10.5     3.52        39.8
+          Microsoft Edge (WAN)                    19.5       0.0005    0.102   0.001    0.359    0.102            0.268       3.2     4.12        60.0
+             Chrome (LAN)                         28.9       0.0013    0.025   0.001    0.167    0.024            0.103      10.4     3.30       40.41
+#2
+             Chrome (WAN)                        135.5       0.0015    0.029   0.001    0.169    0.028            0.165      46.0     3.78       40.05
+              Firefox (LAN)                       17.9       0.0003    0.039   0.001    0.468    0.039            0.039       4.8     3.80       47.28
+#3
+             Firefox (WAN)                       102.3       0.0005    0.042   0.002    0.495    0.046            0.068      40.2     3.85       46.95
+
+
+type of application to connect with a picture archiving and                     on the utilization of VRML on the client side [7, 10]. However,
+communication system and to provide a shorter image                             this approach also suﬀers from several limitations, which were
+display time to improve the teleradiological productivity                       discussed in the previous section. This study addressed
+[41]. Our previous study determined the suitability of Flash                    a diﬀerent technology for an improvement in user friendli-
+for the development of web-based medical imaging appli-                         ness. Furthermore, the WebGL and HTML5 combination has
+cations [42].                                                                   numerous potential advantages over VRML with respect to
+    However, the main disadvantage associated with these                        JavaScript support, consistency across diﬀerent browsers, and
+technologies is the requirement of a browser plug-in. Al-                       no plug-in requirements. Cantor-Rivery and Peters demon-
+though Flash Player is the most popular browser plug-in                         strated that the HTML5 and WebGL combination for medical
+technology in the world thus far; in 2010, Apple decided to                     imaging applications could solve the problem relating to the
+stop incorporating Flash Player in Macs. For this group of                      inability of user browsers to support 3D interactions [37]. The
+users, it is therefore necessary to ensure that their computers                 demo application was tested on several platforms and re-
+are equipped for running Flash applications, which requires                     quired only 1 min to download the corresponding ﬁles and
+an initial installation of the Flash Player. Moreover, the same                 generate an entire 3D model while running on an ordinary
+problem occurs in Java and Silverlight. To run Java-based                       laptop computer in a remote location. In addition, as a useful
+web applications without a plug-in installation, Oracle de-                     tool for the image interpretation, virtual ﬂy-through navi-
+veloped a tool to generate the package for a self-contained                     gation could also be implemented in real time using
+application. This application contains the Java application                     a browser. It should be noted that the download sizes of the
+and the required Java Runtime Environment and requires no                       vertex and normal ﬁles could be dramatically reduced by
+additional JVM installation. However, the drawbacks of self-                    server-side smoothing and polygon decimation, thus short-
+contained application packages are their lager download                         ening the download time for the vertex and normal ﬁles. On
+sizes and platform dependencies [43]. Fortunately, these                        the other hand, if the clients are high-performance computers,
+drawbacks do not exist with the application described in this                   the 3D reconstruction process can be implemented locally,
+paper, given that HTML is the native language of all                            which eliminates the necessity of downloading the vertex and
+browsers. Therefore, HTML5 is a truly “no preinstallation”                      normal ﬁles. Furthermore, all these procedures make it
+and platform-independent technology.                                            possible to further improve the 3D performance of the
+    Another drawback of remote access medical applications                      application.
+is the visualization of the region of interest within a volu-                       Nevertheless, there are minor limitations in the current
+metric dataset. The majority of the previous work was focused                   implementation. At the time of writing, the latest version of
+10                                                                                              Journal of Healthcare Engineering
+
+HTML released was 5.2. In comparison with HTML5.0, the            Data Availability
+latest version provides new features, such as the <dialog>
+element and the allowpaymentrequest attribute of the              Three datasets used in the experiments were downloaded
+<iframe> element. However, the method for accessing the           from The Cancer Imaging Archive (TCIA), which provides
+local ﬁle in HTML5.2 still requires user interaction.             a freely accessible and open archive of cancer speciﬁc
+Therefore, in the application in this study, the users            medical images to the research community.
+themselves are required to specify the ﬁle path when reading
+the downloaded dataset. Given that the W3C is still working       Conflicts of Interest
+on the HTML5 speciﬁcation, in the future, a smart way may
+be developed in HTML5 to read the local ﬁle after obtaining       The authors declare that there are no conﬂicts of interest
+user permission, such as trusted applications in Java and         regarding the publication of this paper.
+Silverlight. Furthermore, the 3D visualization of the medical
+image data is based on surface rendering, and the surface         Acknowledgments
+information is predeﬁned on the server. Consequently, the
+                                                                  The authors would like to acknowledge Dr. Robert Sadleir
+user is not allowed to choose the surface-generation pa-
+                                                                  for his helpful contribution to this work. This work was
+rameters, and the parameters may aﬀect the geometric
+                                                                  supported by the National Key Technology Research and
+representation of the 3D models. To provide a custom 3D
+                                                                  Development Program of the Ministry of Science and
+visualization of medical image data, it is reasonable to allow
+                                                                  Technology of China (no. 2015BAK33B02) and the MOE
+the user to deﬁne the surface-generation parameters in the
+                                                                  (Ministry of Education in China) Project of Humanities and
+application, and the server then implements a fast surface
+                                                                  Social Sciences (no. 17YJC880081).
+extraction according to the chosen parameters. In this case,
+a further study on the fast surface extraction is required. One
+more limitation of this study is browser compatibility. Given     References
+that the W3C HTML5 recommendation was released in                  [1] D. D. Prasad, S. Ray, A. K. Majumdar et al., “Real time medical
+2014, old versions of browsers do not support HTML5.                   image consultation system through internet,” Journal of
+Therefore, some of the latest features in HTML5 may not be             Healthcare Engineering, vol. 1, no. 1, pp. 141–154, 2010.
+compatible with user browsers (e.g., the <canvas> and              [2] P. J. Slomka, E. Edwards, and A. A. Driedger, “Java-based
+<video> elements), if the browsers are not updated. How-               remote viewing and processing of nuclear medicine images:
+ever, as HTML5 is used more extensively, it is expected that           toward ‘the imaging department without walls’,” Journal of
+all of the browsers installed on PCs will support HTML5,               Nuclear Medicine, vol. 41, no. 1, pp. 111–118, 2000.
+and the medical community will adopt the more advanced             [3] P. Knoll, K. Höll, S. Mirzaei, K. Koriska, and H. Köhn,
+features of HTML5. The results of the comparison with other            “Distributed nuclear medicine applications using World
+                                                                       Wide Web and Java technology,” European Radiology, vol. 10,
+teleradiology applications suggest that this new type of web
+                                                                       no. 9, pp. 1483–1486, 2000.
+application can provide the necessary functionalities for          [4] H. K. Choi, S. M. Park, J. H. Kang, S. K. Kim, and H. M. Choi,
+radiological interpretations and oﬀer an excellent perfor-             “Tele-medical imaging conference system based on the web,”
+mance for remote access users, especially in a short time, for         Computer Methods and Programs in Biomedicine, vol. 68,
+3D visualization and real-time ﬂy-through navigation.                  no. 3, pp. 223–231, 2002.
+                                                                   [5] H. Zeng, D. Y. Fei, C. T. Fu, and K. A. Kraft, “Internet
+                                                                       (WWW) based system of ultrasonic image processing tools
+5. Conclusions                                                         for remote image analysis,” Computer Methods and Programs
+                                                                       in Biomedicine, vol. 71, no. 3, pp. 235–241, 2003.
+From a review of the literature, it is apparent that there is
+                                                                   [6] E. Kaldoudi and D. Karaiskakis, “A service based approach for
+a need for a straightforward solution to the remote access of          medical image distribution in healthcare Intranets,” Com-
+radiological images. As revealed in this paper, an HTML5-              puter Methods and Programs in Biomedicine, vol. 81, no. 2,
+based application provides a solution by the remote                    pp. 117–127, 2006.
+implementation of 2D image processing functions and 3D             [7] R. Mongeau, M. A. Casu, L. Pani et al., “Building a virtual
+visualization without the need for preinstallations. More-             archive using brain architecture and Web 3D to deliver
+over, it should be noted that the implementation of the                neuropsychopharmacology content over the Internet,”
+application only requires a web browser on an ordinary                 Computer Methods and Programs in Biomedicine, vol. 90,
+computer. The experimental results indicate that this so-              no. 2, pp. 124–136, 2008.
+lution can achieve real-time performances for 2D and 3D            [8] A. W. C. Kamauu, S. L. DuVall, R. H. Wiggins, and
+functions over both LAN and WAN, providing signiﬁcant                  D. E. Avrin, “Using applet–servlet communication for opti-
+                                                                       mizing window, level and crop for DICOM to JPEG con-
+improvements with respect to accessibility, functionality,             version,” Journal of Digital Imaging, vol. 21, no. 3,
+and usability. Therefore, it can be concluded from the study           pp. 348–354, 2008.
+that the HTML5 and WebGL combination can provide                   [9] C. Costa, J. L. Oliveira, A. Silva, V. G. Ribeiro, and J. Ribeiro,
+a remote access medical imaging experience that is com-                “Design, development, exploitation and assessment of a car-
+parable with (or superior to) that of alternative technologies         diology web PACS,” Computer Methods and Programs in
+that are currently available.                                          Biomedicine, vol. 93, no. 3, pp. 273–282, 2009.
+Journal of Healthcare Engineering                                                                                                           11
+
+[10] S. E. Mahmoudi, A. Akhondi-Asl, R. Rahmani et al., “Web-                 imaging,” Journal of Digital Imaging, vol. 29, no. 2,
+     based interactive 2D/3D medical image processing and vi-                 pp. 206–215, 2016.
+     sualization software,” Computer Methods and Programs in           [27]   P. J. Pickhardt, “Three-dimensional endoluminal CT colo-
+     Biomedicine, vol. 98, no. 2, pp. 172–182, 2010.                          nography (virtual colonoscopy): comparison of three com-
+[11] H. Shen, D. Ma, Y. Zhao et al., “MIAPS: a web-based system               mercially available systems,” American Journal of
+     for remotely accessing and presenting medical images,”                   Roentgenology, vol. 181, no. 6, pp. 1599–1606, 2003.
+     Computer Methods and Programs in Biomedicine, vol. 113,           [28]   P. J. Pickhardt, A. D. Lee, A. J. Taylor et al., “Primary 2D
+     no. 1, pp. 266–283, 2014.                                                versus primary 3D polyp detection at screening CT colo-
+[12] L. Qiao, Y. Li, X. Chen et al., “Medical high-resolution image           nography,” American Journal of Roentgenology, vol. 189, no. 6,
+     sharing and electronic whiteboard system: a pure-web-based               pp. 1451–1456, 2007.
+     system for accessing and discussing lossless original images in   [29]   WebGL 2.0 Speciﬁcation, September 2017 , https://www.
+     telemedicine,” Computer Methods and Programs in Bio-                     khronos.org/registry/webgl/specs/latest/2.0/.
+     medicine, vol. 121, no. 2, pp. 77–91, 2015.                       [30]   S. Ortiz, “Is 3d ﬁnally ready for the web?,” Computer, vol. 43,
+[13] P. T. Looney, K. C. Young, and M. D. Halling-Brown,                      no. 1, pp. 14–16, 2010.
+     “MedXViewer: providing a web-enabled workstation envi-            [31]   M. Zorrilla, A. Martin, J. R. Sanchez, I. Tamayo, and
+     ronment for collaborative and remote medical imaging                     I. G. Olaizola, “HTML5-based system for interoperable 3D
+     viewing, perception studies and reader training,” Radiation              digital home applications,” Multimedia Tools and Applica-
+     Protection Dosimetry, vol. 169, no. 1–4, pp. 32–37, 2016.                tions, vol. 71, no. 2, pp. 533–553, 2014.
+[14] P. Xiberta and I. Boada, “A new e-learning platform for ra-       [32]   J. Jiménez, A. M. Lópe, J. Cruz et al., “A web platform for the
+     diology education (RadEd),” Computer Methods and Pro-                    interactive visualization and analysis of the 3D fractal di-
+     grams in Biomedicine, vol. 126, pp. 63–75, 2016.                         mension of MRI data,” Journal of Biomedical Informatics,
+[15] T. Doel, D. I. Shakir, R. Pratt et al., “GIFT-Cloud: a data              vol. 51, pp. 176–190, 2014.
+     sharing and collaboration platform for medical imaging re-        [33]   J. Y. Xia, B. J. Xiao, D. Li, and K. R. Wang, “Interactive
+     search,” Computer Methods and Programs in Biomedicine,                   WebGL-based 3D visualizations for EAST experiment,” Fu-
+     vol. 139, pp. 181–190, 2017.                                             sion Engineering and Design, vol. 112, pp. 946–951, 2016.
+[16] N. Jiang, Y. Zhuang, and D. K. W. Chiu, “Multiple transmission    [34]   F. Shahzad, T. R. Sheltam, E. M. Shakshuki, and O. Shaikh, “A
+     optimization of medical images in recourse-constraint mobile             review of latest web tools and libraries for state-of-the-art
+     telemedicine systems,” Computer Methods and Programs in                  visualization,” Procedia Computer Science, vol. 98, pp. 100–
+     Biomedicine, vol. 145, pp. 103–113, 2017.                                106, 2016.
+[17] Q. Huang, X. Huang, L. Liu et al., “A case-oriented web-based     [35]   A. Evans, M. Romeo, A. Bahrehmand, and J. Blat, “3D
+     training system for breast cancer diagnosis,” Computer                   graphics on the web: a survey,” Computers & Graphics, vol. 41,
+     Methods and Programs in Biomedicine, vol. 156, pp. 73–83,                pp. 43–61, 2014.
+     2018.                                                             [36]   D. Cantor-Rivera and T. Peters, “Pervasive medical imaging
+[18] K. R. Gøeg, R. K. Rasmussen, L. Jensen et al., “A future-proof           applications–current challenges and possible alternatives,” in
+     architecture for telemedicine using loose-coupled modules                Proceedings of IEEE Conference on E-Health, Networking,
+     and HL7 FHIR,” Computer Methods and Programs in Bio-                     Application and Services, Lyon, France, 2010.
+     medicine, vol. 160, pp. 95–101, 2018.                             [37]   D. Cantor-Rivera, R. Bartha, and T. Peters, “Eﬃcient 3D
+[19] TypeScript, September 2017, http://www.typescriptlang.org/               rendering for web-based medical imaging software: a proof of
+     docs/home.html.                                                          concept,” in Proceedings of Medical Imaging 2011: Visuali-
+[20] C. M. Mendes, D. R. Drees, L. Silva, and O. R. Bellon, “A study          zation, Image-Guided Procedures, and Modeling, Article ID
+     on the conversion of VRML to X3D in a highly complex and                 79643A, Orlando, FL, USA, March 2011.
+     detailed Web3D world,” International Journal of Computer          [38]   W. E. Lorensen and H. E. Cline, “Marching cubes: a high
+     Science Issues, vol. 14, no. 1, pp. 41–47, 2017.                         resolution 3D surface construction algorithm,” ACM Siggraph
+[21] HTML5.2: editor’s draft” September 2017, http://w3c.github.              Computer Graphics, vol. 21, no. 4, pp. 163–169, 1987.
+     io/html/.                                                         [39]   K. Clark, B. Vendt, K. Smith et al., “The cancer imaging
+[22] S. Ringe, R. Kedia, A. Poddar, and S. Patel, “HTML5 based                archive (TCIA): maintaining and operating a public in-
+     virtual whiteboard for real time interaction,” Procedia                  formation repository,” Journal of Digital Imaging, vol. 26,
+                                                                              no. 6, pp. 1045–1057, 2013.
+     Computer Science, vol. 49, pp. 170–177, 2015.
+[23] S. Yuan, H. C. S. Chan, and Z. Hu, “Implementing WebGL            [40]   S. A. A. Wahid and Z. K. Khoon, “Rich internet application
+                                                                              (RIA) new dimension with HTML5, CSS3 and javascript
+     and HTML5 in macromolecular visualization and modern
+                                                                              technology,” International Journal of Advances in Computer
+     computer-aided drug design,” Trends in Biotechnology,
+                                                                              Science & Its Applications, vol. 5, pp. 172–177, 2015.
+     vol. 35, no. 6, pp. 559–571, 2017.
+                                                                       [41]   E. J. C. Arguiñarena, J. E. Macch, P. P. Escobar et al., “Dcm-ar:
+[24] E. J. M. Monteiro, C. Costa, and J. L. Oliveira, “A DICOM
+                                                                              a fast ﬂash-based Web-PACS viewer for displaying large
+     viewer based on web technology,” in Proceedings of 2013 IEEE
+                                                                              DICOM images,” in Proceedings of 2010 Annual International
+     15th International Conference on e-Health Networking, Ap-
+                                                                              Conference of the IEEE Engineering in Medicine and Biology,
+     plications and Services (Healthcom 2013), pp. 167–171, Por-
+                                                                              pp. 3463–3466, IEEE, Buenos Aires, Argentina, August 2010.
+     tugal, Lisbon, October 2013.
+                                                                       [42]   Q. Min, Z. Wang, and M. Wu, “An evaluation of adobe ﬂash
+[25] E. J. M. Monteiro, C. Costa, J. L. Oliveira, D. Campos, and
+                                                                              for remote access medical imaging applications,” in Pro-
+     L. B. Silva, “Caching and prefetching images in a web-based
+                                                                              ceedings of 2016 IEEE 9th International Congress on Image and
+     DICOM viewer,” in Proceedings of 2016 IEEE 29th In-
+                                                                              Signal Processing, BioMedical Engineering and Informatics
+     ternational Symposium on Computer-Based Medical Systems
+                                                                              (CISP-BMEI), pp. 645–650, Datong, China, October 2016.
+     (CBMS), pp. 241–246, Dublin, Ireland, June 2016.
+                                                                       [43]   Java Platform, “Standard edition deployment guide,” March
+[26] D. Haak, C. E. Page, and T. M. Deserno, “A survey of DICOM
+                                                                              2018, https://docs.oracle.com/javase/10/deploy/toc.htm.
+     viewer software to integrate clinical research and medical
+                                                                                                    International Journal of
+
+
+                                                                                                    Rotating                                                                   Advances in
+                                                                                                    Machinery                                                                 Multimedia
+
+
+                                           The Scientific
+Engineering
+           Journal of
+                                                                                                                                              Journal of
+
+Hindawi
+                                           World Journal
+                                           Hindawi Publishing Corporation                           Hindawi
+                                                                                                                                              Sensors
+                                                                                                                                              Hindawi                         Hindawi
+www.hindawi.com              Volume 2018   www.hindawi.com
+                                           http://www.hindawi.com                     Volume 2018
+                                                                                             2013   www.hindawi.com            Volume 2018    www.hindawi.com   Volume 2018   www.hindawi.com             Volume 2018
+
+
+
+
+                                                                                                                                                                              Journal of
+
+                                                                                                                                                                              Control Science
+                                                                                                                                                                              and Engineering
+
+
+
+
+Advances in
+Civil Engineering
+Hindawi                                                                                                                                                                       Hindawi
+www.hindawi.com              Volume 2018                                                                                                                                      www.hindawi.com            Volume 2018
+
+
+
+
+                                                                                      Submit your manuscripts at
+                                                                                         www.hindawi.com
+
+                                                                                                                                                                              Journal of
+Journal of                                                                                                                                                                    Electrical and Computer
+Robotics
+Hindawi
+                                                                                                                                                                              Engineering
+                                                                                                                                                                              Hindawi
+www.hindawi.com              Volume 2018                                                                                                                                      www.hindawi.com             Volume 2018
+
+
+
+
+                                                                     VLSI Design
+Advances in
+OptoElectronics
+                                                                                                                                                                              International Journal of
+
+                                                                                                    International Journal of
+                                                                                                                                              Modelling &
+                                                                                                                                              Simulation
+                                                                                                                                                                              Aerospace
+Hindawi                    Volume 2018
+                                                                                                    Navigation and
+                                                                                                    Observation
+                                                                                                    Hindawi
+                                                                                                    www.hindawi.com             Volume 2018
+                                                                                                                                              in Engineering
+                                                                                                                                              Hindawi
+                                                                                                                                              www.hindawi.com   Volume 2018
+                                                                                                                                                                              Engineering
+                                                                                                                                                                              Hindawi
+                                                                                                                                                                              www.hindawi.com            Volume 2018
+                                                                    Hindawi
+www.hindawi.com                                                     www.hindawi.com   Volume 2018
+
+
+
+
+                                           International Journal of
+International Journal of                   Antennas and                                             Active and Passive                                                        Advances in
+Chemical Engineering                       Propagation                                              Electronic Components                     Shock and Vibration             Acoustics and Vibration
+Hindawi                                    Hindawi                                                  Hindawi                                   Hindawi                         Hindawi
+www.hindawi.com              Volume 2018   www.hindawi.com                            Volume 2018   www.hindawi.com             Volume 2018   www.hindawi.com   Volume 2018   www.hindawi.com            Volume 2018
+

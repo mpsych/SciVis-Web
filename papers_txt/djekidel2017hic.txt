@@ -1,0 +1,359 @@
+Quantitative Biology 2017, 5(2): 183–190
+DOI 10.1007/s40484-017-0091-8
+
+
+
+
+RESEARCH ARTICLE
+HiC-3DViewer: a new tool to visualize Hi-C data
+in 3D space
+Mohamed Nadhir Djekidel1, Mengjie Wang2, Michael Q. Zhang3,1,* and Juntao Gao1,*
+1
+  MOE Key Laboratory of Bioinformatics; Bioinformatics Division and Center for Synthetic & Systems Biology, TNLIST;
+  Department of Automation, Tsinghua University, Beijing 100084, China
+2
+  School of Pharmaceutical Sciences, Tsinghua University, Beijing 100084, China
+3
+  Department of Biological Sciences, Center for Systems Biology, The University of Texas at Dallas, Richardson, TX 75080-
+  3021, USA
+* Correspondence: michaelzhang@tsinghua.edu.cn, jtgao@biomed.tsinghua.edu.cn
+
+Received July 9, 2016; Accepted August 26, 2016
+
+       Background: Although signiﬁcant progress has been made to map chromatin structure at unprecedented resolution
+       and scales, we are short of tools that enable the intuitive visualization and navigation along the three-dimensional (3D)
+       structure of chromatins. The available tools people have so far are generally script-based or present basic features
+       that do not easily enable the integration of genomic data along with 3D chromatin structure, hence, many scientists
+       ﬁnd themselves in the obligation to hack tools designed for other purposes such as tools for protein structure
+       study.
+       Methods: We present HiC-3DViewer, a new browser-based interactive tool designed to provide an intuitive
+       environment for investigators to facilitate the 3D exploratory analysis of Hi-C data along with many useful annotation
+       functionalities. Among the key features of HiC-3DViewer relevant to chromatin conformation studies, the most
+       important one is the 1D-to-2D-to-3D mapping, to highlight genomic regions of interest interactively. This feature
+       enables investigators to explore their data at different levels/angels. Additionally, investigators can superpose
+       different genomic signals (such as ChIP-Seq, SNP) on the top of the 3D structure.
+       Results: As a proof of principle we applied HiC-3DViewer to investigate the quality of Hi-C data and to show the
+       spatial binding of GATA1 and GATA2 along the genome.
+       Conclusions: As a user-friendly tool, HiC-3DViewer enables the visualization of inter/intra-chromatin interactions
+       and gives users the ﬂexibility to customize the look-and-feel of the 3D structure with a simple click. HiC-3DViewer is
+       implemented in Javascript and Python, and is freely available at: http://bioinfo.au.tsinghua.edu.cn/member/nadhir/
+       HiC3DViewer/. Supplementary information (User Manual, demo data) is also available at this website.
+
+       Keywords: Hi-C; 3D genome visualization; chromatin structure prediction
+
+
+INTRODUCTION                                                          as two-dimensional heat maps with genomic positions
+                                                                      along the two axes. This information intrigued investi-
+The breakthrough in chromatin conformation study made                 gator to develop 3D genome prediction methods to infer
+in the last decade enabled us to understand many aspects              the underlying 3D chromatin structure in order to
+of gene transcription mechanisms and revealed the                     understand the transcription mechanisms behind chroma-
+important role of chromatin crosstalk during this process             tin organization [5–7].
+[1–4]. One of the mainly used chromatin conformation                     A key limitation of the currently existing chromatin
+study techniques is Hi-C [1], which enables the mapping               conformation visualization and modeling tools is their
+of genome-wide interactions to identify structural features           extensive reliability on scripting knowledge such as the
+and interactions among all chromosomes, by generating a               different Hi-C 2D-based analysis packages available in
+matrix of interaction frequencies that can be represented             Bioconductor [8,9]. Even the 3D visualization tools that
+
+
+© Higher Education Press and Springer-Verlag Berlin Heidelberg 2017                                                                183
+                                                                                                                 Mohamed Nadhir Djekidel et al.
+
+
+provide user friendly interfaces are very limited in terms                     server-side, on the other hand, is implemented in Python
+of functionalities and manipulation ﬂexibility (Table 1).                      and based on the Flask micro-framework [16], that
+Generally, the existing chromatin 3D structure study tools                     enables the establishment of a very lightweight web-
+fall into one of two categories: 3D structure prediction or                    server without any additional conﬁguration. The Flask
+visualization. The 3D structure prediction tools [5,7]                         micro-framework can either run as standalone application
+generally produce outputs compatible with the Protein                          on a single user computer or be conﬁgured to work with a
+Data Bank (PDB) format designed to be used with protein                        webserver such as APACHE without the need to do any
+visualization tools, such as PyMol [10]. However, the                          code changes.
+PDB format is designed to represent atoms and amino                               The server side is mainly responsible for data storage
+acid residues and the usage of this format for chromatin                       and 3D prediction. Two types of data are available on the
+3D structure representation leads to the loss of genomic                       server: (i) pre-built 3D models for yeast [17], human [1]
+coordinate information and makes it challenging to                             and Drosophila [18] genomes and (ii) the user’s own
+overlay genomic data (such as genes positions, ChIP-                           uploaded data. The 3D prediction is built on the top of the
+Seq signal) on the top of the 3D structure. On the other                       software package Pastis [5] that implements four 3D
+hand, chromatin 3D visualization tools are generally                           structure prediction algorithms — two based on multi-
+available as databases where users can just visualize pre-                     dimensional scaling algorithms and the other two
+calculated 3D models and do not have the ability to                            optimizing the likelihood of a Poisson-based model.
+upload their own data [13,14].                                                 Additionally, the server implements some modules to do
+   To ﬁll this gap, we developed HiC-3DViewer, a new                           ﬁle format conversion and to manipulate genomic ranges.
+interactive chromatin visualization tool designed to                              The browser-based client is responsible for the 3D
+provide an intuitive environment for investigators that                        model and 2D Hi-C contact map visualization. Different
+facilitates the 3D exploratory analysis of Hi-C data and                       menus are available to customize the display of chromo-
+enables 3D chromatin structure prediction. Beside                              somes in order to help investigators focus their studies on
+visualization, HiC-3DViewer enables investigators to                           the chromosomes of interest (Supplementary Figure S1).
+interactively highlight any speciﬁc genomic regions
+through the usage of an interactive 2D Hi-C contact                            HiC-3DViewer navigation environment
+map or by uploading a BED ﬁle of given regions.
+Additionally, HiC-3DViewer allows users to visualize                           The viewer provides a single-page environment that
+inter- and intra-chromatin interactions and to change the                      embeds different features in three panels according to
+look-and-feel of the 3D chromatin model for more                               their roles (Figure 2A). Features handling data input and
+comfortable visualization.                                                     output are all on the top-left panel. In this panel,
+                                                                               investigators are able to select some already pre-
+RESULTS                                                                        calculated 3D models (from species such as Human,
+                                                                               Yeast and Drosophila) for display and visualization. If
+Design and implementation                                                      user has uploaded her/his own model, she/he will also be
+                                                                               able to select it from the model selection section. Basic
+As a browser-based interactive 3D chromatin visualiza-                         information such as name and resolution is available for
+tion tool, HiC-3DViewer is designed based on a client-                         each model. The time required for loading a model
+server architecture (Figure 1), from which the client                          depends on the size of the Hi-C data. We also compiled a
+exploits the features of HTML5 and WebGL to achieve                            set of cytobands for different species that can be loaded by
+data visualization. All 3D displays are based on the                           the user along with the 3D model. Cytoband information
+BufferGeometry class provided by the Three.js javascript                       for some species such as Yeast is not available so it will be
+library [15] which enables the display of large genomes                        displayed as a white band in the viewer.
+with reasonable memory and CPU consumption. The                                   The latest technological advancement in chromatin
+
+      Table 1.     Comparison of some widely used tools for 3D chromatin visualization.
+      Tool                    Speciﬁc to 3D      3D model        Cis-interaction      Trans-interaction   Custom              Need
+                              genome display     display         display              display             annotation          scripting
+      PyMol [10]                                √                                                      √                   √
+      GMol [11]               √                  √                                                                         
+      Genome3D [12]           √                  √                                                      √                   
+      Tadkit [6]              √                  √                                                      √                   
+      HiC-3DViewer            √                  √               √                    √                   √                   
+      Comparison between the features of HiC-3DViewer and some chromatin 3D visualization tools. √ indicates yes, and  means no.
+
+
+184                                                               © Higher Education Press and Springer-Verlag Berlin Heidelberg 2017
+HiC-3DViewer: visualization of Hi-C data in 3D space
+
+
+
+
+     Figure 1. Client-server architecture of HiC-3DViewer. The client uses HTML 5 webGL features for the 3D visualization. The
+     server (implemented in python) is responsible for data storage and data processing.
+
+
+
+
+     Figure 2. Display of some of HiC-3DViewer functionalities. (A) A screenshot showing the main interface of HiC-3DViewer with
+     the Yeast genome displayed. Pink arrowheads indicate the 2D to 3D mapping of the highlighted region in Hi-C heat map on the 3D
+     model. The green arrowhead indicats the 2D to 1D mapping of the selected region in 1D yeast genome (shown in orange for the
+     recently selected region). Each selected region will be mapped to an individual 1D genome. The 1D genome of the highlighted
+     regions can be browsed using the scrollbar on the right of the 1D genome window. If no cytoband information is available, the
+     genome will be shown as a white bar. (B) An example showing the customized annotation feature. Here a ﬁle (bottom-left ﬁle input
+     box) is uploaded that contains the genomic coordinates of some regions to be highlighted (shown in red). This feature is another
+     alternative to the interactive Hi-C matrix which can be used for bulk annotation of genomic regions such as ChIP-Seq peaks, genes.
+
+© Higher Education Press and Springer-Verlag Berlin Heidelberg 2017                                                                       185
+                                                                                           Mohamed Nadhir Djekidel et al.
+
+
+conformation study enabled investigators to mine chro-        and the 3D model, for example to check the spatial
+matin ﬁber cross-talk at an unpresented scale [19] and        proximity between two genomic regions. If a cytoband is
+intrigued investigators to develop 3D prediction methods      selected, then one dimensional mapping on the cytoband
+to crack the mechanisms underlying chromatin interaction      will be performed for each annotated region (see the
+establishment. Thus, in order not to create “yet another      cytobands at the top of Supplementary Figure S2). For the
+3D genome prediction algorithm” we give investigators         case that the cytoband for the selected species is not
+the ability to upload and visualize their own predicted 3D    available, a white band will be displayed (Figure 2A).
+model using their preferred 3D genome prediction                 Another point of interest for investigators is to study the
+algorithm, with the only prerequisite that the model          spatial clustering of genomic signals or a group of genes
+should be provided in the form of a tabulated text ﬁle (see   or mutations. Investigators can upload a custom BED ﬁle
+User Manual).                                                 of the genomic regions to highlight signals such as ChIP-
+   Alternatively, HiC-3DViewer enables users to predict       Seq peaks, genes, SNPs (Figure 2B, Supplementary
+the 3D structure of their own Hi-C data. The 3D structure     Figure S3). If the user associates a score with each region,
+prediction is based on the 3D model prediction algorithm      a gradient color “Yellow-Orange-Red” will be used to
+developed by N. Varoquaux et al. [5] available in the         highlight the regions, with the lowest scores colored in
+Pastis package which implements four 3D model                 yellow and larger scores in red.
+prediction algorithms: two based on the multidimensional
+scaling (MDS) algorithm and the other two statistical         Gene annotation and distance estimation
+models assuming that the counts between two loci follow
+a Poisson distribution with decreasing intensity between      Another option of interest for investigators is the highlight
+distant loci. The prediction speed depends on the data        of genes located in a region of interest and measuring the
+size, the speciﬁed resolution and the algorithm selected,     distance between different loci. Figure 3 shows an
+with the MDS algorithm as the fastest one and the Poisson     example in which the genes located in the neighborhood
+distribution ones the slowest. To add more ﬂexibility,        of a selected region are displayed along with a small panel
+different formats for Hi-C data are supported for upload,     that displays information about them. The gene info panel
+ranging from the matrix format to the 3-columned format.      gives the names of the genes with a link to UCSC, their
+   Once the model is loaded, a couple of panels are           position and link to papers (if any) in which the name of
+displayed on the right side of the screen (Figure 1A), with   the gene and the ﬂuorescent in situ hybridization (FISH)
+a control panel displayed on the top-right (Supplementary     experiment are mentioned.
+Figure S1 and text of the User Manual of HiC-3DViewer).
+The control panel enables investigators to customize the      Exploration of inter- and intra-chromatin interac-
+display of every chromosome, such as the color,               tions
+thickness, visibility, 3D rotation, the display of inter-
+and intra-chromatin interactions and the customization of     Chromatin conformation studies revealed that chromatin
+the color map used to plot the Hi-C 2D heat map.              interactions present non-random organizational structures
+   On the top-down side, a ﬂoating interactive panel with     in which intra-chromatin interactions tend to show
+Hi-C 2D contact map is displayed which enables                clustered regions known as Topologically Associated
+investigators to use the mouse to select regions on the       Domains (TADs) [20], while existing technologies can
+Hi-C heat map and to highlight the corresponding 3D           not tell us about the true signal-to-noise ratio presented in
+positions (Figure 2A, Supplementary Figure S2). Users         the inter-chromatin interactions. Nonetheless, this infor-
+can also highlight regions by uploading a 4-columned          mation is exploited by 3D prediction algorithms to
+BED ﬁle on the “region annotation” section.                   position chromosomes in the 3D space.
+                                                                 In HiC-3DViewer we enable investigators to visualize
+1D to 2D to 3D mapping                                        cis- and trans-interactions so they can assess the accuracy
+                                                              of the 3D predictions by checking if highly connected
+As depicted in the previous sections, one of the key          elements are positioned in close spatial positions. It also
+features relevant to chromatin conformation studies is the    enables users to get some hints about how chromatin
+interactive 1D to 2D to 3D mapping between 1D genomic         topological structures, such as domains or higher
+sequence, 2D Hi-C contact map and the 3D genome               hierarchies, are organized, depending on the resolution.
+model (Figure 2A, Supplementary Figure S2). Though            Investigators can customize the color and the thickness of
+simple, this feature is lacking in all existing Hi-C          the displayed interactions to get a better view or better
+exploratory tools. Furthermore, this feature is very          screenshots (Figure 4).
+practical, as in many cases investigators would like to          In Figure 4A, we show the intra-chromatin interactions
+make a correspondence between the Hi-C contact matrix         in chromosome 2 of Yeast genome. Here, we set
+
+
+186                                                  © Higher Education Press and Springer-Verlag Berlin Heidelberg 2017
+HiC-3DViewer: visualization of Hi-C data in 3D space
+
+
+
+
+     Figure 3. Gene annotation functionality. Investigators have the potential to select genomic region (shown here in green) by a
+     mouse click. The genes located in the proximity of the selected region will be highlighted in red. The name, the position and the
+     potential FISH experiments related papers of the neighboring genes will be displayed in a ﬂoating panel. The gene names are linked
+     to the UCSC browser and the papers are linked to pubmed.
+
+
+chromatin interactions to be thicker and with yellow                    the yeast genome predicted from good quality data
+color. The transparency of each line indicates the                      generated from 3C-based technique developed by Duan
+interaction frequency strength. We can see that genomic                 et al. [17]. The clustering of the centromeres of
+regions located in a short genomic distance have brighter               chromosomes at one pole of the nucleus can be clearly
+colors than the ones located far away. This observation                 noticed. However, in the noisy yeast 3D conformation
+can also be made for the case of trans-interactions. In                 data (Figure 5A), obtained from a failed Hi-C experiment
+Figure 4B, we display chromatin interactions between                    data, we can not see such organization.
+chromosomes 2 and 5. We also notice that regions with
+shorter spatial proximity have brighter interaction lines               Annotation of GATA1 and GATA2 spatial binding
+than the further ones.
+   The examination of inter- and intra-chromatin interac-               In the work published in 2012, Lan et al. [22] combined
+tions can be useful to check the accuracy of the 3D                     Hi-C interaction data with the ChIP-Seq signal of 45
+prediction model. Even though it is quantitative, it gives              transcription factors and 9 histone modiﬁcations. Their
+many hints on the behavior of 3D model prediction                       results showed that the GATA-factors (GATA1 and
+algorithm.                                                              GATA2) tend to co-bind to a speciﬁc subset of loci,
+                                                                        indicating the aggregation of the interacting loci into
+3D visualization as a quality control step for                          different interaction hubs.
+3C-based experiments                                                       Therefore, we overlaid GATA1 and GATA2 signals
+                                                                        onto the top of the 3D structure of human genome, as one
+The use of genome 3D models in elaborating biological                   potential visualization example for HiC-3DViewer appli-
+hypothesis is not a new practice. For example, Ay et al.                cation. Figure 5B shows the binding of GATA1 (in
+[21] exploited the 3D model inferred from Hi-C data to                  yellow) and GATA2 (in red) on chromosome 11. The
+understand the genome structure in initial stages of                    clustering of the binding signals of the two factors can be
+malaria parasite infections. Other groups such as Bau                   clearly visualized. By close examination we notice that
+et al. [6] used FISH data to build a 3D model of the alpha-             these factors tend to cluster into the chromatin curvatures
+globin locus and investigated the chromosomal changes                   that show a short spatial proximity.
+in different cell lineages.
+   We also argue that genome 3D model can give many                     DISCUSSION
+hints on the quality of 3C-based experiments. To
+demonstrate this, we used HiC-3DViewer to evaluate                      Structure determines function. The three-dimensional
+the Hi-C experiment quality with two different samples                  chromatin organization in cell nucleus has an essential
+(Figures 2A and 5A). Figure 2A shows the 3D model of                    regulatory function on the activity of gene expression,
+
+© Higher Education Press and Springer-Verlag Berlin Heidelberg 2017                                                                       187
+                                                                                                                 Mohamed Nadhir Djekidel et al.
+
+
+
+
+      Figure 4. Cis- and trans-chromatin interactions and their control panel. Intra- and inter-chromatin interactions are displayed
+      in the form of white straight lines. The transparency of the lines indicates the strength (or frequency) of the interactions. (A) Users can
+      customize the color and the width of cis-chromatin interactions to get a better view. The intra-chromatin interactions of the selected
+      chromosome are displayed. (B) Trans-chromatin interactions can also be customized. In this panel, only trans-interactions between
+      visible chromosomes, but not intra-chromatin interactions, are displayed.
+
+
+transcription, replication, gene repair and other biological                  prediction algorithms on the user side. Users have the
+processes. The study of the 3D structure (referred to as 3D                   ability to select and utilize one of the four available
+genomics) and function of the whole genome helps us                           algorithms or they can upload their own 3D model for
+understand the mechanism about how genes are guided,                          visualization and annotation. We also showed that HiC-
+get expressed and transcribed in a particular space and                       3DViewer can be used to examine the quality of
+time.                                                                         chromatin structure experiments. Additionally, the pre-
+   HiC-3DViewer provides such an environment for us to                        sented tool can be used to explore the spatial position of
+visualize and evaluate how chromatins are positioned in                       different genomic regions such as genes, SNPs and ChIP-
+3D space, with the corresponding 1D genomic sequence                          Seq signals. We also integrated some features that enable
+information and 2D Hi-C contact matrix. As a novel                            users to annotate a large number of regions by uploading a
+interactive tool that enables the intuitive exploration of                    BED ﬁle. The consideration, integration and visualization
+chromatin structure, HiC-3DViewer is a highly customiz-                       of the 1D genome sequence, 2D interaction matrix, and
+able tool that requires no expert knowledge in 3D genome                      3D gene structure and regulatory elements at the same
+
+188                                                               © Higher Education Press and Springer-Verlag Berlin Heidelberg 2017
+HiC-3DViewer: visualization of Hi-C data in 3D space
+
+
+
+
+      Figure 5. The potential applications of HiC-3DViewer. (A) HiC-3DViewer can be used for the quality control of 3C-based
+      experiments. Here the 3D model of a noisy yeast Hi-C heat map was uploaded. The non-structured shape can be seen very easily,
+      compared to the 3D model in Figure 1A, which has good quality. (B) Annotation of the binding sites of GATA1 and GATA2. The yellow
+      arrowheads indicate some regions that show the clustering of GATA1 (in yellow) and GATA2 (in red) signals at short spatial
+      proximity, conﬁrming previous ﬁndings [22].
+
+
+time will provide novel insights into the genome                           and Juntao Gao declare that they have no conﬂict of interests. All the data
+regulatory functions.                                                      sets the authors used are from public repositories.
+
+
+METHODS                                                                    REFERENCES
+                                                                            1. Lieberman-Aiden, E., van Berkum, N. L., Williams, L., Imakaev, M.,
+3D genome model construction for different species                             Ragoczy, T., Telling, A., Amit, I., Lajoie, B. R., Sabo, P. J., Dorschner,
+                                                                               M. O., et al. (2009) Comprehensive mapping of long-range interactions
+The yeast 3D model was downloaded from the original                            reveals folding principles of the human genome. Science, 326,
+paper by Duan et al. [17]. For the human genome, we at                         289–293
+ﬁrst normalized the Hi-C contact map published by                           2. Li, G., Ruan, X., Auerbach, R. K., Sandhu, K. S., Zheng, M., Wang, P.,
+Lieberman et al. [1] using the HiCNorm method [23],                            Poh, H. M., Goh, Y., Lim, J., Zhang, J., et al. (2012) Extensive
+then did 3D prediction using Pastis [5]. For Drosophila                        promoter-centered chromatin interactions provide a topological basis
+                                                                               for transcription regulation. Cell, 148, 84–98
+genome, the chromatin interaction map [18] was down-
+                                                                            3. Sanyal, A., Lajoie, B. R., Jain, G. and Dekker, J. (2012) The long-range
+loaded at ﬁrst, then HiCNorm and Pastis were used for
+                                                                               interaction landscape of gene promoters. Nature, 489, 109–113
+data normalization and 3D model prediction, respectively.
+                                                                            4. Göndör, A. and Ohlsson, R. (2009) Chromosome crosstalk in three
+                                                                               dimensions. Nature, 461, 212–217
+GATA1 and GATA2 ChIP-Seq signals                                            5. Varoquaux, N., Ay, F., Noble, W. S. and Vert, J.-P. (2014) A statistical
+                                                                               approach for inferring the 3D structure of the genome. Bioinformatics,
+ChIP-Seq data provided by ENCODE consortium for                                30, i26–i33
+GATA1 (GSM1003608) and GATA2 (GSM935373) was                                6. Baù, D., Sanyal, A., Lajoie, B. R., Capriotti, E., Byron, M., Lawrence,
+used in this study.                                                            J. B., Dekker, J. and Marti-Renom, M. A. (2011) The three-dimensional
+                                                                               folding of the α-globin gene domain reveals formation of chromatin
+SUPPLEMENTARY MATERIALS                                                        globules. Nat. Struct. Mol. Biol., 18, 107–114
+                                                                            7. Wang, S., Xu, J. and Zeng, J. (2015) Inferential modeling of 3D
+The supplementary materials can be found online with this article at DOI       chromatin structure. Nucleic Acids Res., 43, e54
+10.1007/s40484-017-0091-8.                                                  8. Thongjuea, S., Stadhouders, R., Grosveld, F. G., Soler, E. and Lenhard,
+                                                                               B. (2013) r3Cseq: an R/Bioconductor package for the discovery of
+ACKNOWLEDGMENTS                                                                long-range genomic interactions from chromosome conformation
+This work is supported by State Key Research Development Program of            capture and next-generation sequencing data. Nucleic Acids Res., 41,
+China (No. 2016YFC1200303), and the National Natural Science Founda-           e132
+tion of China (Nos. 31361163004 and 31671383). We thank Yanjian Li          9. Phanstiel, D. H., Boyle, A. P., Araya, C. L. and Snyder, M. P. (2014)
+(Tsinghua University) for sharing his Hi-C data. MQZ was partially             Sushi.R: ﬂexible, quantitative and integrative genomic visualizations
+supported by UTD funds.                                                        for publication-quality multi-panel ﬁgures. Bioinformatics, 30, 2808–
+                                                                               2810
+COMPLIANCE WITH ETHICS GUIDELINES                                          10. Schrödinger, LLC (2010) The PyMOL Molecular Graphics System,
+                                                                               Versio1 1.3r1. Available: http://www.pymol.org
+The authors Mohamed Nadhir Djekidel, Mengjie Wang, Michael Q. Zhang,       11. Nowotny, J., Wells, A., Xu, L., Cao, R., Trieu, T., He, C., Cheng, J.
+
+
+© Higher Education Press and Springer-Verlag Berlin Heidelberg 2017                                                                                 189
+                                                                                                                         Mohamed Nadhir Djekidel et al.
+
+
+      (2016) GMOL: an interactive tool for 3D genome structure visualiza-               dimensional folding and functional organization principles of the
+      tion. Sci. Rep. 6, 20802                                                          Drosophila genome. Cell, 148, 458–472
+12.   Asbury, T. M., Mitman, M., Tang, J. and Zheng, W. J. (2010)                 19.   Rao, S. S., Huntley, M. H., Durand, N. C., Stamenova, E. K., Bochkov,
+      Genome3D: a viewer-model framework for integrating and visualizing                I. D., Robinson, J. T., Sanborn, A. L., Machol, I., Omer, A. D., Lander,
+      multi-scale epigenomic information within a three-dimensional gen-                E. S., et al. (2014) A 3D map of the human genome at kilobase
+      ome. BMC Bioinformatics, 11, 444                                                  resolution reveals principles of chromatin looping. Cell, 159, 1665–
+13.   Peng, C., Fu, L.-Y., Dong, P.-F., Deng, Z.-L., Li, J.-X., Wang, X. T. and         1680
+      Zhang, H. Y. (2013) The sequencing bias relaxed characteristics of Hi-C     20.   Dixon, J. R., Selvaraj, S., Yue, F., Kim, A., Li, Y., Shen, Y., Hu, M., Liu,
+      derived data and implications for chromatin 3D modeling. Nucleic                  J. S. and Ren, B. (2012) Topological domains in mammalian genomes
+      Acids Res., 41, e183                                                              identiﬁed by analysis of chromatin interactions. Nature, 485, 376–380
+14.   Teng, L., He, B., Wang, J. and Tan, K. (2015) 4DGenome: a                   21.   Ay, F., Bunnik, E. M., Varoquaux, N., Bol, S. M., Prudhomme, J., Vert,
+      comprehensive database of chromatin interactions. Bioinformatics,                 J. P., Noble, W. S. and Le Roch, K. G. (2014) Three-dimensional
+      31, 2560–2564                                                                     modeling of the P. falciparum genome during the erythrocytic cycle
+15.   Dirksen, J. (2013) Learning Three.js: The JavaScript 3D Library for               reveals a strong connection between genome architecture and gene
+      WebGL. Birmingham: Packt Publishing                                               expression. Genome Res., 24, 974–988
+16.   Grinberg, M. (2014) Flask Web Development. Sebastopol: O’Reilly             22.   Lan, X., Witt, H., Katsumura, K., Ye, Z., Wang, Q., Bresnick, E. H.,
+      Media                                                                             Farnham, P. J. and Jin, V. X. (2012) Integration of Hi-C and ChIP-seq
+17.   Duan, Z., Andronescu, M., Schutz, K., McIlwain, S., Kim, Y. J., Lee,              data reveals distinct types of chromatin linkages. Nucleic Acids Res.,
+      C., Shendure, J., Fields, S., Blau, C. A. and Noble, W. S. (2010) A               40, 7690–7704
+      three-dimensional model of the yeast genome. Nature, 465, 363–367           23.   Hu, M., Deng, K., Selvaraj, S., Qin, Z., Ren, B. and Liu, J. S. (2012)
+18.   Sexton, T., Yaffe, E., Kenigsberg, E., Bantignies, F., Leblanc, B.,               HiCNorm: removing biases in Hi-C data via Poisson regression.
+      Hoichman, M., Parrinello, H., Tanay, A. and Cavalli, G. (2012) Three-             Bioinformatics, 28, 3131–3133
+
+
+
+
+190                                                                     © Higher Education Press and Springer-Verlag Berlin Heidelberg 2017
+

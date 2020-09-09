@@ -1,0 +1,971 @@
+                                                                     Computers & Graphics 82 (2019) 304–320
+
+
+
+                                                                  Contents lists available at ScienceDirect
+
+
+                                                                  Computers & Graphics
+                                                             journal homepage: www.elsevier.com/locate/cag
+
+
+Special Section on VCBM/MICCAI 2018
+
+BrainTrawler: A visual analytics framework for iterative exploration of
+heterogeneous big brain data
+Florian Ganglberger a,∗, Nicolas Swoboda a, Lisa Frauenstein a, Joanna Kaczanowska b,
+Wulf Haubensak b, Katja Bühler a
+a
+    VRVis Research Center, Donau-City Straße 11-13, Wien 1220, Austria
+b
+    Research Institute of Molecular Pathology (IMP), Vienna Biocenter (VBC), Campus-Vienna-Biocenter 1, Wien 1030, Austria
+
+
+
+
+a r t i c l e             i n f o                          a b s t r a c t
+
+Article history:                                           In recent years, big brain-initiatives and consortia have created vast resources of publicly available
+Received 15 January 2019                                   brain data that can be used by neuroscientists for their own research experiments. This includes mi-
+Revised 28 May 2019
+                                                           croscale connectivity data—brain-network graphs with billions of edges—and vast spatial gene expression
+Accepted 29 May 2019
+                                                           resources—the representation of tens of thousands genes in brain space. Their joint analysis for higher
+Available online 7 June 2019
+                                                           order relations in structural or functional neuroanatomy would enable the genetic dissection of brain
+Keywords:                                                  networks on a genome-wide scale. Current experimental workﬂows involve only time-consuming manual
+Big data                                                   aggregation and extensive graph theoretical analysis of data from different sources, which rarely provide
+Networks                                                   spatial context to operate continuously on different scales.
+Neuroscience                                                   In this paper, we propose BrainTrawler, a task-driven, web-based framework that incorporates visual
+Gene expression                                            analytics methods to explore heterogeneous neurobiological data. It facilitates spatial indexing to query
+Brain parcellation
+                                                           large-scale voxel-level connectivity data and gene expression collections in real-time. Relating data to the
+Visual queries
+                                                           hierarchical structure of common anatomical atlases enables the retrieval on different anatomical levels.
+                                                           Together with intuitive network visualization, iterative visual queries, and quantitative information this
+                                                           allows the genetic dissection of multimodal networks on local/global scales in a spatial context.
+                                                               We demonstrate the relevance of our approach for neuroscience by exploring social-behavior and
+                                                           memory/learning related functional neuroanatomy in mice.
+                                                                                                                              © 2019 Elsevier Ltd. All rights reserved.
+
+
+
+1. Introduction                                                                              or brain parcellations, including hierarchical and structural anno-
+                                                                                             tations of the brain, collections of 3D spatial gene expression data
+    The quest for understanding the principle organization of the                            (i.e. which gene is where in the brain expressed) with tens of thou-
+brain and its functional parcellation is constantly changing due to                          sands images, and region/voxel-resolution networks with up to bil-
+the increasing wealth of multimodal neurobiological data gener-                              lions of connections. This enables workﬂows for interactively fus-
+ated by brain initiatives, such as the Allen Institute [1], the Hu-                          ing volumetric with connectivity data, brain network exploration
+man Brain Project [2], the WU-Minn Human Connectome Project                                  at different anatomical levels, genetic analysis of the brain and in-
+[3], and the China Brain Project [4].                                                        tuitive 3D graph visualization. We demonstrate the practical signif-
+    Our work takes recent advances in circuit neuroscience into ac-                          icance of this tool by presenting several use cases based on hetero-
+count (e.g. neuro- and behavioral genetics, optogenetics, imaging)                           geneous neurobiological data of the mouse brain from large-scale
+that identiﬁed gene sets underlying a speciﬁc behavioral function                            brain initiatives that allowed to reproduce several recent biological
+[5]. However, there is a lack of tools to explore the mesoscale (i.e.                        ﬁndings.
+scale of neuron populations) as well as the global structural and                                This paper represents an extension of our previous work [6].
+functional brain networks related to these gene sets in silico.                              There, we proposed a framework that visualizes volumetric, geom-
+    We meet this demand by proposing a task-driven, web-based                                etry, and graph data simultaneously in 3D rendering and 2D slice
+framework called BrainTrawler. It allows the visualization, iterative                        views, linked to views showing quantitative proﬁles at a hierarchi-
+exploration and the integration of spatial data on different scales                          cal parcellation level. The user can interactively navigate the hi-
+                                                                                             erarchical levels, which provide spatial context by rendering their
+                                                                                             brain regions in 2D/3D views. We utilized a specialized data struc-
+    ∗
+        Corresponding author.                                                                ture [7] that organizes and aggregates the voxel-wise connectiv-
+        E-mail address: ganglberger@vrvis.at (F. Ganglberger).                               ity data hierarchically. Via so called Aggregation Queries [7], which
+
+https://doi.org/10.1016/j.cag.2019.05.032
+0097-8493/© 2019 Elsevier Ltd. All rights reserved.
+                                  F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320                      305
+
+
+represent the aggregated incoming/outgoing connectivity of vol-                    2. Related work
+umes of interest (VOI), the data is made accessible in real time
+and can be explored interactively on different anatomical scales.                      An abundance of visualization tools for neurobiological data
+The connectivity is visualized as intensity volume in the 3D render-               exists, usually tailored to speciﬁc species such as the drosophila
+ing as well as quantitative brain-region-wise proﬁle. These are aug-               [9–11], mouse [12,13], macaque monkey [14] or the human [15] or
+mented with hierarchical information (i.e. intensity of sub-regions)               the type of data source such as 2D and 3D imaging data showing
+to provide an overview of different hierarchical levels. This kind of              e.g. spatial gene expression [12,16], anatomical structure derived
+interaction allows the researcher to relate integrated resources, for              from microscopy or medical imaging (traced neurons on electron
+example incoming/outgoing connectivity at voxel-level and region                   microscopy data [17], diffusion tensor imaging ﬁbers [18], anatom-
+level, directly to imaging data showing brain-wide gene expres-                    ical regions and segmented neurons from light microscopy [9], dif-
+sions (spatial gene expression data). Higher order network con-                    ferent kinds of connectome data [19] and gene co-expression data
+nections can be targeted by repeatedly cascading over the query                    [16,20]. While traditional visualization tools have to be installed
+results, which can be selected directly in the brain-region-wise                   locally [9,21], there is a trend towards developing web-based ser-
+proﬁle. This represents an iterative exploration of the networks.                  vices. They have the potential to integrate publicly available and
+Region-level representation of voxel-level connectivity rendered as                individually administrable data repositories to facilitate integrated
+3D and 2D network graphs can be used to reduce complexity and                      workﬂows, complying with the shift of brain connectomics into the
+provides neuroanatomical context, so they can be presented in a                    “big data” era [22] and a complementation of experimental science
+way that is particularly suited for neuroscience publications, as ad-              by data driven science.
+vised by domain experts.                                                               Joint exploration of neurobiological data on different scales: As
+    In this paper, we integrate the framework’s components into a                  various studies have already shown for the mammalian brain, com-
+task-driven workﬂow scheme. It does not only allow the iterative                   bining information of the macroscale connectome with microscale
+exploration of big brain networks, it further enables the genetic                  neuronal architecture does provide a deeper understanding of the
+dissection thereof (i.e. which genes play a role in speciﬁc parts of               brain’s organization [23]. Recently, this has also been conﬁrmed for
+these networks). For this, we included spatial gene expression data                the living human brain, associating resting state functional con-
+of the mouse brain on a genome-wide level [8] (i.e. for all genes                  nectivity with both gene expression [24] as well as cortical mi-
+in the mouse genome) and used spatial indexing [9] to allow for                    crostructure such as T1-based myelin content, as obtained from
+real-time queries of genes expressed at a VOI. Query results can be                ultrahigh-resolution MRI [25]. This emphasizes the growing need
+analyzed in linked views that include visual analytic tools (parallel              for visualization tools which incorporate data of multiple scales.
+coordinates, heatmaps etc.) to get insight into genetic features of                To visualize the relationship between multiscale data, mentioned
+subnetworks, i.e. how genetically similar are different parts of a                 studies primarily utilize enhanced heatmaps, as it can be seen in
+network or which genes are relevant for different connections.                     Scholtens et al. [23], where the matrix entries depict anatomical
+    Furthermore, we performed several design optimizations re-                     projections. Structural connectivity strength is encoded by color,
+garding the qualitative and quantitative visualization of networks.                projection distance by dot size. To provide spatial context, the
+Quantitative information can be arranged in different ways to pro-                 matrix is presented side-by-side to a brain surface, color-coding
+vide the user with either more detail or overview. In Ganglberger                  anatomical areas. This approach provides a good overview on
+et al. [6] Aggregation Queries [7] could be represented as region-                 region-level. However its complexity increases on higher resolu-
+level graph in their 3D/2D spatial context. For this, the voxel-level              tion, such as voxel-level.
+connectivity of the VOI is mapped to a brain region-level. Since the                   Lin et al. [26] introduced Neuron Navigator, a tool that allows
+result of an Aggregation Query represents the already aggregated                   queries for connectivity of regions of interest in the Drosophila
+connectivity of a VOI, it could not be further split into anatomical               brain space. These spatial queries are achieved by accessing a 3D
+sub-regions thereof (i.e. the VOI represents the smallest anatom-                  neuron image database and matching the region of interest with
+ical level the outgoing/incoming connectivity can be mapped to).                   annotated locations of neuron terminals. Although these queries
+We overcame this by developing a Split-Aggregation Query, which                    represent connectivity between neurons, they are not executed on
+divides a VOI to anatomical subregions and executes multiple Ag-                   actual graph/network data. Other tools allowing exploration of con-
+gregation Queries in parallel. With similar performance to a sin-                  nectomic data are CATMAID [27] and ConnectomeExplorer [28],
+gle Aggregation Query, they allow a more detailed regional-level                   which allow tracing neurons on single EM Stacks, so that they
+dissection of voxel-level connectivity in real-time.                               work at a local level of a single network with ﬁxed scale. Similar
+    Our previous work [6,7] enabled us to utilize, for the ﬁrst                    accounts for Sherbondy et al. [29], who query pre-computed path-
+time, methods for interactive exploration of dense voxel-wise brain                ways on diffusion tensor imaging data from volumes of interest.
+connectivity data of several dozen gigabytes of size in combina-                   NeuroLines [30] offers a visualization as simpliﬁed skeleton graph,
+tion with vast genetic databases containing volumetric image data.                 similar to a 2D subway map. Different levels of abstraction allow
+Based on this, we propose visual analytics methods for interactive                 for multi-scale exploration, but is ultimately tailored to branched,
+                                                                                   tree like connections in electron microscopy data.
+ •   joint exploration and fusion of brain network data with spatial
+                                                                                       To integrate macroscopic data at a brain region level with
+     gene expression data continuously over different scales rang-
+                                                                                   microscale data from simulation of neural activity, Nowke et al.
+     ing from multi-resolution voxel-wise connectivity to connectiv-
+                                                                                   [31] have introduced the interactive analytics tool VisNEST. The
+     ity deﬁned in respect to different anatomical region hierarchy
+                                                                                   tool provides views for visualizing connectivity between brain re-
+     levels;
+                                                                                   gions, within-region connectivity representation and time-varying
+ •   joint exploration of data from different brain network types
+                                                                                   activities across regions. Regions of interest can be selected in a
+     (e.g. structural, functional, gene co-expression);
+                                                                                   3D anatomical view and are represented as meshes, where color
+ •   identiﬁcation of higher order connectivity in dense network
+                                                                                   and opacity depict activity. Although VisNEST allows comparison of
+     graphs with billions of edges;
+                                                                                   region-level connectivity, it is not tailored for high-resolution con-
+ •   genetic analysis of brain networks based on a genome-wide
+                                                                                   nectivity data nor does it relate to volumetric data.
+     gene expression database with tens of thousands images.
+                                                                                       A more generic framework, named neuroVIISAS [32] provides
+   These methods are based on a task-driven workﬂow that allows                    multiple ways of organizing, visualizing and analyzing multiscale
+the sharing/storing its state for scientiﬁc data provenance.                       brain network simulation data. NeuroVIISAS offers a collection of
+306                                F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320
+
+
+visualization techniques in 2D such as different representations of                 data. Here, it renderes a node-link diagram in anatomical (real
+hierarchical connectivity matrices, circular connectograms, various                 world coordinates) and topological spaces side-by-side.
+layouts for planar graphs, as well as in 3D, where regions are ren-                     Different graph layouts, such as an anatomical layout, are also
+dered as spheres or true anatomical surface meshes, colored based                   supported by NeuroMap [38], which renders potential neuronal
+on the color deﬁned in the reference ontology. Connections are                      connections in the fruit ﬂy’s brain as interactive circuit-style wiring
+depicted as tubes with or without arrows. Moreover, individual                      diagrams. Spatial context is provided by introducing brain regions
+source and target queries can be performed textually by deﬁning                     as spatial constraints to a 2D layout by providing a 2D abstraction
+ﬁlters on a table of all the available connections. The resulting se-               of anatomical organizations and by linking NeuroMap with 3D vi-
+lections can be viewed side-by-side in 2D atlas views. However, as                  sualizations, showing the neurons in their 3D anatomical context.
+this tool is designed for analysis of simulation data it has a differ-              Another anatomical layout approach has been used by Ji et al. [39],
+ent scope.                                                                          which uses a planar projection of the human skull visualize func-
+    Recently, Huisman et al. [16] presented BrainScope, a web-                      tional networks derived from EEG. Although these tools provide
+based tool for interactive visual exploration of gene co-expressions                spatial/anatomical context, they are limited to a regional level, and
+and their anatomical context derived from the Allen Human At-                       do not scale to voxel-level resolution with billions of edges.
+lases offering a variety of linked views, where mouseover in one                        When comparing different kinds of connectivities, it is essen-
+view highlights the according selection. Selections can be made by                  tial to visualize similarities/differences of networks [40]. A design
+brushing regions and are saved in a workspace. Gene sets can be                     study conducted by Alper et al. [40] showed that a matrix visu-
+directly transferred to portals for gene enrichment analysis. They                  alization in combination with glyphs results in a better compa-
+apply dimensionality reduction to explore the high dimensional                      rability than superimposed node-link diagrams. Another way are
+data in two-dimensional space, represented in a scatter plot, pro-                  so called small multiples, a series of graphs with similar scale to
+viding spatial context by linking interactive views of atlas slices,                compare them easily, for example functional connectivity in a cir-
+and a hierarchical anatomy navigator, for selection and deselection                 cular layout with similar anatomical regions/nodes [41]. For ana-
+of brain regions. BrainScope also allows the user to upload their                   lyzing networks over time—with hundreds of time points—this ap-
+own gene sets for exploration but is to date limited to the human                   proach becomes time-consuming and unreliable for it depends on
+template brains provided.                                                           memorization by the user. Therefore, Bach et al. [42] used a pilling
+    BrainExplorer [12] is an interactive visualization tool, provided               metaphor to visually encode snapshots of a network (i.e. a network
+by the Allen Brain Institute to explore the spatial gene expres-                    at a time point) into manageable parts (“piles” of similar small
+sion and structural connectivity data provided by the Allen Mouse                   multiples) to identify temporal patterns in functional networks.
+Brain Atlas. Brain Explorer provides volume rendering and blob-
+like visualization of gene expressions mapped to a standard brain.
+                                                                                    3. Background
+Voxels are colored according to their expression level. The tool
+enables the execution of pre-computed source/target connectivity
+                                                                                    3.1. Data
+queries at brain region level, which is also available via a web-
+interface on the Allen Institute’s website [1]. Furthermore, Brain-
+                                                                                        We have been collaborating with experts interested in neuronal
+Explorer allows explicit gene queries, searching for speciﬁed genes
+                                                                                    circuits in the mouse brain, how they control emotional states and
+of interest and anatomical queries where the search is based on
+                                                                                    behavior, and how they are modulated by genes and psychoactive
+speciﬁc anatomical regions of interest. For identiﬁed genes of in-
+                                                                                    drugs [43]. The data they use provide a good starting point for un-
+terest, a correlation query can be executed, returning genes with
+                                                                                    derstanding how nowadays data-driven research is done in neuro-
+similar Expression Proﬁles. This work comes closest to our solu-
+                                                                                    circuit science. It can be divided into three types:
+tion. However, they provide (pre-computed) queries for incom-
+                                                                                        Standard brain and its parcellation (building the reference sys-
+ing/outgoing connections only on pre-deﬁned sites or anatomical
+                                                                                    tem): A standard brain represents a common reference space, to
+regions.
+                                                                                    which other data can be registered to. This standard space can
+    Visualization of structural, functional and gene co-expression brain
+                                                                                    be hierarchically parcelled to represent anatomical annotation (e.g.
+networks: Brain networks are commonly represented as node-link
+                                                                                    Allen Mouse Brain and Allen Human Brain region annotations). In
+diagrams, connectivity matrices or connectograms, where only the
+                                                                                    general, the highest level is the whole brain which is divided hier-
+ﬁrst can be visualized in anatomical space both in 2D, with slice
+                                                                                    archically into sub-regions.
+views of the anatomical planes and 3D. In volumetric space, edges
+                                                                                        Volume data (aligned to the standard brain, i.e. everything is in
+have been rendered as straight lines in between nodes depicted as
+                                                                                    the same reference space): 3D image data (e.g. brain template, spa-
+spheres across the brain [19,21] or curved lines along the brain sur-
+                                                                                    tial gene expression). The spatial gene expression is available on a
+face [33]. However, with a dense number of connections, this pro-
+                                                                                    genome-wide scale [8], therefore 3D image data of 19479 genes
+duces clutter and obscures the underlying anatomy. Mostly, brain
+                                                                                    add up to to several dozen gigabytes in total.
+networks are too complex to be able to show all details up to the
+                                                                                        Connectivity data (also aligned to the standard brain): Region-
+highest level of resolution whilst seeing the entire global struc-
+                                                                                    wise connections/relations (e.g. resting state functional connectiv-
+ture. Thus, hierarchies can deﬁne the level of partition. Applied
+                                                                                    ity) and voxel-resolution connections/relations (structural connec-
+to rendering in 3D space, the hierarchical level can be determined
+                                                                                    tivity, gene co-expression) derived from imaging data (e.g. Allen
+by the distance to the viewpoint in a level-of-detail-visualization
+                                                                                    Mouse Brain gene expression or connectivity data). Voxel-wise
+[34], edge bundling [35]. Hence, brain network visualization tools
+                                                                                    connectivity/relational data generally has a very dense connectiv-
+[36] often present network structure and anatomical context side-
+                                                                                    ity with up to billions of connections. Hence, their matrices can
+by-side and achieve reference through linked views and coloring
+                                                                                    take up hundreds of gigabytes.
+network nodes according to their anatomical region. This provides
+the ﬂexibility to layout the connectivity network according to net-
+work properties such as using a spring-embedded layout where                        3.2. User stories
+well-connected groups of nodes are pulled together as seen in Pol-
+drack et al. [24]. An interactive approach has been proposed in                         Based on previous projects, informal interviews, and discussions
+NeuroCave [37]. Instead of arranging nodes, they map the network                    with our collaborating domain experts, we jointly identiﬁed the
+to a topological space via dimensionality reduction of connectivity                 following major analytical workﬂows and user stories:
+                                  F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320                        307
+
+
+    Relating spatial gene expression data to different kinds of connec-            3.3. Task analysis
+tivity: The entry point for many data analytics workﬂows are ‘can-
+didate regions’—brain regions that may be part of a speciﬁc brain                      Based on the user stories described in Section 3.2 we identiﬁed
+circuit. Those are affected by genes that are either related to a cer-             the following core tasks to be supported by our system. T1 and T2
+tain behavior, or targeted by a psychoactive drug. Thus, the knowl-                serve the ﬁrst user story, T4 the second, T5 the third and T6 and
+edge of where a gene affects the brain is a ﬁrst step in relating it to            T7 the fourth. T3 and T8 represent general requirement for all user
+a particular function. The effect is rather broadly deﬁned. Well doc-              stories.
+umented cases are primary gene expression sites [8] (sites where                       T1: 3D target/source query: Which parts of the brain are con-
+the gene creates products, such as proteins) and structural con-                   nected to a certain volume of interest (e.g. a region with high gene
+nectivity (regions to which primary gene expression sites project)                 expression)?
+[44]. Spatial gene expression and structural connectivity data for                     T2: Higher order target/source query: What is transitively con-
+the mouse brain is provided e.g. by the Allen Mouse Brain Atlas                    nected to a certain volume of interest?
+(AMBA) at a voxel-level [8]. Here, the primary expression sites of                     T3: Anatomical context: To which brain regions is my data re-
+a gene are made available as 8 bit intensity volumes, representing                 lated?
+the density of cells expressing the gene (i.e. spatial gene expression                 T4: Explore network graphs: How do my networks look like on
+data), related to a speciﬁc standard brain. To use those resources                 different anatomical scales?
+for hypotheses building, it is necessary to aggregate data manually                    T5: Compare network graphs: How do my networks differ from
+by querying online databases and literature research. Therefore, an                each other?
+integrated workﬂow for data fusion is missing. Identifying brain re-                   T6: Gene Expression Query: Which genes are speciﬁc for a cer-
+gions that are functionally or structurally connected (either directly             tain volume of interest (e.g. a part of a network)?
+or transitively) to this expression site may also contribute to this                   T7: Explore genetic diversity of networks: How similar are the
+function or be a second order effect thereof. Performing this tasks                speciﬁc genes for different parts of a network?
+at a voxel-level is a particular challenge, since connectivity matri-                  T8: Reproducible/shareable workﬂows: I want to share/discuss
+ces can easily grow up to hundreds of gigabytes.                                   my ﬁndings, so what data did I use, and which analysis steps did I
+    Exploring the data on different scales: Operating region-wise on               perform?
+the data (for example a region-wise network graph) depends on
+spatial hierarchy. Brain regions are organized by ontologies as trees              4. Data structures for real-time queries of big brain data
+with larger regions at the top, and ultimately resolves into voxel-
+resolution at the lowest level of the related standard brain. In order                 A prerequisite for the user acceptance of a visual analytics
+to keep an overview while comparing global networks with differ-                   framework is its responsiveness during interaction. This task is in
+ent modalities, larger regions are preferred. On the other hand, vi-               our case challenging, as we have to query large graphs, with bil-
+sualizing small subnetworks for circuit dissection requires smaller                lions of edges in real time. Furthermore, keeping the data, repre-
+regions of the hierarchy or even voxel-level. A hierarchical organi-               sented as connectivity matrices (weighted adjacency matrices) or
+zation of the network graph can therefore replace time-consuming                   collections of volume data in memory becomes infeasible with in-
+pre-selection of relevant regions in current experimental work-                    creasing size. This requires special solutions for fast disk access (T1,
+ﬂows.                                                                              T2, and T6). When operating on different anatomical scales (T3
+    Comparing different types of connectivity is of essential impor-               and T4), it is necessary to perform cumulative operations on the
+tance for identifying neural circuits. For example, two brain regions              connectivity matrices (e.g calculate region-level connectivity from
+can have a high structural connectivity (a connection via neurons)                 voxel-wise connectivity). In this case large parts of the connectivity
+but do not necessarily express the same genes (e.g. a so called                    matrix need to be loaded and processed.
+ligand-receptor binding [45]). Therefore, their genetic connectiv-
+ity for a speciﬁc gene set, represented as gene co-expression cor-                 4.1. Aggregation Queries for big brain networks
+relation (the correlation of the gene-expression between two re-
+gions) is low. Finding a correlation between regions in their fMRI                     We proposed a data structure in a previous publication [7] to
+activity may show their functional relation, but a difference in                   allow these Aggregation Queries to happen in real-time, directly
+gene co-expression correlation could reveal that this activity relies              on the hard disk. It uses a specialized Connectivity Storage to ef-
+on completely different molecular mechanisms. Directional struc-                   ﬁciently manage and access large connectivity data (T1 and T2).
+tural connectivity can reveal the ﬂow of information for (undirec-                 By exploiting the sparseness of the data and its spatial organiza-
+tional) fMRI connectivity [46]. The possibilities of brain network                 tion, it optimizes disk-reading speed via read-ahead paging and
+comparisons are versatile, but the given examples are in partic-                   therefore achieves almost sequential reading-speed for local Ag-
+ular relevant for domain experts. Combining speciﬁc circuits for                   gregation Queries (details in Fig. 2). To scale for larger brain areas,
+larger networks can be done again by manual data aggregation,                      a cache mechanism loads pre-computed queries in a hierarchical
+such as whole brain fMRI studies, but require the expertise of a                   way, similar to an image pyramid. Moreover, the Connectivity Stor-
+bioinformatitian.                                                                  age provides a mapping to a standard reference space, which al-
+Analyzing genetic diversity of brain regions and networks is necessary             lows the retrieval of connectivity data regardless of its original res-
+to identify their impact on neuronal function, and consequently on                 olution. The Connectivity Storage has been combined with a multi-
+behavior. Finding genes that are speciﬁc for certain neural circuits               model graph/document-database, which is tailored to hierarchical
+is crucial in drug-discovery [43] and can therefore lead to novel                  brain parcellations (i.e. hierarchical anatomical brain atlases) to
+treatments of diseases. Performing this search on a genome-wide                    store region-level connectivity for different hierarchy levels. It is
+level using e.g. spatial gene expression data provided by AMBA [8],                also used to organize spatial data, such as volume data (e.g. spatial
+represents an unbiased approach, which does not involve manual                     gene expression), binary masks, and meshes of region deﬁnitions.
+literature research for relevant genes prior to the analysis. Since
+the size of such spatial gene expression databases exceeds the                     4.2. Region-level representation of voxel-level connectivity
+memory limitations of current consumer level computers, data re-
+trieval strategies for real-time querying are needed [9].                             The result of an Aggregation Query is a 3D image (Con-
+                                                                                   nectivity Volume), where the intensity represents the cumulated
+308                                      F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320
+
+
+
+
+Fig. 1. Task-based web-component for iterative exploration of multiscale brain data. Detailed views of the individual tabs/subﬁgures can be seen in the supplement. (A)
+Browse Database tab: the user can browse a collection of 3D gene expression and connectivity data via a text search (A1) and visualize the data directly in the 3D view
+(A2) or add it to the workspace (C3). (B) Network Query tab: the user can execute target/source queries from the Query Toolbar (B1) on connectivity matrices that have been
+added to the workspace. Gene expression/Connectivity is rendered volumetrically in a 3D view (B2), in a 2D slice view (B3) and as region-wise quantitative representation
+(Expression/Connectivity Proﬁle) (B4) (C) Network Analysis tab: The user can explore networks or connectivities on a region level in a ball/stick representation (C1), controlled
+by the Network Analysis Toolbar showing histograms of the visualized graphs and threshold sliders for edge ﬁltering (C2). The workspace manages which items (3D volu-
+metric data, networks, query results) are shown in each tab (C3) while the Viewer Items List (C4) controls their appearance (e.g. color). The Parcellation Browser (C5) shows a
+hierarchical (anatomical) brain parcellation and is used to change the parcellation level of visualized graphs and proﬁles. (D) Gene Expression Query tab: Via the Query Toolbar
+(D1), Gene Expression Queries can be executed. Resulting gene lists are shown in a table below (D2). (E) Gene Expression Analysis tab: Gene lists can be compared in a parallel
+coordinate system (E1). Its selection is shown in a table (E2), its correlation in a heatmap (E3).
+
+
+connectivity from a VOI (i.e. area in the brain) to the rest of the                        connectivity of a VOI, the connectivity of anatomical subregions
+brain (i.e. every voxel). In our previous work [6], it was possi-                          within the VOI could not be determined (i.e. one can not split the
+ble to visualize a region-level Graph Representation of a Connectiv-                       connectivity for subregions of the VOI anymore). It rather repre-
+ity Volume. This means a region-level representation of aggregated                         sented an abstract view of the query, showing the aggregated con-
+voxel-level connectivity (T4). Since this is the already cumulated                         nectivity of a VOI mapped to a region-level in its 3D/2D spatial
+                                         F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320                                        309
+
+
+
+
+Fig. 2. Principle of the Connectivity Storage and real time Aggregation Queries: (1) spatial reordering of a (voxel-level) connectivity matrix. Rows/columns that represent the
+outgoing/incoming connectivity of voxels are reordered, so that rows/columns that belong to spatially close voxel are close to each other. (2) Row compression: the reordered
+connectivity matrix is stored with a row-wise compression as Connectivity Storage File on the hard disk. This saves disk space (and therefore reading time) by exploiting
+sparseness. (3) Split-Aggregation Query: a VOI (yellow, purple and cyan indicates anatomical sub-regions of the VOI) is selected on 3D spatial data (e.g. spatial gene expression
+data, red). Outgoing connectivity is aggregated by reading the corresponding rows (yellow, red and cyan) from the Connectivity Storage File into three separate Connectivity
+Volumes. Since spatially close rows are also close in the ﬁle, they can proﬁt from read-ahead paging (blue). Aggregated of the VOI can be generated from the three individual
+Connectivity Volumes (green) but is also available for the 3 subregions (e.g. for region-level Graph Representation). (For interpretation of the references to color in this ﬁgure
+legend, the reader is referred to the web version of this article.)
+
+
+
+                                                                                           to Bruckner et al. [9] allowing fast access of spatial data in ar-
+                                                                                           bitrary VOIs. While Bruckner stores spatial objects and their dis-
+                                                                                           tances, we store gene expression per voxel across all datasets in
+                                                                                           the Allen Mouse Brain Atlas. Hence, a Gene Expression Query proﬁts
+                                                                                           from read-ahead paging similar to Aggregation Queries.
+
+                                                                                           4.4. Application interface
+
+
+Fig. 3. Region-level Graph Representation of a Connectivity Volume with its VOI (yel-
+                                                                                               A REST API is acting as the central access point for the data.
+low). (A) The Graph Representation from our previous paper [6] maps the Connec-            It provides calls for querying the connectivity matrices and spatial
+tivity Volume of the VOI to the two regions within the VOI similarly (i.e. so they         gene expression, as well as importing them. Data import of con-
+receive the same outgoing connectivity). (B) Split-Aggregation Queries generate mul-       nectivity matrices can be performed by providing the matrices in
+tiple Connectivity Volumes for each region of the VOI, so the Graph Representation
+                                                                                           a row/column table format as csv. The data structure will then con-
+maps the Connectivity Volumes of the two regions individually (i.e. so they receive
+their actual outgoing connectivity. (For interpretation of the references to color in      vert the data to a compressed ﬁle format for the Connectivity Stor-
+this ﬁgure legend, the reader is referred to the web version of this article.)             age and automatically aggregates region-level connectivity in the
+                                                                                           graph-database (see details in Ganglberger et al. [7]). It can then
+                                                                                           be used immediately afterwards for real-time target/source Con-
+context (Fig. 3(A)). However, exploring the connectivity of anatom-                        nectivity Queries.
+ical subregions provides a more precise view on the data, which
+would otherwise require additional queries by the user. We ad-                             5. Workﬂow centric UI Design
+dress this problem with Split-Aggregation Queries. Before executing
+a query, the VOI is split into anatomical brain-regions of the lowest                          We evaluated how to best adapt the existing workﬂow [6] for
+level of a hierarchical parcellation. During the reading of connectiv-                     the analytical tasks (Section 3.3) by conducting an informal discus-
+ity data from the Connectivity Storage, we generate not only a sin-                        sion about the usability with our domain experts. Extending the
+gle Connectivity Volume, but one for each region of the VOI simul-                         interface from our previous work [6] with new features was per-
+taneously (indicated as yellow, purple and cyan in Fig. 2). While                          ceived to overload the interface. As a result we implemented a tab-
+the total connectivity of the VOI can be generated from the indi-                          based design (Fig. 1) of the interface subdividing the eight tasks
+vidual Connectivity Volumes, one can still compute the region-level                        into logical sub-workﬂows (Fig. 4). Although tabs can be switched
+connectivity for each brain region of the hierarchical parcellation,                       arbitrary, their order reﬂects the principle experimental procedure
+and therefore an exact region-level Graph Representation (Fig. 3(B)).                      of domain experts:
+                                                                                               W1) Browse database: This workﬂow (Fig. 1(A)) represents the
+4.3. Querying collections of spatial gene expression data                                  starting point for all other workﬂows. The user can browse the
+                                                                                           data collections and add it to a workspace (Fig. 1(C3)). Transitions
+    Genetic dissection of brain regions/networks on a genome-wide                          between these workﬂows, as well as their current state (visual-
+scale requires querying large collections of 3D image data (T6 and                         ized data, executed queries etc) are managed by this, which can
+T7). For each gene of the Allen Mouse Brain Atlas [8], we generated                        be stored/shared as hyperlink to allow for data provenance and re-
+a 8 bit spatial gene expression image with 1MB from the AMBA API                           producibility (T8).
+[47], by scaling the gene expression to a range between 0 and 255.                             W2) Network query: Here, the user can execute target/source
+To account for regional speciﬁcity (i.e. genes can be expressed in                         queries (T1) or higher order target/source queries (T2) to explore
+the whole brain, which makes them not speciﬁc for VOI), we stan-                           local brain network connectivity visualized in an anatomical con-
+dard normalized (z-score) the gene expression of each gene. The                            text (T3) (Fig. 1(B)). The user has 3D volume data that shows activ-
+normalized values are then scaled between 0 and 1 (i.e. 0 means                            ity in certain areas, for example where a certain gene is expressed.
+a z-score ≤ 0 and 1 a z-score ≥ 2.5). To enable a time-eﬃcient                             She wants to know which areas are connected via structure or by
+call for the genome-wide gene expression of a VOI as ranked list                           function at voxel-level (T1). Hence, she can directly select the ar-
+(i.e. genes ranked by their mean gene expression speciﬁcity in the                         eas that are interesting for her based on a 3D brain-visualization
+VOI), we created a spatial index using space-ﬁlling curves similar                         and receives the results instantly.
+310                                      F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320
+
+
+
+
+Fig. 4. Association of the workﬂows/tabs (Section 5), analytical tasks (Section 3.3), visual components (Section 6), and interactions for joint data exploration (Section 7). The
+components and interactions are arranged by their order of appearance in the main text.
+
+
+
+
+    It is possible to select different types of connectivities, which                         W4) Gene expression query: In this workﬂow (Fig. 1(D)), Gene
+can be visualized similarly or by their overlap. Originating from the                      Expression Queries (T6) can be performed. Here, user’s research in-
+target/sources, the user wants to know what further connections                            terest is a speciﬁc brain region or network node (i.e. a VOI that
+exist, i.e., which brain regions (also on a voxel-level) are transi-                       represents parts of a network from W2 or W3). She wants to know
+tively connected to a certain area (T2). Therefore, she can perform                        which genes have a spatial expression pattern speciﬁc for this re-
+target/source queries iteratively, aided by accurate VOI selection of                      gion/node, which can be selected in a 3D brain-visualization. A list
+regions with high connectivity.                                                            of genes, ranked by their gene expression speciﬁcity (i.e. how spe-
+    3D volume data, such as spatial gene expression data or tar-                           ciﬁc is gene expression of a gene for a VOI) is retrieved in real-time
+get/source connectivity query results need to be related to their                          and shown as table with additional information (such as the genes
+anatomical context, so that the user has quantiﬁed information of                          functional association).
+what she is seeing (T3). Therefore, the volume data is summa-                                 W5) Gene expression analysis: Here (Fig. 1(E)), the user
+rized to show how much gene expression/connectivity individual                             can explore the gene expression for different brain regions (e.g
+brain regions exhibit. The hierarchical nature of the regions makes                        source/target regions of a network), i.e. she wants to know how
+it necessary to visualize different hierarchical levels, the user can                      similar these brain regions (T3) are genetically (T7). For this pur-
+select a level based on her needs (Fig. 1C5).                                              pose, she can perform multiple Gene Expression Queries in W4. The
+    W3) Network analysis: Local connectivity (as result of W2)                             resulting gene lists can be compared and ﬁltered interactively in
+or global whole-brain connectivity can be analyzed and compared                            a parallel coordinate system, based on the gene expression speci-
+as region-level networks on different anatomical scales (T3,T4,T5)                         ﬁcity and functional associations.
+(Fig. 1(C)). The user wants to explore connectivity of experimental
+data, such as a fMRI network of a study. Hence, she executes tar-
+get/source queries on the fMRI network (W2) and other modalities
+and renders a Graph Representation of the results (T4). Hierarchical                       6. Visual components
+brain parcellation can be navigated (T3), until the graph ﬁts her
+needs. Multiple connectivities are represented as a graph for pur-                             This section describes the visual components that are used to
+poses of comparison, i.e. to see the difference from and the overlap                       implement the workﬂows (Fig. 4) for the 8 analytical tasks de-
+with her experiment (T5).                                                                  scribed in Section 3.3.
+                                  F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320                       311
+
+
+6.1. Item Manager                                                                  6.4.2. Network visualization
+                                                                                       A result of a target/source query can be also visualized as a
+    The Item Manager is used to handle the association, visibility,                3D ball-and-stick-model within its anatomical reference space (T4
+and appearance of items between all workﬂows/tabs and is in par-                   and T5). Network nodes are rendered as spheres, where their di-
+ticular important to provide ordered and reproducible workﬂows                     ameter is determined by the size of the corresponding anatom-
+(T8). We split the Item Manager into two separate lists to empha-                  ical region. Color reﬂects their anatomical representations in the
+size the distinction between what is relevant for a tab (Workspace                 originating parcellation. Rendering them as meshes instead, would
+List) and the visual appearance within a workﬂows/tabs.                            cause blocking the view by larger brain regions. We chose this ball-
+    The Workspace List (Fig. 1C3) manages which items are visi-                    and-stick model in particular because they are common in neu-
+ble in which workﬂow/tab. Since not all items are relevant for all                 roscientiﬁc publications (e.g. [48–50]). Hence, they are intuitively
+workﬂows, this supports the user to focus on her speciﬁc task. For                 known in the neuroscientiﬁc community and can therefore used
+example, spatial gene expression data of certain genes might be                    to share/discuss ﬁndings with collaborators that are not familiar
+relevant as starting point for Connectivity Queries (Fig. 1(B), W2)                with BrainTrawler (T8). For directed networks, edges are rendered
+but irrelevant for Network Analysis (Fig. 1(C), W3).                               as arrows, undirected network edges are represented by lines. Ren-
+    The Viewer Item List (Fig. 1C4) controls the visibility and appear-            dering arrows that are indicating the direction of connections were
+ance of spatial volumetric data, brain regions and connectivity. For               speciﬁcally requested by our expert users as they are an intuitive
+volumetric data the brightness, contrast, and transparency can be                  way of differentiating incoming from outgoing edges in publica-
+controlled to improve visibility.                                                  tions. For weighted networks, connectivity strength is color-coded,
+                                                                                   ranging from white to the color selected in the Viewer Item List so
+6.2. Link sharing                                                                  different networks can be visually distinguished. Edges and nodes
+                                                                                   are user-adjustable via color-transfer-functions. Moreover, thresh-
+   The current state of the application (visualized items,                         olding edge weights enables dynamical network reﬁnement and an
+workspace, selection, executed queries, etc.) can be exported                      exploration of connections of interest. Node labels further support
+as hyperlink via a button on the top right of the application.                     orientation.
+The user can store and share her current analysis for data prove-                      In addition to the network model in the 3D view, network re-
+nance/reproducibility in a neuroscientiﬁc environment (T8).                        gions are shown as colored outlines of their anatomical equivalent
+                                                                                   in the corresponding 2D slice views; arrows (for directed) or lines
+6.3. Parcellation Browser                                                          (undirected networks) are rendered between the region centers in
+                                                                                   every slice. Although this shows only a part of the network (i.e. in
+   The Parcellation Browser (Fig. 1C5) shows a hierarchically orga-                the speciﬁc slice), it has the advantage that one can correctly ren-
+nized brain parcellation in a tree view, where every brain region                  der the regions by anatomy (instead of using a sphere), without
+has a name and a color code. This color-coding supports the user                   facing the problem caused by possible occlusions in 3D.
+in relating brain regions to all other visual components. Its main                     The comparison and joint exploration of multiple graphs, which
+purpose is to deﬁne the brain regions that are visualized (T3) in                  relate to the same anatomical parcellation, has been realized by
+the Expression and Connectivity Proﬁles as well as the query result’s              overlaying several graphs, i.e. simply rendering multiple edges be-
+Graph Representation (the selection state). The uppermost regions                  tween nodes (Fig. 6C1) for it is intuitively understandable. Since
+are the two hemispheres that can be expanded further down the                      showing only two graphs even renders up to four arrows between
+hierarchy. Each major brain region has a color code that is varied in              nodes, we implemented an overlap visualization to emphasize on
+shade depending on its hierarchical level, providing the user with                 connections that are strong in multiple networks. Here, only a
+an indirect reference to the larger anatomical context of a subnode                maximum of two edges per node needs to be rendered (i.e. two
+and to the spatial position in the brain. This effect is further en-               for directed, one for undirected). Their weights are deﬁned by the
+hanced by using established color codes for brain regions together                 multiplication of all edges (at region-level) between those nodes.
+with brain ontologies, which, for example, available in the Allen                  Unlike an overlap that is based on the presence of connections (i.e.
+Brain Atlas.                                                                       it renders binary edge weights if they are above certain thresh-
+                                                                                   olds in different networks), it provides edge weights on a contin-
+6.4. 3D visualization in anatomical space                                          uous scale to visualize contrast between weak/strong connections.
+                                                                                   If an overlap is computed, the histograms depict a formula of the
+   We use classical volume rendering (Fig. 1B2) and multi-planar                   multiplication of individual graphs (Fig. 6C2), so that the calcu-
+reformation (Fig. 1B3) to visualize volumetric data in its original                lation can be comprehended by the user. Cascading queries are
+spatial, anatomical environment (W1–W4). Graphs are rendered as                    treated as a single network, depicted by brackets in the formula
+ball-and-stick models, since they are common in the neuroscience                   (see Section 7.2), since they represent connectivity of different
+community. We further render anatomical context in the planar                      orders.
+view, visualized by region contours, and mesh geometry in 3D (if
+enabled via Viewer Items List) in order to provide anatomical con-                 6.5. Query Toolbar
+text. 3D mesh rendering is turned off by default, since it would
+obstruct 3D volume rendering.                                                          The Query Toolbar (W2 and W4) (Fig. 1B1 and D1) can be used
+                                                                                   to execute target/source Connectivity Queries on connectivity ma-
+6.4.1. Volume visualization                                                        trices (T1 and T2) as well as Gene Expression Queries (T6). Further-
+    Volumetric data—gene expression data or voxel-level structural                 more, it can start brushes, which is a spherical selection tool in the
+connectivity (T1 and T2)—is rendered in 3D (Fig. 1B2), and in three                2D slice view.
+planar slice views (Fig. 1B3) showing outlines of anatomical re-
+gions (T3). A maximum of four volumes can be blended simultane-                    6.6. Network Analysis Toolbar
+ously in 3D using single color-based transfer-functions (limited by
+the four RGBA channels, since the volume is loaded as texture). In                   Since the number of edges increases quadratically with the
+the slice views, blending is also used for multiple images. There-                 number of nodes, the user can apply thresholding on edges to hide
+fore, the rendering of intensity-overlap converges to white.                       weaker connections (T4 and T5). This is done with a slider to set
+312                                F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320
+
+
+a user deﬁned threshold, in combination with a histogram that                       7. Interaction design for joint data exploration
+shows the edge weight distribution in the Network Analysis Tool-
+bar (Fig. 1C2, W3). The colors of the histogram bars map directly                   7.1. Visual Queries
+to the visualized edges. Hence, color directly relates to connectiv-
+ity strength. The Network Analysis Toolbar further allows to hide                      We use the Spatial Visual Query [9] paradigm to realize con-
+source or target nodes of a network if the user wants to focus on                   nectivity and Gene Expression Queries. A visual query allows API
+these individual parts (T4).                                                        requests to the data structure that are based on selections of a
+                                                                                    volume of interest directly in volume rendering. The response can
+                                                                                    then be shown in the 2D/3D renderer/Connectivity Proﬁle (for tar-
+6.7. Connectivity and Expression Proﬁles                                            get/source Connectivity Queries, T1, T2) or as gene list (for Gene Ex-
+                                                                                    pression Queries, T6). This subsection describes the interaction with
+    Connectivity Proﬁles as well as Expression Proﬁles (Fig. 1B3) sum-              volume data, and the query types we have implemented.
+marize volumetric voxel-level data in order to make them quanti-
+tatively comprehensible for the user (T3). They visualize the mean                  7.1.1. Selecting a volume of interest
+target/source connectivity or gene expression for brain-regions in                      In the 3D visualization (Section 6.4), the selection of areas
+bar graphs. These brain regions are deﬁned by the selection made                    can be performed in four different ways: Brush-selection, region-
+in the Parcellation Browser. The mean connectivity/expression of all                selection, network-nodes-selection or high-intensity-selection.
+subregions are rendered as dots. This allows the user both to iden-                 Brush-selection is performed from the Query Toolbar. It lets the
+tify regions that have highly connected/expressed subregions, and                   user draw spherical areas encoded in transparent yellow in the 2D
+to further reﬁne the anatomical hierarchy to focus on relevant sub-                 slice views, which are also directly rendered in 3D. For example,
+regions. For anatomical context, the colors of the bars and dots are                Fig. 5(A) shows a gene-expression volume, where the spherical
+corresponding to the Parcellation Browser. Names are made visible                   area is drawn on voxels with high gene-expression. Executing
+via a tooltip on demand, since a direct rendering with the bars                     queries on this area is therefore acting as link between volume
+would cause clutter. One or multiple regions can be picked for a                    and connectivity data. The region-selection (Fig. 5(B))—added
+high-intensity VOI selection, which enables the user to threshold                   by the magnifying-glass-plus-button in the Parcellation Browser
+for high expression/connectivity voxels in a separate dialog (see                   next to a region—selects all voxels within this region rendered
+Fig. 5). This allows higher order target/source queries in an iter-                 as transparent yellow cubes. This allows the user to explore a
+ative workﬂow (T2), as further described in Section 7.1. For Con-                   network without volume data (e.g. if now relevant volume data is
+nectivity Proﬁles, the percentual composition of the query region is                available). It is also possible to select the nodes of networks (i.e.
+shown in a bar above the proﬁle to indicate the queries anatom-                     the regions that represent the nodes of a network). This is similar
+ical context. It uses the same parcellation/color code as the pro-                  to selecting the individual regions of a network manually, but it
+ﬁle, and reveals its region names via mouse-over. Furthermore the                   can be done in a single step W3. High-intensity queries are started
+query region can be added again to the 2D/3D viewer, so that the                    from the Expression Proﬁles. They allow the user to select voxels
+user can reproduce the query with the same or other connectivity                    with high intensity within user-selected brain regions. The user
+matrices.                                                                           selects brain regions of interest in the Expression Proﬁles (Fig. 5(C))
+    Proﬁles can be visualized in an overview next to the 2D/3D                      with high gene expression. By clicking the “add high-intensity
+view to show multiple proﬁles below each other (Fig. 7(A)). There-                  VOI” button, a dialog appears which shows a voxel-level histogram
+fore, regions are aligned vertically which enables comparability be-                of the intensity values within this region. Here the user deﬁnes
+tween multiple proﬁles (T5).                                                        high-intensity voxels by setting a threshold. In the 3D/2D views,
+                                                                                    the voxels are instantly selected and visualized, similarly to the
+                                                                                    region-selection.
+6.8. Filterable gene lists
+
+    Gene lists (Fig. 1A1, D2 and E2, W4 and W5) show tabular in-                    7.1.2. Target/source Connectivity Queries
+formation about spatial gene expression data by their name, GO                          Target/source Connectivity Queries (W2) can be used to link
+terms (Gene Ontology, i.e. functional associations [51]), creation                  connectivity data with volume data (T1). In the Query Toolbar
+data, and—if they are result of a Gene Expression Query—their mean                  (Fig. 1B1), connectivity matrices for querying can be selected, and
+gene expression speciﬁcity. The list can be ﬁltered for genes that                  brush-drawings with a certain radius can be initiated (although
+have speciﬁc functional associations (T6, T7) textually. This is nec-               one can also use the other brush-types instead). The selected area
+essary since result lists may contain irrelevant genes that are not                 (Fig. 5(A)) then acts as an input for a target or source query on the
+in the research focus of the user.                                                  API. The API retrieves the connectivity to all voxels that are either
+                                                                                    targets or sources from the selection, and then returns a Connectiv-
+                                                                                    ity Volume (connectivity from/to VOI on voxel-level) as compressed
+6.9. Parallel coordinates system                                                    JPEG to the web-component. It will be rendered instantly in 3D, 2D
+                                                                                    slice view, and as Connectivity Proﬁle (T3). This represents the cu-
+    A parallel coordinates system allows the ﬁltering of multiple                   mulated connectivity to (target) or from (source) the selected area.
+gene lists from different brain regions (W5) by their gene expres-                  The Connectivity Volume gets automatically assigned with the name
+sion speciﬁcity (Fig. 1E1), while their correlation is visualized in                and color of the largest anatomical brain region in the VOI. Hence,
+a heatmap (Fig. 1E2) (T7). We chose a parallel coordinates system                   it is easier for the user to associate the item with the query, than
+so one can interactively select genes that have a high speciﬁcity in                using a random name/id. Connectivity Proﬁles are shown directly
+one region, but low speciﬁcity in others (this is relevant for ligand-              below the 2D/3D view (Fig. 5B4). Different tabs allow the user to
+receptor systems). Furthermore, one could adapt this system for                     switch between proﬁles of visible queries/gene expressions.
+future projects, for example highlighting speciﬁc subsets of genes
+(e.g. related to a brain function or behavior) in a different color, so             7.1.3. Higher order target/source queries
+one could directly see the distribution of these genes in different                     On the Connectivity Proﬁle of the Connectivity Volume, the user
+brain regions.                                                                      can select regions of interest with high connectivity to start a
+                                          F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320                                         313
+
+
+
+
+Fig. 5. Selection of parts of a gene expression pattern (red). (A) Brush-selection of spherical region (yellow) in 2D slice views and rendering in 3D. (B) Region-selection
+initiated by the Parcellation Browser, voxel-level visualization of a region (yellow). (C) High-intensity-selection of a brain-region started from an Expression Proﬁle. A histogram
+of voxel-level connectivity within the selected region lets the user decide which intensity, and therefore which voxels, will be selected. The result is rendered in 2D and 3D
+(yellow). (For interpretation of the references to color in this ﬁgure legend, the reader is referred to the web version of this article.)
+314                                     F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320
+
+
+
+
+Fig. 6. Case Study 1: (A) Gene expression of OXT (cyan) and AVP (purple). (B) Selected VOI with brush-selection (yellow, indicated by red-arrow). (C) Structural connectivity
+of the VOI in 3D and 2D (green) and its Connectivity Proﬁle. (D) Gene co-expression correlation of the VOI in 3D and 2D (blue) and its Connectivity Proﬁle. (E) Graph
+Representation of structural connectivity (white to green) and gene co-expression correlation (white to blue). (F) Multiplication (overlap) of the connectivities (red). (For
+interpretation of the references to color in this ﬁgure legend, the reader is referred to the web version of this article.)
+
+
+high-intensity-selection (Fig. 5(C)). Similarly to the Expression Pro-                   mean gene expression speciﬁcity of the VOI for every gene in
+ﬁle, the user can choose a threshold in a voxel-level connectivity                       the spatial index, and renders it instantly as Filterable Gene List
+histogram, which adds all voxel within the region, and a connec-                         below the 2D/3D view (Fig. 1D2) in a tab similar to Connectiv-
+tivity above the threshold, as VOI. After performing a target/source                     ity Proﬁles. The name and color of the gene list item (i.e. in the
+query on the selection, the resulting second-order connectivity is                       Workspace and Viewer Item list) are automatically assigned analo-
+visualized in 2D and 3D as another volume, while the associated                          gous to target/source connectivity queries (i.e. name/color of the
+Connectivity Proﬁle is rendered again in a tab below the 2D/3D                           largest anatomical region in the VOI). This is especially helpful
+view. The proﬁles can be rendered in an overview (Fig. 7(A)) were                        for Gene Expression Analysis (W5), since it provides the user with
+higher order Connectivity Proﬁles will be shown below their origi-                       anatomical reference without 2D/3D visualization (Fig. 1(E))
+nating Connectivity Proﬁle (T2). The name is indented and preﬁxed
+with “second-order” in red font, so that it is clear to the user that
+this query belongs to an iterative cascade. The cascading nature of                      7.2. Transformation of voxel-level connectivity to region-level Graph
+these queries is further emphasized in the region-level Graph Rep-                       Representation
+resentation, described in the following section.
+                                                                                             Changing from voxel-level Connectivity Volumes to region-level
+7.1.4. Gene Expression Queries                                                           Graph Representation can be controlled either directly from a Con-
+    Gene Expression Queries can be used for genetic dissection of                        nectivity Proﬁle via “Show Graph Representation” button, or via the
+brain regions or networks (T6) in W4. Similarly to target/source                         Viewer Item List (T3–T5) in W2 or W3. It allows iterative queries
+queries, they can be executed from VOIs selected by brush, re-                           for higher order target/sources to be visualized in a cascading way,
+gions, network-nodes, or high-intensity. The API retrieves the the                       since the individual graphs are connected by arrows (Fig. 7(B)).
+                                         F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320                                     315
+
+
+
+
+Fig. 7. Case Study 2: (A) Gene expression (2D slice view in the black box, selected VOI with high-intensity-selection in yellow) and Expression Proﬁle of BDNF (Dentate Gyrus
+brain-region indicated by a red-arrow) and its ﬁrst-, second- and third-order Connectivity Proﬁles. (B) Graph Representation of the connectivity in 2D and 3D (ﬁrst-order blue,
+second-order red, third-order green). (For interpretation of the references to color in this ﬁgure legend, the reader is referred to the web version of this article.)
+
+
+
+Edges of the graph are drawn from all regions in the query area, to                       7.3. Region-level selection and manipulation
+all regions in the Connectivity Proﬁle (i.e. the selection state), with
+their mean connectivity as weights. These edges do not need to be                            The central control element for the Connectivity Proﬁle and
+calculated, since they have already been aggregated for the Con-                          Graph Representation is the Parcellation Browser. Navigating in the
+nectivity Proﬁles.                                                                        tree directly inﬂuences the selection state, thereby determining
+316                               F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320
+
+
+which bars (proﬁle) or nodes (graph) are shown (T3). Opening a                     (T3). She selects the overlapping area with a spherical brush initi-
+subtree of a region will remove the corresponding bars/nodes from                  ated by the Query Toolbar (Fig. 6(B) yellow spheres, highlighted by
+the graph, and adds all its children. Closing a region will add it,                red arrow).
+while removing its children. Since the user is not limited by a rigid                  Find connected areas: In the Network Query tab (W2), the user
+parcellation, she can focus on regions of the brain that are relevant              selects the structural connectivity matrix in the Query Toolbar, a
+to her (e.g. only sub-cortical areas).                                             click on the Target Query button executes the selected VOI on the
+                                                                                   data structure (T1). The accumulated connectivity is instantly dis-
+7.4. Gene Expression Analysis                                                      played as Connectivity Volume in 3D and 2D (Fig. 6(C) green) and
+                                                                                   as Connectivity Proﬁle (Fig. 6(C) bottom). The proﬁle shows that
+    A gene list as results of a Gene Expression Query reveals which                the strongest connectivity is to the Hypothalamus (dark red) itself
+genes are speciﬁc for a certain VOI (T6). However, multiple queries                (strongest connectivity to itself is common for structural and gene
+are needed to dissect circuits or a network (i.e. they involve dif-                co-expression correlation). Other top connections are the Striatum
+ferent brain regions and therefore multiple VOIs) (T7). Since every                (light blue), Pallidum (dark blue), Midbrain (pink), Thalamus (light
+gene list consists of several thousand genes, an eﬃcient compar-                   red) and some cortical areas (green) (T3). This process is repeated
+ison and combined ﬁltering of these lists is needed. This can be                   for the gene co-expression correlation (Fig. 6(D) blue), where its
+done with a parallel coordinate system (Fig. 1E1) in W5, where ev-                 proﬁle depicts hypothalamus as strongest again, but among simi-
+ery coordinate shows the gene expression speciﬁcity for each Gene                  lar connections also strong connections to Cerbellum (yellow) and
+Expression Query. Query name and color provide the user with spa-                  Hindbrain (orange).
+tial reference (T3). Brushed genes in the parallel coordinate system                   Compare networks: To compare the connectivities, the user vi-
+are automatically listed below in a table (Fig. 1E2), while their cor-             sualizes them as Graph Representation (T4 and T5) in the Net-
+relation is shown in a heatmap (Fig. 1E3). To further narrow down                  work Analysis tab (W3). Fig. 6(E) shows the two graphs in 2D and
+the search, the list can be textually ﬁltered, for example to look                 3D, easily recognizable by their colors. For the user, the graph
+only for genes with speciﬁc functional associations.                               looks too cluttered, so she selects a threshold to ﬁlter weak con-
+                                                                                   nections in the Network Analysis Toolbar. Among others, the user
+                                                                                   sees that both networks show projections to the Septal Complex
+8. Case studies                                                                    (LSX), the Anterior Cingulate (ACA) and the Prelimbic/Infralimbic
+                                                                                   Area (PL and ILA), which are well known nodes involved in so-
+   We conducted three case studies in collaboration with our do-                   cial behavior [52]. To further highlight this, the user also visualizes
+main experts who also co-authored this paper. The studies repre-                   the overlap of both graphs (i.e. multiplication of both connectiv-
+sent use cases that would appear in a neuroscientiﬁc environment                   ities). The resulting reduced amount of edges makes it easier for
+in this or a similar form. The ﬁrst case study compares different                  the user to identify regions which are connected via both connec-
+kinds of networks (structural-connectivity vs gene co-expression                   tivities (T5). These types of network visualization were familiar to
+correlation) related to social-bonding behavior (T1, T3–T5). The                   our domain experts, who conﬁrmed their suitability for neurosci-
+second examines neurocircuits related to memory and learning,                      entiﬁc visualization or publications.
+which we explore iteratively (T1–T3). The last case study veriﬁes                      This case study illustrates the joint exploration of gene ex-
+the validity of the gene expression index by genetically dissecting                pression data and different kinds of connectivities on voxel- and
+a well known connection in the limbic system (T3, T6, and T7).                     region-level. This approach allows real-time visual analytic work-
+                                                                                   ﬂows which are fast and eﬃcient, compared to time-consuming
+8.1. Comparison of multiple networks                                               manual data aggregation by querying different online databases,
+                                                                                   literature research and scripting. A video of the case study is avail-
+    In the ﬁrst case study our domain experts would like to exam-                  able as Supplementary Video 1.
+ine brain networks related to social-bonding behavior. In particu-
+lar, they were interested in oxytocin and vasopressin (neuropep-                   8.2. Higher-order connectivity
+tides known to be related to social behavior in mammals) release
+effect at the network level [52]. For this, they wanted both to ex-                    We designed this case study with our domain experts to show-
+amine primary expression sites of both genes, and explore their                    case iterative higher-order Connectivity Queries with a well-known
+target sites (i.e. outgoing connectivity of expression sites) on dif-              relationship between the brain-derived neurotropic factor (BDNF)
+ferent networks. Following data has been incorporated for this                     and hippocampal synaptic plasticity, respectively circuits related to
+case study: spatial gene expression data (67 × 41 × 58 volume                      learning and memory [53]. One of these circuits is Dentate Gyrus
+on a 200-micron resolution) of oxytocin (OXT) and vasopressin                      (DG) → CA2/CA3 → CA1 → Entorhinal cortex/Subiculum [53].
+(AVP), a spatial gene co-expression correlation network (also 200-                 For this purpose, we explored a primary expression site of BDNF in
+micron resolution, matrix ﬁle size is ∼ 12 GB) of social-bonding                   DG, and traversed their ﬁrst-, second- and third-order targets itera-
+related genes consisting of (mouse gene ENTREZ ID in brackets)                     tively. This case-study required the spatial gene expression data at
+Oxt (18429), Oxtr (18430), Avp (11998), V1b receptor (26361), D1R                  a 200-micron resolution for BDNF (mouse gene ENTREZ ID: 12064)
+(13488), D2R (13489), Slc6a3 (13162) and Crh (12918); and a 100-                   and structural connectivity at a 100-micron resolution from AMBA
+micron voxel-level (132x80x114) structural-connectivity from the                   in the data structure [7], which is added to the workspace in the
+AMBA (ﬁle size is ∼ 90 GB) [7]. Although these networks have bil-                  Browse Database tab (W1).
+lions of edges, our data structure [7] allows real-time retrieval of                   Identify a volume of interest of spatial data: The experts started
+aggregated connectivity (i.e. cumulated incoming/outgoing connec-                  their investigation by visualizing the spatial gene expression of
+tivity) of a VOI on a 132 × 80 × 114 standard brain space. The                     BDNF in 2D/3D and as Expression Proﬁle (Fig. 7(A)) in the Network
+user adds this data to the workspace in the Browse Database tab                    Query tab (W2). Since the circuit has its origin in DG, the user
+(W1) before the case study.                                                        navigates in the Parcellation Browser. In the 2D slice view the user
+    Identify a volume of interest of spatial data: The entry point for             sees that there is a high expression level, hence she starts a high-
+experts is the spatial gene expression data of OXT (Fig. 6(A) cyan)                intensity-selection in the Expression Proﬁle (Fig. 7(A)).
+and AVP (Fig. 6(A) purple). The user notices an overlap in the hy-                     Find connected areas iteratively: By selecting the structural con-
+pothalamus (indicated by dark red contours, in the 2D slice view)                  nectivity matrix in the Query Toolbar and clicking the Target Query
+                                   F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320                      317
+
+
+button, the user receives the accumulated connectivity instantly as                 relevant for her (i.e. genes related to a certain function/behavior).
+2D/3D visualization and Connectivity Proﬁle. The name of the pro-                   Therefore, our domain experts ﬁlter this list by GO terms relevant
+ﬁle is indented and preﬁxed with “First-Order” to highlight the it-                 for the reward circuitry, such as behavior and neurotransmitter. This
+erative procedure (Fig. 7(A)). CA2 and CA3 are the strongest con-                   puts tyrosine hydroxylase at the 6. place (Fig, 8(A)).
+nections (not counting DG, since it is a connection to itself), so                      Find genes that are speciﬁc for connected areas: To explore the
+they are chosen for the next high-intensity-selection to go fur-                    structural targets of VTA, the user selects the structural connec-
+ther along the circuit (T2). Note that CA1 receives strong input,                   tivity matrix in the Query Toolbar (Network Query tab, W2) and
+but this is primarily caused by their spatial closeness and data ac-                starts a Target Query. The targets (Fig. 8(A), pink) highlight a re-
+quisition technique for structural connectivity [54]. The next Con-                 gion in the striatum. In the Connectivity Proﬁle the user sees that
+nectivity Proﬁle shows CA1 as strongest connection (except for the                  the ACB is among the strongest connected regions, therefore, she
+originating CA2/CA3). By performing a high-intensity-selection on                   wants to compare its gene expression to VTA. A high-intensity-
+CA1, the results show strong connectivity in the Retrohippocampal                   selection within the ACB sets the voxels with the highest connec-
+Region. After browsing its subregions in the Parcellation Browser,                  tivity as VOI (Fig. 8(B), yellow). A “High Expression Query” (T6) in
+the connections to Entorhinal Cortex and Subiculum are revealed                     the Gene Expression Query tab (W4) reveals gene expression speci-
+(highlighted in Fig. 7(A) bottom)                                                   ﬁcity contrary to VTA: tyrosine hydroxilase has a low speciﬁcity
+   Visualize the circuit: Finally, the experts wanted to see the cir-               (Fig. 8(B)), while the dopamine receptors are ranked on average in
+cuit in a 2D-3D Graph Representation to give them a spatial con-                    the top 1% (after ﬁltering by GO term, the majority of them are in
+text (T3), so that they can use their exploration for presentation                  the top 10).
+and discussion purposes with colleagues (T8). They selected the                         Compare gene expression speciﬁcity of brain-regions: By using a
+“Show Graph Representation” button next to the proﬁles, which in-                   parallel coordinates system (Fig. 8(C)) in the Gene Expression Anal-
+stantly shows them the network graphs (Fig. 7(B)) in the Network                    ysis tab (W5), the user can search for genes with characteristic
+Analysis tab (W3). After ﬁltering for the strongest connections, the                speciﬁcity in different brain regions (T7), such as ligand-receptor
+graph shows only the DG → CA2/CA3 → CA1 → Entorhinal cor-                           binding (i.e. a gene is expressed in one region, but not in another
+tex/Subiculum circuit (and a connection to the lateral septal com-                  [45]). This speciﬁc case requires expression speciﬁcity of the lig-
+plex LTX, which is not relevant for this case study). Since the Con-                and at the projecting site and receptor for this ligand at the target
+nectivity Proﬁles were automatically marked with different colors,                  site. To ﬁlter for genes with this property, the user selects high
+the colored histograms in the Network Analysis Toolbar, that are or-                speciﬁcity for VTA, and low speciﬁcity for ACB on the coordinate
+dered according to their iteration, allow association of graph edges                axes, which show the previously generated gene lists of VTA and
+with the connectivity-order originating from DG.                                    ACB. This narrows the selection down to around 440 genes. These
+   In this case study, we showed the iterative exploration of a 90                  are still to many genes to check manually, so the user applies
+GB connectivity matrix at voxel-level, enabled by quantitative in-                  additional ﬁltering by the GO terms behavior and neurotransmit-
+formation in Connectivity Proﬁle and high-intensity VOI selection.                  ter. Only 5 genes including tyrosine hydroxylase remain (Fig. 8(D)).
+To our best knowledge, this could be done so far only at region-                    This means that without prior knowledge of tyrosine hydroxylase
+level connectivity. We provide a video of this study as Supplemen-                  expression, the user would have been able to identify VTA as a
+tary Video 2.                                                                       candidate source of dopamine in a reward circuit. Similar accounts
+                                                                                    for dopamine receptors when selecting the opposite relations in
+8.3. Genetic dissection of connectivity                                             gene expression.
+                                                                                        This case study shows the genetic dissection of a neuroanatom-
+    In this case study, our domain experts sought to evaluate                       ical connection. It highlights how voxel-level connectvity and
+whether the genetic dissection of a well-known relation in the                      genome-wide spatial gene expression can be combined and ex-
+mesolimbic system was feasible. The structural connection from                      plored interactively with BrainTrawler. A video of this case study
+the ventral tegmental area (VTA midbrain) to the nucleus accum-                     is provided as Supplementary Video 3.
+bens (ACB basal forebrain) plays a role in the dopamine reward
+circuit [55]. They sought to examine this connection genetically                    9. Discussion and evaluation
+by querying the gene expression index for highly speciﬁc genes
+in VTA and its structural targets in ACB. The results can be evalu-                     Section 8 showed the potential and relevance of our method
+ated by exploring them for genes with known functional relations                    in the context of neuroscientiﬁc research, but there is still room
+to this circuit (mouse gene ENTREZ ID in brackets): tyrosine hy-                    for improvements that can be targeted in future work. Therefore,
+droxylase (21823) and the dopamine receptors D1, D2, D3 and D5                      during the case studies, we conducted discussions with 2 domain
+(13488,13489,13490,13492). Structural connectivity at a 100-micron                  experts (which are our co-authors Wulf Haubensak and Joanna
+resolution from AMBA is added to the workspace in the Browse                        Kaczanowska, who were also involved in the tool design). Further-
+Database tab (W1) before the case study.                                            more, we reproduced the case studies with 3 other domain ex-
+    Select volumes of interest for genetic dissection: The entry point              perts (a technician, a PhD student and a post-doc from the ﬁeld
+for the genetic dissection of the circuit is the VTA brain region.                  of neuroscience/circuit dissection with aﬃliations to the Univer-
+Therefore, the user selects VTA in the Parcellation Browser and sets                sity of Vienna), who have seen the tool before (but not in detail).
+the region as VOI (Fig. 8(A), yellow) for a Gene Expression Query.                  The user experience was recorded in informal but focused inter-
+    Find genes that are speciﬁc for a volume of interest: A list of                 views. The following covers the feedback derived from these dis-
+genes, ranked by their speciﬁcity for VTA is retrieved by executing                 cussions/interviews.
+a “High Expression Query” (T6) from the Query Toolbar in the Gene                       Visual design and user interactions: All domain experts stated
+Expression Query tab (W4). Tyrosine hydroxylase is ranked 478th                     that the framework was well designed and meaningful. Especially
+of 19,479 genes, which puts it into the top 2.5%. Dopamine recep-                   the visual queries were of great interest for them. VOI selections
+tors, which are not speciﬁc for VTA ranked mainly around 10.0 0 0.                  were reasonable to perform and intuitively understood. The brush-
+This indicates that a Gene Expression Query returns meaningful re-                  selection was considered to be the most intuitive one, while the
+sults, but it is rather unrealistic that a user would scroll over 450               high-intensity selection was perceived as most accurate one. Also
+genes to ﬁnd speciﬁc genes. In an exploratory setting, a user would                 the region-selection had its application in a ﬁrst, coarse prob-
+use these queries with an a-priory assumption of which genes are                    ing of the data. Color schemes and names of the Connectivity
+318                                    F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320
+
+
+
+
+Fig. 8. Case Study 3: (A) Outgoing structural connectivity (pink) of VTA (yellow) and genes with the highest mean expression speciﬁcity at this region. Genes are ﬁltered
+by GO terms behavior and neurotransmitter. (B) Strongest targets voxels of VTA within ACB (yellow) and genes with low mean expression speciﬁcity at this region. (C) The
+parallel coordinates system shows the selection of genes with high speciﬁcity for VTA and low speciﬁcity for ACB. (D) Genes that are selected by the parallel coordinates
+system. (For interpretation of the references to color in this ﬁgure legend, the reader is referred to the web version of this article.)
+
+
+Volumes were seen as helpful for differentiating different connec-                      Further ﬁltering in the parallel coordinate system was supported
+tivities based on their VOI.                                                            by the colors/names. It was considered to be useful for spatially
+    To allow a quantitative evaluation on brain-region level, the                       differentiating the queries’ anatomical origin.
+results are shown as region-wise proﬁle, presenting the mean-                               Usability and potential: The overall workﬂow provided by Brain-
+connectivity for every brain region, as well as for all its sub-regions                 Trawler was intuitive to our domain experts in general. It was
+in a bar chart. This directly highlights strongly connected sub-                        noted that tooltips and legends for the network graphs could make
+regions, which would otherwise be missed in case the domain-                            it more clearer, especially if one does not use BrainTrawler very of-
+experts operated at a higher brain region level.                                        ten. An export function for Connectivity Proﬁles and network graphs
+    The region-level proﬁle of connectivity further allows for VOI                      as csv ﬁle was a common request among the participants, so they
+selection for transitive connectivity. Although it would generally be                   could use the data for different analyses in other tools. They were
+possible for a user to manually select strongly connected voxels                        explicitly asked if they would consider including it into their own
+in the 2D slice view in order to start another target/source query,                     experimental workﬂow. Their answer was yes. They would mainly
+our domain experts preferred to query for transitive connectivity                       use it for hypothesis building, and thus as an entry point for their
+within brain regions of their interest (i.e. they were not interested                   experiments. It would save them time in contrast to manually
+in retrieving the connectivity of all target/source sites, but only                     searching online databases instead. Initial hypothesis building is
+from sites within brain regions of interest).                                           part of the experimental workﬂow of all participants, so there was
+    Connectivity Query results can be abstracted as 2D and 3D net-                      no difference on how their background (technician, PhD student,
+work graphs, which reduce the complexity of voxel-level while in-                       postdoc) would effect their work with BrainTrawler. Asked for the
+corporating neuroanatomical context. Multiple graphs (i.e. region-                      potential of this work, our domain experts stated that this frame-
+level Graph Representation of connectivity query results) can be                        work could be either used to present large-scale resources online,
+rendered with parallel arrows/lines, or combined by multiplica-                         or for reﬁnement of functional neuroanatomy.
+tion. Our domain experts found this the most intuitive method,                              User interface limitations: In general, there is no limit how much
+since one can directly see the similarity/contrast of two edges be-                     data can be loaded into the workspace, but there are several limi-
+tween two nodes. They understood that the Network Analysis Tool-                        tations regarding the user interface. The 3D visualizations support
+bar provides information about the edge weights as well as a ﬁl-                        4 simultaneously rendered volumes (i.e. gene expression data or
+tering for weak edges. Nevertheless, an additional legend about the                     Connectivity Volumes), but even more than 3 were perceived as too
+meaning of the encodings would be considered as helpful, e.g. it                        obstructive. Similar limitations apply to the 2D slice view, although
+was not clear that the sphere size encodes region size. Also, edge                      the overlap can be visualized for more volumes. To analyze ex-
+bundling/routing algorithms were considered to produce more vi-                         pression data of more genes (e.g. sets of genes related to a certain
+sual appealing ﬁgures for scientiﬁc publications. Otherwise, they                       behavior or brain function) abstraction methods would be needed
+felt familiar with this type of visualization.                                          such as rendering the mean or maximum gene expression for each
+    Filterable Gene Lists for Gene Expression Query results provide in-                 voxel. For the 3D/2D network visualization, including more than 3
+formation in addition to gene expression speciﬁcity. According to                       networks leads to too many parallel edges. In this case, the over-
+our domain experts, ﬁltering by GO terms was signiﬁcantly help-                         lap visualization (multiplication of all edges) can be used to reduce
+ful when browsing the lists, for they give a better overview of the                     the total amount of edges. Comparing more than 3 Connectivity and
+functional context. Several domain experts noted, that without ﬁl-                      Expression Proﬁles was perceived as diﬃcult when they are shown
+tering for GO terms, the list could not be used in an exploratory                       in an overview below each other. For gene lists in the Gene Expres-
+way (i.e. one need to know for which genes one is looking for).                         sion Analysis, the parallel coordinates system does not scale well to
+                                 F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320                                      319
+
+
+more than 15 queries, for there is not enough space in the user in-               is funded by BMVIT, BMDW, Styria, SFG and Vienna Business
+terface. Nevertheless, none of these issues were considered as lim-               Agency in the scope of COMET—Competence Centers for Excellent
+itations for our case studies or potential further future projects.               Technologies (854174) which is managed by FFG. Special thanks
+    Performance: Connectivity and Gene Expression Queries were in-                to Dominic Kargl, Lukasz Piszczek and Andreea Constantinescu (all
+stantly executed without an inconvenient delay for the user (re-                  three are associated with the University of Vienna/IMP) for his par-
+sults in ≤ 2 seconds) during the case studies. In Ganglberger et al.              ticipation in the Case Study.
+[7] we showed, that on SSD, Connectivity Queries can be executed
+in less than one second for brain areas involving about 1% of the
+                                                                                  Supplementary material
+brain, and less than four seconds for larger areas up to the whole
+brain. On HDD the queries are approximately three times slower.
+                                                                                     Supplementary material associated with this article can be
+We performed these tests again for Split-Aggregation Queries with-
+                                                                                  found, in the online version, at doi:10.1016/j.cag.2019.05.032.
+out major performance losses. Gene Expression Queries were no-
+tably slower for larger brain areas (linear with VOI size), since the
+implementation of the spatial index ([9]) did not utilize hierarchi-              References
+cal structures similar to [7].
+                                                                                   [1] Alleninstitute. Allen institute. 2019. https://www.alleninstitute.org/.
+                                                                                   [2] Humanbrainproject.        Human       brain     project.   2019.     https://www.
+10. Conclusion                                                                         humanbrainproject.eu.
+                                                                                   [3] Van Essen DC, Smith SM, Barch DM, Behrens TE, Yacoub E, Ugurbil K,
+    In this paper we present BrainTrawler, a novel web-framework                       et al. The WU-MINN human connectome project: an overview. Neuroimage
+                                                                                       2013;80:62–79.
+for analyzing and fusing heterogeneous neurobiological data of dif-                [4] Ming Poo M, Lin Du J, Ip NY, Xiong ZQ, Xu B, Tan T. China brain project:
+ferent types, modalities and scale via their spatial context. The                      basic neuroscience, brain diseases, and brain-inspired computing. Neuron
+framework integrates data from different large-scale brain initia-                     2016;92(3):591–6.
+                                                                                   [5] Kim J, Zhang X, Muralidhar S, LeBlanc SA, Tonegawa S. Basolateral to central
+tives as well as user generated data. It incorporates a hierarchi-                     amygdala neural circuits for appetitive behaviors. Neuron 2017;93(6):1464–79.
+cally organized data structure, which enables real-time querying                   [6] Ganglberger F, Swoboda N, Frauenstein L, Kaczanowska J, Haubensak W, Büh-
+and aggregating of huge brain network connectivity of different                        ler K. Iterative exploration of big brain network data. In: Proceedings of the
+                                                                                       Eurographics workshop on visual computing for biology and medicine, VCBM
+scales and resolutions in a common standard brain space. In com-
+                                                                                       18; Granada, Spain, September 20–21; 2018. p. 77–87.
+bination with spatial indexing of vast gene expression collections,                [7] Ganglberger F, Kaczanowska J, Haubensak W, Bühler K. A data structure for
+for the ﬁrst time ever it is possible to genetically dissect large-                    real-time aggregation queries of big brain networks. bioRxiv 2018. doi:10.1101/
+scale brain networks on a voxel-level in real-time. This enables                       346338.
+                                                                                   [8] Lein ES, Hawrylycz MJ, Ao N, Ayres M, Bensinger A, Bernard A,
+neuroscientists to explore the genetic and functional characteristics                  et al. Genome-wide atlas of gene expression in the adult mouse brain.
+of microcircuits without time-consuming manual data-aggregation                        Nature 2007;445(7124):168–76.
+and literature-research. Furthermore, they can share their results                 [9] Bruckner S, Soltészová V, Gröller ME, HladÅvka J, Bühler K, Yu JY,
+                                                                                       et al. BrainGazer–visual queries for neurobiology research.. IEEE Trans Vis
+as link, with visualizations that neuroscientists are familiar with,                   Comput Graph 2009;15(6):1497–504.
+to support collaboration and data provenance in a scientiﬁc envi-                 [10] Arganda-Carreras I, Manoliu T, Mazuras N, Schulze F, Iglesias JE, Bhler K,
+ronment. Finally, the case studies conducted with domain experts                       et al. A statistically representative atlas for mapping neuronal circuits in the
+                                                                                       drosophila adult brain. Front Neuroinf 2018;12:13.
+showed biological validity by reproducing ﬁndings of known mi-                    [11] Muenzing SE, Strauch M, Truman JW, Bühler K, Thum AS, Merhof D. lar-
+crocircuits that are subject to current research.                                      valign: aligning gene expression patterns from the larval brain of drosophila
+    For the future, we aim to extend this framework in a holistic                      melanogaster. Neuroinformatics 2018;16(1):65–80.
+                                                                                  [12] Lau C, Ng L, Thompson C, Pathak S, Kuan L, Jones A, et al. Exploration and
+way. Therefore, it should not only allow to access the data, but                       visualization of gene expression with neuroanatomy in the adult mouse brain.
+also include the import of user-generated data and preprocessing.                      BMC Bioinf 2008;9(1):153.
+One could further improve network visualization by incorporating                  [13] Feng D, Lau C, Ng L, Li Y, Kuan L, Sunkin SM, et al. Exploration and visualiza-
+                                                                                       tion of connectivity in the adult mouse brain. Methods 2015;73:90–7.
+edge bundling/routing algorithms or sophisticated 2D graph lay-
+                                                                                  [14] Bezgin G, Reid AT, Schubert D, Kötter R. Matching spatial with ontological
+outs. Quantitative analysis of networks would beneﬁt from com-                         brain regions using java tools for visualization, database access, and integrated
+puting network statistics and more detailed graphs legends. Fur-                       data analysis. Neuroinformatics 2009;7(1):7–22.
+thermore, we want to position BrainTrawler as tool for the presen-                [15] Margulies DS, Böttger J, Watanabe A, Gorgolewski KJ. Visualizing the human
+                                                                                       connectome. NeuroImage 2013;80:445–61.
+tation of large-scale resources of neuroimaging initiatives.                      [16] Huisman S, vanÂ Lew B, Mahfouz A, Pezzotti N, Höllt T, Michielsen L,
+                                                                                       et al. BrainScope: interactive visual exploration of the spatial and temporal hu-
+Information sharing statement                                                          man brain transcriptome. Nucl Acids Res 2017;45(10):e83.
+                                                                                  [17] Schneider-Mizell CM, Gerhard S, Longair M, Kazimiers T, Li F, Zwart MF,
+                                                                                       et al. Quantitative neuroanatomy for connectomics in Drosophila. eLife
+   BrainTrawler is available upon individual request to the corre-                     2016;5:1–36.
+sponding author, Florian Ganglberger or Katja Bühler.                             [18] Jiang H, Van Zijl PCM, Kim J, Pearlson GD, Mori S. DtiStudio: Resource program
+                                                                                       for diffusion tensor computation and ﬁber bundle tracking. Comput Methods
+                                                                                       Programs Biomed 2006;81(2):106–16.
+Declaration of interest                                                           [19] LaPlante RA, Douw L, Tang W, Stuﬄebeam SM. The connectome visualiza-
+                                                                                       tion utility: software for visualization of human brain networks. PLoS One
+                                                                                       2014;9(12).
+    The authors declare that they have no known competing ﬁnan-                   [20] Mahfouz A, Huisman SMH, Lelieveldt BPF, Reinders MJT. Brain transcriptome
+cial interests or personal relationships that could have appeared to                   atlases: a computational perspective. Brain Struct Funct 2016:1–24.
+inﬂuence the work reported in this paper.                                         [21] Xia M-R, Wang J-H, He Y. BrainNet viewer: a network visualization tool for
+                                                                                       human brain connectomics. PloS One 2013;8(7):1–15.
+                                                                                  [22] Xia M, He Y. Functional connectomics from a big data perspective. NeuroImage
+Acknowledgments                                                                        2017;160:152–67.
+                                                                                  [23] Scholtens LH, Schmidt R, De Reus MA, Van Den Heuvel MP. Linking
+                                                                                       macroscale graph analytical organization to microscale neuroarchitectonics in
+   This work is a result of a joint IMP VRV is project supported by
+                                                                                       the macaque connectome. J Neurosci 2014;34(36):12192–205.
+Grant 852936 of the Austrian FFG Funding Agency. W. H. was sup-                   [24] Poldrack RA, Laumann TO, Koyejo O, Gregory B, Hover A, Chen M-YEA.
+ported by a grant from the European Community’s Seventh Fram-                          Long-term neural and physiological phenotyping of a single human. Nat Com-
+work Programme (FP/2007-2013)/ERC grant agreement no. 311701,                          mun 2015;6:8885.
+                                                                                  [25] Huntenburg JM, Bazin P-L, Goulas A, Tardif CL, Villringer A, Margulies DS.
+the Research Institute of Molecular Pathology (IMP), Boehringer In-                    A systematic relationship between functional connectivity and intracortical
+gelheim and the Austrian Research Promotion Agency (FFG). VRVis                        myelin in the human cerebral cortex. Cerebr Cort 2017:1–17.
+320                                      F. Ganglberger, N. Swoboda and L. Frauenstein et al. / Computers & Graphics 82 (2019) 304–320
+
+
+[26] Lin CY, Tsai KL, Wang SC, Hsieh CH, Chang HM, Chiang AS. The neuron naviga-          [41] de Ridder M, Klein K, Yang J, Yang P, Lagopoulos J, Hickie I, et al. An uncer-
+     tor: exploring the information pathway through the neural maze. In: Proceed-              tainty visual analytics framework for fMRI functional connectivity. Neuroinfor-
+     ings of the IEEE Paciﬁc visualization symposium 2011, PaciﬁcVis 2011; 2011.               matics 2018;17(2):211–23.
+     ISBN 9781612849324                                                                   [42] Bach B, Henry-Riche N, Dwyer T, Madhyastha T, Fekete J-D, Grabowski T. Small
+[27] Saalfeld S, Cardona A, Hartenstein V, Tomančák P. CATMAID: Collabora-                    multipiles: piling time to explore temporal patterns in dynamic networks.
+     tive annotation toolkit for massive amounts of image data. Bioinformatics                 Comput Graph Forum 2015;34(3):31–40.
+     2009;25(15):1984–6.                                                                  [43] Haubensak W, Kunwar PS, Cai H, Ciocchi S, Wall NR, Ponnusamy R, et al. Ge-
+[28] Beyer J, Al-Awami A, Kasthuri N, Lichtman J, Pﬁster H, Hadwiger M. Con-                   netic dissection of an amygdala microcircuit that gates conditioned fear. Na-
+     nectomeexplorer: query-guided visual analysis of large volumetric neuro-                  ture 2010;468(7321):270–6.
+     science data. IEEE Trans Vis Comput Graph (Proceedings IEEE SciVis 2013)             [44] Oh SW, Harris JA, Ng L, Winslow B, Cain N, Mihalas S, et al. A mesoscale con-
+     2013;19(12):2868–77.                                                                      nectome of the mouse brain. Nature 2014;508(7495):207–14.
+[29] Sherbondy A, Akers D, Mackenzie R, Dougherty R, Wandell B. Exploring con-            [45] Young LJ, Wang Z. The neurobiology of pair bonding. Nat Neurosci
+     nectivity of the brain’s white matter with dynamic queries. IEEE Trans Vis                2004;7(10):1048–54.
+     Comput Graph 2005;11(4):419–30.                                                      [46] Genç E, Schölvinck ML, Bergmann J, Singer W, Kohler A. Functional connectiv-
+[30] Al-Awami AK, Beyer J, Strobelt H, Kasthuri N, Lichtman JW, Pﬁster H,                      ity patterns of visual cortex reﬂect its anatomical organization. Cerebral Cortex
+     et al. Neurolines: a subway map metaphor for visualizing nanoscale neuronal               2015:bhv175.
+     connectivity. IEEE Trans Vis Comput Graph 2014;20(12):2369–78.                       [47] AMBAGeneExpressionWhitepaper. Allen mouse brain atlas gene expres-
+[31] Nowke C, Schmidt M, van Albada SJ, Eppler JM, Bakker R, Diesrnann M,                      sion whitepapers. 2018. http://help.brain-map.org/display/mousebrain/Allen+
+     et al. VisNEST – interactive analysis of neural activity data. In: Proceedings            Mouse+Brain+Atlas.
+     of the 2013 IEEE symposium on biological data visualization (BioVis); 2013.          [48] Zalesky A, Fornito A, Bullmore ET. Network-based statistic: identifying differ-
+     p. 65–72.                                                                                 ences in brain networks. NeuroImage 2010;53(4):1197–207.
+[32] Schmitt O, Eipert P. neuroVIISAS: approaching multiscale simulation of the rat       [49] Richiardi J, Altmann A. Correlated gene expression supports synchronous ac-
+     connectome. Neuroinformatics 2012;10(3):243–67.                                           tivity in brain networks. Science 2015;348(6240):11–14.
+[33] Li H, Fang S, Goni J, Contreras JA, Liang Y. Integrated visualization of human       [50] Bassett DS, Sporns O. Network neuroscience. Nat Neurosci 2017;20(3):353–64.
+     brain connectome data. Lect Notes Comput 2015;9250:295–305.                          [51] Carbon S, Dietze H, Lewis SE, Mungall CJ, Munoz-Torres MC, Basu S, et al. Ex-
+[34] Balzer M, Deussen O. Level-of-detail visualization of clustered graph layouts.            pansion of the gene ontology knowledgebase and resources: the gene ontology
+     In: Proceedings of the Asia-paciﬁc symposium on visualisation 20 07; 20 07.               consortium. Nucleic Acids Research 2017.
+     p. 133–40.                                                                           [52] Baribeau D, Anagnostou E. Oxytocin and vasopressin: linking pituitary
+[35] Boettger J, Schaefer A, Lohmann G, Villringer A, Margulies DS. Three-dimen-               neuropeptides and their receptors to social neurocircuits. Front Neurosci
+     sional mean-shift edge bundling for the visualization of functional connectivity          2015;9:335.
+     in the brain. IEEE Trans Vis Comput Graph 2014;20(3):471–80.                         [53] Leal G, Bramham C, Duarte C. Chapter eight – BDNF and hippocampal synaptic
+[36] Murugesan S, Bouchard K, Brown JA, Hamann B, Seeley WW, Trujillo A,                       plasticity. In: Litwack G, editor. Neurotrophins. Vitamins and hormones, 104.
+     et al. Brain Modulyzer: interactive visual analysis of functional brain connec-           Academic Press; 2017. p. 153–95.
+     tivity. IEEE/ACM Trans Comput Biol Bioinf 2016:1–14.                                 [54] AMBAConnectivityWhitepaper. Allen mouse brain atlas connectivity
+[37] Keiriz JJG, Zhan L, Ajilore O, Leow AD, Forbes AG. NeuroCave: a web-based im-             whitepapers.       2018.   http://help.brain-map.org/display/mouseconnectivity/
+     mersive visualization platform for exploring connectome datasets. Netw Neu-               Documentation.
+     rosci 2018;2(3):344–61.                                                              [55] Malenka R, Nestler E, Hyman S. Chapter 6: Widely projecting systems:
+[38] Sorger J. neuroMap – interactive graph-visualization of the fruit ﬂy’ s neural            monoamines, acetylcholine, and orexin. In: Molecular neuropharmacology: A
+     circuit. In: Proceedings of the 2013 IEEE symposium on biological data visual-            foundation for clinical neuroscience. McGraw-Hill Education / Medical; 3rd
+     ization (BioVis); 2013.                                                                   Edition; 2009.
+[39] Ji C, Maurits NM, Roerdink JBTM. Data-driven visualization of multichannel
+     EEG coherence networks based on community structure analysis. Appl Netw
+     Sci 2018;3(1):41.
+[40] Alper B, Bach B, Henry Riche N, Isenberg T, Fekete J-D. Weighted graph
+     comparison techniques for brain connectivity analysis. In: Proceedings of the
+     SIGCHI conference on human factors in computing systems. CHI ’13. New York,
+     NY, USA: ACM; 2013. p. 483–92. ISBN 978-1-4503-1899-0.
+

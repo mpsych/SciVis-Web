@@ -1,0 +1,612 @@
+                Interactive visualization of volumetric data with WebGL in real-time
+                     John Congote∗                                            Luis Kabongo†                                      Aitor Moreno‡
+                   EAFIT University                                    Vicomtech Research Center                          Vicomtech Research Center
+              CAD-CAM-CAE Laboratory                                  Donostia - San Sebastian, Spain                    Donostia - San Sebastian, Spain
+                  Medellı́n, Colombia
+                      Alvaro Segura§                                               Jorge Posada¶                                  Oscar Ruizk
+                Vicomtech Research Cente                                   Vicomtech Research Center                           EAFIT University
+              Donostia - San Sebastian, Spain                             Donostia - San Sebastian, Spain                   CAD-CAM-CAE Laboratory
+                                                                                                                               Medellı́n, Colombia
+
+
+Abstract                                                                                           1    Introduction
+                                                                                                   Real-time 3D computer graphics systems usually handle surface de-
+This article presents and discusses the implementation of a direct                                 scription models (i.e. B-Rep representations) and use surface ren-
+volume rendering system for the Web, which articulates a large                                     dering techniques for visualization. Common 3D model formats
+portion of the rendering task in the client machine. By placing the                                such as VRML, X3D, COLLADA, U3D (some intended for the
+rendering emphasis in the local client, our system takes advantage                                 Web) are based entirely on polygonal meshes or higher order sur-
+of its power, while at the same time eliminates processing from                                    faces. Real-time rendering of polygon models is straightforward
+unreliable bottlenecks (e.g. network). The system developed artic-                                 and raster render algorithms are implemented in most graphics ac-
+ulates in efficient manner the capabilities of the recently released                               celerating hardware. For many years, several rendering engines,
+WebGL standard, which makes available the accelerated graphic                                      often via installable browser plug-ins, have been available to sup-
+pipeline (formerly unusable). The dependency on specially cus-                                     port 3D mesh visualization in Web applications.
+tomized hardware is eliminated, and yet efficient rendering rates
+are achieved. The Web increasingly competes against desktop ap-                                    However, some scientific fields (e.g. medicine, geo-sciences, me-
+plications in many scenarios, but the graphical demands of some                                    teorology, engineering) work with 3D volumetric datasets. Volu-
+of the applications (e.g. interactive scientific visualization by vol-                             metric datasets are irregular or irregular samples of either scalar
+ume rendering), have impeded their successful settlement in Web                                    (f : R3 → R) or vector (f : R3 → R3 ) fields. For the pur-
+scenarios. Performance, scalability, accuracy, security are some of                                pose of this article, we will use the term volumetric data sets to
+the many challenges that must be solved before visual Web applica-                                 refer to scalar fields and will ignore for the time being vector fields.
+tions popularize. In this publication we discuss both performance                                  Surface-based raster rendering techniques are obviously not suit-
+and scalability of the volume rendering by WebGL ray-casting in                                    able for visualizing such datasets and specific Direct Volume Ren-
+two different but challenging application domains: medical imag-                                   dering algorithms are needed, which are not available for the Web.
+ing and radar meteorology.                                                                         Therefore, our work uses Volume ray-casting, which is a common
+                                                                                                   technique in Computer Graphics for volume visualization originally
+                                                                                                   presented in [Levoy 1988] and further studied in [Hadwiger et al.
+CR Categories: I.4.10 [Image Processing and computer vision]:                                      2009]. The rendering is not photo-realistic but shows the important
+Image Representation—Volumetric;                                                                   characteristics of the set.
+
+Keywords: Direct Volume Rendering, Ray Casting, Real-Time
+visualization, WebGL, Weather Radar Volume, Medical Imaging
+
+   ∗ e-mail:jcongote@eafit.edu.co
+    † e-mail:lkabongo@vicomtech.org
+    ‡ e-mail:amoreno@vicomtech.org
+    § e-mail:asegura@vicomtech.org
+   ¶ e-mail:jposada@vicomtech.org
+   k e-mail:oruiz@eafit.edu.co
+
+
+
+
+Copyright © 2011 by the Association for Computing Machinery, Inc.                                      Figure 1: Medical data rendered with volume ray-casting
+Permission to make digital or hard copies of part or all of this work for personal or
+classroom use is granted without fee provided that copies are not made or distributed
+for commercial advantage and that copies bear this notice and the full citation on the             In medical imaging, diagnostic techniques such as computer to-
+first page. Copyrights for components of this work owned by others than ACM must be                mography (CT), magnetic resonance imaging (MRI) and positron
+honored. Abstracting with credit is permitted. To copy otherwise, to republish, to post on         emission tomography (PET) produce sets of parallel slices that
+servers, or to redistribute to lists, requires prior specific permission and/or a fee.
+Request permissions from Permissions Dept, ACM Inc., fax +1 (212) 869-0481 or e-mail
+                                                                                                   form a volumetric dataset. Volume rendering is a common tech-
+permissions@acm.org.                                                                               nique for visualizing volumetric datasets along with multi-planar
+I3D 2011, Paris, France, June 20 – 22, 2011.
+© 2011 ACM 978-1-4503-0774-1/11/0006 $10.00
+
+                                                                                             137
+reconstructions (MPR). Storage and distribution of these 3D im-                  be synthesized first, which is not a trivial task as it depends on the
+ages usually requires a Picture Archiving and Communication Sys-                 quality of the sample. (2) Since it must be precomputed, the result
+tems (PACS), which normally uses specialized workstation soft-                   is static and cannot be easily adjusted in real time.
+ware ([Meyer-Spradow et al. 2009], [Fogal and Kruger 2010]) for
+interactive visualization ([Mahmoudi et al. 2009]). Few solutions                Recent advances in Direct Volume Rendering and graphic card ca-
+exist for regular desktop computers ([Kabongo et al. 2009]) among                pabilities allow the representation of volumes with good quality by
+others. Weather radar data is also a volumetric dataset. A weather               projecting volumetric data into a 2D image, depending on the po-
+radar scans a volume around it by collecting values in families of               sition of a virtual camera. The main advantage of this technique is
+circular, elliptical or conical scan surfaces.                                   the visualization of all inner characteristics at once.
+
+Doppler radars sample several physical variables (reflectivity, dif-             Preprocessing does not intervene since most of the computations
+ferential reflectivity, radial velocity and spectral width) for each lo-         are performed when the camera is displaced. In order to project the
+cation of the sky. Radar data is usually visualized for a single slice           volumetric data, several methods exist ([Meißner et al. 2000]). Ref-
+of the volume, either conical, as in plan position indicator (PPI),              erence [Westover 1991] discusses Volume Splatting and represents
+or planar, as in constant altitude plan position indicators (CAPPI).             each scalar value by a simple geometrical shape that will face the
+Initial approaches for Web-based Volume Rendering of radar data                  camera, allowing fast rendering. Its main disadvantage is the loss
+rely on pre-computed in-server rendering ([Sundaram et al. 2008]),               of quality. A technique called Shear Warping ([Lacroute and Levoy
+which normally hinders interaction in the visualization.                         1994]), consists of applying shear warp transformations to the vol-
+                                                                                 ume slices to imitate the real orientation of the camera. Since the
+WebGL is a new standard for accelerated 3D graphics rendering in                 technique is based on simple transformations this method is quite
+the Web that complements other technologies in the future HTML5                  fast but its main drawback is a low sampling power. With the con-
+standard ([Marrin 2011]). Some of the major Web browsers, includ-                stant improvement in graphic card capabilities, the Texture Map-
+ing Google Chrome, Mozilla Firefox, WebKit, Safari and Opera                     ping method has been popularized in video-games. It consists in
+have already implemented it in their latest releases or release candi-           re-slicing the volume depending on the orientation ot the camera
+dates. WebGL is basically a Javascript binding of the OpenGL ES                  viewpoint and representing all the slices at once taking advantage
+API and enables low level imperative graphics rendering based on                 of eventual occlusion optimizations ([Hibbard and Santek 1989]).
+programmable shaders.
+                                                                                 Volume Ray-casting was initially presented in [Levoy 1988] and has
+1.1   Contribution of this Article.                                              become one of the most common methods for volume rendering.
+                                                                                 The set of rays from the camera reach the 3D scene and hit the ob-
+Our contribution is a practical implementation of a volume render-               jects, generating parametric (scalar) landmark values. By defining a
+ing system for the Web, based on the Volume Ray-casting algorithm                blending function it is possible to give priorities to the different val-
+and implemented on WebGL. Our system is capable of obtaining                     ues encountered along the ray, allowing the visualization of differ-
+interactive visualization with diverse volume datasets (Figure 1).               ent internal structures. Additional modifications to the algorithm,
+The original Volume Ray-casting algorithm was slightly modified                  such as transfer functions, and Phong illumination ([Phong 1975])
+to work with the input structures needed for the Web environment.                were developed in order to improve the perception and make the
+Special care was taken to avoid the use of dynamic server content.               volume look realistic. Compared to the other techniques, this one
+This avoidance allows for the algorithm to be used without increas-              is older and more accurate in sampling. However, the computa-
+ing the demands on the server and shifts, as much as possible, the               tional power required made initially difficult its usage in real-time
+processing to the client.                                                        interactive representations, allowing other approximations to settle.
+                                                                                 Nowadays, the increasing computational power of graphic cards al-
+Our work is tested in two scenarios with volumetric datasets: medi-              lows fast calculations ([Kruger and Westermann 2003]) which give
+cal imaging and radar meteorology. Their main practical difference               new interest to Volume Ray-casting. Reference [Hadwiger et al.
+is the pattern in which the volume is sampled: for medical data                  2009] presents a tutorial with all the basic explanation on volume
+a uniform cartesian grid is used. For weather data a non-uniform                 ray-casting. We used this tutorial as starting point for the theoretical
+spherical coordinate grid is used. A side-effect of our work is                  foundations in our implementation and for technical details. Open
+the proof-of-concept that interactive platform-independent visual-               Source implementations such as [Meyer-Spradow et al. 2009] and
+ization of 3D data on the Web is feasible by means of the WebGL                  [Fogal and Kruger 2010] were also used.
+standard.
+The paper is organized as follows. Section 2 presents a brief sta-               2.2   Web 3D rendering
+tus of the different technologies present in this publication: Volume
+Rendering, Web rendering, medical and radar visualization. Sec-                  The fact that the Web and 3D graphics are currently ubiquitous in
+tion 3 presents our methodology for volume rendering with special                desktop and palm devices makes their integration urgent and im-
+attention to the modifications of the algorithm for the Web environ-             portant. Several standards and proprietary solutions for embedding
+ment. Section 4 presents the output obtained by the implemented                  3D in the Web have been devised, such as VRML, X3D or vendor-
+algorithm and the performance values in different conditions. Sec-               specific Web browser plug-ins, implementations on general purpose
+tion 6 presents the conclusions of our work and future directions.               plug-ins, etc. A review of these techniques could be found in [Behr
+                                                                                 et al. 2009].
+2     Related Work                                                               In the case of Medical Imaging and other computing-intensive visu-
+                                                                                 alization scenarios, a partial solution has been the use of in-server
+2.1   Direct volume rendering techniques                                         rendering ([Blazona and Mihajlovic 2007]). In this approach, the
+                                                                                 rendering process is remotely performed in the server and its re-
+In 3D scalar field interactive visualization, two solutions prevail:             sulting image is sent to the client. This solution increases the load
+Surface Rendering and Direct Volume Rendering. Surface Render-                   on the server when many clients are present. In addition, the high
+ing has the advantage of being easy to compute due to its low geo-               latency times make the system non-responsive and unsuitable for
+metric complexity. Its main disadvantages are: (1) A surface must                smooth interactive visualization.
+
+
+                                                                           138
+Outstanding issues among solutions for Web 3D graphics are: ded-               and an extrinsic R ∈ M4×4 real-valued matrices. These matrices
+icated languages, plug-in requirements for interpretation, portabil-           project a 3D point p ∈ P3 onto a 2D point p0 ∈ P2 .
+ity across browsers, devices and operating systems and advanced
+rendering support. While writing this article, the Khronos Group
+released the WebGL 1.0 specification, which has been under de-
+velopment and testing. In practice, the WebGL 1.0 is a Javascript
+binding of the OpenGL ES 2.0 API. Calls to the API are relatively
+simple and serve to set up vertex and index buffers, to change ren-
+dering engine state such as active texture units or transform ma-
+trices, and to invoke drawing primitives. Most of the computation
+is performed in vertex and fragment shaders written in GLSL lan-
+guage, which are run natively on the GPU hardware. Unlike pre-
+vious Web 3D standards which define declarative scene description
+languages, WebGL is a low-level imperative graphic programming
+API. Its imperative character enables a great flexibility and exploits                   (a) Front Faces                     (b) Back Faces
+the advanced features of modern graphics hardware.
+                                                                                              Figure 2: Color cube map coordinates
+The WebGL 1.0 standard takes advantage of already existing
+OpenGL-based graphics applications, such as accurate iso-surface
+computation ([Congote et al. 2010]) or optimized shader program-               A volume is normally represented as a set of images. Each im-
+ming ([Marques et al. 2009]). The usage of an interpreted language             age represents a slice of the volume. Usually slices are parallel and
+to manage the behavior of scene elements and animations might be               evenly-spaced but this is not always the case. For example, volumes
+considered as a drawback. However, the performance of Javascript               can also be sampled in spherical coordinates with the angular inter-
+interpreters is constantly improving. Current optimized just-in-time           val being variable. Both cases (cartesian and spherical samples) are
+compilation in the latest engines provides performance not far from            handled by our algorithm.
+that of natively compiled languages.                                           Volume ray-casting is an algorithm which defines the color for each
+                                                                               pixel (i, j) in the image or projection screen I, calculated in func-
+2.3   Medical visualization                                                    tion of the values of a scale field V (x, y, z) associated with the
+                                                                               points (x, y, z) visited by a ray originated in such a pixel. The ray
+From the different scientific fields, Medical Visualization is one             is casted into the cuboid that contains the data to display (i.e the
+of the most challenging since the user interpretation directly trans-          scalar field V ). The ray is equi - parametrically sampled. For each
+lates into clinical intervention. Quality is one of the most important         sampled point ps on the ray one computes an approximation of the
+factors, but fast interactive response is also central in this domain.         scalar field V (ps ), by usually calculating a tri-linear interpolation.
+Medical Visualization has already produced some implementations                In addition, a shade might be associated to ps , according to the illu-
+of volumetric visualization in Web, mainly for educational purposes            mination conditions prevailing in the cuboid. The color associated
+([John et al. 2008][John 2007]). These approximations require third            to ps might be determined by axis distances as shown in figure 2.
+party systems for the correct visualization, or the presence of a ren-         As last step, the pixel in the image which originated the ray is given
+dering server ([Poliakov et al. 2005], [Yoo et al. 2005]), which lim-          the color determined by the sampled point ps nearest to the screen,
+its the scalability of the application. Using standards such as VRML           in such a ray.
+and Texture Mapping ([Behr and Alexa 2001]) visualization of vol-
+                                                                               Alternatively, the samples on the ray may also cast a vote regarding
+umes in the Web has been achieved.
+                                                                               the color that their originating pixel will assume by using a compo-
+                                                                               sition function (Eq:1-4), where the accumulated color Argb is the
+2.4   Radar visualization                                                      color of the pixel (i, j), and Aa is the alpha component of the pixel
+                                                                               which is set to 1 at the end of the render process. Given an (x, y, z)
+Radar data visualization also poses new challenges as the data are             coordinate in the volume and a step k of the ray, Va is the scalar
+acquired in a spherical coordinate system ([Riley et al. 2006]). This          value of the volume V , Vrgb is the color defined by the transfer
+particularity makes difficult the optimization of ray-casting, which           function given Va , S are the sampled values of the ray and Of , Lf
+usually traverses cubic-shaped volumes. Nevertheless, this problem             are the general Opacity and Light factors.
+has already been addressed in [Goenetxea et al. 2010].
+                                                                                                                   
+3     Methodology                                                                                Sa = Va ∗ Of ∗
+                                                                                                                    1
+                                                                                                                                                   (1)
+                                                                                                                    s
+Direct Volume Rendering is a set of Computer Graphics algorithms                              Srgb    = Vrgb ∗ Sa ∗ Lf                             (2)
+to generate representations of a 3D volumetric dataset. The pro-                                                          
+duced image is a 2-dimensional matrix I : [1, h] × [1, w] → R4                                Akrgb   = Ak−1
+                                                                                                         rgb + 1 − Aa
+                                                                                                                       k−1
+                                                                                                                             ∗ Srgb                (3)
+(w: width and h: height in pixels). A pixel has a color represen-
+tation expressed by four-tuple (R, G, B, A) of red, green, blue and                             Aka   =   Ak−1
+                                                                                                           a     + Sa                              (4)
+alpha real-valued components, (R, G, B, A ∈ [0, 1]).
+The volume is a 3-dimensional array of real values V : [1, H] ×                3.1   Data Processing and volume interpolation
+[1, W ] × [1, D] → [0, 1] (H: Height, W: Width, D: Depth of the
+represented volume, in positive integer coordinates). Therefore,               3.2   Contribution
+V (x, y, z) ∈ [0, 1]. The volume-rendering algorithm is a projec-
+tion of a 3D model into a 2D image. The projection model used in               The images for one volume are composed into a single image con-
+this work is known as a pin-hole camera ( [Hartley and Zisserman               taining all slices that will be stored in a texture as shown in Figure
+2003] ). The pin-hole camera model uses an intrinsic K ∈ M3×4                  3. This texture is generated by tilling each slice one besides other in
+
+
+                                                                         139
+                                                                              of a pixel in coordinates x, y, z from images presented in an carte-
+                                                                              sian grid. s is the total number of images in the mosaic and Mx ,
+                                                                              My are the number of images in the mosaic in each row and column
+                                                                              as the medical dataset show in Figure 3.
+                                                                              The functions presented in the equations are defined by the GLSL
+                                                                              specification. This allow us to manipulate the images as continu-
+                                                                              ous values because the functions of data extraction from the texture
+                                                                              utilize interpolation.
+
+                                                                              3.2.1   Identification of Ray coordinates
+
+                                                                              The geometry of a cube is generated with coordinates from (0, 0, 0)
+                                                                              to (1, 1, 1). This cube represents the boundary of the volumet-
+                                                                              ric dataset and is painted with colors representing the coordinates
+                                                                              at each point x, y, z coordinates (Figure 2)are stored in the r, g, b
+                                                                              color component of each pixel. The cube is then rendered in the
+                                                                              scene from the desired view point. The rendering process has sev-
+ Figure 3: Aorta dataset in mosaic form to be read by the shader              eral steps. The first two steps are the rendering of the color cube
+                                                                              with the depth function change. Then one of the passes presents
+                                                                              the closest region of the cube to the camera (Figure 2(a)), and the
+                                                                              second pass presents the far region (Figure 2(b)).
+a matrix configuration, this step was implemented as a preprocess-
+ing step in our algorithm. The size of the texture in GPU memory              With these two renders a ray is calculated from each point in the
+could change from 4096×4096 in PC to 1024×1024 for handheld                   cube for the render with the faces closest to the eye and the end of
+devices. The reduction in quality in the image is explained in Fig-           the ray with the point of the back region. The colors in the cube rep-
+ure 7. The number of images per row and the number of rows as                 resent the exact coordinates of the ray for each pixel in the image.
+well as the total number of slices must be given to the shader.               We store the color information of the cube as 24 bit RGB values.
+                                                                              This range of values seems to be small and not precise enough for
+In medical images the sample bit depth is commonly bigger than 8
+                                                                              big images, but color interpolation gives enough precision for the
+bits. This is hard to handle in Web applications where commonly
+                                                                              ray coordinates.
+supported formats are limited to 8 bits per sample. In this work,
+medical data sets were reduced to 8 bits.                                     Cartesian coordinates Most voxel-based volume datasets are ar-
+                                                                              ranged in a cartesian uniform grid. A medical CT or MRI scanner,
+Higher depths could be supported using more than one color com-
+                                                                              computes parallel slices of the specimen at different positions with
+ponent to store the lower and higher bits of each pixel but this rep-
+                                                                              a normally constant spacing. Each image contains a matrix of sam-
+resentation is not currently implemented in our shader.
+                                                                              ples of relative to the specific signal measured by the equipment.
+                                                                              By stacking all slices aligned together, a discretely sampled vol-
+                                                                              ume is defined. Each sample can be addressed by cartesian x, y, z
+                      s1 = floor(z ∗ S)                          (5)          coordinates, one being a slice selector and the other two coordinates
+                      s2 = s1 + 1                                (6)          of a point in that slice image.
+                                  s1                                          Spherical coordinates A weather radar scans the surrounding sky
+                    dx1 = fract(      )                          (7)
+                                 Mx                                           in successive sweeps. Beginning at a low angular elevation, the
+                                 
+                                   s1
+                                                                             radar performs a 360◦ azimuth scan (Figure 4, fig:radar). At each
+                           fract M   y                                        one-degree space direction a ray is emitted and a number of sam-
+                    dy1 =                                        (8)
+                                My                                            ples along the ray are measured back from its echoes (400 samples
+                                  s2                                          or buckets in our case). The radar then proceeds step by step in-
+                    dx2 = floor(       )                         (9)          creasing elevation at each successive swept scan. Elevation angles
+                                 Mx
+                                                                            are not normally uniformly incremented because most interesting
+                                   s2
+                           fract M   y
+                                                                              data is at the lower levels. Our datasets use 14 such elevations.
+                    dy2 =                                       (10)
+                                My
+                                    x
+                    tx1 = dx1 +                                 (11)
+                                   Mx
+                                    y
+                    ty1 = dy1 +                                 (12)
+                                   My
+                                    x
+                    tx2 = dx2 +                                 (13)
+                                   Mx
+                                    y
+                    ty2 = dy2 +                                 (14)
+                                   My
+                      v1 = tex2D (tx1 , ty1 )                   (15)
+                                                                              Figure 4: Simplified geometry of a radar scan. Each scan can be
+                      v2 = tex2D (tx2 , ty2 )                   (16)          approximated as a cone. Therefore, a radar volume dataset is ap-
+            Va (x, y, z) = mix (v1 , v2 , (x × S) − s1 )        (17)          proximated as a set of co-axial cones with the radar in the common
+                                                                              apex.
+For the correct extraction of the value of the volume two equations
+were implemented. The equations 5-17 show how to get the value                Such a process results in a discrete sampling of the sky volume in
+
+
+                                                                        140
+which each sample has elevation, azimuth and range coordinates.                       Terminology      Meaning
+Thus, samples can then be addressed by spherical coordinates. In                      Chrome           Chrome 9.0.597.98
+the conversion of raw radar data into input images suitable for the                   Opera            Opera 11.50 Labs b24661
+WebGL implementation the sample values become pixel values.                           FirefoxDX        Firefox Minefield 4.0b13pre
+Each swept scan for a fixed elevation angle forms one image in                                         with Angle and shader validation
+which pixel columns correspond to each azimuth direction (there                       FirefoxGL        Firefox Minefield version
+are 360 columns), and rows correspond to distances along each ray                                      without Angle nor shader validation
+(400 rows). Each image maps to a conical surface in space as shown
+in figure 4. The images from consecutive elevations are joined to                              Table 1: Terminology specification.
+form a single image for the whole volume, presented in figure 5 (the
+figure is rotated 90◦ ).
+
+                                                                               4.1   Hardware and Software configuration
+                            p
+                       r = x2 + y 2 + z 2                        (18)
+                                                                               The tests for this article have been conducted using an Intel Quad
+                       ϕ = arctan(y, x) + π                      (19)
+                                                                               Core Q8300 processor, 4GB of RAM and a GeForce GTX 460,
+                       θ = arccos(z/ϕ)                           (20)          Windows 7 PRO 64 bits (Service Pack 1) with the latest stable
+                                                                               graphics drivers. Among all the Web browsers with full implemen-
+                                                                               tation of WebGL standard, we have selected the following ones:
+For the spherical coordinates volume dataset from a radar the fol-             FireFox Minefield 4.0b12Pre (2011/02/16)1 , Chrome 9.0.597.982
+lowing Equations 18-20. Where used. The interpolation process                  and Opera 11.50 labs (build 246613 .
+used for the identification of the volume value in an arbitrary point
+is presented in Equations 5-17. We use a simple interpolation
+method because the data is expected to be normalized from the cap-             It is worth to point out that both Chrome and Firefox in its default
+ture source. The problems presented in this topic were explained by            configuration use Google’s Angle library 4 to translate WebGL’s na-
+[Segura et al. 2009].                                                          tive GLSL shaders to Microsoft’s HLSL language and compile and
+                                                                               run them through the DirectX subsystem. This procedure improves
+                                                                               compatibility with lower-end hardware or older graphics drivers.
+                                                                               Firefox Minefield has been configured with two different settings
+                                                                               by modifying some keys in the configuration page about:config: (1)
+                                                                               the default value of webgl.prefer-native-gl was set to TRUE. (2) The
+                                                                               default value of webgl.shader validator was set to FALSE. These
+                                                                               changes basically disable Angle as the rendering back-end end val-
+                                                                               idator of shaders, thus directly using the underlying native OpenGL
+Figure 5: Original Doppler radar image. Each vertical band rep-                support. See Table 1 for terminology precisions.
+resents data along the cones described in Figure 4
+                                                                               A LightTPD Web server5 was installed and configured in the
+                                                                               same computer, to serve the dataset images, the sample webpages
+3.2.2   Ray generation                                                         (HTML and Javascript files) and the vertex and fragment shaders.
+
+The ray is generated for each pixel in the image I, geometrically the
+start and end positions of the ray are extracted from the previous             4.2   Medical Dataset
+render passes with the information of the color cube. The ray is
+divided by S steps, which indicates the number of samples of the               Figure 6 shows some graphical output for the medical dataset intro-
+volume. For each sample the x, y, z inside the volume is calculated            duced in the previous section. The 6 different axial views have been
+and the value of that position is interpolated from the texture.               generated using 80 steps in the shaders implementation (800×800
+                                                                               canvas rendered in the FirefoxDX configuration). Table 2 displays
+3.2.3   Transfer function                                                      the recorded statistics: Column 1: Browser configuration. Column
+                                                                               2: Number of steps selected in the shaders. Column 3: Loading
+This value of the texture tx,y,z , is then used to identify the color          times (milisec). Column 4: Qualitative frame rate (fps). Column 5:
+to be used in the composition function (Eq:1). When the compo-                 Memory usage (MB). The dataset parameters and volume rendering
+sition function reaches the end of the ray in the cube or the accu-            shaders proved to be very influential in the experiment with WebGL
+mulated alpha Aa reaches its maximum, the ray is interrupted and               rendered volume datasets. In order to realize the tests under compa-
+the resulting color Argb for the ray in the corresponding pixel is the         rable conditions, the web-browsers were stopped and their caches
+cumulated value.                                                               emptied after each test execution. For numbers of steps larger than
+                                                                               80 Chrome and FirefoxDX failed to compile the shader. Therefore,
+                                                                               only Opera and FirefoxGL statistics are shown. For numbers of
+4   Results                                                                    steps smaller than 80, the measured FPS was truncated to 128 in all
+                                                                               configurations due to the selected measurement method.
+The proposed GPU implementation of the Volume Rendering tech-
+nique presented in the previous sections has been tested with differ-
+ent settings and with different datasets. As the interactive and real-           1 http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2011-02-16-03-
+time results depend on both hardware and software, it is very im-              mozilla-central
+portant to begin with the platform specification used for the testing.           2 http://www.google.com/chrome
+
+In the following sections, medical volumetric datasets and weather               3 http://snapshot.opera.com/labs/webgl/Opera 1150 24661 WebGL en.exe
+
+radar volume samples are used to validate that WebGL is a valid and              4 http://code.google.com/p/angleproject
+
+promising technology for real time and interactive applications.                 5 http://www.lighttpd.net
+
+
+
+
+                                                                         141
+             (a) Front View                    (b) Back View                         (c) Top View                     (d) Bottom View
+
+
+
+
+           (e) Left Side View                (f) Right Side View              (g) Used Transfer Function           (h) Applying Other TF
+
+Figure 6: Subfigures (a), (b), (c), (d), (e) and (f) illustrate renderings of the axial views of the sample volume dataset. The output was
+generated in 800×800 with 80 steps using FirefoxDX. Subfigure (g) depicts the applied transfer function, where the left side represents the
+color and the right side the transparency (black=opaque, white=transparent). With different transfer functions other outputs are obtained, as
+subfigure (h) shows.
+
+
+ Browser        N. Steps      Load Time    frame rate    Memory              the shaders and (3) first rendering of the webpage, including the vol-
+                                 (msec)   (frame/sec)      (MB)              ume rendering. The results follow a similar schema in which Opera
+ FirefoxDX            80          16677           69        204              and FirefoxGL are significantly faster than Chrome and FirefoxDX,
+ FirefoxGL            80            308           94        102              due to the longer compiling time and shader validation of Angle.
+ Chrome               80          18062           77        153
+ Opera                80             82          108         74              4.2.3   Frame Rate
+ FF-nA               140            302           60         95
+ Opera               140            118           66         73              Since the frame rate cannot be precisely determined, we have de-
+ FirefoxGL           170            281           51         95              vised an empirical measuring method. We forced the GL canvas
+ Opera               170            102           54         77              to be redrawn continuously and then we have counted how many
+ FirefoxGL           200            312           44         96              times the scene was rendered in a 5-seconds interval. We have re-
+ Opera               200            111           48         81              peated this procedure 5 times, choosing the median value (i.e. after
+                                                                             removing the two highest and the two smallest values) as the effec-
+           Table 2: Results table for the medical dataset.                   tive frame rate. The results show that the frame rate is truncated
+                                                                             to 128 fps at maximum (not shown in Table 2). This is considered
+                                                                             to be a side effect of the chosen measurement method, based on
+                                                                             the Javascript setTimeout() function. Even with a parameter
+4.2.1   Memory Usage                                                         of 0 ms the browsers take a minimum time to call the correspond-
+                                                                             ing function, being it 10 ms in average for desktop Web browsers.
+Regarding memory usage, Opera showed to be the least demand-                 Therefore, it is preferable to increase the number of steps in order
+ing browser, being FirefoxDX the most consuming one. FirefoxGL               to get smaller frame rates and reduce this side effect. With higher
+dropped the memory usage resembling the one of Opera. This fact              values of steps (only usable with Opera or FirefoxGL) Opera is
+leads us to infer that the current Angle implementation is the key           slightly faster, consuming less memory and requiring smaller load-
+factor in the memory management since Chrome has consumption                 ing times.
+similar to FirefoxDX. For Opera, FirefoxDX and FirefoxGL, a sim-
+ple subtraction between the final and initial memory allocation suf-         4.2.4   Dataset Resolution
+fices to estimate the memory consumption. On the other hand, since
+Chrome implements the Out of Process technology, we have in-                 This qualitative test was intented to show how the input dataset res-
+cluded all running processes of Chrome (2 processes at the starting          olution affects the final rendering quality. Using the same dataset,
+time and 3 processes after WebGL was loaded).                                a modified version was created by reducing the input resolution per
+                                                                             slice from 5120×5120 to 1280×1280 (a reduction to 25% per di-
+4.2.2   Loading Times                                                        mension or to 6.25% globally). The number of steps in the shaders
+                                                                             were also varied, using 20, 50 and 80 steps with FirefoxDX setup
+The loading time includes the (1) downloading of all the required            and a selection of the results can be shown in Figure 7. If the
+files (assuming a locally installed Web server), (2) compilation of          number of steps is small the banding artifacts of the algorithm are
+
+
+                                                                       142
+noticiable, some aproximations could be implemented to solve this
+problem as show by [Marques et al. 2009].
+
+
+
+
+      (a) 100% - 80 steps                  (b) 25% - 80 steps
+                                                                               Figure 8: A Samsung Galaxy Tab (left) and a Galaxy S Smartphone
+                                                                               (right) volume - rendering medical datasets.
+
+
+
+
+      (c) 100% - 20 steps                  (d) 25% - 20 steps
+
+Figure 7: Resolution qualitative test. Cases (a) and (b) use 80
+steps in the rendering. Cases (c) and (d) use 20 steps. Cases (a)
+and (c) correspond to the full resolution dataset. Cases (b) and (d)
+correspond to the reduced dataset. Even with the dramatic reduc-               Figure 9: Application to define the transfer function for radar re-
+tion of the resolution, the volume render allows to identify the main          flectivity visualization.
+structures.
+
+                                                                               (figure 4), with each cone containing a sample set of the volume
+4.3   Medical Dataset in Portable Devices                                      (figure 5). The volume-rendering algorithms, therefore, must work
+                                                                               with spherical coordinates for this purpose. This implementation
+The Mozilla Firefox Development Group has released a mobile ver-               of the volume rendering can only be tested under Opera and Fire-
+sion of the browser for ARM devices called Fennec6 . We have                   foxGL. Otherwise the shader compilation fails.
+tested it on 2 Android-based devices: Samsung Galaxy Tab7 and
+Samsung Galaxy S smartphone8 . Taking into account the hardware                In the case studies we have created a simple HTML user interface
+limitations of such devices, we have scaled down the Aorta dataset             using jQuery (Figure 9) to interact with the shader. It allows the tun-
+to half resolution, reduced the HTML canvas size and chosen a suit-            ning of parameters such as the window (zoom and offset), quality
+able number of steps to get quality results with the highest possible          (number of steps) and the transfer function (adapted specifically for
+interactivity. The test under this browser was quite straight-forward.         this weather radar information). The zoom and pan allow the users
+No further modification in the implementation of the shaders, Glue             to conveniently interact with the radar data, which is not as regular
+Javascript code or HTML Web page were required. Although we                    as the medical images. For instance, the useful information is found
+achieved a low frame rate (about 2 or 3 frames per second), it was             in the bottom of the volume (i.e. near the terrain). In addition, the
+proved as possible the rendering of volume datasets in such mobile             resolution in outer zones is lower than near the radar source. Due to
+devices. Further optimizations in the data or the implementation               their geometrical configuration, the large area over radars is rarely
+of the shaders, specifically oriented to such devices, might result in         scanned. Therefore, additional navigation controls for zoom and
+better overall performance. We left such issues for future efforts.            pan have been implemented in the sample Web page, allowing in-
+                                                                               and out- zooming in the volume and panning the view. The radar
+                                                                               captures periodic scans every 10 minutes. Therefore, some navi-
+4.4   Weather Radar Volumetric Dataset                                         gational functionality has been added to help users to access the
+                                                                               next or previous data in the sequence. As the loading time is rather
+Weather radars are devices used to scan the surrounding atmosphere             short, the possibility to create fully interactive 4D animations is to-
+and determine its structure and composition, typically using the               tally open.
+Doppler effect ([Segura et al. 2009]). Radar scans are represented
+as 2D images in the form of either PPI (plan position indicator)               A very simple HTML-based editor for transfer functions was im-
+or CAPPI (constant altitude PPI) formats. The volumetric radar-                plemented, which allows the proper analytic inspection of the radar
+scanned data may be approximated by a set of concentric cones                  data by changing the values and colors with the provided sliders.
+                                                                               Figure 10 shows different visualization of the same radar sample,
+   6 http://www.mozilla.com/en-US/mobile                                       obtained by changing the transfer function (affecting colors and
+   7 http://galaxytab.samsungmobile.com/2010/index.html                        opacity). The figure also shows the effect of variations in camera
+   8 http://galaxys.samsungmobile.com                                          parameters (zoom, pan and view orientation). The chosen number
+
+
+                                                                         143
+of steps was high enough to display a 800×800 canvas with high                  to diminish the bandwidth currently required, for example, for ani-
+quality images and yet to keep the visualization frame rate above               mated render of radar-scanned weather phenomena.
+26 frames/second.
+                                                                                Another important evolution will be the integration of surface ren-
+                                                                                dering within volume-rendered scenes in order to visualize, for
+5    Contribution and Complexity Analysis                                       example, segmented areas in medical images or terrain surfaces.
+                                                                                Some tests have already been performed on desktop prototypes.
+Our contribution is an implementation of a volume rendering sys-                This article lays the technical ground that would make the integra-
+tem for the Web. The system is based on the Volume Ray-Casting                  tion of surface render in volume-render (via WebGL) possible and
+algorithm with a complexity of O(M ∗ S), where M is the number                  reasonable.
+of pixels to be drawn and S is the number of steps of the ray that tra-
+verses the volume. Since the algorithm is implemented in WebGL,
+its visualization speed is similar to native applications because it
+                                                                                Acknowledgments
+uses the same accelerated graphic pipeline. The original algorithm
+has been slightly modified to work with the input structures because            This work was partially supported by the Basque Government’s
+of the lack of Volume Textures in WebGL. Therefore, our algorithm               ETORTEK Project (ISD4) research programme and CAD/CAM/-
+simulates the 3D data by using a 2D tiling map of the slices of the             CAE Laboratory at EAFIT University and the Colombian Coun-
+volume maintaining the tri-linear interpolation, so there is not a real         cil for Science and Technology –COLCIENCIAS–. Radar datasets
+loss in quality because the interpolation is the same as the used in            were provided by the Basque Meteorology and Climatology De-
+the GPU. Even thought a slight impact in performance could be                   partment.
+generated for this interpolation, this is minimal and very difficult to
+perceive because the browsers are not capable of handle such fast               References
+events. This is so because the browsers are heavily dependent on
+several layers such as the shader compilers, hardware architecture,             B EHR , J., AND A LEXA , M. 2001. Volume visualization in vrml.
+graphic drivers, etc. Our algorithm was designed to run entirely in                In Proceedings of the sixth international conference on 3D Web
+the client (which is the novelty of our proposal). Some delays are                 technology, ACM New York, NY, USA, 23–27.
+obviously expected because of the network performance, and the
+interpreted nature of Javascript. Our implementation9 does not ev-              B EHR , J., E SCHLER , P., J UNG , Y., AND Z ÖLLNER , M. 2009.
+idence a real overhead for the server to present the data in 3D as                 X3dom: a dom-based html5/x3d integration model. In Proceed-
+occurs in [Mahmoudi et al. 2009], therefore allowing more clients                  ings of the 14th International Conference on 3D Web Technol-
+to be connected simultaneously. At the same time, more powerful                    ogy, ACM, 127–135.
+clients are required to handle this approximation.
+                                                                                B LAZONA , B., AND M IHAJLOVIC , Z. 2007. Visualization service
+The limitations in our method, even been WebGL compilant, stem                     based on web services. Journal of Computing and Information
+from the fact that some browsers do not adequately provide power-                  Technology 15, 4, 339.
+ful enough shader language implementations to even allow compi-                 C ONGOTE , J., M ORENO , A., BARANDIARAN , I., BARANDI -
+lation of larger shader programs.                                                  ARAN , J., AND RUIZ , O. 2010. Extending marching cubes
+                                                                                   with adaptative methods to obtain more accurate iso-surfaces. In
+6    Conclusions and future work                                                   Computer Vision, Imaging and Computer Graphics. Theory and
+                                                                                   Applications International Joint Conference, VISIGRAPP 2009,
+Two different case studies (medical- and weather radar-imaging)                    Lisboa, Portugal, February 5-8, 2009. Revised Selected Papers.
+presented here illustrate the capabilities of complex volume render-               Springer Berlin / Heidelberg, January, 35–44.
+ing visualization in Web browsers. Although many performance                    F OGAL , T., AND K RUGER , J. 2010. Tuvok, an Architecture for
+improvements and optimizations are still needed, the material dis-                 Large Scale Volume Rendering. In Proceedings of the 15th In-
+cussed indicates that rendering volumetric data with Web standard                  ternational Workshop on Vision, Modeling, and Visualization,
+technology is applicable to many other technical fields. Such an                   M. Dogget, S. Laine, and W. Hunt, Eds., 57–66.
+initiative also re-ignites interest for visualization functions imple-
+mented in the past for high-end desktop visualization applications.             G OENETXEA , J., M ORENO , A., U NZUETA , L., G ALD ÓS , A.,
+The integration of our implemented software in the Web follows the                 AND S EGURA , A. 2010. Interactive and stereoscopic hybrid
+upcoming HTML5 standard, namely a Javascript API and the new                       3d viewer of radar data with gesture recognition. In Romay et al.
+WebGL context for the HTML5 canvas element (which gives the                        [Romay et al. 2010], 213–220.
+application a professional look). The implementation of the algo-
+rithm in declarative languages as X3DOM is planned.                             H ADWIGER , M., L JUNG , P., S ALAMA , C. R., AND ROPINSKI , T.
+                                                                                   2009. Advanced illumination techniques for gpu-based volume
+The scope of the present article did not include the integration of                raycasting. In ACM SIGGRAPH 2009 Courses, ACM, 1–166.
+different rendering styles. However, interactive and complex light-
+ing integration are promising ways to improve render quality. The               H ARTLEY, R., AND Z ISSERMAN , A. 2003. Multiple View Geome-
+use of multi-dimensional interactive transfer functions is also an                 try in Computer Vision, second ed. Cambridge University Press,
+promising direction to explore. The minor optimizations that we                    Cambridge, UK.
+already applied in this work allow us to expect that mathematically-            H IBBARD , W., AND S ANTEK , D. 1989. Interactivity is the key.
+planned negotiation between speed performance and quality is a                     In Proceedings of the 1989 Chapel Hill workshop on Volume
+promising research field. An additional goal for minimization is the               visualization, ACM, New York, NY, USA, VVS ’89, 39–43.
+optimized handling of time-varying datasets using videos instead of
+images as render input. since video formats already minimize trans-             J OHN , N., A RATOW, M., C OUCH , J., E VESTEDT, D., H UDSON ,
+mitted data by reducing temporal redundancy, it would be possible                  A., P OLYS , N., P UK , R., R AY, A., V ICTOR , K., AND WANG ,
+                                                                                   Q. 2008. MedX3D: standards enabled desktop medical 3D.
+    9 http://demos.vicomtech.org/volren                                            Studies in health technology and informatics 132, 189.
+
+
+                                                                          144
+                  (a)                               (b)                                (c)                               (d)
+
+
+
+
+                  (e)                               (f)                                (g)                               (h)
+
+Figure 10: Different weather radar volume renderings. Images (a) and (b) use the traditional color mapping for reflectivity scans (measured
+in decibels, dBZ). Images (c), (d), (e), (f), (g) and (h) have been generated by varying the transfer function (color and transparency) and the
+window zoom and pan.
+
+
+J OHN , N. W. 2007. The impact of web3d technologies on medical             M EYER -S PRADOW, J., ROPINSKI , T., M ENSMANN , J., AND
+   education and training. Computers and Education 49, 1, 19 – 31.            H INRICHS , K. H. 2009. Voreen: A rapid-prototyping environ-
+   Web3D Technologies in Learning, Education and Training.                    ment for ray-casting-based volume visualizations. IEEE Com-
+                                                                              puter Graphics and Applications (Applications Department) 29,
+K ABONGO , L., M ACA , I., AND PALOC , C. 2009. Development of                6 (Nov./Dec.), 6–13.
+   a commercial cross-platform dicom viewer based on open source
+   software. In International Journal of Computer Assisted Radiol-          P HONG , B. T. 1975. Illumination for computer generated pictures.
+   ogy and Surgery; CARS 2009 Computer Assisted Radiology and                  Commun. ACM 18, 6, 311–317.
+   Surgery Proceedings of the 23rd International Congress and Ex-           P OLIAKOV, A. V., A LBRIGHT, E., H INSHAW, K. P., C ORINA ,
+   hibition, Springer, Berlin, Germany, P. H. U. Lemke, P. P. K.               D. P., O JEMANN , G., M ARTIN , R. F., AND B RINKLEY, J. F.
+   Inamura, P. P. K. Doi, P. P. M. W. Vannier, P. P. A. G. Farman,             2005. Server-based approach to web visualization of integrated
+   and D. PhD, Eds., vol. 4, International Foundation of Computer              three-dimensional brain imaging data. Journal of the American
+   Assisted Radiology and Surgery, S29–S30.                                    Medical Informatics Association 12, 2, 140 – 151.
+K RUGER , J., AND W ESTERMANN , R. 2003. Acceleration tech-                 R ILEY, K., S ONG , Y., K RAUS , M., E BERT, D. S., AND L EVIT,
+   niques for gpu-based volume rendering. In VIS ’03: Proceedings              J. J. 2006. Visualization of structured nonuniform grids. IEEE
+   of the 14th IEEE Visualization 2003 (VIS’03), IEEE Computer                 Computer Graphics and Applications 26, 46–55.
+   Society, Washington, DC, USA, 38.
+                                                                            ROMAY, M. G., C ORCHADO , E., AND G ARC ÍA -S EBASTI ÁN ,
+L ACROUTE , P., AND L EVOY, M. 1994. Fast volume rendering us-                M. T., Eds. 2010. Hybrid Artificial Intelligence Systems, 5th In-
+   ing a shear-warp factorization of the viewing transformation. In           ternational Conference, HAIS 2010, San Sebastián, Spain, June
+   Proceedings of the 21st annual conference on Computer graph-               23-25, 2010. Proceedings, Part I, vol. 6076 of Lecture Notes in
+   ics and interactive techniques, ACM, New York, NY, USA, SIG-               Computer Science, Springer.
+   GRAPH ’94, 451–458.
+                                                                            S EGURA , Á., M ORENO , A., G ARC ÍA , I., AGINAKO , N.,
+L EVOY, M. 1988. Display of surfaces from volume data. IEEE                    L ABAYEN , M., P OSADA , J., A RANDA , J. A., AND A NDOIN ,
+   Comput. Graph. Appl. 8, 3, 29–37.                                           R. G. D. 2009. Visual processing of geographic and environ-
+                                                                               mental information in the basque country: Two basque case stud-
+M AHMOUDI , S. E., A KHONDI -A SL , A., R AHMANI , R., FAGHIH -                ies. In GeoSpatial Visual Analytics, R. D. Amicis, R. Stojanovic,
+  ROOHI , S., TAIMOURI , V., S ABOURI , A., AND S OLTANIAN -                   and G. Conti, Eds., NATO Science for Peace and Security Series
+  Z ADEH , H. 2009. Web-based interactive 2d/3d medical image                  C: Environmental Security. Springer Netherlands, October, 199–
+  processing and visualization software. Computer Methods and                  208.
+  Programs in Biomedicine In Press, Corrected Proof , –.                    S UNDARAM , V., Z HAO , L., S ONG , C., B ENES , B., V EERA -
+                                                                               MACHENENI , R., AND K RISTOF, P. 2008. Real-time Data De-
+M ARQUES , R., S ANTOS , L. P., L E ŠKOVSK Y̌ , P., AND PALOC ,               livery and Remote Visualization through Multi-layer Interfaces.
+  C. 2009. Gpu ray casting. In 17 Encontro Português de                       In Grid Computing Environments Workshop, 2008. GCE’08, 1–
+  Computaçao Gráfica, En Anexo, Covilha, Portugal, A. Coelho,                10.
+  A. P. Cláudio, F. Silva, and A. Gomes, Eds., 83–91.
+                                                                            W ESTOVER , L. A. 1991. Splatting: a parallel, feed-forward vol-
+M ARRIN , C. 2011. WebGL Specification. Khronos WebGL Work-                   ume rendering algorithm. PhD thesis, Chapel Hill, NC, USA.
+  ing Group.                                                                  UMI Order No. GAX92-08005.
+M EISSNER , M., H UANG , J., BARTZ , D., M UELLER , K., AND                 YOO , S., K EY, J., C HOI , K., AND J O , J. 2005. Web-Based Hy-
+  C RAWFIS , R. 2000. A practical evaluation of popular volume                brid Visualization of Medical Images. Lecture notes in computer
+  rendering algorithms. In Proceedings of the 2000 IEEE sympo-                science 3568, 376.
+  sium on Volume visualization, Citeseer, 81–90.
+
+
+                                                                      145
+146
+

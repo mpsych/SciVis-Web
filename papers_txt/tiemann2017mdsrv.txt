@@ -1,0 +1,253 @@
+                                                                                                                                                                                                        CORRESPONDENCE
+
+                                                                              a                                                                                  MDsrv: viewing and sharing molecular
+                                                                                                                                                                 dynamics simulations on the web
+                                                                                                                                                                 To the Editor: Molecular dynamics (MD) simulations are a well-
+                                                                                                                                                                 established technique to investigate time-resolved motions of
+                                                                                                                                                                 biological macromolecules at atomic resolution1. Methodological
+                                                                                                                                                                 advances, continued software optimization and hardware accel-
+                                                                                                                                                                 eration have broadened the applicability of MD simulations with
+                                                                                                                                                                 respect to feasible system size, runtime and quality2. Coupled to
+                                                                                                                                                                 these advances, availability of vast cloud storage is enabling the
+                                                                                                                                                                 creation of MD trajectory databases3. However, accessing, viewing
+                                                                              b                                           c
+© 2017 Nature America, Inc., part of Springer Nature. All rights reserved.
+
+
+
+
+                                                                                                                                                                 and sharing MD trajectories is restricted by large file sizes and the
+                                                                                                                                                                 need for specialized software (e.g., VMD, Chimera, Schrodinger
+                                                                                                                                                                 Suite Products), which greatly limits the audience to which the MD
+                                                                                                                                                                 data are available. In light of increasingly interdisciplinary research
+                                                                                                                                                                 and remote collaborations, it is desirable to make the atom trajec-
+                                                                                                                                                                 tories of MD simulations widely available to facilitate interactive
+                                                                                                                                                                 exploration and collaborative visual analysis as well as to promote
+                                                                              d                                                                                  discussions. While some tools exist for analysis or visualization of
+                                                                                                                                                                 trajectories, none of these offers a straightforward and easy solution
+                                                                                                                                                                 for sharing and viewing MD trajectories online (for a comparison,
+                                                                                                                                                                 see Supplementary Note 1).
+                                                                                                                                                                    Here, we present MDsrv, a tool to stream MD trajectories and
+                                                                                                                                                                 show them interactively within web browsers without requir-
+                                                                                                                                                                 ing advanced knowledge in specialized MD software (Fig. 1).
+                                                                                                                                                                 MDsrv is available as a software package (via PyPi and conda,
+                                                                                                                                                                 Supplementary Software) that can be run locally or deployed
+                                                                             Figure 1 | VR using the Autodesk Molecule Viewer. (a) Screenshot of the
+                                                                                                                                                                 to a dedicated web server to make data from MD simulations
+                                                                             Autodesk Molecule Viewer tool in its editing mode. (b) Exploring structures
+                                                                             using a desktop-machine-linked VR headset through a web browser.
+                                                                                                                                                                 accessible to a wide audience of researchers, which helps to
+                                                                             (c) VR content loaded onto a smartphone web browser for exploration with            facilitate collaboration between computational and experimen-
+                                                                             an inexpensive cardboard VR device. (d) Audience members following a                tal researchers (see Supplementary Note 1). For interactive and
+                                                                             VR-based structural biology seminar.                                                remote exploration of trajectories, we used client-server archi-
+                                                                                                                                                                 tecture to create a web-based platform. MDsrv can be used for
+                                                                                                                                                                 viewing or serving MD simulations. The latter usage offers two
+                                                                             Autodesk for supplying cardboard VR devices at international conferences. We
+                                                                             thank the Canadian Institute for Advanced Research and the Canada Excellence        modes of operation—one is an easy-to-use command-line tool
+                                                                             Research Chairs program (both to O.P.E.) for financial support to attend and        for local service (Supplementary Fig. 1a); the other deploys
+                                                                             present at international conferences. O.P.E. holds the Anne and Max Tanenbaum       the tool on a server to provide a dedicated streaming service
+                                                                             Chair in Neuroscience.
+                                                                                                                                                                 (see Supplementary Notes 2–4). MDsrv supports structures,
+                                                                             AUTHOR CONTRIBUTIONS                                                                topologies and trajectories from common MD packages includ-
+                                                                             A.R.B. prepared and presented structural biology content in VR at international     ing Amber, Gromacs, NAMD, Tinker or Desmond. To aid visu-
+                                                                             conferences with guidance from M.W. and O.P.E. All authors participated in
+                                                                                                                                                                 alization and analysis of MD trajectories, a number of process-
+                                                                             discussing, writing and revising of the manuscript.
+                                                                                                                                                                 ing steps can be performed on the structure and trajectory data
+                                                                             COMPETING FINANCIAL INTERESTS                                                       (Supplementary Table 1). When analyzing MD simulations, the
+                                                                             The authors declare competing financial interests: details are available in the     focus is generally on the internal motions of the macromolecule
+                                                                             online version of the paper.
+                                                                                                                                                                 rather than on the diffusion movement in aqueous solution or
+                                                                             Aidin R Balo1,2, Merry Wang2 & Oliver P Ernst1,3
+                                                                                                                                                                 lipid bilayers. To display unprocessed data from nascent simula-
+                                                                                                                                                                 tions, on-the-fly superposition to a reference structure, handling
+                                                                             1Department of Biochemistry, University of Toronto, Toronto, Ontario, Canada.
+                                                                             2Autodesk Life Sciences, Autodesk, Inc., Toronto, Ontario, Canada. 3Department of
+                                                                                                                                                                 of simulations with periodic boundary conditions and second-
+                                                                             Molecular Genetics, University of Toronto, Toronto, Ontario, Canada.                ary structure assignment can be performed. By applying these
+                                                                             e-mail: oliver.ernst@utoronto.ca                                                    calculations only to displayed frames, no scalability issues arise
+                                                                                                                                                                 when viewing large structures and very long trajectories. Finally,
+                                                                             1.   Kendrew, J.C. et al. Nature 185, 422–427 (1960).                               to reduce the amount of transferred data, coordinate frames can
+                                                                             2.   Johnson, C.K. ORTEP Rep. ORNL-3794 (Oak Ridge National Laboratory,
+                                                                                  Tennessee, 1965).
+                                                                                                                                                                 be retrieved individually, and atoms from solvent or other, non-
+                                                                             3.   Chung, J.C. et al. Proc. SPIE 1083, 42–52 (1989).                              relevant molecules can be filtered out before transferring a frame.
+                                                                             4.   Pirhadi, S., Sunseri, J. & Koes, D.R. J. Mol. Graph. Model. 69, 127–143           Scalable molecular graphics for the MDsrv web application
+                                                                                  (2016).
+                                                                             5.   Humphrey, W., Dalke, A. & Schulten, K. J. Mol. Graph. 14, 33–38, (1996).
+                                                                                                                                                                 are provided by the NGL Viewer4. Accelerated 3D graphics are
+                                                                             6.   Norrby, M., Grebner, C., Eriksson, J. & Boström, J. J. Chem. Inf. Model. 55,   enabled by WebGL, a standard built directly into web browsers
+                                                                                  2475–2484 (2015).                                                              without requiring installation of plugins. NGL supports a wide
+
+                                                                                                                                                                               NATURE METHODS | VOL.14 NO.12 | DECEMBER 2017 | 1123
+                                                                              CORRESPONDENCE
+                                                                                                                                                                 MDsrv is the next natural step in the sharing and visualization
+                                                                                                                                                              of MD simulations. Given the capabilities of MDsrv, we envision a
+                                                                                                                                       MD trajectory          number of use cases where it will prove helpful. Scientists perform-
+                                                                                                                                       processing and         ing MD simulations can benefit from MDsrv by remotely accessing
+                                                                                                                                       streaming              MD trajectories. They can, for instance, use MDsrv to quickly share
+                                                                                                                            MDsrv
+                                                                                                                                                              their simulations with collaborators without needing to completely
+                                                                                                                                                              transfer or process the data. In fact, the browser-based visualization
+                                                                                                                                                              gives experts, nonexperts or students easy access to MD simulation
+                                                                                                                                       Collaboration and
+                                                                                                                            Web                               data for the first time. MDsrv thus supports collaborative visual
+                                                                                                                                       remote sharing
+                                                                                                                                                              analysis, peer review and teaching.
+
+                                                                                                                                                              Life Sciences Reporting Summary. Further information on
+© 2017 Nature America, Inc., part of Springer Nature. All rights reserved.
+
+
+
+
+                                                                                                                             NGL       Exploratory and        experimental design is available in the Life Sciences Reporting
+                                                                                                                             GUI       interactive analysis   Summary.
+
+                                                                                                                                                              Code availability. MDsrv is openly developed and available under
+                                                                                                                                                              the MIT License. The source code is provided as Supplementary
+                                                                                                                                                              Software. Updated versions, documentation and examples are avail-
+                                                                                                                                                              able online at http://nglviewer.org/mdsrv/.
+                                                                             Figure 1 | Schematic display of MDsrv’s capabilities. Left, a rendering of
+                                                                             cholesterol (red, orange, yellow) entering a G-protein-coupled receptor          Note: Any Supplementary Information and Source Data files are available in the
+                                                                                                                                                              online version of the paper.
+                                                                             (steel-blue cartoon) as observed in an MD simulation5. The cholesterol
+                                                                             molecule is shown for different stages of the process of entering. The           ACKNOWLEDGMENTS
+                                                                             receptor dynamics are indicated by showing several snapshots of the              This project was supported in part by RCSB PDB, which is jointly funded by the
+                                                                             receptor (gray line traces). Right, the main components of the web               NSF, the NIH, and the US DoE (NSF DBI-1338415; PI, S.K. Burley), Deutsche
+                                                                             application and what features they enable.                                       Forschungsgemeinschaft (Sfb740/B6, DFG HI 1502/1-2, BI 893/8 all to P.W.H.),
+                                                                                                                                                              Berlin Institute of Health (to P.W.H.), and funds by Stiftung Charité (to P.W.H.).
+                                                                                                                                                              Computing resources for the simulation sessions were in part provided by
+                                                                             array of molecular representations, including spacefill, ball and                Norddeutscher Verbund für Hoch und Höchstleistungsrechner (to P.W.H.).
+                                                                             stick, ­cartoon, and molecular surface. The appearance of the rep-               AUTHOR CONTRIBUTIONS
+                                                                             resentations can be fine tuned by various parameters, for example,               A.S.R. and P.W.H. conceived the project. A.S.R. and J.K.S.T. developed the
+                                                                             to change the rendering quality, color or size. These parameters                 software with contribution from R.G.-G. All authors wrote the manuscript.
+                                                                             for molecular representations can also be scripted and stored for                COMPETING FINANCIAL INTERESTS
+                                                                             sharing MD trajectories (Supplementary Fig. 1b). MDsrv can be                    The authors declare no competing financial interests.
+                                                                             embedded into a website to provide scripted but interactive views
+                                                                                                                                                              Johanna K S Tiemann1,2, Ramon Guixà-González1,
+                                                                             of MD trajectories (see Supplementary Fig. 2 and tool’s website)
+                                                                                                                                                              Peter W Hildebrand1,2 & Alexander S Rose1,3
+                                                                             or accessible via a graphical user interface (GUI) that allows the
+                                                                                                                                                              1Institute of Medical Physics and Biophysics, Charité University Medicine, Berlin,
+                                                                             creation of complex molecular scenes (Supplementary Figs. 2–4).
+                                                                                                                                                              Germany. 2Institute of Medical Physics and Biophysics, University Leipzig, Leipzig,
+                                                                             A set of controls is available for animating a trajectory, including             Germany. 3RCSB Protein Data Bank, San Diego Supercomputer Center, University
+                                                                             playing and pausing, speed, frame increment and display of simu-                 of California, San Diego, La Jolla, California, USA.
+                                                                             lation time. The GUI further provides controls to add new rep-                   e-mail: alexander.rose@weirdbyte.de or peter.hildebrand@medizin.uni-leipzig.de
+                                                                             resentations or change parameters of molecular representations.                  1.   Levitt, M. Angew. Chem. Int. Edn. Engl. 53, 10006–10018 (2014).
+                                                                             Individual frames of a viewed MD trajectory can be saved as PDB-                 2.   Dror, R.O., Dirks, R.M., Grossman, J.P., Xu, H. & Shaw, D.E. Annu. Rev. Biophys.
+                                                                             formatted files directly from the web application for subsequent                      41, 429–452 (2012).
+                                                                                                                                                              3.   Doerr, A. Nat. Methods 7, 426 (2010).
+                                                                             analysis. Further, the displayed molecular scene can be exported                 4.   Rose, A.S. & Hildebrand, P.W. Nucleic Acids Res. 43, W576–W579 (2015).
+                                                                             at any time as high-resolution images (Supplementary Fig. 4).                    5.   Guixà-González, R. et al. Nat. Commun. 8, 14505 (2017).
+
+
+
+
+                                                                             1124 | VOL.14 NO.12 | DECEMBER 2017 | NATURE METHODS
+                                                                                                                                                                   nature research | life sciences reporting summary
+                                                                                      Corresponding author(s): Alexander S Rose
+                                                                                          Initial submission       Revised version          Final submission
+
+Life Sciences Reporting Summary
+Nature Research wishes to improve the reproducibility of the work that we publish. This form is intended for publication with all accepted life
+science papers and provides structure for consistency and transparency in reporting. Every life science submission will use this form; some list
+items might not apply to an individual manuscript, but all fields must be completed for clarity.
+For further information on the points included in this form, see Reporting Life Sciences Research. For further information on Nature Research
+policies, including our data availability policy, see Authors & Referees and the Editorial Policy Checklist.
+
+
+`   Experimental design
+1. Sample size
+    Describe how sample size was determined.                         n/a
+
+2. Data exclusions
+    Describe any data exclusions.                                    n/a
+3. Replication
+    Describe whether the experimental findings were                  n/a
+    reliably reproduced.
+4. Randomization
+    Describe how samples/organisms/participants were                 n/a
+    allocated into experimental groups.
+5. Blinding
+    Describe whether the investigators were blinded to               n/a
+    group allocation during data collection and/or analysis.
+    Note: all studies involving animals and/or human research participants must disclose whether blinding and randomization were used.
+
+6. Statistical parameters
+    For all figures and tables that use statistical methods, confirm that the following items are present in relevant figure legends (or in the
+    Methods section if additional space is needed).
+
+n/a Confirmed
+
+          The exact sample size (n) for each experimental group/condition, given as a discrete number and unit of measurement (animals, litters, cultures, etc.)
+          A description of how samples were collected, noting whether measurements were taken from distinct samples or whether the same
+          sample was measured repeatedly
+          A statement indicating how many times each experiment was replicated
+          The statistical test(s) used and whether they are one- or two-sided (note: only common tests should be described solely by name; more
+          complex techniques should be described in the Methods section)
+          A description of any assumptions or corrections, such as an adjustment for multiple comparisons
+          The test results (e.g. P values) given as exact values whenever possible and with confidence intervals noted
+          A clear description of statistics including central tendency (e.g. median, mean) and variation (e.g. standard deviation, interquartile range)
+          Clearly defined error bars
+                                                                                                                                                                   June 2017
+
+
+
+
+                                  See the web collection on statistics for biologists for further resources and guidance.
+
+
+
+
+                                                                                                                                                                            1  Software
+
+
+
+
+                                                                                                                                                                     nature research | life sciences reporting summary
+Policy information about availability of computer code
+7. Software
+    Describe the software used to analyze the data in this            see code availability statement in the manuscript
+    study.
+    For manuscripts utilizing custom algorithms or software that are central to the paper but not yet described in the published literature, software must be made
+    available to editors and reviewers upon request. We strongly encourage code deposition in a community repository (e.g. GitHub). Nature Methods guidance for
+    providing algorithms and software for publication provides further information on this topic.
+
+`   Materials and reagents
+Policy information about availability of materials
+8. Materials availability
+    Indicate whether there are restrictions on availability of        n/a
+    unique materials or if these materials are only available
+    for distribution by a for-profit company.
+9. Antibodies
+    Describe the antibodies used and how they were validated n/a
+    for use in the system under study (i.e. assay and species).
+10. Eukaryotic cell lines
+    a. State the source of each eukaryotic cell line used.            n/a
+
+    b. Describe the method of cell line authentication used.          n/a
+
+    c. Report whether the cell lines were tested for                  n/a
+       mycoplasma contamination.
+
+    d. If any of the cell lines used are listed in the database       n/a
+       of commonly misidentified cell lines maintained by
+       ICLAC, provide a scientific rationale for their use.
+
+`   Animals and human research participants
+Policy information about studies involving animals; when reporting animal research, follow the ARRIVE guidelines
+11. Description of research animals
+    Provide details on animals and/or animal-derived                  n/a
+    materials used in the study.
+
+Policy information about studies involving human research participants
+12. Description of human research participants
+    Describe the covariate-relevant population                        n/a
+    characteristics of the human research participants.
+
+
+
+                                                                                                                                                                     June 2017
+

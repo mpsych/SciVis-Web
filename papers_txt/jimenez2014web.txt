@@ -1,0 +1,807 @@
+                                                             Journal of Biomedical Informatics 51 (2014) 176–190
+
+
+
+                                                                Contents lists available at ScienceDirect
+
+
+                                                   Journal of Biomedical Informatics
+                                                 journal homepage: www.elsevier.com/locate/yjbin
+
+
+
+
+A Web platform for the interactive visualization and analysis of the 3D
+fractal dimension of MRI data
+J. Jiménez a,⇑, A.M. López a, J. Cruz a, F.J. Esteban b, J. Navas c, P. Villoslada d, J. Ruiz de Miras a
+a
+  Department of Computer Science, University of Jaén, Jaén, Spain
+b
+  Department of Experimental Biology, University of Jaén, Jaén, Spain
+c
+  Department of Mathematics, University of Jaén, Jaén, Spain
+d
+  Service of Neurology, Hospital Clinic Barcelona, Barcelona, Spain
+
+
+
+a r t i c l e         i n f o                           a b s t r a c t
+
+Article history:                                        This study presents a Web platform (http://3dfd.ujaen.es) for computing and analyzing the 3D fractal
+Received 21 June 2013                                   dimension (3DFD) from volumetric data in an efﬁcient, visual and interactive way. The Web platform
+Accepted 24 May 2014                                    is specially designed for working with magnetic resonance images (MRIs) of the brain. The program esti-
+Available online 6 June 2014
+                                                        mates the 3DFD by calculating the 3D box-counting of the entire volume of the brain, and also of its 3D
+                                                        skeleton. All of this is done in a graphical, fast and optimized way by using novel technologies like CUDA
+Keywords:                                               and WebGL. The usefulness of the Web platform presented is demonstrated by its application in a
+3D fractal dimension
+                                                        case study where an analysis and characterization of groups of 3D MR images is performed for three
+Box-counting
+Skeleton
+                                                        neurodegenerative diseases: Multiple Sclerosis, Intrauterine Growth Restriction and Alzheimer’s disease.
+Magnetic-resonance imaging                              To the best of our knowledge, this is the ﬁrst Web platform that allows the users to calculate, visualize,
+WebGL                                                   analyze and compare the 3DFD from MRI images in the cloud.
+CUDA                                                                                                                       Ó 2014 Elsevier Inc. All rights reserved.
+
+
+
+
+1. Introduction                                                                          Analysis [19]. There are also speciﬁc programs designed to calcu-
+                                                                                         late the FD. This is the case of the Visual Basic tool announced in
+   A fractal is a geometry object that is self-similar at different                      [20] and later improved in [21] by Grossu et al., a tool that allows
+scales. Fractals are described by fractal geometry, which was ﬁrst                       us to estimate the FD of both 2D and 3D images represented as CSV
+proposed by Benoit Mandelbrot [1]. The fractal dimension (FD) is                         ﬁles. Sezer presents in [22] a Java-based software called FRACEK for
+a non-integer number that characterizes the morphometric vari-                           calculating the fractal dimension of 2D images. In [23], the authors
+ability of a complex and irregular shape. In recent years, several                       present a Visual C# software for estimating the FD of 2D vector
+studies have shown the utility of the FD as a good descriptor of                         data. Recently, a C++ program designed for calculating the 3DFD
+structures in a wide range of scientiﬁc ﬁelds such as biomedicine                        of volumes generated from Magnetic Resonance Images (MRI)
+[2–9], materials analysis [10–12], environmental science [13,14],                        was presented in [24]. Finally, a so-called fast MatLab script for cal-
+and computer graphics [15], among others.                                                culating both 2D and 3DFD is presented in [11].
+   When performing the calculation of the FD value, some authors                            All of these desktop solutions are designed for a speciﬁc plat-
+choose to implement an algorithm that ﬁts to their particular case                       form, and access to them could be difﬁcult. Nowadays, web-based
+study. This is the case of the papers presented in [7,8] or [16],                        applications have become a very interesting solution and are over-
+where a MacOS application that reads directly from FreeSurfer ﬁles                       coming the classic desktop software development [25]. The soft-
+is developed [17]. But there also exist some general desktop                             ware that resides on the web engine presents some advantages
+applications that allow the user to calculate the FD. General and                        over local applications. For example, when a software application
+wide-use image analysis programs for calculating the 2D FD are                           is developed for the web, it could be directly accessed and exe-
+available, such as ImageJ [18], and also more speciﬁc programs                           cuted by any user around the world, independently of his running
+for the FD calculation such as HarFA – Harmonic and Fractal Image                        OS (cross-platform character) and without installing any special
+                                                                                         software. Only an internet connection and a web browser for exe-
+                                                                                         cuting the application are needed. This is the main advantage of
+  ⇑ Corresponding author. Address: Department of Computer Science, University of         the web-based applications over the desktop-based ones. In addi-
+Jaén, Campus Las Lagunillas s/n, 23071 Jaén, Spain. Fax: +34 953212472.                  tion, Web applications are centralized in the cloud, in a computer
+    E-mail address: jjibanez@ujaen.es (J. Jiménez).
+
+http://dx.doi.org/10.1016/j.jbi.2014.05.011
+1532-0464/Ó 2014 Elsevier Inc. All rights reserved.
+                                           J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190                                  177
+
+
+server, so it is guaranteed that the users will always access the                   The CUDA programming model allows the programmer to
+newest version of the software, which is a very important feature.               simultaneously launch thousands of GPU threads. Each thread exe-
+For these reasons, in recent years several web-based applications                cutes the same function, called a kernel, on a dataset. All threads
+for resolving many kinds of problems have appeared. Focusing on                  are organized into several levels. Individual threads are grouped
+the medical imaging research ﬁeld, some platforms that allow                     in 1-, 2- or 3-dimensional thread-blocks. Thread-blocks are
+interacting with and processing medical images have been devel-                  grouped in a mono- or bi-dimensional grid, and also, only on NVI-
+oped. For example, in [26] an online 3D visor of medical images                  DIA GF100 GPUs [33], in three-dimensional grids.
+is presented. Other interesting web-based applications that allow                   Each CUDA-capable GPU has several Multi Processors (MPs),
+visualizing and processing 2D and 3D medical images have been                    each one consisting of some Streaming Processors (SPs) with SIMD
+published in [27,28].                                                            (Simple Instruction – Multiple Data) architecture. These processors
+    But to the best of our knowledge there are no web-based appli-               are responsible for executing all the threads in a parallel way. The
+cations designed to calculate the FD of a 2D/3D image yet. There-                CUDA memory architecture is explicitly managed by the program-
+fore, we focus our efforts on the development of a Web platform                  mer. Each device has a large amount of slow Global Memory and
+that allows the user to calculate and analyze the FD value of mag-               some small-size and fast-access memory modules, called Shared
+netic resonance images (MRI), independently of the characteristics               Memory. Since the arrival of the GF100 Fermi architecture [33], a
+of his personal computer. We focus on this class of images because,              real cache memory hierarchy has been introduced. The CUDA orga-
+nowadays, the FD analysis of medical images is the most estab-                   nization philosophy allows a high level of scalability because
+lished and widely used FD applied procedure, but our software                    thread-blocks are automatically assigned to idle MPs, indepen-
+could be extended to process other scientiﬁc images.                             dently of the number of existing cores in the device. Therefore,
+    The rest of the paper is organized as follows. First, we describe            the same compiled program can be executed on different and het-
+the theoretical basis and the computational methods on which our                 erogeneous CUDA capable devices.
+Web platform is based. Then some concrete implementation
+details are highlighted due to their interest and novelty. After-                2.3. 3D fractal dimension computation
+wards, the user interface and main functionalities of the Web plat-
+form are outlined. In Section 5 we show a case study in which our                    The FD of a 3D volume (3DFD) can be estimated by applying dif-
+Web platform is used for analyzing and characterizing 3D MR brain                ferent methods [34]. One of the most widely used methods is the
+images related to three neurodegenerative diseases. Finally, we                  one known as box-counting calculation [35], a suitable method
+summarize our work in the conclusions section.                                   when working with statistically self-similar models [36]. In general
+                                                                                 terms, the box-counting algorithm consists of covering the object
+                                                                                 with a grid of square boxes with an edge size of l, then counting
+2. 3D fractal dimension: theoretical base                                        how many of these square boxes are totally or partially ﬁlled by
+                                                                                 the model represented in the 2D image or the 3D volume. Each
+    The main feature of the web-based application presented in this              one of these square boxes has a speciﬁc classiﬁcation depending
+paper is the estimation of the FD value of 3D volumes constructed                on whether it is completely, partially or not contained by the
+from MR images. Thus, in this section we describe the basic algo-                model. In the ﬁrst case (full ﬁlled box), the box is labeled as black
+rithms and the theoretical basis for our Web application. In addi-               voxel; in the second case (partially ﬁlled box) it will be labeled as
+tion, the algorithm improvements that have been studied and                      a gray voxel; and ﬁnally the rest of the boxes are labeled as white
+implemented are outlined.                                                        voxels. This process of counting and classifying boxes must be
+                                                                                 repeated for different box edge sizes, and also for different values
+                                                                                 of l.
+2.1. 3D volume generation from 2D images
+                                                                                     Since each pixel of the 2D slices takes an integer value between
+                                                                                 0 and 255, as previously seen, it is necessary to set a threshold
+    A 3D volume, also known as 3D image or 3D matrix in the liter-
+                                                                                 value, u, to determine whether a pixel belongs to the object or
+ature, is usually generated by stacking several 2D images or slices.
+                                                                                 whether it corresponds to the background. In other words, it is nec-
+This way of stacking images implies that each ﬁnal (x, y, z) position
+                                                                                 essary to binarize the images. Therefore, a voxel with an edge size
+of the 3D volume corresponds to the value of the pixel with coor-
+                                                                                 of l (so l + 1 consecutive pixels in the three dimensions from the
+dinates (x, y) obtained from the 2D image number z. Just as we
+                                                                                 new voxel) will be labeled as black if all the pixels contained in that
+refer with the word ‘‘pixel’’ to each position of a 2D image, each
+                                                                                 voxel have a value equal to or greater than the threshold u. On the
+position of a 3D volume is generally known as a ‘‘voxel’’. In our
+                                                                                 contrary, that voxel will be considered as white if all the covered
+Web platform, biomedical images are the expected input data, as
+                                                                                 pixels have a value less than u, and the voxel will be labeled as gray
+previously mentioned, so in this case each 2D image is an MRI slice,
+                                                                                 in all other cases.
+and each voxel of the 3D volume stores an integer value between 0
+                                                                                     A graphical example of the 3D box-counting process is shown in
+and 255, since pixels of MR images are gray-color codiﬁed. Once
+                                                                                 Fig. 1 for different edge sizes, where only the gray voxels are repre-
+the 3D matrix which represents the 3D object is generated, there
+                                                                                 sented. Gray voxels correspond to the boundary voxels of the
+are several algorithms used to display it, process the data or recon-
+                                                                                 object, i.e. the surface cuts across them, while black voxels repre-
+struct the region of interest [29,30].
+                                                                                 sent the inner sections. Logically, the higher the value of the edge
+                                                                                 box size is, the lower the resolution and the accuracy of the
+2.2. CUDA programming model                                                      obtained representation are. So we can consider the box-counting
+                                                                                 algorithm as a Level of Detail (LOD) representation, since the
+   The use of the Graphic Processing Unit (GPU) for improving                    original 3D volume has to be represented with different voxel res-
+algorithms and processes with a general purpose (GPGPU) has                      olutions, with the aim of counting how many boxes are necessary
+grown exponentially in recent times. The most common GPGPU                       in each voxelization.
+programming models are NVIDIA CUDA [31] and Khronos OpenCL                           So for each voxelization of size l, like the ones shown in Fig. 1,
+[32], CUDA being the more established nowadays. We use CUDA in                   the number of black, gray, and white voxels is counted. From these
+the Web platform to parallelize and optimize the more time-                      data, the 3DFD for a concrete type of voxel, either isolated or
+consuming algorithms involved in 3DFD computation.                               combined (i.e. black + gray voxels), is calculated through a log–log
+178                                                 J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190
+
+
+
+
+Fig. 1. Box-counting voxelization of a sample 3D image (in this case, the segmented gray matter of a brain composed of 155 MR Images of 155  188 pixels each), for different
+voxel edge sizes.
+
+
+
+linear regression in which the X axis represents the inverse of                           calculation is the one developed by Liebotich and Toth [37] and
+the edge size of the voxel, l, and the Y axis represents the counting,                    later improved by Hou et al. [38]. This algorithm is especially indi-
+N(l), for the selected type of voxel. In other words, in the X axis                       cated for binary models, like the segmented MR image and its skel-
+each one of the considered voxelization resolutions is represented,                       eton representation, as will be seen later. It has a time complexity
+and the Y axis shows the number of voxels that have been counted                          of O(N  ln(N)). In brief, Hou’s algorithm assigns a unique bit string
+for its corresponding resolution. The ﬁnal value for the 3DFD                             code to each position of the object, and then these codes are sorted
+corresponds to the slope of the exposed linear regression:                                according to their values, low to high. In the last step, the algo-
+                                                                                          rithm iteratively applies a mask to the codes and checks the values
+             ln NðlÞ
+3DFD ¼                                                                                   that are equal, since they correspond to the same box, thus labeling
+               ln l                                                                       the boxes and obtaining the box-counting.
+An example of this linear regression is shown in Fig. 2. Once the line                        In a previous study we further optimize Hou’s algorithm by
+is generated, it is necessary to adjust it to obtain the most reliable                    developing an implementation designed for its execution on the
+FD estimation. Thus, the selection of the voxel size range affects                        Graphic Processing Unit (GPU) [39]. That optimized GPU imple-
+the value of the estimated FD. But this selection is still an open                        mentation was developed by using NVIDIA CUDA. In this way the
+issue. The general method consists of discarding the points that fall                     running time of the box-counting algorithm is decreased, the
+outside of the linear part, usually the ﬁrst and the last points of the                   new GPU-based algorithm being 28 times faster than the classic
+line. Then the linear portion of the log–log plot that ﬁnally deter-                      mono threaded implementation on CPU, according to our tests.
+mines the FD value is obtained by selecting the point range that                          This improvement is especially interesting when performing the
+maximizes the correlation value [2,11]. In Fig. 2 the red dots corre-                     FD calculation on huge datasets of images, which is a usual situa-
+spond to the voxel edge sizes that have been discarded, while the                         tion. In other work we have also analyzed the performance
+green dots represent the selected values when calculating the ﬁnal                        obtained by using OpenCL in both GPU and multi-core CPUs [40].
+regression line. In this example, the box-counting (Y axis values) is                         However, Hou’s box-counting algorithm, both the original algo-
+the sum of both gray and black voxels.                                                    rithm and the one optimized for the GPU, has a limitation: it com-
+    Some studies have focused on improving the exposed box-                               putes the box-counting only considering those boxes that have a
+counting algorithm in terms of efﬁciency. One of the more impor-                          power-of-2 edge size. Therefore, the number of multi-resolution
+tant and widely used algorithms for performing the box-counting                           grids of boxes used to cover the voxelized object is lower than
+
+
+
+
+                                                 Fig. 2. Linear regression for 3DFD computation from box-counting data.
+                                            J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190                               179
+
+
+the number of grids used with the classic box-counting algorithm,                 not acceptable in interactive and dynamic environments such as
+because of the limited number of values that l could take. There-                 web applications, where a fast response of the system is necessary.
+fore, there are fewer points to adjust the regression line and then               For this reason, in a previous study we optimized Palágyi’s thinning
+the FD estimation could not be as accurate as when all the points                 algorithm by developing an implementation designed for its fast
+are available. This fact particularly affects the 3DFD estimation,                and parallel execution on GPU [48,49]. This implementation was
+since 3D models normally have a lower resolution in each axis than                also developed by using NVIDIA CUDA, and it has been included
+2D images. So, for ﬂexibility reasons and according to our success-               in the Web application, ensuring running time rates that allow
+ful previous studies [4–6,24], we include the classic algorithm in                an interactive and satisfactory user experience.
+our Web platform, which offers sufﬁcient values to estimate the
+FD in any case. Meanwhile, we are performing different tests and
+                                                                                  3. Implementation details
+studies to ensure that, with the values obtained with Hou’s box-
+counting algorithm, the FD analysis provides similar results to
+                                                                                     In this section some implementations details regarding the
+our previous and contrasted studies on brain characterization [4–
+                                                                                  development and optimization of the 3DFD Web platform are out-
+6,24].
+                                                                                  lined. In addition to the hardware and the general structure of the
+                                                                                  platform, we highlight those aspects and novel technologies that
+2.4. Skeleton generation from a 3D volume
+                                                                                  are especially useful for its performance and usability, such as
+                                                                                  the ones related to multi-GPU programming, or the 3D graphics
+    In general terms, a skeleton is a special representation of an
+                                                                                  development for the web.
+object that captures its topological essence in a simple and very
+compact way. The skeleton known as curve skeleton [41] is a 1D
+representation for a 3D object, and it is the most compact and min-               3.1. Hardware available on the web server
+imal object representation possible. So from here on, and through-
+out this paper, when we use the term skeleton we refer to the curve                   When developing a Web platform with intensive computation
+skeleton, unless otherwise stated. Skeletons have a wide variety of               and high storage requirements, it is important to setup a powerful
+uses and applications [42]: virtual navigation, virtual endoscopy                 hardware conﬁguration for successfully managing the simulta-
+and animation, segmentation of anatomical structures, medical                     neous connections, and also for optimizing the algorithms in a par-
+image registration, matching of 3D objects, morphing, surface                     allel way, then achieving good performance rates and ensuring a
+reconstruction and mesh repair, among others.                                     satisfactory user experience.
+    In many biomedical studies it is interesting to perform the FD                    The server computer which our web-based software runs on
+calculation both on the original images and also on their skeleton                has two Intel Xeon E5620@2.40 GHz CPUs with 4 independent
+representation [3–5,43–46]. This is because, by performing the                    cores each and a capacity of simultaneously managing 8 threads.
+FD analysis on the skeleton a double indicator could be obtained                  This was accompanied by 12 GB RAM and two hard disk drives of
+which is related to the hypothesis being analyzed, and it is even                 1 TB each, enough for storing the received images. In addition,
+possible to obtain some results and conclusions that could not be                 the system has two NVIDIA GPUs for executing the optimized pro-
+obtained solely with the FD results associated with the original                  cessing algorithms in a fast way. These two GPUs are a NVIDIA
+3D volume.                                                                        Tesla C2050 (Tesla2050) and a NVIDIA GeForce GTX 670 (GTX670).
+    There are several kinds of algorithms for calculating the 3D                      Table 1 shows a comparison of the main hardware speciﬁca-
+skeleton [42]: based on the thinning technique, on the distance                   tions of both GPUs. In general terms, GTX670 stands out for its
+ﬁelds theory, and also on the Voronoi diagram. In our Web plat-                   higher number of processing cores but the Tesla presents better
+form we use a thinning algorithm because of its usefulness and                    memory-related speciﬁcations, i.e. global and cache memory
+properties when working with 3D volumes represented by voxels,                    amount and memory bus bandwidth. Currently, the NVIDIA driver
+not represented by a mesh. Thinning algorithms work by itera-                     version 306.97 is installed, together with the CUDA driver version
+tively deleting voxels of the original 3D object until its minimal                4.2.
+representation is obtained. There are several thinning algorithms
+in the literature, but we have implemented into our Web platform                  3.2. Design of the Web application
+the one introduced in [47], one of the most widely referenced and
+used algorithms presented in the literature.                                         In this section we explain the design and architecture of the
+    As in the case of the box-counting calculation, to generate the               Web platform. As is well-known, the client (a Web browser) trans-
+skeleton the original 3D image has to be binarized in order to                    fers the orders to the server, unless the client can dynamically
+determine the positions that belong to the object, and conse-                     resolve the user’s request by using some technology such as
+quently the ones that belong to the background. Therefore, a                      JavaScript. The requests to the server can be dealt with in a syn-
+threshold u has to be set and only the pixels of the images that                  chronous or asynchronous way, by using AJAX calls in the asyn-
+have a value greater or equal to it are considered in the skeleton-               chronous case. Then the server processes and performs the
+ization process. Once the 3D skeleton is generated, the 3DFD calcu-               requested operations through a server-side programming lan-
+lation could be performed as outlined in Section 2.3, but starting                guage, PHP in our case, or by using local system procedures and
+from the 3D matrix deﬁned by the skeleton itself and without                      software. Therefore, the server stores the database of the applica-
+applying a threshold cut, because the threshold is applied at the                 tion, and also the system scripts, toolkits and components used
+beginning, when the skeleton is generated.                                        to execute the processes. When the server has processed the client
+    An important problem presented by all the thinning algorithms                 request, it returns the results by refreshing the Web page, in the
+is their high computational cost; they are very time-consuming                    synchronous-call case, or by sending an XML or JSON (JavaScript
+processes. For example, according to our tests the 3D skeleton gen-               Object Notation) [50] document that would be asynchronously
+eration of a standard model with a resolution of 256 voxels in each               interpreted in a second plane procedure by the client.
+axis always surpasses one minute of running time. In the case of a                   Fig. 3 shows a brief scheme of the system structure and technol-
+3D model with higher resolution, i.e. 512 voxels in each axis, the                ogies used to develop the software presented in this paper.
+execution takes around 15 min, so the running time has an almost                     The graphical interface should be user-friendly and has to allow
+exponential increase as the model resolution is higher. This fact is              the maximum online interaction capabilities. By using simple web
+180                                         J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190
+
+
+Table 1                                                                           3.3. 3D interactive visualization of MRI data on the Web
+GPUs speciﬁcations comparison.
+
+                                       Tesla               GeForce GTX                In this section we describe the technologies used and the archi-
+                                       C2050               670                    tecture developed to allow an interactive visualization of the 3D
+  CUDA computing capability            2.0                 3.0                    structures required for the 3DFD analysis in our Web platform.
+  NVIDIA architecture                  Fermi               Kepler                     WebGL (Web-based Graphics Library) is a standard Web API
+  GPU clock rate                       1.15 GHz            1.06 GHz               developed by the Khronos Group. This API extends the capability
+  Multiprocessors (MPs)                14                  7
+  Cores per MP                         32                  192
+                                                                                  of the JavaScript programming language, allowing it to generate
+  CUDA cores                           448                 1344                   interactive 3D graphics in any compatible Web browser, without
+  Simultaneous threads per MP          1536                2048                   the need for extra plug-ins. The WebGL API [54] is based on the
+  Global memory amount                 3 GB                2 GB                   OpenGL ES 2.0 standard [55]; it has a cross-platform character
+  Memory bus width                     384 bits            256 bits
+                                                                                  and is royalty-free. WebGL objects are shown on web browsers
+  Registers (32 bits)                  32 K                64 K
+  Max registers per thread for a       21 registers        32 registers           thanks to the HTML5 canvas element, and their related data is
+     full MP occupancy                                                            accessible through the Document Object Model (DOM) interface,
+  Shared memory + L1 cache amount      64 KB               64 KB                  so it could be considered as an alternative option to the HTML5
+  Shared memory amount                 Up to 48 KB         Up to 48 KB            canvas.
+  L2 Cache                             768 KB              512 KB
+                                                                                      WebGL is implemented right into the web browser, so each
+                                                                                  browser vendor is responsible for supporting the WebGL standard.
+                                                                                  Thus, the desktop Web browsers that currently offer support for
+                                                                                  representing the WebGL canvas are: Mozilla Firefox (since version
+                                                                                  4.0), Google Chrome (since version 9), Safari (since version 5.1),
+forms, the whole webpage has to be reloaded after each interaction                and Opera (since version 12). Microsoft Internet Explorer does
+of the user, a fact that in most cases does not provide a satisfactory            not offer support for WebGL yet. However, a plug-in is being devel-
+and appropriate user experience [51]. Therefore, it is necessary to               oped that will allow rendering WebGL on Internet Explorer 6.0 and
+use some dynamic technologies that allow the user to perform                      newer versions [56].
+assertions on the ﬂy, such as JavaScript, or even to send second-                     Some frameworks have appeared in recent dates to facilitate
+plane requests to the server, such as AJAX.                                       the WebGL programming. Each one of these frameworks intro-
+    In our Web application the server performs the calculations by                duces an extra API layer, coded with JavaScript, which offers a
+using PHP, and a MySQL database to store the data. Some com-                      high-level communication point between the developer’s code
+mand-line binary software is also executed. This external software                and the low-level WebGL API. In our case, in order to code the
+is related, in our case, with medical image managing, by using Ima-               3D graphical representation in the web application, we choose a
+geJ scripts to encode/decode the uploaded images. In addition, C++/               well-known and tested WebGL framework: Three.js [57].
+CUDA optimized algorithms are invoked when required. This bin-                        We use WebGL in our Web platform to show a web-integrated
+ary software will return its results in a standard array that is inter-           3D visualization of the original biomedical images uploaded to the
+preted by the PHP code, thus obtaining the results that will be                   system, together with its multi-resolution 3D voxelized represen-
+interpreted and transferred to the client.                                        tations associated with the box-counting calculation (i.e. Fig. 1).
+    In the Web application presented throughout this paper we                     In addition the skeleton representation of each model is also
+focus on MRI medical images because, as seen in the introduction                  depicted, to show the differences between this representation
+section, the biomedical image study has become one of the most                    and its corresponding full voxelization
+important research applied ﬁelds related to FD analysis. For this                     When working with WebGL it must be taken into account that,
+reason medical images are the main data input of our application,                 in addition to the classical problems associated with the 3D graph-
+and the starting point for any later process. Thus, the users have to             ics topic we have to deal with some additional determining
+provide their previously segmented medical images converted to                    aspects, such as the data transfer through the network between
+either the Analyze 7.5 ﬁle format [52] or to the DICOM ﬁle format                 the server and the client, the computational load that the Java-
+[53].                                                                             Script language is able to support, or the memory allocation limits
+    Fig. 4 shows the main modules and the data ﬂow of the Web                     set by some web browsers. All these factors imply that we must
+application. It is organized in three main parts: one which cor-                  study and develop a particular solution in order to achieve the
+responds with the image upload process, both in a single or a                     required performance when working with the high volume of data
+multiple way, another one related to the single or multiple                       our system has to manage.
+3DFD calculation on these images (or their skeleton representa-                       In order to represent the original MR image (composed of sev-
+tion) by applying the box-counting method, and a third part                       eral 2D grayscale slices distributed in three views) in a 3D space,
+which is related to the analysis, the 2D/3D visualization and                     the browser requests each one of these slices at once from the
+managing processes of the previously stored 3D images and                         server, so a previous data load is necessary to allow the user to
+3DFD results.                                                                     visualize and interact with the 3D representation. Once the MR
+
+
+
+
+                                                •                                                       •
+                                                •                                                       •
+                                                •                                                           •
+                                                •                                                           •
+                                                •                                                           •
+
+                                                           Fig. 3. Client–server system structure.
+                                            J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190                                  181
+
+
+
+
+                                           Fig. 4. Main modules and data ﬂow of the UJA-3DFD Web platform.
+
+
+
+image is transferred to the client, the user could interact with it in            minimizing the execution time, since that 3D representation has
+real time by using the native navigation controls offered by                      been previously requested, calculated and saved, by using the AJAX
+Three.js/WebGL. Fig. 10D shows an example of this 3D interactive                  second plane calls. If the user changes the value of the threshold
+visualization in the Web platform of the original MR images                       parameter the resulting 3D model has to be recalculated, so the
+through WebGL.                                                                    application cannot use the one stored in memory and has to per-
+    Regarding the visualization of the voxelized models associated                form a new request to the server. In addition, when a 3D model
+with the box-counting calculation (the different LODs of the 3D                   is ﬁnally displayed its ﬁnal geometry is also stored in memory, thus
+model), the best option could be to operate in the same way as                    avoiding recalculation for a new display.
+in the previous case, by transferring the MR image to the client                      Starting from the client computer and following the orange
+and then performing the required operations on the browser. But                   path in Fig. 5 (the continuous line), we show how the ﬁrst 3D
+this way the computational load associated to JavaScript would                    model, with a default LOD value, is requested to the server, and
+increase considerably, since it would have to identify the gray                   how this returns the encoded data as a JSON object. Once this
+and black voxels of the model for the selected resolution. In addi-               object is processed in the client, new LODs of the same 3D model
+tion, it is not efﬁcient to transfer the full gray-scale MR image from            are requested in advance, by using second plane AJAX calls (black
+the server to the client when only a binary voxelization, usually                 path – dashed line in Fig. 5). If the user wants to visualize an
+without having the full resolution, is going to be represented.                   LOD of the model that has been previously requested to the server,
+Therefore, it is necessary to adopt another strategy for the process              the web application follows the blue path in Fig. 5 (dotted line) and
+of representing these multi-resolution models.                                    directly obtains, without involving the server, the JSON object that
+    Fig. 5 shows the whole process for calculating, transferring and              represents the selected 3D model, and generates the geometry. In
+interactive visualizing of the different voxelizations needed for a               the case that the required 3D object has been previously displayed,
+3D box-counting calculation. When the client requests the visual-                 the Web application needs only retrieve the WebGL geometry
+ization of a 3D representation, with a concrete voxel size resolution             which corresponds to the required LOD (green path in Fig. 5) and
+and a threshold, the server locally runs a C-coded program which is               draw it.
+responsible for generating the 3D matrix which corresponds to the                     Thanks to the asynchronous and second plane requests, the
+desired 3D voxelization, thus identifying the black, gray and white               communication time between client and server is partially hidden.
+voxels. The size of this 3D matrix would vary depending on the res-               In addition, by maintaining a cache memory with the objects that
+olution (the LOD level) of the voxelized model that is going to be                have been displayed previously, the running time is greatly
+represented. Once the box-counting calculation has been per-                      decreased when representing these repeated models. Regarding
+formed, a PHP script will interpret the 3D matrix returned to                     the efﬁciency while displaying each voxelized 3D model, the main
+encode it by using JSON. The JSON object is transferred to the client             problem appears for high-resolution models. In this case it is nec-
+browser in a second plane response, by using the AJAX communi-                    essary to represent around one million voxels, an amount of data
+cation protocol. Then, once the data has been received on the web-                that is not easily manageable, causing the crash of the web browser
+browser, the values of the 3D matrix are read in order to identify                if we try to display it in a direct way. So it is necessary to ﬁnd efﬁ-
+the voxels that are going to be represented in the WebGL canvas.                  cient solutions that allow us to display high-resolution voxeliza-
+Afterwards, while the 3D model is shown and while the user inter-                 tions in the WebGL canvas.
+acts with it, new asynchronous requests to the server are per-                        With the aim of resolving this issue, we apply two optimiza-
+formed. In this way, the 3D models with a resolution just above                   tions. First, it is necessary to reduce the geometry of the object
+and below that of the model that it is being represented are                      to be represented. To do this without affecting the visualization,
+requested in advance, and stored in the client memory. Thus, when                 the representation of the voxels that are not visible has to be
+the user modiﬁes the resolution parameter (the 3D model LOD),                     avoided. When drawing a solid cube with the Three.js API, we have
+the web application needs only draw it in the WebGL canvas                        to select which sides of the cube are graphically represented.
+182                                          J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190
+
+
+
+
+                                   Fig. 5. Client requests scheme to obtain the voxelized models represented with WebGL.
+
+
+
+
+Therefore, by analyzing the neighbourhood of each voxel we deter-                  account that the skeleton generation algorithm is the most time
+mine which cube sides are going to remain hidden, and the geom-                    consuming process in our system, we decided to enter into the
+etry of these sides are not rendered. In this way a voxel that is                  multi-device algorithm optimization to beneﬁt from the whole
+totally surrounded by other voxels will not be represented at all,                 hardware platform.
+a fact that is not visually perceptible, thus decreasing the scene                    This multi-device optimization has followed these steps:
+geometry and improving the general performance.
+   In addition, it is important to reduce the number of WebGL calls                   The input dataset has to be split into two parts, so the algorithm
+as much as possible. Three.js offers a function that allows us to                      is executed on each device in a parallel way over its own section
+reduce the calls to the WebGL API and then also the data inter-                        of the dataset. Fig. 6 shows how when the original dataset is
+change between the CPU and the GPU. This function is                                   divided the value X is placed in the GPU A while its neighbors
+THREE.GeometryUtils.merge(). This process binds a set of meshes,                       Y3, Y4, and Y5 are placed in GPU B. Therefore, it is necessary to
+forming a single geometry. This process also allows us to reuse an                     duplicate some data (a slice, shaded squares in Fig. 6) in order
+existing mesh, change its coordinates or link together other                           to make available all the neighbors necessary for checking the
+meshes, thus reducing the creation of new objects and improving                        deletion condition of each voxel (the thinning algorithm deter-
+the performance. If this technique of geometry merging is not used,                    mines whether a voxel has to be deleted or not by reading its
+for each voxel a completely new cube mesh would be generated                           neighborhood). Then the boundary slice of the GPU B is repli-
+and added to the 3D scene, increasing the complexity. This tech-                       cated in A and vice versa, each neighbor being locally readable.
+nique can be used only for representing static geometry, e.g. a                        The thinning algorithm is an iterative process, so at the end of
+brain voxelization in which it is not necessary to individually                        each one of the iterations the GPU A has to update in the GPU
+translate or rotate each one of the voxels that form the whole                         B the data that has been just calculated, and vice versa.
+model.                                                                                We measure the isolated performance of both GPUs to quantify
+   Fig. 10 shows several examples of the obtained Web-GL visual-                       the performance difference between them, then determining
+ization of an LOD for a voxelized brain, its skeleton, a 2D slice of                   how the computational load has to be balanced. We used as
+this LOD and the original MR images in a 3D representation.                            input data the anatomical models of twenty generated normal
+                                                                                       brains presented in [58–60] and we selected ﬁve brain tissue
+3.4. Optimization of the skeleton generation algorithm: a multi-device                 classes with different topologies: cerebrospinal ﬂuid (CSF), gray
+approach                                                                               matter, white matter, skull and bone marrow. The performance
+                                                                                       test results in Table 2 show that the Tesla2050 GPU is 1.22
+    As outlined in Section 2.4, in order to obtain the skeleton of the                 times faster than the GTX670. This performance difference
+3D voxelized models uploaded to our system we use a fast thinning                      implies that a theoretical and static computational load balance
+algorithm presented in [48], designed for its execution on a GPU.                      of 61–39% would be ideal for reaching the maximum multi-GPU
+This algorithm is efﬁcient and shows impressive speedups com-                          algorithm performance.
+pared with the standard single-threaded CPU algorithm. However,                       When splitting the voxelized model to send each part to a dif-
+it was designed for its execution on a single GPU, while in our com-                   ferent GPU, we divide it at the slice level. Each one of the slices
+puter server there are two GPUs, as seen in Section 3.1. Taking into                   contains a different and unpredictable number of voxels
+                                                    J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190                                               183
+
+
+
+
+Fig. 6. The original whole dataset is divided among the available devices. Shared data (i.e. Y3, Y4, Y5, Y2, X and Y6) has to be duplicated and refreshed in each iteration to
+maintain the integrity of the ﬁnal result.
+
+
+
+   belonging to the object. Therefore, when we apply the previ-                              Fig. 8 shows a snapshot of the application related to the upload
+   ously estimated optimal computational load distribution, the                               process of a new 3D image to the server. Currently, the Web
+   high performance peaks do not appear when expected. Fig. 7A                                platform does not include any segmentation procedure, so the
+   shows how maximum performance is achieved with different                                   user must provide images already segmented. It is usually nec-
+   data distribution depending on how the model is partitioned.                               essary to analyze the FD of a set of several images, e.g. the gray
+   For a human brain model, the maximum level of symmetry is                                  matter of several patients. For this reason the Web platform also
+   found in the sagital axis, and therefore we did the partition of                           offers the option of uploading a set of images into a packed ﬁle.
+   the brain by its cerebral hemispheres. The performance peak                                In addition, each uploaded image can be included into a group,
+   was reached when we sent to the Tesla2050 GPU approximately                                in order to later studies and comparative analysis purposes.
+   55% of the slices, as can be seen in Fig. 7B. Finally, Fig. 7 shows                       Fig. 9 shows how the platform displays the data and the 2D
+   how an average speedup of 1.6 was achieved with respect the                               slices associated with each 3D image.
+   single-GPU algorithm executed on the Tesla2050 GPU (the fas-                              In addition to the 2D slice visualization, the application allows
+   ter one). The ideal 2 speedup is not reached due to data swap-                            us to visualize a WebGL based 3D representation of the 3D
+   ping between GPUs and since the two GPUs are not identical.                                image, as described in Section 3.3. A 3D voxelized LOD repre-
+                                                                                              sentation of the whole 3D image is shown in Fig. 10A. We can
+    This procedure refers to the case in which the model has to be                            also visualize the 3D skeleton representation of the original
+partitioned between two GPUs. If another hardware conﬁguration                                model (Fig. 10B). As seen in previous sections, this algorithm
+is available, a new study to search for the optimal dataset distribu-                         is developed and well optimized by using CUDA in a multi-
+tion between the devices is required, but this performance analysis                           GPU implementation, thus obtaining the interactivity needed
+only has to be performed one time.                                                            in any web application. By interacting with the UI sliders, a slice
+                                                                                              by slice visualization of either the voxelized 3D model or the 3D
+                                                                                              skeleton is obtained (Fig. 10C). The ‘‘Images’’ visualization mode
+                                                                                              shows the original MR images combined and represented in a
+4. User interface and functionality
+                                                                                              3D space (Fig. 10D).
+                                                                                             The result of the box-counting algorithm is displayed in a log–
+    The user interface (UI) is a key element in any software applica-
+                                                                                              log scattered plot, as can be seen in Fig. 11. The user can discard
+tion, because it is the communication point between the user and
+                                                                                              those plot points that do not follow a linear trend, by observing
+the system. In general terms, our aim was to develop a Web appli-
+                                                                                              the regression line itself and the correlation value, thus adjust-
+cation that allows the user to easily calculate and analyze the FD of
+                                                                                              ing the regression line and then approximating the FD value in a
+a 3D image, as seen throughout this paper. The user interface
+                                                                                              better way. The interactivity with the graph and the ﬁnal FD
+design has been supervised by experienced biomedical staff (FJE,
+                                                                                              results is performed dynamically, without refreshing the web-
+JN and PV), taking into account the common methodology and
+                                                                                              page, thanks to the JavaScript/AJAX implementation. Thus a sat-
+work-ﬂow used in common FD studies in this ﬁeld.
+                                                                                              isfactory user experience is achieved. Once the user has
+    The main functionality of the Web platform is described by the
+                                                                                              adjusted the plot line, the 3DFD value and its associated values
+following screens:
+                                                                                              of error and correlation can be stored in the database. The Web
+                                                                                              platform can also simultaneously execute the FD calculation on
+                                                                                              multiple images with multiple threshold values, both on their
+Table 2                                                                                       original and skeleton representation, and also with different
+Performance comparison between both our GPUs. Average values for all the brains of            ranges of points for the regression line adjustment. The results
+each tissue class.                                                                            are grouped into a formatted text ﬁle that can be downloaded
+  Brain tissue       GTX670 runtime (s)      Tesla2050 runtime (s)      Speedup               and further processed to search for the desired parameters.
+                                                                                             Fig. 12 shows the user interface to calculate the 3DFD on one or
+  CSF                13.4205                 10.9888                    1.22
+  Gray matter        30.1383                 24.2671                    1.24                 more image groups with multiple images. This is organized into
+  White matter       11.8121                  9.7122                    1.22                 three steps; ﬁrstly, the user has to select the input parameters.
+  Skull              13.3872                 10.9289                    1.22                 To determine these parameters it is necessary to experiment
+  Bone marrow        12.2017                 10.0051                    1.22
+                                                                                              with them in the single 3DFD calculation section, as seen in
+                                                                                              Fig. 11, looking for the greatest correlation value. Secondly,
+184                                                J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190
+
+
+
+
+Fig. 7. Relationship between percentages of slices assigned to the Tesla2050 GPU and the multi-GPU algorithm performance. The speedup is obtained when comparing with
+the single Tesla2050 algorithm execution. (A) Model splitting in Axial View. (B) Model splitting in Sagital View (hemispheres right and left), symmetry founded. Average
+values for all the brains models (gray matter tissue) available on [60].
+
+
+
+
+                                          Fig. 8. Graphical user interface of the UJA-3DFD Web platform. Upload image form.
+
+
+
+
+   the user has to select the image groups on which the 3DFD is                          5. Case study: computation and comparative analysis of MRI
+   going to be calculated. Finally, the 3DFD values (each value                          data in neurodegenerative diseases
+   associated to one of the selected images) are automatically cal-
+   culated in a second plane procedure. The user interface dynam-                           In the previous sections we have described the Web platform, its
+   ically communicates to the user at which point the process is,                        functionality and the speciﬁc techniques and algorithms employed
+   and also which image is being analyzed at the moment.                                 to improve its performance in obtaining the interactive times
+  The numeric FD calculations could be queried and displayed on                         needed in any Web application. In this section we show how we
+   the Web application with the aim of analyzing the results, as                         can use the Web platform to perform a comparative study based
+   Fig. 13 shows.                                                                        on the 3DFD analysis of 3D images that belong to different and
+                                                                                         related groups. This test aims to show how typical 3DFD studies
+    The Web platform offers three types of plots for representing                        can be performed entirely in the Web platform as the biomedical
+previously calculated 3DFD results, together with the raw values,                        experts currently perform them using a diversity of independent
+thus allowing an easy, graphical and statistical analysis of the data.                   software. As our case study we show three examples of studies of
+The user can represent a scattered, a box and whiskers or a SEM                          three neurodegenerative diseases (Multiple Sclerosis, Alzheimer’s
+(Standard Error of the Mean) plot. This is shown in more detail                          disease and Intrauterine growth restriction) in which 3DFD has
+in the next section.                                                                     been revealed as a very promising descriptor in our previous work.
+                                                    J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190                                              185
+
+
+
+
+                                         Fig. 9. Graphical user interface of the UJA-3DFD Web platform. Detail query of an image.
+
+
+
+
+Fig. 10. Graphical user interface of the UJA-3DFD Web platform. (A) 3D voxelization view, (B) 3D skeleton view (for a better view, this example shows the 3D skeleton of only
+a brain lobe), (C) 2D voxelization slice (only gray voxels of the box-counting), and (D) 3D visualization of the 2D original MR images.
+
+
+
+
+   In the ﬁrst study [4], 3DFD analysis was applied to the gray mat-                         Fig. 14 shows the plot of the standard error of the mean
+ter of 52 patients with MS and 20 healthy controls. The results of                        obtained in the Web platform from the data used in [4]. Three
+this work indicated that gray matter (GM) morphology is abnormal                          groups of images were created in the platform: HC_MS_STUDY
+in patients with MS and that this alteration appears early in the                         group for healthy controls, MS_CIS group for CIS patients and
+course of the disease. This study found that patients with MS had                         MS_RR group for RRMS patients. The 3DFD for the 3D images of
+an increase in the 3DFD of the GM compared to controls. Such dif-                         each group was calculated using the parameters shown in
+ferences in the 3DFD of the GM were found for either CIS (clinically                      Fig. 14: a threshold of 70 and a range of voxel sizes from 6 to 16
+isolated syndrome) or RRMS (relapsing-remitting MS) compared to                           from the Gray + Black data of the box-counting. The selection of
+controls. Finally, a signiﬁcant difference in the GM 3DFD between                         these values of the parameters comes from [4], where a previous
+CIS and RRMS patients was also found.                                                     manual segmentation of the images showed 70 as the most appro-
+186                                               J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190
+
+
+
+
+Fig. 11. Graphical user interface of the UJA-3DFD Web platform. 3DFD calculation: input parameters, the box-counting and log–log linear regression computation with the
+ﬁnal 3DFD value.
+
+
+
+
+                                 Fig. 12. Graphical user interface of the UJA-3DFD Web platform. 3DFD calculation on multiple images.
+
+
+
+priate threshold value (in a gray scale from 0 to 255) and, for this                    diagnosed before 34 weeks of gestation, 15 preterm infants
+threshold, the range of voxel sizes from 6 to 16 maximized the                          matched one-to-one for gestational age (GA, ±2 weeks) at delivery,
+correlation. This fact was also asserted in this case by using the sin-                 and 15 neonates born at term. The results indicated a signiﬁcant
+gle 3DFD calculation tool of the Web platform, presented in the                         decrease of the 3DFD of the brain GM and white matter (WM) in
+previous section.                                                                       the IUGR group when compared to the preterm or at term controls.
+   In the second study [5], a 3DFD analysis was applied to a sample                        Fig. 15 shows the box and whiskers plot obtained in the Web
+of 18 singleton premature infants with a prenatal diagnosis of                          platform from the data used in [5]. Three groups of images were
+severe IUGR (Intrauterine growth restriction, a major cause of pre-                     created in the platform: HC_PTM group for preterm healthy con-
+term delivery, neonatal morbidities, neonatal death, and stillbirth)                    trols, HC_TERM group for healthy controls born at term and IUGR
+                                                   J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190                                          187
+
+
+
+
+              Fig. 13. Graphical user interface of the UJA-3DFD Web platform. FD calculation results performed on a 3D image and stored in the database.
+
+
+
+
+Fig. 14. Plot of the standard error of the mean (SEM) obtained by performing, in the Web platform, the 3DFD calculation on the MR Images of the Multiple Sclerosis study
+presented in [4].
+
+
+
+group for intrauterine growth restriction patients. In this case, we                     60 years old and AD group for Alzheimer’s disease patients. The
+show the results for the 3DFD of the skeleton of the WM of the 3D                        3DFD for the 3D images of each group was calculated using the
+images in each group, calculated using the following parameters: a                       parameters shown in Fig. 16: a threshold of 70 and a range of voxel
+threshold of 70 and a range of voxel sizes from 9 to 27 from the                         sizes from 2 to 10 from the Gray + Black data of the box-counting
+Gray + Black data of the box-counting. Similar to the previous                           (the same values used in [6]).
+example, the selection of the values for these parameters is the                             With these three examples we showed how the Web platform
+same as that used in [5].                                                                allows a comparative, interactive and on-line analysis of different
+    Finally, T1-weighted magnetic resonance imaging scans of 242                         groups of 3D images based on the 3DFD. In summary, this analysis
+subjects (116 healthy controls under sixty years old, 63 equal to                        starts by uploading the 3D images to the Web platform and asso-
+or over sixty years old and 63 subjects with mild to moderate Alz-                       ciating each image to a particular group of the case study. Next,
+heimer’s disease) were included in the analysis in [6]. The results                      the 3DFD is calculated for every 3D image or its skeleton. The spe-
+showed a signiﬁcant decrease in the 3DFD of the GM both in nor-                          ciﬁc parameters to be used to calculate de 3DFD (threshold and
+mal aging and in Alzheimeŕs Disease (AD). The results obtained                          range of voxel size) can be explored and tested in the single
+showed a signiﬁcant correlation between the GM 3DFD and age.                             3DFD calculation section of the application, by an interactive
+In addition, and when compared to healthy controls, this study                           manipulation of the regression line associated with the box-count-
+found a signiﬁcant decrease of the GM 3DFD in AD. Moreover, a                            ing data. Finally, we can graphically analyze and extract conclu-
+signiﬁcant difference between healthy controls under 60 years                            sions on the results obtained thanks to three different plots
+old and AD subjects was identiﬁed, and also between healthy con-                         available in the Web platform: standard error of the mean, box
+trols over 60 years old and AD patients, but in this last case just in                   and whiskers and scatter. In addition, the Web platform gives the
+the chosen signiﬁcation cut-off. Inside the healthy control group,                       user the numeric 3DFD values, in case it is necessary to perform
+signiﬁcant differences were also found between the subjects under                        additional studies external to our application.
+versus over 60 years old.                                                                    A comparative analysis of new images uploaded to the Web
+    Fig. 16 shows the scatter plot obtained in the Web platform                          platform can be performed by including these images in any of
+from the data used in [6]. Three groups of images were created                           the existing groups, or by creating a new group for these images
+in the platform for this study: HC_60_UP group for healthy controls                      and adding this new group to the comparative plot. In any case,
+over 60 years old, HC_60_DOWN group for healthy controls under                           the values of the parameters used to calculate the 3DFD for these
+188                                                  J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190
+
+
+
+
+Fig. 15. Box and whiskers plot obtained by performing, in the Web platform, the 3DFD calculation on the MR Images of the intrauterine growth restriction (IUGR) study in [5].
+
+
+
+
+              Fig. 16. Scatter plot obtained by performing, in the Web platform, the 3DFD calculation on the MR Images of Alzheimer’s disease study in [6].
+
+
+new images must be the same as those used for the images in the                            comparison, we install the desktop application on the server where
+previous existing groups.                                                                  the Web application resides.
+   Regarding the computational cost of a 3DFD analysis session on                             First we can see how in the Desktop application the skeleton
+our Web platform, we measure the running times associated with                             generation process takes up almost 99% of the running time of
+the IUGR study [5], the most complex and costly case among the                             the execution. For this reason we decided to optimize that process
+previously described ones, since the skeleton representation of                            by using the GPU, as described in Section 3.4, thus decreasing its
+the images is needed. In Table 3 we detail the times obtained with                         running time to a half of the whole box-counting process. The
+the Web platform compared to the equivalent times but computed                             results presented show that an acceleration of up to 40 is
+with the non-optimized desktop software [24]. For a fair                                   achieved when comparing the running times of both desktop and
+
+Table 3
+Performance comparison between desktop and web application, both installed on the same computer server. The performance results correspond to the IUGR analysis case study.
+Average values of ‘‘skeleton’’ and ‘‘total’’ running times for the images contained in each group. Speedup when comparing the accumulative running time of both applications.
+
+  Group        #Images    Desktop application                                                   Optimized web application
+                          Sk. running       Total running      %           Accumulative         Sk. running       Total running     %          Accumulative       Speedup
+                          time (Avg.) (s)   time (Avg.) (s)    Skeleton    running time (s)     time (Avg.) (s)   time (Avg.) (s)   Skeleton   running time (s)
+  HC_PTM       15         74.382            75.248             98.85       1128.72              0.911             1.811             50.30      27.17              41.54
+  HC_TERM      15         75.435            76.309             98.85       1144.64              0.924             1.827             50.57      27.40              41.77
+  IUGR         18         70.188            71.039             98.80       1278.70              0.861             1.761             48.89      31.69              40.35
+                                           J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190                                                  189
+
+
+Web application. Thus in the desktop application the analysis of                 References
+the 3 groups involved on the IUGR study takes around one hour,
+while in the Web platform it takes only around 86 s. These results,               [1] Mandelbrot BB. The fractal geometry of nature. W.H. Freeman and Company;
+                                                                                      1983.
+together with the developed UI, show that the Web platform actu-                  [2] Zhang L, Liu JZ, Dean D, Sahgal V, Yue GH. A three-dimensional fractal analysis
+ally allows an interactive 3DFD analysis of non-simple sets of 3D                     method for quantifying white matter structure in human brain. J Neurosci
+images, especially in the computations where the skeleton of the                      Methods 2006;150:242–53.
+                                                                                  [3] Zhang L, Dean D, Liu JZ, Sahgal V, Wang X, Yue GH. Quantifying degeneration of
+image is needed, and offer an easy and intuitive way of performing                    white matter in normal aging using fractal dimension. Neurobiol Aging
+3DFD studies in an on-line multi-platform context.                                    2007;28:1543–55.
+                                                                                  [4] Esteban FJ, Sepulcre J, Ruiz de Miras J, Navas J, de Mendizábal NV, Goñi J, et al.
+                                                                                      Fractal dimension analysis of grey matter in multiple sclerosis. J Neurol Sci
+6. Conclusions                                                                        2009;282:67–71.
+                                                                                  [5] Esteban FJ, Padilla N, Sanz-Cortés M, Ruiz de Miras J, Bargalló N, Villoslada P,
+                                                                                      et al. Fractal-dimension analysis detects cerebral changes in preterm infants
+    In this paper we have presented a novel Web platform for com-                     with     and     without    intrauterine    growth     restriction.    NeuroImage
+puting and analyzing the 3DFD of magnetic resonance images. We                        2010;43:1225–32.
+                                                                                  [6] Esteban FJ, Villoslada P, Ruiz de Miras J, Vélez de Mendizábal N, Navas J, Goñi J,
+have summarized the computational methods on which our soft-
+                                                                                      et al. Fractal dimension changes in the grey matter of the normal aging brain
+ware is based, such as the box-counting computation and the skel-                     and in Alzheimer disease. In: 16th annual meeting of the organization for
+eton generation algorithm. The design of the Web platform has                         human brain mapping, Barcelona – Spain; 2010.
+                                                                                  [7] Wu YT, Shyu KK, Jao CW, Wang ZY, Soong BW, Wu HM, et al. Fractal dimension
+been outlined; both the internal layers and the user interface
+                                                                                      analysis for quantifying cerebellar morphological change of multiple system
+design. In addition, we have shown how the available hardware,                        atrophy of the cerebellar type (MSA-C). NeuroImage 2010;49:539–51.
+in this case two powerful GPUs, has been exploited in order to                    [8] Shyu KK, Wu YT, Chen TR, Chen HY, Hu HH, Guo WY. Measuring complexity of
+achieve the maximum performance possible. We have also focused                        fetal cortical surface from mr images using 3-D modiﬁed box-counting
+                                                                                      method. IEEE Trans Instrum Meas 2011;60(2):522–31.
+on the interactive 3D visualization of the volumetric data involved               [9] Chen W-K, Lee J-C, Han W-Y, Shih C-K, Chang K-C. Iris recognition based on
+in the 3DFD analysis with WebGL, a recent technology that offers                      bidimensional empirical mode decomposition and fractal dimension. Inform
+several advantages for representing 3D models on the web.                             Sci; in press. ISSN 0020-0255. doi: http://dx.doi.org/10.1016/j.ins.2012.09.021
+                                                                                      [2012].
+    As examples of the usefulness and validity of the Web platform,              [10] Kotowski P. Fractal dimension of metallic fracture surface. Int J Fract
+we have presented a case study in which the 3DFD values obtained                      2006;141(1–2):269–86.
+from several groups of segmented MR images of human brains                       [11] de Souza J, Rostirolla SP. A fast MATLAB program to estimate the multifractal
+                                                                                      spectrum of multidimensional data: application to fractures. Comput Geosci
+belonging to healthy controls and Multiple Sclerosis, IUGR and Alz-                   2011;37:241–9.
+heimer’s disease patients are graphically and numerically com-                   [12] Khanbareh H, Wu X, Van der Zwaag S. Analysis of the fractal dimension of
+pared in an efﬁcient way. In this way we have shown how the                           grain boundaries of AA7050 aluminium alloys and its relationship to fracture
+                                                                                      toughness. J Mater Sci 2012;47:6246–53.
+Web platform allows us to easily analyze and characterize groups
+                                                                                 [13] Vahedi A, Gorczyca B. Application of fractal dimensions to study the structure
+of MR images based on an on-line and interactive computation of                       of ﬂocs formed in lime softening process. Water Res 2011;45(2):545–56.
+the 3DFD.                                                                        [14] Sun Z, Zheng J, Hu H. Fractal pattern in spatial structure of urban road
+    The Web platform is accessible through the URL http://                            networks. Int J Mod Phys B 2012;26(30).
+                                                                                 [15] Khoury M, Wenger R. On the fractal dimension of isosurfaces. IEEE Trans Visual
+3dfd.ujaen.es.                                                                        Comput Graphics 2010;16:1198–205.
+    Nowadays, new web-based technologies are being developed                     [16] King RD, Brown B, Hwang M, Jeon T, George AT. Fractal dimension analysis of
+with the aim of improving and increasing the computing capabili-                      the     cortical   ribbon    in    mild    Alzheimer’s    disease.     NeuroImage
+                                                                                      2010;53(2):471–9.
+ties of the web browsers. The main example of this is WebCL [61], a              [17] Fischl B. FreeSurfer. NeuroImage 2012;62(2):774–81.
+new standard under development by the Khronos Group. In gen-                     [18] ImageJ: Image Processing and Analysis in Java. <http://rsb.info.nih.gov/ij/>
+eral terms, WebCL is a wrapper of the OpenCL computing platform.                      [February 2014].
+                                                                                 [19] HarFa: Harmonic and Fractal Image Analyzer; 2012. <http://www.fch.vutbr.cz/
+The ﬁnal objective with the development of WebCL is to reach a                        lectures/imagesci/> [February 2014].
+high-performance computing level in web browsers by using the                    [20] Grossu IV, Besliu C, Rusu MV, Jipa A, Bordeianu CC, Felea D. Visual tool for
+client devices, i.e. multi-core CPUs or GPU. As future work, it would                 estimating the fractal dimension of images. Comput Phys Commun
+                                                                                      2009;180(10):1999–2001.
+be very interesting to use WebCL to improve the box-counting cal-                [21] Grossu IV, Felea D, Besliu C, Jipa A, Bordeianu CC, Stan E, et al. A new version of
+culation and its visualization, by joining both WebCL and WebGL                       visual tool for estimating the fractal dimension of images. Comput Phys
+technologies in the client machine [62].                                              Commun 2010;181(4):831–2.
+                                                                                 [22] Sezer E. A computer program for fractal dimension (FRACEK) with application on
+    From a biomedical point of view, our aim is to extend the Web
+                                                                                      type of mass movement characterization. Comput Geosci 2010;36(3):391–6.
+platform by including efﬁcient and interactive automatic and semi-               [23] Wang Q, Zhang Q. Design of quick computation program on fractal dimension
+automatic segmentation techniques of MR images and their nor-                         for 2D vector data. In: 2010 2nd IITA international conference on geoscience
+malization. In this way, the Web platform will offer the users the                    and remote sensing, IITA-GRS; 2010. p. 124.
+                                                                                 [24] Ruiz de Miras J, Villoslada P, Navas J, Esteban FJ. UJA-3DFD: a program to
+whole lifecycle of the 3DFD analysis, from the original MR image,                     compute the 3D fractal dimension from MRI data. Comput Methods Programs
+as obtained from the MR scanner, to the graphical analysis of the                     Biomed 2011;104:452–60.
+3DFD results.                                                                    [25] Taivalsaari A, Mikkonen T, Anttonen M, Salminen A. The death of binary
+                                                                                      software: End user software moves to the web. In: Proceedings – 9th
+    A pending task is the formal evaluation of the usability of the                   international conference on creating, connecting and collaborating through
+Web platform. We plan to use our tool in clinical studies about                       computing, C5; 2011. p. 17.
+the application of the 3DFD of MRI in several neurodegenerative                  [26] Cantor-Rivera D, Bartha R, Peters T. Efﬁcient 3D rendering for web-based
+                                                                                      medical imaging software: a proof of concept. In: Progress in biomedical optics
+diseases. In this context, the feedback of many clinical staff will                   and imaging – proceedings of SPIE; 2011.
+allow us to evaluate and improve the Web platform usability.                     [27] Mahmoudi SE, Akhondi-Asl A, Rahmani R, Faghih-Roohi S, Taimouri V, Sabouri
+                                                                                      A, et al. Web-based interactive 2D/3D medical image processing and
+                                                                                      visualization      software.     Comput        Methods      Programs       Biomed
+Acknowledgments                                                                       2010;98(2):172–82.
+                                                                                 [28] Jacinto H, Kéchichian R, Desvignes M, Prost R, Valette S. A web interface for 3D
+                                                                                      visualization and interactive segmentation of medical images. In: Proceedings,
+   This work has been partially supported by the University of                        Web3D 2012 – 17th international conference on 3D web technology. p. 51–8.
+Jaén, the Caja Rural de Jaén, the Andalusian Government and the                  [29] Lorensen WE, Cline HE. Marching cubes: a high resolution 3D surface
+European Union (via ERDF funds) through the research projects                         construction algorithm. ACM Comput Graph 1987;21:163–9.
+                                                                                 [30] Muraki S, Kita Y. A survey of medical applications of 3D image analysis and
+UJA2009/13/04, UJA2013/12/04, UJA2013/08/35 and PI10-TIC-                             computer graphics. Syst Comput Jpn 2006;37:13–46.
+5807.
+190                                                 J. Jiménez et al. / Journal of Biomedical Informatics 51 (2014) 176–190
+
+
+[31] NVIDIA CUDA Toolkit Documentation. <http://docs.nvidia.com/cuda/                     [47] Palágyi K, Kuba A. A parallel 3D 12-subiteration thinning algorithm. Graph
+     index.html> [February 2014].                                                              Models Image Proc 1999;61:199–221.
+[32] KHRONOS OPENCL WORKING GROUP: The Open CL Speciﬁcation. Version 1.2.                 [48] Jiménez J, Ruiz de Miras J. Three-dimensional thinning algorithms on graphics
+     <http://www.khronos.org/opencl/> [February 2014].                                         processing units and multicore CPUs. Concurr Comput Pract Exper
+[33] Wittenbrink CM, Kilgariff E, Prabhu A. Fermi GF100 GPU architecture. IEEE                 2012;24:1551–71.
+     Micro 2011;31:50–9.                                                                  [49] Jiménez J, Ruiz de Miras J. Optimizations with CUDA: a case study on 3D curve-
+[34] Lopes R, Betrouni N. Fractal and multifractal analysis: a review. Med Image               skeleton extraction from voxelized models. In: Computer vision, imaging and
+     Anal 2009;13:634–49.                                                                      computer graphics. Theory and application, vol. 359. Berlin, Heidelberg:
+[35] Russel D, Hanson J, Ott E. Dimension of strange attractors. Phys Rev Lett                 Springer; 2013. p. 82–96.
+     1980;45:1175–8.                                                                      [50] JSON Speciﬁcation. <http://www.json.org> [February 2014].
+[36] Normant F, Tricot C. Methods for evaluating the fractal dimension of curves          [51] Dustin E, Rashka J, Mc Diarmid D. Quality web systems. Performance, security,
+     using convex hulls. Phys Rev A 1991;43:6518–25.                                           and usability. Addison-Wesley; 2002.
+[37] Liebotich LS, Toth T. A fast algorithm to determine fractal dimension by box         [52] Mayo Clinic Analyze 7.5: Format Spec Compilation. <http://wideman-
+     counting. Phys Lett A 1989;141:386–90.                                                    one.com/gw/brain/analyze/formatdoc.htm> [February 2014].
+[38] Hou X, Gilmore R, Mindlin GB, Solari HG. An efﬁcient algorithm for fast              [53] Medical Imaging & Technology Alliance, NEMA. The DICOM standard; 2000
+     O(Nln(N)) box counting. Phys Lett A 1990;151:43–6.                                       <http://medical.nema.org> [February 2014].
+[39] Jiménez J, Ruiz de Miras J. Fast box-counting algorithm on GPU. Comput               [54] WebGL Speciﬁcation 1.0.2. Khronos Group. <https://www.khronos.org/
+     Methods Programs Biomed 2012;108(3):1229–42.                                              registry/webgl/specs/1.0/> [February 2014].
+[40] Jiménez J, Ruiz de Miras J. Box-counting algorithm on GPU and multi-core             [55] OpenGL ES. Khronos Group. <http://www.khronos.org/opengles/> [February
+     CPU: an OpenCL cross-platform study. J Supercomput September                              2014].
+     2013;65(3):1327–52.                                                                  [56] IEWebGL: WebGL for Internet Explorer. <http://iewebgl.com/> [February
+[41] Svensson S, Nystrom I, Sanniti G. Curve-skeletonization of surface-like objects           2014].
+     in 3D images guided by voxel classiﬁcation. Pattern Recogn Lett                      [57] Cabello R. Three.js library: download and documentation. <http://
+     2012;23(12):1419–26.                                                                      mrdoob.github.com/three.js/> [February 2014].
+[42] Cornea N, Silver D, Min P. Curve-skeleton properties, applications and               [58] Aubert-Broche B, Grifﬁn M, Pike GB, Evans AC, Collins DL. Twenty new digital
+     algorithms. IEEE Trans Visual Comput Graphics 2007;13:530–48.                             brain phantoms for creation of validation image data bases. IEEE Trans Med
+[43] Liu J, Zhang L, Yue G. Fractal dimension in human cerebellum measured by                  Imaging 2006;25:1410–6.
+     magnetic resonance imaging. Biophys J 2003;85:4041–6.                                [59] Aubert-Broche B, Evans AC, Collins DL. A new improved version of the realistic
+[44] Lee J, Yoon U, Kim J, Kim I, Lee D, Kwon J, et al. Analysis of the hemispheric            digital brain phantom. Neuroimage 2006;32:138–45.
+     asymmetry using fractal dimension of a skeletonized cerebral surface. IEEE           [60] BrainWeb: 20 Anatomical Models of 20 Normal Brains. <http://
+     Trans Biomed Eng 2004;51:1494–8.                                                          brainweb.bic.mni.mcgill.ca/brainweb/anatomic_normal_20.html> [February
+[45] Ha T, Yoon U, Lee K, Shin Y, Lee J, Kim I, et al. Fractal dimension of cerebral           2014].
+     cortical surface in schizophrenia and obsessive-compulsive disorder. Neurosci        [61] Aarnio T, Bourges-Sevenier M. WebCL working draft. Khronos WebCL Working
+     Lett 2005;384:172–6.                                                                      Group. <https://cvs.khronos.org/svn/repos/registry/trunk/public/webcl/spec/
+[46] Zhang L, Butler AJ, Sun C, Sahgal V, Wittenberg GF, Yue GH. Fractal dimension             latest/index.html> [February 2014].
+     assessment of brain white matter structural complexity post stroke in relation       [62] Joshi P, Bourges-Sévenier M, Russell K, Mo Z. Graphics programming for the
+     to upper-extremity motor function. Brain Res 2008;1228:229–40.                            web. ACM SIGGRAPH 2012 Courses.
+

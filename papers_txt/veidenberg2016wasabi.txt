@@ -1,0 +1,291 @@
+          Wasabi: An Integrated Platform for Evolutionary Sequence
+          Analysis and Data Visualization
+          Andres Veidenberg,1 Alan Medlar,1 and Ari L€oytynoja* ,1
+          1
+           Institute of Biotechnology, University of Helsinki, Helsinki, Finland
+          *Corresponding author: E-mail: ari.loytynoja@helsinki.fi.
+          Associate editor: Naoki Takebayashi
+
+
+
+
+                                                                                                                                                                                  Downloaded from https://academic.oup.com/mbe/article-abstract/33/4/1126/2579418 by Univ Massachusetts Healey Library user on 07 June 2020
+          Abstract
+          Wasabi is an open source, web-based environment for evolutionary sequence analysis. Wasabi visualizes sequence data
+          together with a phylogenetic tree within a modern, user-friendly interface: The interface hides extraneous options,
+          supports context sensitive menus, drag-and-drop editing, and displays additional information, such as ancestral se-
+          quences, associated with specific tree nodes. The Wasabi environment supports reproducibility by automatically storing
+          intermediate analysis steps and includes built-in functions to share data between users and publish analysis results. For
+          computational analysis, Wasabi supports PRANK and PAGAN for phylogeny-aware alignment and alignment extension,
+          and it can be easily extended with other tools. Along with drag-and-drop import of local files, Wasabi can access remote
+          data through URL and import sequence data, GeneTrees and EPO alignments directly from Ensembl. To demonstrate a
+          typical workflow using Wasabi, we reproduce key findings from recent comparative genomics studies, including a
+          reanalysis of the EGLN1 gene from the tiger genome study: These case studies can be browsed within Wasabi at
+          http://wasabiapp.org:8000?id=usecases. Wasabi runs inside a web browser and does not require any installation. One
+          can start using it at http://wasabiapp.org. All source code is licensed under the AGPLv3.
+          Key words: evolutionary sequence analysis, reproducible research, data visualization.
+
+          Introduction                                                                                Wasabi is inspired by our earlier tool, webPRANK
+                                                                                                  (L€oytynoja and Goldman 2010), a web interface to the
+          In evolutionary sequence analysis, phylogenetic trees and
+                                                                                                  PRANK alignment program. webPRANK was limited to the
+          sequence alignments are intrinsically linked: Sequence align-
+                                                                                                  analysis of only small data sets and to a single analysis
+          ments define character homologies upon which phylogenetic
+                                                                                                  method. Wasabi, however, was developed using modern
+          inference is based and trees are integral in correcting for
+                                                                                                  web technologies to scale to much larger data sets, while
+          hierarchical dependencies among sequence data. In multiple
+                                                                                                  maintaining responsiveness. Wasabi additionally contains fea-
+          sequence alignment, this connection was noticed early
+                                                                                                  tures for integrating heterogeneous data sets, file manage-
+          (Sankoff 1975) and was central in the first progressive align-
+                                                                                                  ment and an intuitive, modern web interface (see fig. 1 for
+          ment algorithm (Hogeweg and Hesper 1984). Although pop-
+                                                                                                  overview) for navigating and selecting appropriate analysis
+Article
+
+
+
+
+          ular alignment programs use a tree to guide the alignment
+                                                                                                  options. Additionally, due to the increasing complexity of
+          procedure, they consider the tree a nuisance parameter. The
+                                                                                                  data analysis, Wasabi allows users to save all intermediate
+          phylogeny-aware algorithm ( L€oytynoja and Goldman 2005,
+                                                                                                  analysis steps to aid reproducibility and allows for sharing of
+          2008b; L€oytynoja et al. 2012) makes the alignment/phylogeny
+                                                                                                  project data and analysis steps between collaborators.
+          dependence explicit again: Reconstructed ancestral
+          sequences are aligned according to a guide phylogeny and                                Results
+          the gap patterns created closely reflect the tree topology. The
+          phylogeny-aware approach has been shown to outperform                                   Overview
+          other alignment methods in comparative sequence analysis                                Wasabi is a web-application for evolutionary sequence anal-
+          (Fletcher and Yang 2010; Jordan and Goldman 2012).                                      ysis that is compatible with all web browsers supporting the
+              In this article we present Wasabi: A web-based analysis                             HTML5 standard (see table 1). Wasabi has been designed with
+          environment that reflects the interdependence between                                   the goal of providing a comprehensive set of analysis tools
+          the phylogeny and the alignment in its design and displays                              enabling users to analyze their own data, integrate it with
+          each sequence next to the corresponding node in the phylo-                              external data sets, if necessary, and visualize the results.
+          genetic tree. The joint visualization of tree and alignment                             Data analysis is complicated because input data need to be
+          allows for the assessment of phylogenies next to the sequence                           in specific formats, programs have a large number of options,
+          data they were inferred from or for the evaluation of align-                            and poor file management can lead to careless mistakes.
+          ments in the context of the underlying phylogeny. By addi-                              Wasabi aims to incorporate a wide set of tools, automatically
+          tionally integrating ortholog and inferred ancestral sequences,                         converts between file formats, and provides a hierarchy of
+          Wasabi highlights information that cannot easily be shown                               program options to highlight parameters of interest for dif-
+          with either the tree or the alignment in isolation.                                     ferent scenarios.
+
+
+          ß The Author(s) 2015. Published by Oxford University Press on behalf of the Society for Molecular Biology and Evolution. All rights reserved. For permissions, please
+          e-mail: journals.permissions@oup.com
+
+          1126                       Mol. Biol. Evol. 33(4):1126–1130 doi:10.1093/molbev/msv333 Advance Access publication December 3, 2015
+Wasabi . doi:10.1093/molbev/msv333                                                                                                                      MBE
+
+
+
+
+                                                                                                                                                                           Downloaded from https://academic.oup.com/mbe/article-abstract/33/4/1126/2579418 by Univ Massachusetts Healey Library user on 07 June 2020
+FIG. 1. Overview of Wasabi interface. The toolbar contains menus and buttons for data management, analysis tools, zoom levels, undo/redo, and server
+notifications. Pop-up menus are associated with tree nodes and reveal ancestral sequences which are displayed in lighter colors next to the node. A
+windowing system provides access to other functionality (e.g., sequence translation and analysis library, shown above).
+
+
+Table 1. Minimum Version of Web Browsers Supporting Basic and                       Table 2. Main Wasabi Features in Alternative Programs.
+Full Set of Wasabi Features.                                                                                    Wasabi      ClustalX     JalView    Mega      Seaview
+              IE          Firefox         Chrome           iOS         Android      Phylogeny integration                     —            —        —          —
+Basic         9.0            3.0            4.0            3.2a          41         Ancestral sequences                       —            —                  —
+Full         10.0          10.0            12.0            3.2a          41         Analysis history                          —            —                  —
+NOTE.—Desktop browsers: Internet Explorer (IE), Firefox, Chrome. Mobile browsers:   Sharing URL                               —            —        —          —
+Safari on iOS, Chrome on Android.                                                   User accounts                             —            —        —          —
+a
+ Refers to iOS version.                                                             Web access                                —                    —          —
+                                                                                    Ensembl import                            —                    —           
+Visualization
+                                                                                    Plugin extension                          —            —        —           
+Many evolutionary analysis methods output additional infor-
+                                                                                    NOTE.—Programs versions: ClustalX 2.1, JalView 2.8, Mega 6.06, Seaview 4.5.3.
+mation that is not generally visualized. For example, along
+with aligned sequences, the programs PRANK and PAGAN
+can output inferred ancestral sequences and posterior prob-
+abilities of different evolutionary processes (L€oytynoja and                       Newick, Extended Newick (Cardona et al. 2008), NEXUS
+Goldman 2008b, 2008a). Although a majority of sequence                              (Maddison et al. 1997), HSAML, and PhyloXML (Han and
+alignment viewers omit this information (see table 2),                              Zmasek 2009). User and analysis data are stored in a struc-
+Wasabi either displays it by default (e.g., distinguishing be-                      tured, file-based database. By default, Wasabi stores interme-
+tween insertion and deletion gaps) or else provides access to                       diate results from an analysis in the form of a branching tree
+it through context sensitive menus. Ancestral sequences are                         to track parallel pipelines and associated metadata allowing
+not shown by default, but can be shown or hidden for indi-                          for reproducibility.
+vidual nodes or entire subtrees. Using this function, the user                          Wasabi currently supports importing external data from
+can locate mutation events at specific tree branches and gain                       Ensembl (homologous gene sets and alignment slices) using
+additional insights, for example, about mutation events after a                     the Ensembl REST API (Flicek et al. 2013): A dedicated import
+distant branching event, or contrast the mutation processes                         menu supports Ensembl IDs and allows querying data sets, for
+in different evolutionary lineages. Wasabi incorporates similar                     example, with species and gene names. Wasabi can addition-
+metadata from external data sets including ancestral se-                            ally read input files from URLs.
+quences and duplication event nodes from EPO (Paten                                     Results can be shared between users through URLs allow-
+et al. 2008) and GeneTree (Vilella et al. 2009) alignments                          ing access to single data sets or even entire analysis trees. The
+imported from Ensembl.                                                              recipient of the URL can display the linked data and continue
+                                                                                    working on a copy inside Wasabi before returning any mod-
+Data Import/Integration/Sharing                                                     ified data to the sender, for example, to be reintegrated
+Wasabi supports key file formats for importing sequence and                         into the original analysis (see supplementary fig. S1,
+phylogenetic tree data, including: FASTA, ClustalW, Phylip,                         Supplementary Material online).
+
+                                                                                                                                                                    1127
+Veidenberg et al. . doi:10.1093/molbev/msv333                                                                                          MBE
+Feature Comparison                                                   Table 3. Time to Open a FASTA File with Random Protein Sequence
+                                                                     Data (in seconds).
+Wasabi’s core features are largely lacking from existing se-
+quence alignment viewers. In table 2, we compare Wasabi              Data Size         Wasabi       ClustalX      JalView       Mega       Seaview
+to JalView 2.8 (Waterhouse et al. 2009), Mega 6.06 (Tamura           1K  1K            2.0            9.4           0.8         5.3          0.2
+et al. 2013), Seaview 4.5.3 (Gouy et al. 2010), and ClustalX 2.1     1K  10K           2.8           87.5           4.6         5.2          2.9
+(Larkin et al. 2007).                                                1K  100K          9.6           TO            OM           6.4         22.8
+   Existing programs either display the phylogeny in a sepa-         NOTE.—Input data size as # sequences  # sites, in thousands. TO, timeout; OM,
+
+
+
+
+                                                                                                                                                       Downloaded from https://academic.oup.com/mbe/article-abstract/33/4/1126/2579418 by Univ Massachusetts Healey Library user on 07 June 2020
+rate window with limited editing and annotation capabilities         out of memory. Program versions as in table 2. All programs tested with default
+                                                                     settings on Mac OSX 10.9 running on a Macbook Pro with a 2.4 GHz CPU, 4 GB
+or else omit the tree altogether (ClustalX). Other features,         RAM, and an SSD hard disk. Wasabi ver. 140615 in Chrome ver. 39. Time limit:
+such as data/analysis management, Ensembl integration,               15 min.
+and plugin extension, are either missing or have only limited
+support.
+                                                                     examples are provided in supplementary                             material,
+                                                                     Supplementary Material online.
+Performance
+Although Wasabi is a web application, its performance is             Discussion
+comparable to a “native” application. Table 3 shows the              Wasabi provides an intuitive interface and scalable platform
+time taken by several sequence alignment viewers to load             for evolutionary sequence analysis through the web. Despite
+and display protein alignments of increasing size (methodol-         being under active development, Wasabi is being used every-
+ogy described in supplementary material, Supplementary               day by researchers to perform analyses and share results with
+Material online). We note that not all programs tested per-          collaborators.
+form exactly the same functions upon loading the data, for               Wasabi is a centralized service. Some benefits from this,
+example, ClustalX calculates conservation scores, JalView cal-       such as transparent sharing of results between user accounts,
+culates consensus scores, whereas other methods (Wasabi,             are obvious. Others are more indirect: New features and bug
+Seaview) do neither. Of all the applications tested, Wasabi          fixes can be deployed immediately to the web, benefiting
+and Mega have the most predictable behavior, though we               many users at once. Wasabi, however, is open source, allowing
+note that in the 1–10K sequence range, Wasabi is twice as            for local (communal lab server) and personal (laptop/desk-
+fast. Although it is unlikely users would want to visualize a        top) installations. For example, a research group can host
+100K sequence alignment, it demonstrates both the scalabil-          their own private Wasabi installation to keep their data in-
+ity of Wasabi’s design and that there are few limitations with       house, while still being able to share analyses with local
+being web-based.                                                     colleagues.
+                                                                         Future plans for Wasabi focus on looking beyond sequence
+                                                                     alignment. The integration of downstream analysis tools such
+Example of Wasabi Workflow                                           as SLR and PAML (Massingham and Goldman 2005; Yang
+To demonstrate the capabilities of Wasabi, we performed a            2007) within Wasabi would allow an investigator to go
+common analysis task: The comparison of a gene sequence              from raw data to alignment and inference of selection with-
+from a species of interest to its homologs. We reanalyzed the        out needing to leave the Wasabi environment. The additional
+EGLN1 gene data set highlighted in the recent tiger genome           visualization elements required for the display of selection
+study (Cho et al. 2013). EGLN1 is involved in the cellular re-       inference results could be used for any column-wise data,
+sponse to hypoxia. Cho et al. identified a single amino acid         for example, to indicate sequence conservation or alignment
+change that might be related to high-altitude adaptation in          uncertainty or to show annotation tracks. Related to this, we
+snow leopards. We reassembled the EGLN1 sequence for the             are developing a plugin system that will ease the integration
+big cats (performed on the command line, see supplementary           of other command line tools. Plugin writers will not need
+material, Supplementary Material online) and then used               to do any programming, but instead specify a JSON configu-
+Wasabi to download the corresponding Ensembl GeneTrees               ration file detailing how command line options are exposed
+data set, extended the Ensembl alignment with the big cat            through Wasabi (for a minimal plugin example, see http://
+sequences using PAGAN, removed paralogs and incomplete               wasabiapp.org/plugins, last accessed December 16, 2015).
+sequences, and visualized the results. This analysis consists of a       Finally, we are developing a stripped-down version of
+handful of easy steps, all performed within Wasabi’s graphical       Wasabi for data visualization only. A version of this will be
+environment (fig. 2).                                                integrated in the Ensembl browser for the display of Compara
+    Our analysis confirms the lysine-to-methionine substitu-         alignment data. The tool will be provided as a separate library
+tion in the snow leopard lineage. However, our extended data         for easy integration with other web resources.
+set shows that the sequence position is not strictly conserved
+in other lineages and, interestingly, an identical, independent      Materials and Methods
+lysine-to-methionine substitution is seen in alpaca, another         Wasabi integrates a phylogenetic tree and sequence align-
+species adapted to high altitudes. The resulting data sets,          ment viewer together with a toolbar and pop-up dialog win-
+including intermediate checkpoints, can be explored with             dows to access information and analysis options. It does so by
+Wasabi at http://wasabiapp.org:8000?id=usecases. Other               leveraging many of the features introduced in HTML5 and
+
+1128
+Wasabi . doi:10.1093/molbev/msv333                                                                                                           MBE
+
+
+
+
+                                                                                                                                                             Downloaded from https://academic.oup.com/mbe/article-abstract/33/4/1126/2579418 by Univ Massachusetts Healey Library user on 07 June 2020
+FIG. 2. The reanalysis of the EGLN1 gene data set consists of seven steps: (1) Import of Ensembl GeneTrees data set; (2) addition of tiger, lion, and snow
+leopard sequences with PAGAN, (3) removal of paralogs and incomplete or nonmammalian sequences, (4) correction of big cats’ placement (error
+caused by high sequence similarity and missing data in cat), (5) removal of alignment gaps, (6) translation to codons, and (7) visualization of the
+resulting alignment and the lysine-to-methionine substitution in snow leopard (circled).
+
+therefore requires a modern web browser. For older web                          elements, which are then copied to the main canvas as
+browsers, Wasabi is designed to degrade gracefully using                        needed.
+JavaScript or other means.
+                                                                                Tile-Based Rendering
+Architecture                                                                    Wasabi was designed to scale to large data sets and breaks
+Wasabi uses the Model-View-View-Model design pattern im-                        down the visualization of sequence data into smaller man-
+plemented by the Knockout JavaScript library to make inter-                     ageable pieces, called “tiles.” Each tile is a fixed-size canvas
+face elements and their contents dynamically reflect program                    element four times the size of the viewport. In response to the
+state. This is used throughout the Wasabi client interface.                     user scrolling the viewport beyond the rendered area, a new
+    Phylogenetic trees are drawn using scalable vector graphics                 tile is added and filled with data (see supplementary fig. S2,
+(SVG) to support multiple zoom levels, aspect ratios, and                       Supplementary Material online). This process continues until
+screen resolutions. Rendering utilizes a modified version of                    there is no more sequence data or the browser limit of total
+jsPhyloSVG (Smits and Ouverney 2010). All SVG elements are                      canvas size has been reached, in which case, nonvisible tiles
+individually addressable for associating mouse interactions                     are recycled.
+and dynamically applying CSS styling, for example, when a
+user edits the tree by performing a drag-and-drop operation,                    Backend
+eligible drop targets are highlighted as bolded tree branches.                  Web applications are restricted from writing files to the local
+    Sequences are always positioned next to corresponding                       hard disk and from launching external applications. Wasabi
+tree elements; moving and deleting tree nodes results in                        relies on a separate backend server to manage user accounts,
+the same actions being performed on the sequence.                               data and analysis results, perform analyses, and provide task
+Sequence alignments are rendered using an HTML5 canvas                          progress notifications to the client. The Wasabi server back-
+element for performance reasons. Drawing the visible portion                    end is written in Python and supports Windows, Mac OS,
+of the alignment is optimized by prerendering all glyphs using                  and Linux. By running the Wasabi backend server on an
+the current typeface and color scheme to individual canvas                      internet-addressable host, it becomes a centrally managed
+
+                                                                                                                                                    1129
+Veidenberg et al. . doi:10.1093/molbev/msv333                                                                                                MBE
+web application and forms the basis for Wasabi’s collaborative                Larkin MA, Blackshields G, Brown NP, Chenna R, Mcgettigan PA,
+sharing features.                                                                 McWilliam H, Valentin F, Wallace IM, Wilm A, Lopez R, et al.
+                                                                                  2007. Clustal W and Clustal X version 2.0. Bioinformatics 23(21):
+                                                                                  2947–2948.
+Supplementary Material                                                        L€oytynoja A, Goldman N. 2005. An algorithm for progressive multiple
+Supplementary text and Supplementary figures S1 and S2 are                        alignment of sequences with insertions. Proc Natl Acad Sci U S A.
+available at Molecular Biology and Evolution online (http://                      102(30): 10557–10562.
+                                                                              L€oytynoja A, Goldman N. 2008a. A model of evolution and structure for
+www.mbe.oxfordjournals.org/).                                                     multiple sequence alignment. Philos Trans R Soc Lond B Biol Sci.
+
+
+
+
+                                                                                                                                                              Downloaded from https://academic.oup.com/mbe/article-abstract/33/4/1126/2579418 by Univ Massachusetts Healey Library user on 07 June 2020
+                                                                                  363(1512): 3913–3919.
+Acknowledgments                                                               L€oytynoja A, Goldman N. 2008b. Phylogeny-aware gap placement pre-
+                                                                                  vents errors in sequence alignment and evolutionary analysis.
+The authors acknowledge the Ensembl team for considering                          Science 320(5883): 1632–1635.
+our feedback in the development of the Ensembl REST API.                      L€oytynoja A, Goldman N. 2010. webPRANK: a phylogeny-aware multiple
+This work was supported by the Biocenter Finland,                                 sequence aligner with interactive alignment browser. BMC
+Biocentrum Helsinki, and Marie Curie Career Integration                           Bioinformatics 11(1): 579.
+Grants.                                                                       L€oytynoja A, Vilella AJ, Goldman N. 2012. Accurate extension of multiple
+                                                                                  sequence alignments using a phylogeny-aware graph algorithm.
+                                                                                  Bioinformatics 28(13): 1684–1691.
+References                                                                    Maddison DR, Swofford DL, Maddison WP. 1997. Nexus: An extensible
+Cardona G, Rossell F, Valiente G. 2008. Extended newick: it is time               file format for systematic information. Syst Biol. 46(4): 590–621.
+     for a standard representation of phylogenetic networks. BMC              Massingham T, Goldman N. 2005. Detecting amino acid sites
+     Bioinformatics 9(1): 532.                                                    under positive selection and purifying selection. Genetics 169(3):
+Cho YS, Hu L, Hou H, Lee H, Xu J, Kwon S, Oh S, Kim HM, Jho S, Kim S,             1753–1762.
+     et al. 2013. The tiger genome and comparative analysis with lion and     Paten B, Herrero J, Fitzgerald S, Beal K, Flicek P, Holmes I, Birney E. 2008.
+     snow leopard genomes. Nat Commun. 4(May): 2433.                              Genome-wide nucleotide-level mammalian ancestor reconstruc-
+Fletcher W, Yang Z. 2010. The effect of insertions, deletions, and align-         tion. Genome Res. 18:1829–1843.
+     ment errors on the branch-site test of positive selection. Mol Biol      Sankoff D. 1975. Minimal mutation trees of sequences. SIAM J Appl
+     Evol. 27(10): 2257–2267.                                                     Math. 28(1): 35–42.
+Flicek P, Amode MR, Barrell D, Beal K, Billis K, Brent S, Carvalho-Silva D,   Smits Sa, Ouverney CC. 2010. jsPhyloSVG: a javascript library for visual-
+     Clapham P, Coates G, Fitzgerald S, et al. 2013. Ensembl 2014. Nucleic        izing interactive and vector-based phylogenetic trees on the web.
+     Acids Res. 42(Database issue): D749–D755.                                    PLoS One 5(8): 6–9.
+Gouy M, Guindon S, Gascuel O. 2010. SeaView version 4: a multiplat-           Tamura K, Stecher G, Peterson D, Filipski A, Kumar S. 2013. MEGA6:
+     form graphical user interface for sequence alignment and phyloge-            molecular evolutionary genetics analysis version 6.0. Mol Biol Evol.
+     netic tree building. Mol Biol Evol. 27(2): 221–224.                          30(12): 2725–2729.
+Han MV, Zmasek CM. 2009. phyloXML: XML for evolutionary biology               Vilella AJ, Severin J, Ureta-Vidal A, Heng L, Durbin R, Birney E. 2009.
+     and comparative genomics. BMC Bioinformatics 10(1):356.                      EnsemblCompara GeneTrees: complete, duplication-aware phyloge-
+Hogeweg P, Hesper B. 1984. The alignment of sets of sequences and the             netic trees in vertebrates. Genome Res. 19(2): 327–335.
+     construction of phyletic trees: an integrated method. J Mol Evol.        Waterhouse AM, Procter JB, Martin DMA, Clamp M, Barton GJ. 2009.
+     20(2): 175–186.                                                              Jalview version 2—a multiple sequence alignment editor and anal-
+Jordan G, Goldman N. 2012. The effects of alignment error and align-              ysis workbench. Bioinformatics 25(9): 1189–1191.
+     ment filtering on the sitewise detection of positive selection. Mol      Yang Z. 2007. PAML 4: phylogenetic analysis by maximum likelihood.
+     Biol Evol. 29(4): 1125–1139.                                                 Mol Biol Evol. 24(8): 1586–1591.
+
+
+
+
+1130
+

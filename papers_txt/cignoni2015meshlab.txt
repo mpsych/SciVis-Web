@@ -1,0 +1,474 @@
+Eurographics Italian Chapter Conference (2008)
+V. Scarano, R. De Chiara, and U. Erra (Editors)
+
+
+
+
+                MeshLab: an Open-Source Mesh Processing Tool
+
+                                P. Cignoni, M. Callieri, M. Corsini, M. Dellepiane, F. Ganovelli, G. Ranzuglia
+
+                                                  Visual Computing Lab, ISTI - CNR, Pisa Italy
+
+
+
+
+        Abstract
+        The paper presents MeshLab, an open source, extensible, mesh processing system that has been developed at
+        the Visual Computing Lab of the ISTI-CNR with the helps of tens of students. We will describe the MeshLab
+        architecture, its main features and design objectives discussing what strategies have been used to support its
+        development. Various examples of the practical uses of MeshLab in research and professional frameworks are
+        reported to show the various capabilities of the presented system.
+        Categories and Subject Descriptors (according to ACM CCS): I.3.3 [Computer Graphics]: Line and Curve Genera-
+        tion
+
+
+
+
+1. Introduction                                                              Another more serious issue of these system is their very
+                                                                           short life expectation: maintenance is neither a requirement
+3D modeling and editing tools are a quite common nowa-
+                                                                           nor a rewarding activity for a researcher, so in most of the
+days, and the software market offers a very vast set of solu-
+                                                                           cases these tools, after a few months, often lie in a rather
+tions for many different purpose, targeting the most variable
+                                                                           abandoned state.
+audience, so the idea of developing yet another tool should
+be evaluated with a bit of care. On the other hand there is                   Another source of research-level F/OSS systems are gov-
+still space for specific, sharp tools that offers functionalities          ernment founded projects where, in some cases, the funding
+rarely available (particularly when they are free). In this pa-            organization encourages the dissemination of the results un-
+per we present MeshLab the 3D mesh processing system that                  der a liberal licensing scheme. In these cases stability and
+we have developed with the help of many students in the last               maintenance are guaranteed for the project duration, but at
+two years and that fits in the peculiar niche of advanced re-              the end of the project the developed software systems face
+search tools useful for a wider audience.                                  again the risk of being abandoned.
+                                                                              For our system we have decided try to reduce our com-
+1.1. Motivations                                                           mitment in the project as much as possible and to leverage
+                                                                           on students workforce for the more practical implementing
+There are many basic motivations for a research institution                duties. This approach as many positive effects: reducing our
+to start a free or open source software(F/OSS) project. Com-               commitment left us more time for classical research activ-
+monly the most frequent reason is to allow the so called re-               ity (usually more rewarding from a professional point of
+producibility of research results; in this case a research group           view), binding the development of the project with a uni-
+releases, under a more or less liberal license, a frozen version           versity course has the consequence of guaranteeing willing
+of the software system behind a given published work; while                work force (the students has to complete a piece of Mesh-
+this kind of approach should be strongly encouraged by jour-               Lab as part of their course jobs) and it forces us to keep the
+nal and conferences because allows to the reviewer to get a                project updated from year to year.
+better assessment of quality of the proposed solutions, from
+a software engineering point of view the release software is
+often far from being a clean and robust software product.
+                                                                           2. MeshLab general architecture
+This is not a negative point of view from a scientific point
+of view, because the purpose of the released software is well              MeshLab was designed as a general 3D mesh processing
+different from the one of being a real product.                            system tool with the following primary objectives in mind:
+
+c The Eurographics Association 2008.
+130                                                     Cignoni et al. / MeshLab
+
+• ease of use. The tool should be designed so that users                       just MeshLab and LaTeX, pdf files with 3D objects
+  without high 3D modeling skills could use it (at least for                   that can be seen with the current free version of Acro-
+  the most basic functionalities)                                              bat Reader.
+• deep of use. The tool should be designed so that advanced            •   Mesh Cleaning Filters:
+  users can tweak and extend it by adding functionality and                – removal of duplicated, unreferenced vertices, null
+  or by modifying all the involved parameters.                                 faces, small isolated components
+• single mesh processing oriented. The system should try                   – coherent normal unification and flipping
+  to stay focused on mesh processing instead of mesh edit-                 – erasing of non manifold faces
+  ing and mesh design where a number of fierce competi-                    – automatic filling of holes
+  tors already crowd the software arena (notably blender,              •   Remeshing filters:
+  3D Max, Maya, and many others).                                          – High quality edge collapse simplification (even with
+• Efficiency. 3D scanning meshes can easily be composed                        texture coords preservation)
+  by millions of primitives, so the tool should be able to                 – Ball Pivoting surface reconstruction
+  manage them.                                                             – Subdivision surfaces (loop and butterfly)
+• Sustainability. The project should be able to grow and                   – Feature preserving smoothing and fairing filters
+  self sustain itself for at least some years.                         •   Various Colorization/Inspection filters
+                                                                           – Gaussian and mean curvature
+   As a result MeshLab presents itself a mesh viewer applica-
+                                                                           – Border edges, geodesic distance, from borders
+tion, where a 3D object, stored in a variety of formats can be
+                                                                           – Non two-manifold edges and vertices
+loaded and interactively inspected in a easy way, by simply
+                                                                           – Self intersecting faces
+dragging and clicking on the mesh itself. MeshLab supports
+                                                                           – Ambient Occlusion. An ambient occlusion field can be
+a ever growing variety of 3D formats (all the most commons
+                                                                               computed and stored per vertex
+format are supported) to accommodate the broadest set of
+users. Once loaded a mesh the user can work on it by mean              •   Measuring tool. You can take linear measures between
+of a large set of direct parametric filters, that performs unat-           points of the displayed meshes
+tended automatic task like smoothing, re-meshing or sim-               •   Slicing tool. A new tool that allows to export planar sec-
+plifying, or by mean of interactive tools. Figure 1 shows                  tions of a mesh in SVG format
+an example of an interactive filter when the user drag the             •   3D Scanning tools
+                                                                           – Alignment: ICP based range map registration tool, for
+mouse over the mesh a local smoothing is performed on the
+                                                                               putting meshes into the same reference space.
+touched portion of the mesh in real time; in this case the
+                                                                           – Merging of multiple meshes the Poisson surface recon-
+result is that the user is washing out some features of the
+                                                                               struction source code
+object. No classical design-oriented features are provided,
+                                                                       •   OpenGL Shader based rendering
+structured editing of complex scene graphs is not supported
+                                                                       •   Large rendering. Images up to 16k x 16k pixels can be
+by design. Multiple meshes can be loaded together and pro-
+                                                                           created for high quality poster printing
+cessed separately or together following a flat approach based
+on layers. This approach is, in some sense, a bit similar to the
+classical raster processing tools that focus on the processing         2.1. MeshLab Development
+of a bitmap and their "global" composition rather focusing             One of the MeshLab ambitious goals was to create an open
+on the pure painting operations.                                       source application that is backed up by a sustainable devel-
+   The mesh processing functionalities that MeshLab cur-               opment model. As previously discussed a common prob-
+rently provide are many and a short, incomplete, high level            lem of many open source tool is that either they are small
+list of MeshLab characteristic is presented in the following:          enough to be created and maintained by a small team, or,
+                                                                       if they require a considerable development effort, the devel-
+• Interactive selection and deletion of portion of the mesh.           oper team need to be economically supported in some way.
+  Even for large models.                                               Many times the projects originates as research projects that
+• Painting interface for selecting, smoothing and coloring             are freed/opened (or simply released under some OSI ap-
+  meshes.                                                              proved license) at the end (or during) the (financially sup-
+• Input/output in many formats:                                        ported) research project. In these case the big incognito is the
+  – import: PLY, STL, OFF, OBJ, 3DS, COLLADA,
+                                                                       long term maintenance of the tool. In some cases the origi-
+      PTX, X3D, VRML
+                                                                       nal developers, mostly for ethical and sentimental reasons,
+  – export: PLY, STL, OFF, OBJ, 3DS, COLLADA, X3D,
+                                                                       continue a low priority maintenance the software correcting
+      VRML, DXF
+                                                                       small bugs and applying minor modifications, but great im-
+  – Point Clouds support. 3D files that are composed only
+                                                                       provements are difficult to carry on. A direct consequence of
+      by points are well supported in PLY and OBJ format.
+                                                                       this situation is that many many interesting projects lie in a
+  – U3D support; MeshLab is the first open source tool
+                                                                       rather abandoned state.
+      to provide direct conversion of 3D meshes into the
+      U3D format. with this format users can create, with                  While we could base the development of the system on a
+
+                                                                                                           c The Eurographics Association 2008.
+                                                     Cignoni et al. / MeshLab                                                 131
+
+                                                                    should be included in the core of the system. And this can
+                                                                    cause the some unpredictable delays in the development of
+                                                                    some (possibly very important) features.
+                                                                       As a result MeshLab started out in the autumn of 2005 and
+                                                                    most of the 60k lines of code composing its core, have been
+                                                                    written by willing students as part of their course work; each
+                                                                    year students are adding new and new features to the system
+                                                                    and they are actually making it to grow at a stead rate. The
+                                                                    long list of many contributors to the MeshLab base code is
+                                                                    well shown in the home page of the system.
+
+
+                                                                    3. MeshLab and Arc3D web service
+                                                                    As an example of the capabilities of MeshLab we briefly
+Figure 1: A typical snapshot of MeshLab in action: the mesh         report how MeshLab covered a critical role in a publicly ac-
+under processing is interactively displayed and the user can        cessible framework for the 3d reconstruction from sequence
+work on it by mean of a large set of unattended parametric          of photos. Two partners of the Epoch Network of Excel-
+filters, or by mean of interactive tools, like the one shown        lence [Epo06], the ESAT-PSI lab of K.U.Leuven (Belgium)
+in the above image, where the user is smoothing out some            and the Visual Computing Lab of CNR-ISTI (Italy) have set
+features of the object with some simple mouse strokes.              up a low-cost 3D reconstruction pipeline to be used in the
+                                                                    cultural heritage field. The idea of the designed system is
+                                                                    that only a digital photocamera, a pc, and an Internet con-
+                                                                    nection are necessary for a user to reconstruct scenes in 3D.
+large stable C++ library for mesh processing task [The04],
+                                                                    The central part of this approach is a web accessible service,
+the whole task of building a consistent interface to present
+                                                                    called Arc3D that allows to reconstruct raw 3D data directly
+the library functionalities to the user (and add new missing
+                                                                    from photo sequences, whose results are then processed by
+pieces) was considerable.
+                                                                    MeshLab into clean usable 3D models.
+   Very large projects that can afford the support of a large
+                                                                       A more detailed description of the complex inner working
+community can rely on the loose sustain of many individ-
+                                                                    of this system, and how it magically succeed to reconstruct
+uals, but large communities are difficult to be constructed.
+                                                                    the basic 3D data from simple sequences of photos, can be
+We decided for the above reasons for a very modular archi-
+                                                                    found in [VVG05]; in this section we mostly describe the
+tecture and to subdivide the whole system into as small and
+                                                                    second part of the whole pipeline the one that brings to raw
+as independent as possible pieces. These final pieces were
+                                                                    reconstructed data to 3D objects. For accessing to the ser-
+small enough to be assigned, as course tasks, to students of
+                                                                    vice, downloading the uploading software add trying the re-
+FGT a Computer Graphics course at the Computer Science
+                                                                    construction service visit [Arc07].
+Faculty of the University of Pisa.
+   From a practitioner point of view, MeshLab is assembled
+                                                                    3.1. MeshLab processing of Arc3D data
+by a central skeleton framework with almost no capability
+and a large set of independent plugins that implement all the       The output of the Arc3D web service is constituted by a set
+functionalities of meshlab, from loading the many different         of range maps with texture and a per-pixel quality measure
+file formats, to simple filtering like cleaning and smoothing       that denotes the number of found matches among all the
+algorithms to complex interactive tools that directly act over      images. For each range map all the intrinsic and extrinsic
+the mesh under the control of the user like the painting tools      camera parameter are available, that makes easy to build, for
+or the alignment subsystem.                                         each range map a simple point clouds with the points placed
+                                                                    in the right spatial position.
+   The idea proved successful, motivating the students much
+more than classical ’mock-up’ projects usually faced during            Like all the data coming from digital acquisition devices
+courses, moreover the fact that their code would have been          they are affected in some measure by various kind of noise
+actually used in a real project used by real people (we usu-        and errors. Knowing the kind of issues that are in the ac-
+ally show to the students people around the world that dis-         quired data can help to remove or at least reduce them.
+cusses MeshLab bugs and workaround) stimulated them to
+                                                                       MeshLab provide a specific tool for importing the data
+take their task with greater serious attention.
+                                                                    produced by the Arc3D service. The tool is integrated in-
+   On the other hand not all the students are equal, and for        side meshlab as an input filter, when the author try to open
+tasks that where assigned to low scoring students, the results      a ".v3d" file created from the Arc3D the interface shown in
+are pieces of code that not always was decided that they            Figure 2 is displayed to the user. All the images used for the
+
+c The Eurographics Association 2008.
+132                                                    Cignoni et al. / MeshLab
+
+                                                                      the error is more or less uniform along all the directions.
+                                                                      Moreover the subsampling process is done
+
+                                                                      3.3. Outlier management
+                                                                      From a practical point of view it is convenient to consider
+                                                                      also procedures for the management of outliers. For a vari-
+                                                                      ety of reasons (wrong matching, non correct lighting setup,
+                                                                      difficult surface reflectance properties) some of the acquired
+                                                                      points can represent ghost surfaces that do not belong at all
+                                                                      to the original surface. Luckily enough these points are usu-
+                                                                      ally rather isolated, or in other words they do forms small
+                                                                      floating pieces far form the main surface. MeshLab provides
+                                                                      a couple of automatic filters that allows to cope with these
+                                                                      issues, these filters removes the all the small isolated con-
+Figure 2: The MeshLab interface of the importer for photo-            nected components that are smaller than a chosen size ex-
+reconstrcuted data from the Arc3D service. A synthetic color          pressed either spatially or in terms of primitives compos-
+map depicting the quality of each range map is shown for              ing the component. Figure 3 shows an example of the fil-
+each reconstructed photo. A number of option allow to fine            ters that automatically removes the small isolated pieces that
+tune the processing of the chosen range maps.                         float around each single range map. The same range maps is
+                                                                      shown before (left) and after (right) the processing.
+
+                                                                      3.4. Noise management
+reconstruction process are shown on the right with a color
+coded measure of the quality of the reconstruction process.           Image based acquisition methods suffers of noise problems
+The user can select some of the images (usually the best ones         that are in some way the opposite of the one that happens
+and /or the ones that cover in the better way the targeted ob-        in traditional active scanning technologies. In fact the most
+ject) and the 3D data generated from the Arc3D is used to             difficult surfaces for passive techniques are the ones that are
+build a set of range maps ready to be utterly cleaned inside          very flat, uniform and smooth. where the absence of promi-
+MeshLab and then integrated in a single clean object. The             nent visible distinctive features, make difficult any match-
+user can also paint individual masks over the image for dis-          ing procedure. The direct consequence of this behavior is
+carding portions of the images. A number of parameters are            that flat smooth surfaces can be affected by a considerable
+present in the left side to carefully drive the process of con-       amount of noise. On the other hand it is possible to partially
+verting the raw 3D data into clean high quality range maps.           cure this problems by analyzing the original images used for
+Once the range maps have been imported a set of different             the reconstruction process. In fact by detecting the portions
+operations have to be performed on them (cleaning, merg-              of the image that do not posses enough features and marking
+ing, aligning) in order to obtain a nice, ready to be used 3D         them it is possible to apply them in a latter stage a heavier
+model. In the next paragraphs we discuss some aspects of              smoothing pass.
+these processing steps
+                                                                         Moreover sometimes, typically when the photos are not
+                                                                      taken in the perfect setting, the boundaries of high jumps
+3.2. Weighted averaging and depth aware triangulation                 region can present larger errors with eventually large and
+                                                                      coherent outliers. Also these situations can be detected and
+First of all, some subsampling steps are usually necessary,           corrected almost automatically by searching the boundary
+current digital cameras has very resolute CCD an can eas-             regions and applying a erosion-dialation approach that re-
+ily generate tens of megapixel images. While this kind of             moves one or more strip of pixels from the dangerous jump
+definition is useful from the reconstruction point of view be-        zones.
+cause it helps the robustness of the feature matching parts (at
+                                                                         Once you have removed all the outliers you have to choose
+high definition even flat surfaces have some kind of texture),
+                                                                      if you should fill all the created holes and interpolate in some
+when converting these maps to 3D meshes this resolution is
+                                                                      way the original mesh, This can be done inside meshlab, that
+often not very useful. Infact the spatial accuracy of the re-
+                                                                      provides some hole-filling filters that can close all the small
+constructed data is not uniform along the axis: along the xy
+                                                                      holes under a given size. Thy applies a variant of the algo-
+image plane there is much more precision than along z depth
+                                                                      rithm presented in [Lie03], with various different heuristics
+direction. When you will integrate the various meshes the fi-
+                                                                      for choosing the
+nal quality will be affected by an error dependent from the
+maximal erorr of the single range-[maps/meshes so it is a                Figure 4 shows the combined application of the tech-
+good suggestion to subsample the images at the point that             niques here described, large outliers and dangerous borders
+
+                                                                                                          c The Eurographics Association 2008.
+                                                     Cignoni et al. / MeshLab                                                 133
+
+
+
+
+Figure 3: MeshLab provides filters that automatically removes the small isolated pieces that float around each single range
+map. The same range maps is shown before (left) and after (right) the processing.
+
+
+
+
+Figure 4: The figure shows the combined application of erosion dilation approach for cleaning out the depth jumps outliers
+that sometimes appears. A set of small holes, that remains from outliers removal, is covered automatically by robust holefilling
+technique.
+
+
+
+(look above and around the bull statue) are removed. A set          step but range map from each sequence get out already well
+of small holes (all over the wall), that remains from previous      aligned from the Arc3D service. The aligning issue arise
+outliers removal, is covered automatically too.                     when you wont to join two or more different sequences. In
+                                                                    this case you have to align them together.
+4. MeshLab as a general range map processing tool                      The Alignment process adopts a classical approach based
+                                                                    on first, a pairwise local and then a global alignment [LR01,
+One of the interesting characteristic of MeshLab is the
+                                                                    Pul99]. The initial placement placement of each mesh is
+presence of all the basic pieces of the 3D scanning soft-
+                                                                    driven by the user and require the selection of four or more
+ware pipeline. Infact beside the rangemap cleaning tools de-
+                                                                    points on both the meshes. This initial step is followed by
+scribed in the previous sections, that were tailored for the
+                                                                    an automatic process that fine tunes the whole alignment
+noisy meshes output from multistereo reconstruction tech-
+                                                                    . The alignment code used in meshlab is a derivation of
+niques, but works quite well for any kind of range maps,
+                                                                    the one used in Scanning Tools of the Visual Computing
+inside meshlab there are tools for the subsequent required
+                                                                    Lab [CCG∗ 03], that has been used in a number of projects.
+alignment and merging processing steps.
+
+
+4.1. Aligning                                                       4.2. Merging
+The aligning process it the step in which you take a set of         The individual range maps, after having been carefully
+different range maps of a same object, each one in its onw          cleaned and prepared, are ready to be integrated and fused
+reference space and you rototranslate them in a single con-         in a single coherent model. All the range maps coming from
+sistently aligned space. Usually in the traditional scanning        a same sequence are already well aligned, so the next step is
+pipeline [BR00], the aligning step, come before the merging,        the one of to apply a surface reconstruction filter that fuses
+
+c The Eurographics Association 2008.
+134                                                    Cignoni et al. / MeshLab
+
+
+
+
+Figure 5: Three samples of the meshes that can be obtained by using the Arc3D web service reconstruction and the MeshLab
+system. On the Left, a textured mesh representing one of the two lions in the Loggia della Signoria in Florence. On the center
+an untextured statue from the Portalada in Ripoll, a large portal in Ripoll, near Barcelona, on the right a reconstruction of the
+Paris arc du triomphe, untextured for better evaluation of the geometric quality of the geometric shape. The ambient occlusion
+lighting used to better enhance the shape features was computed with MeshLab.
+
+
+
+
+Figure 6: A snapshot of the MeshLab Aligning tool, that allow to register different range maps, or in the case of data coming
+from the Arc3D web service, portions of a same object that have been reconstructed from different photo sequences.
+
+
+
+all the meshes in a single new mesh integrating the various           more safe approach. Figure 5 shows three samples of the
+parts together in a seamless way. MeshLab offers three dif-           reconstruction process. On the Left, a textured mesh rep-
+ferent surface reconstruction algorithms. The first one is a          resenting one of the two lions in the Loggia della Signoria
+interpolatory triangulation filter based on the Ball-Pivoting         in Florence, the color was integrated from the many photos
+algorithm [BMR∗ 99], that tries to build a surface connect-           directly during the reconstruction. On the center an untex-
+ing all the input points. This kind of algorithms do not work         tured statue from the Portalada in Ripoll, a large portal in
+very well in presence of very noisy input data like the one           Ripoll, near Barcelona reconstructed using the Poisson sur-
+coming from the Arc3D service. The other two are implicit             face reconstruction algorithm; a watertight surface was ro-
+surface approaches that uses the input data to build a im-            bustly constructed, even if the input data contained only in-
+plicit representation and then polygonalize it using marching         formation on the front of the statue, building an interpolating
+cubes [LC87] variants. One is based on the Poisson surface            surface even for the back of the model. On the right a recon-
+reconstruction algorithm [KBH06], and it uses part of the             struction of the Paris arc du triomphe, done again with the
+original code provided by the authors themselves, and the             plymc apprach untextured for better evaluation of the geo-
+second one, called plymc, developed at the Visual Comput-             metric quality of the geometric shape. The ambient occlu-
+ing Lab and described in [CCG∗ 03], is an extension of the            sion shading that is used to better enhance the shape features
+approach of [CL96]. The Poisson based surface reconstruc-             was computed with MeshLab.
+tion algorithm has the very nice characteristic that always
+build a watertight hole-free surface filling with an interpola-
+tory surface all the missing parts, but currently do not sup-         5. MeshLab as an inspection, verification, and
+port the color preservation. On the other hand the plymc ap-             assessment system
+proach preserves the color during the processing but leaves           Last but not least we would remember the many visualiza-
+the unsampled areas as holes in the mesh; from a Cultural             tion, inspection and healing features of MeshLab. One of the
+Heritage point of view this behavior could be considered a            common problem in managing real world 3d meshes is that
+
+                                                                                                         c The Eurographics Association 2008.
+                                                     Cignoni et al. / MeshLab                                                135
+
+common models are often plagued by many different issues,
+and inconsistencies both topological and geometrical. Typi-
+cal example of topological issues are the presence of vertices
+that are not referenced, or duplicated among faces, incon-
+sistency in the face orientation, edge and vertex non mani-
+foldness. For all of them meshlab provide tools for detect-
+ing and in many cases removing them. Similarly there are
+many geometrical issues that can arise frequently, like the
+plain presence of self-intersecting faces, ghost geometry in-
+side the object, small floating pieces around the mesh, badly
+shaped triangles, fold-over and other high curvature config-
+urations. Again MeshLab provide tools for detecting these
+situations. In figure 8 two example of the visualization tools
+are shown. On the left the mesh is transparently rendered
+                                                                    Figure 7: Smoothing filters can help the process of noise re-
+with a color depending on the surface curvature; rendering
+                                                                    moval. Small bumps due to noise from the acquisition device
+the mesh with an x-ray effect allow to easily detect the pres-
+                                                                    can be automatically reduced.
+ence of extraneous geometry inside the object itself. On the
+right, self intersecting face are automatically detected and
+colored in red.
+   An interesting unique feature of MeshLab is that it can             on Visualization and Computer Graphics 5, 4 (Oct.-Dec.
+export meshes in the U3D format. Meshes in this format                 1999), 349–359.
+can easily included in PDF files using pdfLaTeX and the             [BR00] B ERNARDINI F., RUSHMEIER H. E.: 3D Model
+movie15 latex package. Acrobat Reader supports the inter-             Acquisition. In Eurographics 2000, State of the Art Re-
+active viewing of these objects since version 7; click on the         ports Proceedings (Aug. 24–25 2000), Eurographics As-
+figure 9 to interactively rotate and zoom the Gargoyle. It is         sociation, pp. 41–62.
+worth noting that the u3d format is quite compact: the u3d          [CCG∗ 03] C ALLIERI M., C IGNONI P., G ANOVELLI F.,
+model of the displayed gargoyle is 130k, less than the png            M ONTANI C., P INGI P., S COPIGNO R.: VCLab’s tools
+file used as a placeholder before activating the 3D model or          for 3D range data processing. In VAST 2003 (Bighton,
+for very old pdf browsers that do not support 3D objects.             UK, Nov. 5-7 2003), D. Arnold A. C., Niccolucci F.,
+                                                                      (Eds.), Eurographics, pp. 13–22.
+6. Conclusions and Future Works                                     [CL96] C URLESS B., L EVOY M.: A volumetric method
+The system has proved a success over any initial prediction.          for building complex models from range images. In
+The last version has been downloaded 10000 times in the               Comp. Graph. Proc., Annual Conf. Series (SIGGRAPH
+first three weeks, there are thousands of users from all the          96) (1996), ACM Press, pp. 303–312.
+world with at least 600 users that have used it for opening         [Epo06] E POCH:    The European Network of Excel-
+more than one hundred of meshes, Users come from hun-                 lence on ICT Applications to Cultural Heritage (IST-
+dreds of universities and renowned commercial firms that              2002-507382). More info on: http://www.epoch-
+have found MeshLab useful in contexts different from the              net.org/, 2006.
+original one of Cultural Heritages.
+                                                                    [KBH06] K AZHDAN M., B OLITHO M., H OPPE H.: Pois-
+Acknowledgments We acknowledge the financial sup-                     son surface reconstruction. Proceedings of the fourth Eu-
+port of “EPOCH" (EU Network of Excellence, IST-2002-                  rographics symposium on Geometry processing (2006),
+507382). A warm thank you to the many developers and                  61–70.
+code contributors that have helped to build the current Mesh-
+                                                                    [LC87] L ORENSEN W. E., C LINE H. E.: Marching cubes:
+Lab system, to the Arc3D team, and, particularly, to M.
+                                                                      A high resolution 3D surface construction algorithm. In
+Kazhdan and M. Bolitho for the Poisson surface reconstruc-
+                                                                      ACM Computer Graphics (SIGGRAPH 87 Proceedings)
+tion code.
+                                                                      (1987), vol. 21, pp. 163–170.
+                                                                    [Lie03] L IEPA P.: Filling holes in meshes. In EG/ACM
+References
+                                                                      Symposium on Geometry Processing (SGP) (June 2003),
+[Arc07] Arc3d: Automatic reconstruction conduit. More                 Eurographics, pp. 200–206.
+  info on: http://www.arc3d.be/, 2007.                              [LR01] L EVOY M., RUSINKIEWICZ S.: Efficient variants
+[BMR∗ 99] B ERNARDINI F., M ITTLEMAN J., RUSH -                       of the ICP algorithm. In Third Int. Conf. on 3D Digital
+  MEIER H., S ILVA C., TAUBIN G.: The ball-pivoting al-               Imaging and Modeling (3DIM 2001) (May 28th - June 1st
+  gorithm for surface reconstruction. IEEE Transactions               2001), IEEE Comp. Soc., pp. 145–152.
+
+c The Eurographics Association 2008.
+136                                                 Cignoni et al. / MeshLab
+
+
+
+
+Figure 8: Some of the many inspection tools inside meshlab. On the left the mesh is transparently rendered with a color
+depending on the surface curvature; on the right, self intersecting face are automatically detected.
+
+
+
+
+                                                       (gargoyle.u3d)
+
+
+
+
+Figure 9: MeshLab can export meshes in the U3D format. Meshes in this format can easily included in PDF files using
+pdfLaTeX. Acrobat Reader supports the interactive viewing of these objects; click on the above picture to interactively rotate
+and zoom the Gargoyle.
+
+
+
+[Pul99] P ULLI K.:      Multiview registration for large              2004.
+  datasets. In Proc 2nd Int.l Conf. on 3D Digital Imaging          [VVG05] V ERGAUWEN M., VAN G OOL L.: Web-based
+  and Modeling (1999), IEEE, pp. 160–168.                            3D Reconstruction Service. Machine Vision and Applica-
+                                                                     tions 17, 6 (2005), 411–426.
+[The04] T HE V ISUAL C OMPUTING L AB - ISTI - CNR:
+  Visual computing library: a gpl c++ library for mesh pro-
+  cessing. More info on: http://vcg.isti.cnr.it/,
+
+                                                                                                   c The Eurographics Association 2008.
+

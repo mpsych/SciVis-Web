@@ -1,0 +1,628 @@
+                                                                          Graphical Models 88 (2016) 57–65
+
+
+
+                                                                 Contents lists available at ScienceDirect
+
+
+                                                                          Graphical Models
+                                                         journal homepage: www.elsevier.com/locate/gmod
+
+
+
+
+GPU-based remote visualization of dynamic molecular
+data on the web
+Finian Mwalongo∗, Michael Krone, Michael Becher, Guido Reina, Thomas Ertl
+Visualization Research Center (VISUS), University of Stuttgart, Germany
+
+
+
+
+a r t i c l e         i n f o                            a b s t r a c t
+
+Article history:                                         Visualization of dynamic data from molecular dynamics simulations is crucial for understanding the func-
+Received 14 October 2015                                 tioning of molecules. Many existing visualization tools have mainly focused on supporting a single user
+Revised 6 April 2016
+                                                         working on a desktop computer. Technical advancements in browser features increase the potential for
+Accepted 1 May 2016
+                                                         the development of web-based collaborative visualization tools. Although web-based molecular viewers
+Available online 2 May 2016
+                                                         already exist, their support for dynamic molecular data at interactive rates is lacking. To address this gap,
+Keywords:                                                we present an eﬃcient web application for visualization of dynamic molecular data using WebGL that
+Remote visualization                                     exploits HTML5 technologies like WebSockets and Web Workers. GPU-based ray casting techniques offer
+Dynamic data visualization                               fast rendering times and produce images with higher visual quality. Eﬃcient data encoding techniques
+Web-based visualization                                  are used to minimize the data transferred to the client; therefore saving bandwidth and improving the
+Molecular data visualization                             transfer times. We demonstrate the feasibility of visualizing large dynamic molecular data with more than
+WebGL
+                                                         one million atoms in the browser at interactive frame rates. Our approach allows scientists at arbitrary
+GPU-based ray casting
+                                                         locations to concurrently visually analyze the same data. The interactive parameterization of the visual-
+                                                         ization can be shared among multiple clients, providing the basis for collaborative research. Moreover,
+                                                         the application can be employed for remote simulation monitoring on mobile devices.
+                                                                                                                             © 2016 Elsevier Inc. All rights reserved.
+
+
+
+
+1. Introduction                                                                                 Browsers had no capabilities to access the local graphics hard-
+                                                                                            ware directly, and process binary data. Modern browsers now sup-
+    Dynamic molecular data are usually produced by molecular                                port GPU-accelerated rendering using WebGL [1], and native binary
+simulation programs in order to gain insights into the molec-                               data processing through TypedArrays [2].
+ular mechanisms on the level of individual atoms. These time-                                   All the same, loading and processing large data in the browser
+dependent data sets contain at least the position of every atom                             using JavaScript cannot offer performance comparable to native
+for each time step. Such so-called trajectories are typically written                       client software. Additionally, the oﬄine workﬂow introduces sig-
+to a ﬁle, and after the simulation completes, a visualization appli-                        niﬁcant lag between running the simulation and analyzing its re-
+cation can be used to load the data for analysis. This oﬄine visu-                          sults. A desirable option is thus streaming the data from the sim-
+alization workﬂow, which relies on clusters for the simulation and                          ulation environment or other powerful centralized infrastructure
+desktop machines for visualization, is the most common nowadays,                            and visualizing it in the browser. Interactive visualization of dy-
+along with the respective implications for maintaining a working                            namic data in a web browser requires fast rendering methods, ef-
+environment on both ends. Browser-based applications, in contrast,                          ﬁcient usage of bandwidth, and low-latency networking.
+have the beneﬁt of not requiring a client-side installation and offer                           Web-based applications are of special interest in the context of
+centralized deployment and maintenance, ensuring a common en-                               what is traditionally termed thin clients, that is, mobile devices.
+vironment for all users. Until recently, mapping the oﬄine work-                            These devices still offer much less powerful hardware than clas-
+ﬂow to a browser-based application, using platform-independent                              sical desktop workstations; however, their steadily increasing fea-
+built-in technologies like JavaScript, was unfeasible.                                      ture level is starting to make this categorization questionable. Like-
+                                                                                            wise, the capabilities of browsers have improved, but there is still
+                                                                                            a lack of tools leveraging these capabilities for visualizing dynamic
+  ∗
+    Corresponding author.                                                                   molecular data.
+    E-mail addresses: ﬁnian.mwalongo@visus.uni-stuttgart.de (F. Mwalongo),                      We present a web-based application prototype that exploits the
+michael.krone@visus.uni-stuttgart.de (M. Krone), becherml@studi.informatik.uni-             latest technologies and evaluates their performance to understand
+stuttgart.de  (M.     Becher),    guido.reina@visus.uni-stuttgart.de (G. Reina),
+                                                                                            their applicability to support interactive visualization of dynamic
+thomas.ertl@vis.uni-stuttgart.de (T. Ertl).
+
+http://dx.doi.org/10.1016/j.gmod.2016.05.001
+1524-0703/© 2016 Elsevier Inc. All rights reserved.
+58                                                         F. Mwalongo et al. / Graphical Models 88 (2016) 57–65
+
+
+
+
+Fig. 1. Different WebGL visualizations of an hemoglobin protein (PDB ID: 4HHB) rendered with our web-based molecular visualization application. From left to right:
+GPU-based sphere ray casting colored by protein subunit; molecular surface mesh colored by temperature factor; postprocessing effects realized by deferred shading (depth-
+dependent silhouettes, ﬂat shading, and screen space ambient occlusion).
+
+
+
+molecular data in the browser. We show the feasibility of visu-                         loaded to the GPU and produces high quality images. This is the ra-
+alizing dynamic data with hundreds of thousands of atoms both                           tionale for us choosing GPU-based ray casting as our core method
+in desktop browsers and mobile ones using modern web tech-                              for visualizing large dynamic data.
+nologies. Our web application features different visualization styles                       Desktop tools like PyMol [14] or VMD [15] provide means
+for molecular data and high-quality rendering methods as well as                        for converting time-dependent data sets to movies, which can
+a basic HTML-based user interface. Fig. 1 shows three exemplary                         be embedded in web pages as videos, losing all interactivity.
+renderings for a hemoglobin molecule obtained from our web ap-                          Image streaming techniques, where the client sends rendering
+plication. Our implementation is a client-server application which                      parameters to the server that renders the image and streams it
+can also be deployed to a cloud platform since the server side has                      as a video, suffer from poor interactivity due to encoding times,
+no speciﬁc hardware requirements. The client uses only built-in                         transfer times, and network latency issues. Given the possibility of
+browser technology, which is available on a wide range of plat-                         GPU-accelerated rendering on both desktop computers and mobile
+forms. This paper is an extended version of our previous work pre-                      devices in the browser through JavaScript and WebGL, client-
+sented at the Web3D conference [3] and introduces data quantiza-                        based rendering is the most promising approach for platform-
+tion. This reduces the amount of data that has to be transferred                        independent interactive visualization of dynamic molecular
+between server and client by about 50%, resulting in lower trans-                       data.
+fer times, which is crucial for dynamic data.                                               To ensure interactive frame rates, it is beneﬁcial to oﬄoad de-
+                                                                                        manding preprocessing steps to a server. As long as interactivity is
+2. Related work                                                                         ensured, the user can freely navigate and select regions of inter-
+                                                                                        est. For non-interactive graphics, a more involved determination of
+    Web-based visualization of dynamic molecular data sets is an                        optimal viewing points can be beneﬁcial (see, e.g., [16]).
+area that has not yet been explored thoroughly. Few web-based
+tools support visualization of molecular trajectories. Jmol [4] is a                    3. Application overview
+web-based molecular visualization implemented as a Java applet.
+It can play animations and create movies from a number of sup-                              We present a web application that mainly visualizes dynamic
+ported trajectory ﬁles. Jmol requires the Java browser plugin, which                    molecular data. Its current rendering capabilities include arbitrary
+suffers from security issues. This is the reason why some browsers                      triangulated objects, like smooth molecular surfaces or secondary
+disable running applets by default. The Java plugin needs regular                       structure representations, as well as GPU-based ray casting of
+maintenance on every machine it is installed on (e.g., installing se-                   implicit quadratic glyphs. That is, we can depict all commonly
+curity updates). Consequently, a Java-based applet effectively can-                     used molecular representations (as well as arbitrary triangulated
+not be considered installation-free and low-maintenance from the                        objects). In addition to local lighting, the user can also choose
+client perspective. JSmol [5] is a JavaScript re-implementation of                      an optional postprocessing pass to add effects like toon shad-
+Jmol that aims at eliminating these problems. Its performance cur-                      ing and screen-space ambient occlusion for improved structure
+rently lags behind that of the Java-based counterpart and its use is                    perception.
+currently recommended only for molecules with less than 10,0 0 0                            Our web application implements the client-server architecture
+atoms [6]. Furthermore, its ability to load large molecular trajecto-                   and logic shown in Fig. 2. The interaction is started by the browser
+ries is limited, since all frames are loaded into main memory.                          sending a request URI to the server. The server parses the request
+    Recent web-based molecular visualization tools that leverage                        and sends a set of HTML ﬁles and JavaScript code as well as the
+WebGL and other modern browser standards have been presented,                           WebGL GLSL shaders required that constitute the client-side ap-
+for example, NGL Viewer [7], 3DMol.js [8], PV [9], iview [10],                          plication (i.e., user interface and visualization). Additional requests
+bioWeb3D [11], and SpiderMol [12]. However, none of them pro-                           can encode arbitrary parameters in the URI, like the speciﬁc data
+vides modern rendering methods and capabilities to visualize dy-                        set to be visualized and the visualization options. These parame-
+namic data. Their implementations use polygon-based rendering                           ters can also be manipulated through the HTML user interface (see
+that limits not only the quality of the rendered images but also                        Fig. 7).
+makes it diﬃcult to scale the rendering performance of these tools                          The client-side code will establish a WebSocket [17] connection
+to large numbers of atoms. Moreover, using polygon-based render-                        to the server, which is used to request and obtain the raw visual-
+ing techniques for large dynamic molecular data requires a large                        ization data. The server is implemented as part of a visualization
+amount of triangle data to be uploaded to the GPU whenever                              framework that loads the requested data, extracts the values nec-
+the data changes, thus increasing bandwidth requirements for net-                       essary for rendering, and transmits them through the already es-
+work and CPU-GPU transfer as well as increasing memory foot-                            tablished WebSocket connection. The goal is to encode the data so
+print. On the contrary, GPU-based ray casting as introduced by                          that the client has to execute as few operations as possible to ob-
+Gumhold [13] requires only implicit surface parameters to be up-                        tain a directly renderable representation, while keeping the size of
+                                                            F. Mwalongo et al. / Graphical Models 88 (2016) 57–65                                                       59
+
+
+
+                                                  Client                                                                      Server
+
+                                                                            Request                                                     Parse
+                                                                                                                    Listen
+                                                                              URI                                                      Request
+
+
+                           Display                   Parse                                                       Send
+                                                                             Listen
+                           HTML                    Response                                                    Resources
+
+
+                                                    Open                                                                Open
+                                                  WebSocket                                                           WebSocket              HTTP
+
+
+                                                                            Request                                                    Extract
+                           Render                                                                                   Listen
+                                                                             Data                                                       Data
+
+                                     No            New Data?
+
+                                                      Yes
+
+
+                                                   Complete
+                        Upload Data
+                                                     Data
+                                                                                                                 Send                Create
+                                                                             Listen
+                                                                                                               ByteArray            ByteArray
+                                                 PostMessage
+
+                                                                         Extract Data
+                                                Transferable
+                                                      Object                                                                        WebSocket
+
+Fig. 2. Our application architecture. Thin arrows represent control ﬂow within server or client, respectively. Broad arrows represent data ﬂow between memory spaces
+according to the protocol/interface illustrated by the colored boxes (HTTP, WebSocket, Transferable Object). The entry point for the user is the request URI in the client.
+
+
+the message minimal for fast transfer. The client receives the data,                     by the client in a binary format. This ensures a small memory
+slices and transforms them appropriately, and sends them to the                          footprint of the message and minimal client-side processing be-
+GPU.                                                                                     fore rendering (i.e., no deserialization). The data transfer proto-
+    To avoid client-side congestion by too many messages, the next                       col is speciﬁed as shown in Fig. 4. We use the libwebsockets C li-
+time step of a dynamic data set is always requested explicitly by                        brary [19] in our implementation. This library was chosen because
+the client. That is, after the client has issued draw calls for the                      of its easy integration into our visualization framework, which is
+current data to the GPU, it sends the server a request for new                           written in C++, and its capability to host different services in a sin-
+data. That way, we also ensure that each frame is at least rendered                      gle server using the WebSocket Sub-Protocol feature. Another im-
+once.                                                                                    portant feature of the library is that it includes functionality for
+                                                                                         serving HTTP requests, which is required for the initial communi-
+4. Implementation details                                                                cation that provides HTML, scripts, and shaders to the client.
+                                                                                            The client side comprises data fetching and rendering. The
+    This section describes the implementation of the Server and                          data fetching runs in a separate thread provided by a Web
+Client. This includes the network transfer, user interaction, and the                    Worker [20] and the rendering runs in the main JavaScript thread.
+employed rendering methods.                                                              This separation is important for performance reasons, given that
+                                                                                         JavaScript is generally single-threaded. Therefore, to allow the user
+4.1. Server and client Implementation                                                    interface to remain responsive, all long-running code paths need to
+                                                                                         run outside the main thread. Network communication is an exam-
+   As discussed in Section 3, our application implements a client-                       ple for such a long-running path that would stall the main thread
+server architecture (see Fig. 2). The server side is implemented as                      while waiting for transmission to complete. However, Web Work-
+an extension to our existing visualization framework MegaMol [18],                       ers run on a different JavaScript virtual machine and, therefore,
+which offers data management components. The extension mainly                            cannot share memory with the main thread. The communication
+consists of the WebSocket server component.                                              between the main thread and the Web Worker is thus possible
+   After receiving a client request, the WebSocket server parses                         only through message passing via the postMessage() function.
+the request and forwards it to the data management component,                            The Web Worker uses the WebSocket object to communicate with
+which provides the requested data that is then forwarded by the                          the server, and once the data arrives from the server, it is posted
+WebSocket server to the client. To improve the performance, the                          to the main thread for rendering. To avoid performance overhead
+data management components run in the same thread as the Web-                            for copying data between Web Worker and main thread, we take
+Socket responder. Since visualization applications require high in-                      advantage of the Transferable Objects mechanism, which transfers
+teractivity, the rendering stage of the visualization pipeline is im-                    the ownership of objects from sender to receiver. Once the own-
+plemented in the client. The server sends the data to be rendered                        ership is transferred to the receiver, however, the sender has no
+60                                                          F. Mwalongo et al. / Graphical Models 88 (2016) 57–65
+
+
+                                                                                         sponse is still being received. The abstracted sequence of events
+                    Request                                                              that makes up the communication cycle of server and client is de-
+                      URI                                                                picted in Fig. 3.
+                                                                                             The memory layout of the server response, which is transmitted
+                                                      Send                               via the WebSocket connection, is shown in Fig. 4. The data are sent
+                                                    Resources                            to the client as a single large binary byte array, reducing the band-
+                                                      Open                               width requirements and processing overhead in the client. This ar-
+                     Parse                          WebSocket                            ray is read by the client as an ArrayBuffer [2], which can be sliced
+                   Response                                                              and reinterpreted according to the protocol to be directly sent to
+                    Open                                                                 the GPU (see below).
+                  WebSocket                                                                  The server always sends the bounding box of the whole dataset
+                                                             HTTP                        for camera setup. The message always contains the number of con-
+                                                                                         tained spheres, the number of contained vertices, and the triangle
+                                                                                         count, either one of which can be zero. For sphere rendering, the
+                                                                                         server sends atom positions, radii, and colors. The time required to
+                                                                                         send this data over the network is a critical factor for the overall
+                    Request                                                              performance of the application. This holds especially as updated
+                     Data                                                                atom data is sent on a per-frame basis. Therefore we reduce the
+                                                                                         transfer time by simply reducing the overall amount of atom data
+                                                      Send                               to be sent.
+                                                    ByteArray
+                                                                                             Atom positions are usually speciﬁed as 32-bit ﬂoats, requiring
+                                                                                         12 bytes per atom position. Since the positions can be encoded at
+                  Extract Data                                                           a lower precision without loss of image visual quality, the atom
+                                                     WebSocket                           positions are quantized to 16 bits per coordinate, i.e., six bytes
+                                                                                         per atom. This allows us to eﬃciently utilize the bandwidth and
+Fig. 3. Abstracted version of Fig. 2 that depicts the temporal dependencies between      improve transfer times. Quantization is done by ﬁrst normalizing
+the communication components. After establishing the WebSocket connection, the
+                                                                                         the atom positions within the molecule bounding box, then scal-
+application loops indeﬁnitely until the user closes the web page or requests a dif-
+ferent data set.                                                                         ing them to the range of unsigned short integer before ﬁnally
+                                                                                         clamping the values. This introduces a small quantization error.
+                                                                                         The magnitude of the error depends on the size of the bounding
+more access to the objects. In our case, this is not a problem, be-                      box, which is essentially discretized into a three-dimensional grid
+cause the web worker does not need access to the data anymore.                           with 65,5363 cells by the choice of an unsigned short. In the worst
+Using WebSockets in Web Workers is, at the time of writing, sup-                         case, the quantization error equals half of the diagonal of a cell. As
+ported at least starting from Chrome 41 and Firefox 37 beta.                             a concrete example, the papillomavirus has a bounding box length
+                                                                                                                                              .7399
+                                                                                         of 586.7399 Å. This results in a cell length of 586
+                                                                                                                                            65536 Å = 0.00895
+4.2. Client-server interaction and data transfer
+                                                                                         Å and thus a diagonal of 0.012908 Å, which is less than one per-
+                                                                                         cent of the radius of a hydrogen atom (1.4 Å).
+   As mentioned above, Client-Server interaction uses the Web-
+                                                                                             The radii are stored as single precision ﬂoating point values
+Socket protocol for communication. The WebSocket allows full-
+                                                                                         and the color information is reduced to a single byte per chan-
+duplex communication between client and server and transfer the
+                                                                                         nel. Overall, this yields a size of 13 bytes per atom, as compared
+responsibility for closing the connection to the application. Full-
+                                                                                         to 28 bytes when simply using single precision ﬂoating point val-
+duplex communication channels minimize latency by keeping the
+                                                                                         ues for all elements. For triangle rendering, the server has two
+connection active between requests instead of individual connec-
+                                                                                         possibilities: triangles can either be deﬁned only by vertex posi-
+tion setup for every request/response pair as happens with HTTP.
+                                                                                         tions or by vertices plus an index buffer that deﬁnes the triangles
+Moreover, both client and server listen to incoming data all the
+                                                                                         and references the vertices. In the ﬁrst case, the TriangleCount is
+time. Thus, new requests can be posted even while a large re-
+
+
+
+
+Fig. 4. Memory layout for the data buffer sent by the server. Each square represents a block of four bytes (e.g., a ﬂoating point value or an unsigned integer). Half-squares
+represent two bytes (unsigned shorts), quarter-squares a single byte.
+                                                 F. Mwalongo et al. / Graphical Models 88 (2016) 57–65                                                      61
+
+
+set to zero, so three consecutive vertices form a triangle, and the
+effective TriangleCount equals the number of vertices divided by
+three. In the second case, the TriangleCount is explicitly given and,
+multiplied by three, corresponds to the Index Count. That is, three
+vertex indices are stored per triangle in this case. Since in a con-
+tiguous mesh vertices are shared by adjacent triangles, data size
+is reduced because vertices are not duplicated. Both triangle for-
+mats can directly be rendered by WebGL using drawArrays or
+drawElements. Aside from adding additional padding between
+vertices before sending the data to the GPU, no further processing
+is required in JavaScript, as the index data is simply sliced from
+the server response as a Uint32Array sub-array, while the posi-
+tion, color, and normal data are sliced from the server response as
+a Uint8Array sub-array. Both arrays are used as separate buffer
+objects. Similar to the atom data, vertex positions are also quan-
+                                                                              Fig. 5. GPU-based sphere ray casting combined with triangle rendering. The image
+tized to relative coordinates inside the bounding box, while color            shows a ligand (triangle surface) which is interacting with a receptor (spheres).
+precision is reduced to single bytes per channel. Additionally, the
+third component of the normal is omitted and reconstructed from
+the ﬁrst two, reducing vertex data in total from 36 bytes to only             back in the vertex shader in order to avoid expensive computa-
+17 bytes.                                                                     tion in JavaScript and also save CPU-GPU bandwidth during data
+    Since the simulation data is streamed for every time step sep-            upload.
+arately (compared to downloading the entire trajectory ﬁle), band-                The client application generates the indices for the trian-
+width is used eﬃciently. This option is also useful for the cloud             gle proxies for the entire molecule only once and sends them
+computing paradigm where large data sets are stored in the cloud,             to the GPU. Note that even for dynamic data the indices are
+and clients running on mobile devices with limited storage can re-            constant as the number of atoms in the data sets does not
+quest only minimum data for rendering.                                        change. Rendering is performed with a single draw call for
+                                                                              the whole molecule (drawElements()). WebGL core speciﬁcation
+4.3. WebGL GPU ray casting                                                    supports only UNSIGNED_BYTE and UNSIGNED_SHORT for the
+                                                                              type parameter of the drawElements() command. To be able
+    GPU-based ray casting is a technique that renders objects from            to draw molecules with large number of atoms, we use the
+their implicit mathematical description by performing ray-object              OES_element_index_uint extension [21] that supports the
+intersection in the fragment shader [13]. We can thus provide the             use of UNSIGNED_INT and is available for both desktop and mo-
+established space-ﬁlling or calotte model, where each atom is rep-            bile browsers.
+resented by a sphere. The radius of the sphere corresponds to                     In the vertex shader, the proxy is transformed such that it al-
+the van der Waals radius of the atom’s element. To implement                  ways faces the camera and covers the whole sphere. The transfor-
+this technique, a proxy geometry—usually a quad—that covers the               mations are done in the camera space coordinate system. In the
+sphere extents in image space has to be rendered. Only the param-             fragment shader, a ray from the camera position through the cen-
+eters deﬁning the implicit surface (i.e., center and radius) are sent         ter of the fragment is generated and a ray-sphere intersection is
+to the GPU. The surface is generated by ray-surface intersection in           performed. The hit point closer to the camera is shaded using lo-
+the fragment shader. For desktop software, this is considered the             cal lighting [22] and the resulting color assigned to that particular
+state-of-the-art technique and commonly used by molecular visu-               fragment. If the ray misses the surface, the fragment is discarded.
+alization tools.                                                              The correct intersection with other spheres requires writing a con-
+    Our implementation uses two triangles to render the above-                sistent depth value to the depth buffer. Since this is not sup-
+mentioned proxy geometry. The triangles form a quad with extents              ported by the core functionality of WebGL 1.0, it requires the use
+based on the respective atom radius. The vertex data for all quads            of the EXT_frag_depth extension. To get a perspective-correct
+is stored in a single vertex buffer.                                          value for the depth and additionally allow depth-correct intersec-
+    Each vertex is comprised of the atom position, an offset value            tion with triangle data, the z component of the hit point is divided
+in x and y direction and the atom color. The offset values are de-            by its w value and written to the gl_FragDepthEXT variable.
+rived from the atom radius and are used to build ﬁtting quads                 Fig. 5 shows a combination of raycast spheres and a triangle mesh.
+around the atom position. Due to the non-uniform data layout of                   Rendering two triangles for each atom introduces some mem-
+the raw input data, additional care is needed for creating the ver-           ory overhead. As an alternative, a single image-space-aligned
+tex buffer. Using a DataView object to conveniently access the                point could have been used as proxy geometry. WebGL renders
+different data types stored in the ArrayBuffer slows down the ver-            gl_POINTS as a quad whose size in pixels is determined by
+tex creation to the point where more additional time is spent than            gl_PointSize. This variant would require sending only the cen-
+is initially saved by quantizing the data. Therefore, we instead di-          ter of the atom and the radius to the GPU. However, we chose
+rectly copy byte values from the raw input data. The vertex offset            not to use this technique, due to the driver-limited point size that
+values are computed by using fast bit-wise operations on speciﬁc              could cause the quad to not cover the sphere completely, resulting
+bytes instead of reinterpreting the byte data of atom radii as sin-           in clipped spheres.
+gle precision ﬂoats for the computations. Furthermore we need to                  To circumvent the limitation of WebGL regarding depth buffer
+meet WebGLs requirement of having 4-byte-aligned vertices in the              access, a different technique that does not require writing the frag-
+vertex buffer. Since each vertex in the raw data has a 17 bytes,              ment depth was recently described by Mwalongo et al. [23]. This
+additional padding is inserted between vertices to make it 4-byte             technique is a WebGL adaptation of the work originally proposed
+aligned as required by WebGL. Finally, as described in Section 4.2,           by Lindow et al. [24]. It uses a grid acceleration structure that
+the atom positions are normalized and mapped to unsigned shorts               is created in a preprocessing step in order to reduce the cost of
+by the server. For rendering, they have to be transformed back to             ray-sphere intersections and allow for local intersection sorting
+their original values. On the client side, the data is transformed            for each frame buffer pixel. However, the preprocessing overhead
+62                                                           F. Mwalongo et al. / Graphical Models 88 (2016) 57–65
+
+
+
+
+Fig. 6. Different postprocessing effects via deferred shading. From left to right: toon shading (silhouettes and quantized screen space ambient occlusion) without colors, toon
+shading with colors, local lighting and screen space ambient occlusion. The ambient occlusion emphasizes protrusions and depressions.
+
+
+
+adversely affects the frame rates for visualization of dynamic data                       but since the WebGL implementation does not offer scalability to
+sets. Moreover, the overhead of traversing the grid data structure                        the same dataset sizes as the native implementations, this should
+in the fragment shader only amortizes for extremely high atom                             rarely cause issues.
+counts (see [24] for details). In addition to lower performance, the                          The toon shading post processing effect relies on the gradient of
+WebGL security model [25] discourages shaders to run for very                             the depth texture and was therefore implemented as an additional
+long times. A shader that takes too long to execute can cause the                         render pass, taking the linear depth texture from the G-Buffer as
+GPU to be reset and destroy the WebGL context.                                            input and writing the depth gradient to another texture. The gra-
+                                                                                          dient is used during the shading pass to draw depth-dependent
+4.4. Deferred shading                                                                     silhouettes around objects [26]. The toon shading effect is further-
+                                                                                          more reinforced by an extreme color quantization.
+    As opposed to forward rendering, which usually produces a ﬁ-                              The SSAO computation adds three additional passes to each
+nal image in a single render pass, deferred shading splits render-                        rendered frame. The ﬁrst pass computes per-pixel ambient occlu-
+ing into two or more passes [26]. It moves potentially demand-                            sion factors: A precomputed, randomly generated, hemispherical
+ing lighting and shading calculations to a separate render pass                           sampling kernel is randomly rotated and oriented along the surface
+and simply gathers relevant surface properties in the initial render                      normal for each pixel. By then comparing the depth values of each
+pass. Consequently, lighting and shading is only executed for the                         sample to the respective value stored in the depth texture of the G-
+visible fragments of the ﬁnal image, that is, deferred shading gives                      Buffer, the samples contribute to an occlusion factor for the given
+a performance boost for scenes with high overdraw and many light                          pixel. All necessary information for these computations, that is, the
+sources.                                                                                  depth information and normal vectors of the scene, is conveniently
+    The gathered surface properties are written to the G-Buffer—a                         available in the G-Buffer used for deferred shading. Next, the re-
+framebuffer object with multiple textures attachments—that in our                         sult from this pass is ﬁltered with a separated Gaussian, making up
+case includes the camera-space position and depth value, albedo                           the other two passes of the SSAO computation. The SSAO computa-
+color and camera-space normals. The WEBGL_draw_buffers ex-                                tion again suffers from the restricted framebuffer layouts, as only
+tension enables the usage of multiple render targets in a fragment                        a single value is computed but stored in a RGB texture, with an
+shader.                                                                                   additional RGB texture necessary as a back-buffer for the smooth-
+    Deferred shading also allows the easy adaptation of stylized                          ing passes. Generally, the SSAO quality is controlled by the radius
+rendering and various screen-space post processing effects. To                            of the sampling kernel, its size (i.e., the number of samples), and
+demonstrate that, we implemented a toon shading effect [26] as                            the quality of the applied smoothing. Since WebGL does not al-
+well as screen-space ambient occlusion (SSAO) [27] (see Fig. 6).                          low for loops with a non-static loop condition controlled by a uni-
+The beneﬁcial use of ambient occlusion in molecular renderings                            form variable, real-time manipulation of the kernel radius must be
+for perception of depth and structure has for example been dis-                           accomplished by dynamically rewriting the shader code and re-
+cussed by Tarini et al. [28] and Grottel et al. [29]. The adaptation                      uploading it.
+of the aforementioned screen-space techniques and corresponding
+shader programs for WebGL is mostly straightforward. Challenges
+arise mostly from the limited availability of framebuffer layouts                         5. Results and discussion
+and formats.
+    When using deferred rendering, for performance reasons it is                             We tested the performance of our prototypical implementa-
+commonly desired to minimize the size of the G-Buffer, while                              tion focusing on transfer times and rendering speed for various
+maintaining the precision necessary for storing non-color data like                       molecular data sets obtained from our project partners and from
+positions and normal vectors. WebGL only features either RGB or                           the protein data bank [30]. We focused on these two performance
+RGBA layouts for framebuffer texture attachments and the data                             parameters because we are interested in remote rendering of dy-
+formats available are limited in comparison to OpenGL. By using                           namic data. Therefore, we evaluated how fast the data can be
+the OES_texture_float extension, spatial information is stored                            transferred from the server to the client and whether rendering
+without precision issues, but even with extensions the mixing                             speed could maintain interactivity for large dynamic data sets. We
+of different framebuffer precision was not possible in our setup.                         tested on LAN and WiFi network environments using a commodity
+Together with other limitations and compatibility issues regard-                          PC as a server and two different client machines. Their hardware
+ing framebuffer color attachments with different channel sizes or                         speciﬁcations are listed in Table 1. The canvas size for all test runs
+of different types, this yields unnecessary large framebuffers. In                        was set to 1280 × 720 pixels. Fig. 7 shows the largest of the tested
+theory this limits the available GPU memory for molecular data,                           data sets.
+                                                              F. Mwalongo et al. / Graphical Models 88 (2016) 57–65                                                          63
+
+
+                     Table 1
+                     The systems used for performance measurement including their speciﬁcations. The clients were both running Chrome (v.41.0) using
+                     ANGLE binding with D3D11 enabled. The WiFi speed of the laptop was rated at 65 MBit during testing.
+
+                       System       CPU                                RAM       GPU                          OS                              Network
+
+                       Server         Intel Core i7-2600 (3.4 GHz)     8 GB      GeForce GTX 560 Ti           Windows 7 Pro x64               GBit LAN
+                       Laptop       Intel Core i7-3520M (2.90 GHz)     8 GB      GeForce GT 640M LE           Windows 8.1 Pro x64             WiFi/GBit LAN
+                       PC             Intel Core i7-2600 (3.40 GHz)    16 GB     GeForce GTX 660 Ti           Windows 8.1 Enterprise x64      GBit LAN
+
+
+                       Table 2
+                       Performance results showing transfer times for the laptop client machine for various molecules in both LAN and WiFi network
+                       environments. All transfer times are averages over 100 transfers given in milliseconds (ms). Values in parentheses show results
+                       for optimized data layout.
+
+                                                                                       LAN                         WiFi
+                         Molecule name              PDB ID              #Atoms         Transfer(ms)                Transfer(ms)            Memory
+
+                         peptide simulation         –                   100                    6.16 (6.83)                 7.5 (8.39)        2.8 (1.3) KB
+                         lipase simulation          2VEO (added H2 )    6626                  15.94 (8.05)                45.11 (22.9)     185.5 (86.2) KB
+                         lipase + solvent sim.      2VEO, solvent         38,789              55.89 (12.49)              234.66 (96.31)      1.09 (0.5) MB
+                         mottle virus sim.          –                    214,440             234.94 (45.6)         1212 (407.47)             6.0 (2.8) MB
+                         simian virus               1SVA ( × 60)         958,980       1039 (191.1)                  5598 (2,242)           26.8 (12.5)MB
+                         papillomavirus             3IYJ ( × 60)        1356,840            2121.9 (284.4)         6976 (3179)              38.0 (17.6)MB
+
+
+                           Table 3
+                           Rendering performance of the GPU ray casting in frames per second for various molecules using the PC and laptop
+                           client machines (frame rates given include the data upload to the GPU). Note that rendering frame rates for the laptop
+                           client are given in frames per second (fps) for the Intel integrated (HD40 0 0) graphics as well as for the Nvidia GPU
+                           (in brackets). The largest data set could not be visualized using the Intel GPU. We noticed that, in contrast to the PC
+                           client and the Intel GPU, the performance using the Nvidia GPU drops after a time when the visualization is running.
+                           This is probably due to thermal limitations of the laptop chassis that causes the GPU to throttle its clock speed.
+
+                                                                                           PC                        Laptop
+
+                                Molecule name           PDB ID               #Atoms        LAN        LAN                WiFi              Memory
+
+                                peptide simulation      –                    100           59.24       59.0 (60.5)          59.0 (60.4)      2.8 KB
+                                lipase simulation       2VEO (added H2 )     6626          58.99        37.5 (60.3)         37.97 (60.1)   185.5 KB
+                                lipase + solvent sim.   2VEO, solvent          38,789      58.17        15.17 (51.8)        15.33 (59.9)     1.09 MB
+                                mottle virus sim.       –                     214,440      44.88         2.52 (10.8)         2.50 (40.0)     6.0 MB
+                                simian virus            1SVA ( × 60)          958,980      41.33         1.31 (4.3)          1.31 (15.6)    26.8 MB
+                                papillomavirus          3IYJ ( × 60)         1356,840      38.62      – (3.6)            – (14.9)           38.0 MB
+
+
+
+
+Fig. 7. The largest of our test data sets, the capsid of a papillomavirus (PDB ID: 3IYJ) consisting of 1.3 million atoms. On the right hand the user interface for adjusting the
+rendering modes and parameters can be seen.
+
+
+
+   Our tests measured transfer times and rendering for data with                                 The effectiveness of the quantization techniques is demon-
+quantization and without quantization. The timings of the data                               strated by the signiﬁcant reduction in the size of data that is trans-
+transfer of both clients are shown in Table 2. This includes the                             ferred to the client. This has in turn improved the transfer times
+unquantized and the quantized data. Table 3 shows the render-                                proportionally. The reduction in data size beneﬁts not only the
+ing performance of the PC and the Laptop client for data without                             communication between the client and server, but also saves band-
+quantization and performance for data with quantization is shown                             width between CPU and GPU. This is possible because the decoding
+in Table 4. In both cases, the computationally more demanding                                of the data is done in vertex shader in the GPU and not in the CPU
+GPU-based sphere ray casting was used.                                                       using JavaScript.
+64                                                      F. Mwalongo et al. / Graphical Models 88 (2016) 57–65
+
+
+                              Table 4
+                              Rendering performance of the GPU ray casting in frames per second of various molecules using the
+                              PC and laptop client machines with the optimized data layout (frame rates given include the data
+                              upload to the GPU). Note that the shown rendering frame rates for the laptop client are for the Nvidia
+                              GPU.
+
+                                                                                            PC              Laptop
+
+                                Molecule name            PDB ID                #Atoms       LAN       LAN       WiFi    Memory
+
+                                peptide simulation       –                     100          59.95     59.80     59.84     1.3   KB
+                                lipase simulation        2VEO (added H2 )      6626         59.95     59.80     59.80    86.2   KB
+                                lipase + solvent sim.    2VEO, solvent           38,789     59.95     59.48     58.07   504.3   KB
+                                mottle virus sim.        –                      214,440     44.40     43.02     40.43     2.8    MB
+                                simian virus             1SVA ( × 60)           958,980     19.93     20.50     24.82    12.5    MB
+                                papillomavirus           3IYJ ( × 60)          1356,840      7.41     13.32     19.17    17.6    MB
+
+
+
+
+    Results in Table 2 reﬂect the signiﬁcant difference in bandwidth                 the overhead for image compression and decompression as well as
+between the LAN connection and the WiFi one in effective trans-                      the fact that for greater interactivity we can just pause the requests
+fer times. Despite the differences in transfer times between server                  for new data, which directly results in interactive frame rates. For
+and client, there is no signiﬁcant difference in the rendering frame                 example, papillomavirus rendered up to about 53% faster when re-
+rates in the two environments (see Table 3). This shows that the                     quests for new data were paused. Such an option is not available
+decoupling of the receiving thread and the rendering thread works                    for image-based solutions. Additionally, interaction is sensitive to
+as intended. We observed a signiﬁcant improvement in frame rates                     the total round trip time between request for an image with an
+when the client is disconnected from the server and consequently                     updated viewpoint and the resulting rendering. Interactively rotat-
+receives no buffer updates. This suggests that the drop in the frame                 ing a data set with signiﬁcant lag can prove extremely challeng-
+rates is attributed to client processing and data upload to the GPU.                 ing. While this solution only requires a client capable of decom-
+Transfer time is taken as the time from when the WebSocket object                    pressing the image data, the server needs to be equipped with a
+in the client sent the request to the server up to when the data                     dedicated GPU. In cloud deployment scenarios, this is a challenge
+is entirely received by the client for processing. Decoupling of the                 by itself since there are very few specialized and extremely costly
+data receiver from the rendering thread and eﬃcient methods for                      GPUs that allow for virtualization, reducing the number of concur-
+data transfer between server and client, and between CPU and GPU                     rent cloud instances per chassis drastically.
+are important to reduce the time between availability of new data                        On the aspect of scalability, a client-side rendering method
+on the server and the availability of said data on the client. This is               would scale better than an image-streaming method because it
+especially relevant for the simulation monitoring scenario. Having                   does not create huge demands in bandwidth and requires no
+signiﬁcant differences in the transfer times between LAN and WiFi                    server-side rendering infrastructure.
+also suggests that the application is bandwidth-limited. Although                        From the bandwidth requirements for dynamic data given in
+data compression could further alleviate the bandwidth problem,                      Table 2, we can derive network requirements for our system. For
+the additional time required for compression and decompression                       example, in a GBit LAN environment, there are about seven data
+has to be amortized by reduced transfer time through lower mem-                      updates per second for one user or one data update per second
+ory footprint. Minimizing the transferred data and performing de-                    for seven concurrent users per server for our largest data set. If
+coding computations on the GPU would reduce the computation                          the data is static, this scales to seven new users per second, each
+load in JavaScript and save CPU-GPU bandwidth. It however re-                        one receiving the data just once. Afterwards, each client can render
+mains to be seen if this would increase the overall performance                      the received data interactively, in contrast to an image streaming
+signiﬁcantly.                                                                        method that would constantly require transmission of new images
+    Despite our promising results, bottlenecks for interactive visu-                 from the server.
+alization of dynamic data sets lie not only in the still abstracted                      In fact, client-side rendering is central to the scalability of the
+memory management in JavaScript but rather in the communi-                           web itself. It would have required massive server infrastructure to
+cation cost between server and client, and between the CPU and                       host a web page that is accessed by many users if web page con-
+GPU. More eﬃcient and latency-hiding algorithms are needed to                        tent was rendered on the server.
+address some of these limitations. Moreover, extensions in Web                           We also measured the performance of the deferred shading us-
+Workers and WebGL to allow data upload from Web Workers could                        ing local lighting. As expected, we noticed a small speedup for
+prove useful. This would free the main thread from data upload                       large data sets that exhibit high overdraw. For example, the mot-
+and remain with handling rendering and user interactions only.                       tle virus sim. data set rendered about 15% faster. The improve-
+Web Workers solve the problem partly, but given their memory                         ment would have been more marked if additional light sources
+overhead and communication model, use of many workers in a sin-                      were used, making the shading more costly. Still, for small data
+gle application may offset the performance gain.                                     sets and few light sources, the additional overhead introduced by
+    A possible alternative to our client-side rendering would be to                  deferred shading slightly decreases the overall performance. An is-
+transport the images rendered at the server side. One needs to                       sue of forward rendering as well as of the deferred shading is the
+consider the memory footprint even of compressed images in re-                       limited precision of the z-buffer. As a consequence, our ray cast-
+lation to the transfer of the molecule data. An exemplary 1280 ×                     ing implementations may suffer from artifacts if data sets grow too
+720 image compressed as JPEG at 50% quality requires 40 KB. If                       large since the depth cannot be resolved with suﬃcient accuracy.
+one were to send at least 15 of these images per second, which                       This is especially relevant in WebGL where the z-buffer is lim-
+would be required for smooth interaction, 600 KB/s of constant,                      ited to 16 bits. Here, the grid-based techniques used by Mwalongo
+reliable bandwidth are required. Such an approach, in contrast to                    et al. [23] and Lindow et al. [24] discussed in Section 4.3 would
+our solution, is extremely sensitive to bandwidth ﬂuctuations. Al-                   be advantageous since they can use local relative coordinates with
+though our larger data sets exceed such size, one has to consider                    much smaller dynamic range in their calculations. Note that lack
+                                                          F. Mwalongo et al. / Graphical Models 88 (2016) 57–65                                                           65
+
+
+of support for the WEBGL_draw_buffers extension in avail-                               [6] JSmolWiki, Jmol Wiki: JSmol pros and cons, 2015 http://wiki.jmol.org/index.
+able browsers on Android currently prevents the usage of deferred                           php/JSmol_pros_and_cons. [Online; accessed 2016/04/05].
+                                                                                        [7] A.S. Rose, P.W. Hildebrand, NGL viewer: a web application for molecular vi-
+shading effects on this platform.                                                           sualization, Nucleic Acids Res. 43 (W1) (2015) W576–W579, doi:10.1093/nar/
+                                                                                            gkv402.
+                                                                                        [8] N. Rego, D. Koes, 3Dmol.js: molecular visualization with WebGL, Bioinformatics
+6. Conclusion and future work                                                               31 (8) (2015) 1322–1324, doi:10.1093/bioinformatics/btu829.
+                                                                                        [9] pv - WebGL protein viewer, [Online; accessed 2016/04/05]. http://dx.doi.org/
+    We have demonstrated the feasibility of visualizing large dy-                           10.5281/zenodo.20980
+                                                                                       [10] T.N. Hongjian Li, K.-S. Leung, M.-H. Wong, iview: an interactive WebGL visual-
+namic molecular data interactively by exploiting modern web tech-
+                                                                                            izer for protein-ligand complex, BMC Bioinformatics 15 (2014) 56, doi:10.1186/
+nologies. Our results indicate that, although browser technologies                          1471-2105-15-56.
+are still evolving, their potential as a preferred platform for highly                 [11] J.-B. Pettit, J.C. Marioni, bioWeb3D: an online WebGL 3D data visualisation tool,
+                                                                                            BMC Bioinformatics 14 (2013) 185, doi:10.1186/1471-2105-14-185.
+interactive collaborative visualization systems is high. The positive
+                                                                                       [12] M. Callieri, R.M. Andrei, M. Di Benedetto, M. Zoppè, R. Scopigno, Visualization
+trend in performance improvements in the JavaScript language and                            methods for molecular studies on the web platform, in: Web3D 2010. 15th
+the fast evolution of the OpenGL ES speciﬁcation [31] provide a                             Conference on 3D Web technology, Web3D Consortium, 2010.
+strong support for the growth of WebGL. This trend, combined                           [13] S. Gumhold, Splatting illuminated ellipsoids with depth correction, in: Pro-
+                                                                                            ceedings of the Vision, Modeling, and Visualization Conference 2003 (VMV
+with increasingly powerful mobile GPUs, makes it possible to bring                          20 03), 20 03, pp. 245–252.
+to the browser visualization algorithms that are currently conﬁned                     [14] Schrödinger, LLC, The PyMOL molecular graphics system, version 1.3r1, 2010
+to the desktop environment. The ability to run the same visual-                             http://www.pymol.org/. [Online; accessed 2016/04/05].
+                                                                                       [15] W. Humphrey, A. Dalke, K. Schulten, VMD – visual molecular dynamics, J. Mol.
+ization applications across platforms ranging from desktop PCs to                           Graph. 14 (1996) 33–38.
+smartphones without a single change in the source code can be a                        [16] N. Doulamis, E. Chronis, G. Miaoulis, D. Plemenos, Personalized view selection
+driving force for scientists to share data and tools and collaborate                        of 3D molecular proteins, in: D. Plemenos, G. Miaoulis (Eds.), Intelligent Com-
+                                                                                            puter Graphics 2010, Studies in Computational Intelligence, vol. 321, Springer
+across the globe.                                                                           Berlin, Heidelberg, 2010, pp. 211–227, doi:10.1007/978- 3- 642- 15690- 8_11.
+    As future work, we intend to focus on scalability and concur-                      [17] I. Fette, A. Melnikov, The WebSocket protocol, 2011 http://www.rfc-editor.org/
+rency issues on the server side, supporting different datasets and                          info/rfc6455. Online; accessed 2016/04/05.
+                                                                                       [18] S. Grottel, M. Krone, C. Mller, G. Reina, T. Ertl, MegaMol - a prototyping frame-
+rendering styles, and explore web standard protocols (e.g., Web-
+                                                                                            work for particle-based visualization, IEEE Trans. Vis. Comput. Graph. 21 (2)
+Sockets, WebRTC, and HTTP) for interfacing our visualization tool                           (2015) 201–214, doi:10.1109/TVCG.2014.2350479.
+with simulation and scientiﬁc analysis tools and for interactive                       [19] Libwebsockets, Libwebsockets: C Websockets library (Version 1.3), 2011 https:
+                                                                                            //libwebsockets.org/trac/libwebsockets. [Online; accessed 2016/04/05].
+web-based collaborative visualization. Speciﬁcally we would like
+                                                                                       [20] W3C, Web Workers: W3C candidate recommendation, 2012 http://www.w3.
+to explore the cloud computing platform for deployment of visu-                             org/TR/workers/. [Online; accessed 2016/04/05].
+alization applications as a cloud service, as the cloud provides a                     [21] Khronos, WebGL OES_element_index_uint Khronos ratiﬁed extension speciﬁ-
+scalable computing model for services used by many simultane-                               cation, 2014 https://www.khronos.org/registry/webgl/extensions/OES_element_
+                                                                                            index_uint/. Online; accessed 2016/04/05.
+ous users. We also want to investigate different compression algo-                     [22] J.F. Blinn, Models of light reﬂection for computer synthesized pictures, in: Pro-
+rithms that strike a sensible balance between computing times and                           ceedings of the 4th Annual Conference on Computer Graphics and Interactive
+compression ratio.                                                                          Techniques, in: SIGGRAPH ’77, ACM, New York, NY, USA, 1977, pp. 192–198,
+                                                                                            doi:10.1145/563858.563893.
+                                                                                       [23] F. Mwalongo, M. Krone, G. Karch, M. Becher, G. Reina, T. Ertl, Visualization
+Acknowledgments                                                                             of molecular structures using state-of-the-a techniques in WebGL, in: Inter-
+                                                                                            national Conference on 3D Web Technology, vol. 19, ACM, 2014, pp. 133–141,
+                                                                                            doi:10.1145/2628588.2628597.
+   This work was partially funded by German Academic Exchange                          [24] N. Lindow, D. Baum, H.-C. Hege, Interactive rendering of materials and biolog-
+Service (DAAD) and by German Research Foundation (DFG) as part                              ical structures on atomic and nanoscopic scale, Comput. Graph. Forum 31 (3)
+                                                                                            (2012) 1325–1334, doi:10.1111/j.1467-8659.2012.03128.x.
+of Collaborative Research Center SFB 716.
+                                                                                       [25] Khronos, WebGL security, 2011 https://www.khronos.org/webgl/security/. [On-
+                                                                                            line; accessed 2016/04/05].
+References                                                                             [26] T. Saito, T. Takahashi, Comprehensible rendering of 3D shapes, Comput. Graph.
+                                                                                            (Proc. SIGGRAPH 1990) 24 (4) (1990) 197–206, doi:10.1145/97880.97901.
+ [1] Khronos, WebGL 1.0 speciﬁcation, 2011 http://www.khronos.org/registry/            [27] V. Kajalin, Screen-space ambient occlusion, in: W. Engel (Ed.), ShaderX7 : Ad-
+     webgl/specs/latest/1.0/. [Online; accessed 2016/04/05].                                vanced Rendering Techniques, Charles River Media, 2009, pp. 413–424.
+ [2] Khronos, Typed array speciﬁcation, 2013 http://www.khronos.org/registry/          [28] M. Tarini, P. Cignoni, C. Montani, Ambient occlusion and edge cueing for en-
+     typedarray/specs/latest/. Online; accessed 2016/04/05.                                 hancing real time molecular visualization, IEEE Trans. Vis. Comput. Graph. 12
+ [3] F. Mwalongo, M. Krone, M. Becher, G. Reina, T. Ertl, Remote visualization of           (5) (2006) 1237–1244. http://dx.doi.org/10.1109/TVCG.2006.115.
+     dynamic molecular data using WebGL, in: ACM (Ed.), International Confer-          [29] S. Grottel, M. Krone, K. Scharnowski, T. Ertl, Object-space ambient occlusion
+     ence on 3D Web Technology (Web3D), vol. 20, 2015, pp. 115–122, doi:10.1145/            for molecular dynamics, in: IEEE Paciﬁc Visualization Symposium, IEEE, 2012,
+     2775292.2775307.                                                                       pp. 209–216, doi:10.1109/PaciﬁcVis.2012.6183593.
+ [4] Jmol, Jmol: an open-source Java viewer for chemical structures in 3D, 2009        [30] H.M. Berman, J. Westbrook, Z. Feng, G. Gilliland, T.N. Bhat, H. Weissig,
+     http://www.jmol.org/. [Online; accessed 2016/04/05].                                   I.N. Shindyalov, P.E. Bourne, The protein data bank, Nucleic Acids Res. 28 (1)
+ [5] JSmol, JSmol: JavaScript-based molecular viewer from Jmol, 2013 http://                (20 0 0) 235–242, doi:10.1093/nar/28.1.235.
+     sourceforge.net/projects/jsmol/. [Online; accessed 2016/04/05].                   [31] Khronos, OpenGL ES 3.1 speciﬁcation, 2015 https://www.khronos.org/registry/
+                                                                                            gles/specs/3.1/es_spec_3.1.pdf. [Online; accessed 2016/04/05].
+

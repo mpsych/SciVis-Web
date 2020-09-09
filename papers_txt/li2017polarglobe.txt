@@ -1,0 +1,930 @@
+                       International Journal of Geographical Information
+                       Science
+
+
+
+                       ISSN: 1365-8816 (Print) 1362-3087 (Online) Journal homepage: http://www.tandfonline.com/loi/tgis20
+
+
+
+
+                PolarGlobe: A web-wide virtual globe system for
+                visualizing multidimensional, time-varying, big
+                climate data
+
+                Wenwen Li & Sizhe Wang
+
+                To cite this article: Wenwen Li & Sizhe Wang (2017): PolarGlobe: A web-wide virtual globe
+                system for visualizing multidimensional, time-varying, big climate data, International Journal of
+                Geographical Information Science, DOI: 10.1080/13658816.2017.1306863
+
+                To link to this article: http://dx.doi.org/10.1080/13658816.2017.1306863
+
+
+
+
+                        Published online: 27 Mar 2017.
+
+
+
+                        Submit your article to this journal
+
+
+
+                        Article views: 12
+
+
+
+                        View related articles
+
+
+
+                        View Crossmark data
+
+
+
+
+                                       Full Terms & Conditions of access and use can be found at
+                               http://www.tandfonline.com/action/journalInformation?journalCode=tgis20
+
+Download by: [Chinese Academy of Agricultural Sciences]                                                     Date: 29 March 2017, At: 18:08
+INTERNATIONAL JOURNAL OF GEOGRAPHICAL INFORMATION SCIENCE, 2017
+http://dx.doi.org/10.1080/13658816.2017.1306863
+
+
+
+
+PolarGlobe: A web-wide virtual globe system for visualizing
+multidimensional, time-varying, big climate data
+Wenwen Lia and Sizhe Wanga,b
+a
+  School of Geographical Sciences and Urban Planning, Arizona State University, Tempe, AZ, USA; bSchool
+of Computer Science and Engineering, Arizona State University, Tempe, AZ, USA
+
+
+    ABSTRACT                                                                  ARTICLE HISTORY
+    The increasing research interest in global climate change and the         Received 6 July 2016
+    rise of the public awareness have generated a signiﬁcant demand           Accepted 11 March 2017
+    for new tools to support eﬀective visualization of big climate data       KEYWORDS
+    in a cyber environment such that anyone from any location with            Cyberinfrastructure;
+    an Internet connection and a web browser can easily view and              multidimensional
+    comprehend the data. In response to the demand, this paper                visualization; video stream
+    introduces a new web-based platform for visualizing multidimen-           compression; big data;
+    sional, time-varying climate data on a virtual globe. The web-            geovisualization; scientiﬁc
+    based platform is built upon a virtual globe system Cesium,               visualization
+    which is open-source, highly extendable and capable of being
+    easily integrated into a web environment. The emerging WebGL
+    technique is adapted to support interactive rendering of 3D gra-
+    phics with hardware graphics acceleration. To address the chal-
+    lenges of transmitting and visualizing voluminous, complex
+    climate data over the Internet to support real-time visualization,
+    we develop a stream encoding and transmission strategy based
+    on video-compression techniques. This strategy allows dynamic
+    provision of scientiﬁc data in diﬀerent precisions to balance the
+    needs for scientiﬁc analysis and visualization cost. Approaches to
+    represent, encode and decode processed data are also introduced
+    in detail to show the operational workﬂow. Finally, we conduct
+    several experiments to demonstrate the performance of the pro-
+    posed strategy under diﬀerent network conditions. A prototype,
+    PolarGlobe, has been developed to visualize climate data in the
+    Arctic regions from multiple angles.
+
+
+
+
+1. Introduction
+The world is undergoing rapid ecological and social system changes due to global
+climate change (Walther et al. 2002). Research has revealed that ecological changes
+since 1976 have greatly aﬀected organism phenology (Root et al. 2003), causing a
+shift in the range and geographical distribution of species (Chen et al. 2011) and a
+visible change in the composition and dynamics of various ecosystems (Post et al.
+2009). Climate ﬂuctuations and extreme weather, such as urban heat waves (Luber
+and McGeehin 2008), El Niño/Southern Oscillation (ENSO; Cobb et al. 2003) and
+increasing average temperatures in the past decades (Vasseur et al. 2014), have
+
+CONTACT Wenwen Li              Wenwen@asu.edu
+© 2017 Informa UK Limited, trading as Taylor & Francis Group
+2      W. LI AND S. WANG
+
+
+been shown to have an impact on human health due to their contributions to
+diseases such as cardiovascular and respiratory illnesses as well as cholera and
+other infectious diseases (McMichael et al. 2006). The World Health Organization
+estimates that climate change is responsible for over 150,000 deaths annually (Patz
+et al. 2005). Understanding the mechanics of the climate system, the cause and
+impact of its changes, as well as its interaction with other natural and human
+systems to mitigate consequences of regional and global climate change, has,
+therefore, become an urgent research topic for climate scientists.
+   Scientiﬁc visualization, which takes account of big climate data, is playing an increas-
+ingly important role to support eﬀective climate analysis. First, visualization allows for
+the exploration of data in an intuitive way and helps uncover complex patterns that are
+typically hidden within the data (Kehrer and Hauser 2013). Second, it is an eﬀective
+means to convey information and make big data accessible to a large audience
+(Batstone 2013). Third, it has the ability to accelerate knowledge extraction and policy
+making by converting big data into important insights in a timely manner (Ohlhorst
+2012). In the 2003 NSF blue-ribbon report, visualization is identiﬁed as one of the four
+major themes in cyberinfrastructure research to revolutionize science and engineering
+(Atkins 2003).
+   In recent years, the emergence of virtual globes such as Google Earth (Sheppard
+and Cizek 2009) and NASA WorldWind (Bell et al. 2007) has brought visualization
+from traditional 2D mapping to a 3D world. This evolution is of particular importance
+to visualizing climate data because the data itself are multidimensional. Thus, com-
+bining visualization with a virtual 3D globe facilitates the understanding of how
+landscape impacts the spatial patterns of climate dynamics. Although virtual globe-
+based visualization has introduced signiﬁcant advantages, existing tools are mostly
+developed as standalone applications, impeding the widespread sharing of knowl-
+edge by scientists who are physically distributed. This limitation is becoming a real
+obstacle in today’s culture of collaborative scientiﬁc analysis that uses the World
+Wide Web (WWW or Web) as the main medium for information retrieval and
+dissemination. As a result, the need to establish a ‘web-wide world’ becomes more
+pressing (Butler 2006).
+   In this paper, we introduce a web-based virtual globe system to support real-
+time visualization of time-varying, multidimensional climate data. We focus on
+resolving three challenges: (1) eﬀectively representing and organizing multidimen-
+sional climate data, (2) improving the transmission of large amount of time series
+data over the web and (3) developing a balanced client–server load assignment to
+realize real-time data rendering. The remainder of the paper is organized as follows:
+Section 2 provides a literature review of major techniques that support virtual
+globe-based visualization and current web-based visualization platforms. Section 3
+introduces the proposed workﬂow for cyber-enabling virtual globe visualization.
+Section 4 describes the methodology in detail and Section 5 demonstrates the
+system prototype. The eﬃciency of proposed video compression techniques is
+tested and veriﬁed in Section 6. Section 7 concludes the paper and discusses future
+research directions.
+                          INTERNATIONAL JOURNAL OF GEOGRAPHICAL INFORMATION SCIENCE       3
+
+
+2. Related works
+Recently, it has become easier to access climate data from satellites, ground measure-
+ments and models from various data centers. However, accessing, processing and
+visualizing heterogeneous, multidimensional, and large-volume data from diﬀerent
+sources remain very complicated tasks, especially when performing real-time data
+visualization in a web environment. Despite a lack of literature addressing a compre-
+hensive visual platform to acquire massive scientiﬁc data and render processed images,
+there are some works that attempt to solve various aspects of data visualization
+challenges.
+    UV-CDAT (Williams 2013) is a very popular desktop tool in the climate science
+community for processing and visualizing ultra-scale climate data. It has the ability to
+re-grid Earth data according to the needs of diﬀerent map projections, process large
+datasets in parallel using high-performance computing (HPC) facilities and perform 2D/
+3D visualization of a dataset from multiple angles. In addition to these powerful features,
+UV-CDAT can also integrate several important visual exploration tools, such as ParaView
+(Ahrens et al. 2005), VisIt (14) and DV3D (Maxwell 2012), providing a common interface
+to display the visualization results of these diﬀerent tools. Although UV-CDAT does not
+provide an integrated visualization in a true 3D environment, it does oﬀer a 3D
+visualization on a projected 2D world map. Distortion of location and shape of some
+climate phenomena is inevitable in this scenario, however (Goodchild 2015).
+    With the introduction of virtual globe tools, such as NASA WorldWind and Google
+Earth, researchers are looking to integrate multidimensional visualization in a true 3D
+geographical space (Wang et al. 2013). For instance, Li et al. (2011) proposed a systema-
+tic framework for rendering large-scale geosciences phenomena using a volume-render-
+ing technique. A multi-resolution octree data organization method with a view-
+dependent level of detail rendering strategy was implemented to improve rendering
+eﬃciency. Liang et al. (2014) improved upon the volume-rendering technique to avoid
+the time-consuming resampling process during data rendering. This enhancement made
+interactive vertical scaling possible when visualizing large amounts of climate data.
+Other works, including Berberich et al. (2009), Liu et al. (2015) and Zhang et al. (2016),
+use octree as the primary data structure to index spatial data. Although this approach
+works well for organizing static data, storing individual octrees requires a lot of space
+when indexing time-series spatial data, creating challenges in both backend data
+storage and network data transmission, especially in a web environment.
+    As the web has become the dominant medium for information dissemination,
+web-based visualization systems have also been investigated. ParaViewWeb, for
+example, provides interactive 3D visualization and data processing (Jourdain et al.
+2010). Sun et al. (2012a) developed a Google Earth-based visualization platform that
+integrates various climate data and images from distributed and heterogeneous data
+sources. Although many datasets and statistics are available in the system, it only
+supports rendering of layer-based 2D time-series data. Hecher et al. (2015) described
+a web-based platform for geospatial data visualization and analysis. Image overlay
+and vertical curtain imagery (images vertically rendered on a virtual globe using data
+that varies at diﬀerent altitude) are supported. Time dimension is also supported in
+this platform. However, it limits time frame selection. Real-time, time-series data
+4      W. LI AND S. WANG
+
+
+visualization was not taken into consideration in this work. Other works include
+NASA’s Giovanni system (Berrick et al. 2009) and a Google Earth-based visualization
+engine for A-Train data (Chen et al. 2009), among others. Despite the signiﬁcant
+advantages oﬀered by virtual globe-based visualization, existing solutions suﬀer from
+various limitations.
+    In desktop-based applications, it is feasible to achieve an acceptable interactive frame
+rate during visualization because the data are stored locally. Thus, a major visualization
+challenge – providing eﬃcient access to massive remote data – can be overcome.
+However, these systems are typically implemented as standalone applications limiting
+their accessibility and applicability in todays’ collaborative research paradigm. The
+migration to web-based visualization eliminates this constraint; yet, most virtual globe
+visualization systems only support the rendering of 2D or time-series 2D images. Very
+few existing works have the capability of visualizing multidimensional (3D or 4D) data
+due to the lack of eﬃcient strategies in web-based rendering and network transmission
+of big data. In addition, most client–server architectures assign the computation-inten-
+sive rendering tasks to the server and leave the client for display only to support smooth
+visualization. The scalability of this architecture is limited, especially when there are
+multiple and concurrent requests redirecting to the server.
+    To address these issues, we propose a cyber-enabled, web-based platform for visua-
+lizing multidimensional climate data on a virtual globe that integrates the emerging
+WebGL technique to enable exploration of time-series climate data. The proposed
+platform allows easy access to climate data for both scientists and the public from all
+around the world. The next section describes the system architecture and key
+techniques.
+
+
+3. System design for real-time climate data rendering on the web
+The space–time visualization system outlined here accurately visualizes large-volume
+time-varied climate data in a web environment. Figure 1 shows the architectural design.
+Working from the bottom up, the framework includes a data driver/manager layer,
+rendering engine layer and space–time visualization layer.
+   The data driver/manager layer is the core layer that provides various data sources to
+satisfy the needs of real-time visualization. Raw scientiﬁc data in hierarchical data format
+(Folk et al. 1999), NetCDF (Rew and Davis 1990), or other binary data formats from
+distributed databases, are included in this layer. These datasets are preprocessed into
+compressed data with image-based lossless encoding and video-based lossy compres-
+sion. When the volume of the requested data is small, for instance a request for the
+value of a speciﬁc point, raw data are used. When the volume of data requested
+increases requiring large data transfer and longer processing time of the server,
+image-based compressed data are chosen. When requested data become extremely
+large and a fast server response (less than a second) is needed, lossy video compressed
+data are accessed. A detailed description of this method can be found in Section 4.
+Above this layer lays the rendering engine, which provides a platform for space–time
+visualization.
+   Cesium (AGI 2015), an open-source library for 3D virtual globes and maps, is
+adopted in our framework as it provides adequate support for cross-platform and
+                            INTERNATIONAL JOURNAL OF GEOGRAPHICAL INFORMATION SCIENCE          5
+
+
+
+
+Figure 1. A framework to support time-varied multidimensional visualization in cyber environment.
+
+
+cross-device dynamic visualization without plugins on both the virtual globe and
+map. Cesium also provides a WGS84 spatial reference for data visualization and
+supports several fundamental virtual interactive operations, such as zooming, pan-
+ning and rotating. Extending the Cesium framework, we integrate a video container
+for receiving and decoding video-based compressed data. Data are then sent to a 3D
+rendering engine that utilizes WebGL (Congote et al. 2011) to eﬃciently render the
+climate data in the web client and at the same time realize hardware acceleration for
+3D graphics.
+    In addition to the 3D rendering engine and Cesium virtual globe platform, we
+develop various components for visualizing multidimensional data from multiple
+perspectives. For instance, an animation control tool allows for setting the time
+periods of interest and speed for visualizing time-series data. A value-picking tool
+enables the query of attribute values at selected locations or at certain pressure/
+altitude levels. Vertical proﬁle visualization allows the inspection of data character-
+istics within the data cube along a trajectory of interest on the Earth’s surface. In
+addition, data ﬁltering functions provide partial data visualization based on the space
+or value of interest. Section 4 details these mechanisms.
+6      W. LI AND S. WANG
+
+
+
+
+Figure 2. Visualization workﬂow.
+
+
+4. Methodology
+4.1. Visualization workﬂow
+Figure 2 demonstrates the workﬂow of the web-based visualization process. On the
+server side, instead of processing raw data on-demand, time-series climate data are
+preprocessed to improve overall response time. This process includes three phases: (1) a
+dimension reduction phase rearranges multidimensional data (4D if one climate variable
+is compiled, 5D if two variables are compiled etc.) into a series of 2D-gridded data with
+each data point containing information about one climate variable; (2) a linear transfor-
+mation phase transforms the original individual pixel value from a scalar space to an RGB
+image space; and (3) a video encoding phase encodes the multiple RGB images using
+video compression techniques.
+    Upon user request, the video-compressed data are transmitted from the server to the
+client side via a browser-enabled web application such as a data stream. The advantage
+of accepting streaming data is that data can be processed as it reaches the client rather
+than having to wait for all of the data to be transmitted before processing can begin.
+Thus, the overall rendering performance is greatly improved. Upon arrival, the video
+data go through a data restoration phase to reconstruct the original values in a multi-
+dimensional data structure. Next, restored data are pushed to the graphic processing
+unit (GPU) for rendering and analysis. The following sections describe each processing
+step in detail.
+
+
+4.2 Data preprocessing and organization on the server side
+Figure 3 demonstrates the data preprocessing workﬂow for reducing 4D climate data
+into time-series 2D images to make it video encoder compatible.
+   Assuming that the original data can be represented in the following format
+   (i,j,k,t,v)
+   where v refers to the value of a grid cell at a horizontal location (relative to the Earth’s
+surface) indexed by (i,j) and a vertical dimension k at time t, the 4D data can be
+decomposed into a time series of 3D data (i,j,k,v) with location dimensions (i,j,k).
+
+4.2.1. Dimension reduction
+In the ﬁrst step, each of these data cubes is reduced into 2D-gridded data with
+dimensions m  n. This size needs to be determined carefully to satisfy the following
+goals: (1) the data should represent global or local similarity patterns for values in
+nearby cells in order to achieve a high compression ratio, (2) the rearranged data can
+                            INTERNATIONAL JOURNAL OF GEOGRAPHICAL INFORMATION SCIENCE      7
+
+
+
+
+Figure 3. Transform multidimensional data into multiple 2D images.
+
+
+be easily reconstructed on the client side and (3) the data should maintain a shape
+that minimizes the allocation of graphic card memory and improves frame rate for
+data processing and rendering. Goal 3 is needed because the graphic card will
+allocate a trunk of memory for images with the width and height as
+    L = 2v
+    where L represents the width (number of rows) or height (number of columns) of an
+image, and v is an integer >0. If either m or n is only slightly bigger than L, the frame is
+extended by a factor of 2 and the unﬁlled frame is ﬁlled by white noise. In this situation,
+signiﬁcant memory space is wasted. Therefore, we designed the following strategy for
+rearranging the raw dataset to ensure eﬀective 2D reduction.
+    First, the minimum number of pixels allocated in the graphics card is initialized as the
+greatest integer so that any new calculated value in the following loop is capable of
+claiming newly found minimums and overwriting this value. Next, k pieces of a layer (each
+horizontal slice of data in the data cube layer) are tiled in a 2D grid and combinations of
+all possible grid pairs (width, height) are exploited (lines 2–14 in Algorithm 1). This
+identiﬁes the optimal setting of width and height values that minimize the waste of
+grid space. These values are saved in the mlayer and nlayer , respectively.
+    In the loop body, the number of pixels in the two directions of the 2D grid is
+obtained by providing the pixel dimensions of a single data layer. The values are
+marked as pm and pn . Using WebGL, when 2D grid is loaded into a graphics card
+memory as a texture, it extends to next-sized power-of-two texture. This process can
+result in memory waste.
+    To prevent this waste, the actual dimensions of the 2D grid are stored in the
+graphics card memory. They are calculated and represented as pðgÞm  pðgÞn with
+the total number of pixels marked as p. When p is less than pmin , meaning that it is
+the minimal value found so far, then the variables pmin , m and n will be overwritten
+with p, pm and pn . Finishing the loop process, the minimum number of pixels in the
+new 2D grid is obtained and the optimal dimensional values hm; ni are determined
+and set as the output.
+8      W. LI AND S. WANG
+
+
+Algorithm 1 – Optimizing graphics card memory allocation
+
+
+
+
+4.2.2. Color space transformation
+Once 2D-gridded data with dimensions m  n is generated, it is further processed to
+convert the data from a scalar space to an RGB color space in order to feed the data into
+a video encoder. To map ﬂoat numbers from a scalar space F to the RGB color space,
+they are ﬁrst mapped to an integer vector space I:
+                                 n                         o
+                             I ¼ njn 2 N; 0 <n <3  2ðb=3Þ
+
+where N indicates the group of natural numbers, and b is the bit depth of the RGB color. In
+our example, the bit depth is 24. This transformation is done using the following equation:
+                                         ðvF  Fmin Þ  3  2ðb=3Þ
+                                  vI ¼
+                                              Fmax  Fmin
+where vF is the original ﬂoat value in space F, and Fmax and Fmin are the maximum and
+minimum values of the whole dataset.
+   To convert the vI value to the RGB color space, we adopt a Color Accumulation strategy to
+sequentially increase the three RGB color components and raise the vI value. Assuming
+b ¼ 24, it takes 8 bit with a value range of [0,255] to represent each color dimension R, G and
+B. When vI is less than 255, the R component increases linearly while G and B components
+are kept at 0. As vI increases but remains less than 512, the R and B components are 255 and
+0, respectively, and the G component increases. If vI becomes greater than 512, the B
+component begins to rise. This process is depicted by the equations below:
+                                                           
+                           R ¼ min maxðvI ; 0Þ; 2ðb=3Þ  1
+
+                                                                 
+                           G ¼ min max vI  2ðb=3Þ ; 0 ; 2ðb=3Þ  1
+                          INTERNATIONAL JOURNAL OF GEOGRAPHICAL INFORMATION SCIENCE     9
+
+                                                                 
+                        B ¼ min max vI  2ð2b=3Þ  1; 0 ; 2ðb=3Þ  1
+
+   Because nearby pixel values in the original climate data are always similar according
+to the First Law of Geography, we keep the data characteristics after the linear trans-
+formation of pixel values from the larger scalar space to the smaller RGB color space.
+Thus, the proposed color accumulation strategy eﬀectively avoids a dramatic change of
+relative luminance of nearby pixels after the linear transformation. This strategy pre-
+serves the data details and ensures good data quality after it is converted to a video
+stream.
+
+
+4.3 Video-based data compression and transmission
+We adopt lossy compression for video encoding to ensure accuracy and quality and
+attain the highest compression ratio. In addition, encoding and decoding time of the
+video ﬁle is constrained below an upper limit to meet real-time rendering demands.
+These indicators can be impacted by multiple factors. For example, a video ﬁle’s bitrate
+and frames-per-second (FPS) greatly impact the compression ratio and accuracy. With a
+ﬁxed FPS, the higher the bitrate is, the greater the ﬁle size will be and the better
+compression quality obtained and vice versa. It is also possible to adjust parameters
+to slightly improve the video quality by slowing down the encoding speed. Of all the
+factors, however, the most decisive ones are video compression codec and chroma
+subsampling (Poynton 2008).
+   Although there are plenty of codecs for video compression, only a few are feasible for
+a web environment. H.264 is a video codec standardized by ITU-T Video Coding Experts
+Group (Joint Video Team 2002 ) and ISO/IEC Moving Picture Experts Group (MPEG; Gall
+1991). It is also known as MPEG4 part 10 or AVC (Advanced Video Coding). A wide range
+of online videos and video streaming services are encoded in H.264, which makes it the
+most popular video codec used on the web. Leveraging the libx264, a free software
+library to encode video streams into the H.264/MPEG-4 AVC compression format, video
+data are capable of being swiftly encoded and decoded. Data accuracy is also acceptable
+in this format.
+   VP8 and VP9 are two other video codecs that are widely adopted in video streaming
+on the web. They are derived from the WebM project (Bankoski 2011). VP8 provides a
+faster decoding speed compared with the H.264 codec in the same parameter setting.
+However, it also suﬀers more data error than H.264. VP9 is the next-generation open
+video codec provided by WebM. It is seen as an upgrade of VP8. The video quality of VP9
+codec is comparable with H.264 and has a similar decoding speed. However, VP9
+supports more chroma subsampling models, making it stand out against H.264.
+   In the encoding process, a series of pictures is compressed into a video ﬁle.
+Multidimensional climate data encoded in RGB color space are transformed into YUV
+color space, which consists of luminance (Y) and chrominance (UV) components (Kekre
+and Thepade 2009). Y is a product of the linear-weighted sum of the R, G, and B
+component values. It represents the brightness in color and is a key value in determining
+details in the dataset. UV represents the color components of the dataset.
+    YUV is typically adopted in image and video encoding as it reduces bandwidth and
+maintains accuracy for chrominance components via chroma subsampling. This
+10      W. LI AND S. WANG
+
+
+sampling strategy keeps more resolution for luma information than chroma information.
+The reason for this is that the human visual system is less sensitive to color diﬀerences
+than luminance. Thus, YUV color space more eﬃciently presents the images and videos
+than the RGB representation in terms of human perception.
+   YUV models are expressed as three digits that stand for the sample rates of the
+components (Y, U and V) in a 1-by-4-pixel block. For instance, the three components are
+equally and fully sampled (4 pixels each) in a YUV 4:4:4 format. Other popular YUV
+models, such as YUV 4:2:0 and YUV 4:2:2 that are dominant in online video encoding,
+only implement full resolution for luminance and partial resolution for chrominance
+information, resulting in a loss of color information.
+   Because video compression in this application is for data transmission rather than direct
+visualization, each pixel in the compressed video represents an encoded data value rather
+than a real color. Therefore, a full resolution YUV color format, YUV 4:4:4, may be more
+applicable because of its higher color precision. In Section 6, we conduct a series of
+experiments to test and identify the optimal YUV model for use in our application.
+
+
+
+4.4 Client rendering of multidimensional data using GPU
+As the climate data evolve, requested encoded video data are streamed from the server
+to the client browser. As the browser receives data, the frame of the video that contains
+all the data values at a certain time point is decompressed. This decoded video frame is
+encapsulated in WebGL texture and pushed to the graphics card memory for data
+rendering. To accomplish this, we arrange two workﬂows (Figure 4) in the GPU to take
+advantage of its parallel computing capability. One workﬂow is designed to calculate
+where each voxel (a unit of graphic information that deﬁnes a point in three-dimen-
+sional space) of the original 3D-gridded data in a speciﬁc view perspective should be
+projected in the current viewport. The other is responsible for resolving the correspond-
+ing data values at a certain time stamp.
+    The workﬂow that accomplishes the viewport coordinates calculation (left hand
+thread in Figure 4) starts with a preconstructed 3D-gridded model and the position of
+each voxel represented by latitude, longitude and height above mean sea level. By
+providing the geographical projection information, 3D-gridded coordinates, also known
+as the 3D matrix indices, are programmatically converted to the geographical coordi-
+nates. These coordinates are stored in the graphics memory and serve as input for GPU
+parallel computing.
+    On the GPU side, geographical coordinates of each voxel are converted to Cartesian
+coordinates in which the origin locates at the center of earth. The x-axis goes through
+the point where the Equator and Prime Meridian intersect, the y-axis goes through the
+point whose latitude is 0 degree and longitude is 90 degrees and the z-axis goes
+through the North Pole. This coordinate conversion leverages the following equation
+when the earth is considered as a sphere:
+                                                2                   3
+                                                  cosð yÞ  cosð xÞ
+                            Pcart   ¼ ðR þ hÞ  4 cosð yÞ  sinð xÞ 5
+                                                       sinð yÞ
+                          INTERNATIONAL JOURNAL OF GEOGRAPHICAL INFORMATION SCIENCE      11
+
+
+
+
+Figure 4. GPU-based client rendering workﬂow.
+
+
+
+where x and y are latitude and longitude, respectively, h is the altitude. R represents the
+approximate radius of the earth. The ﬁnal coordinate conversion, from Cartesian coordi-
+nates to viewport coordinates, is achieved using the model-view projection (MVP) matrix
+provided by Cesium. The viewport coordinates are obtained using the following
+equation:
+
+                                     Pview ¼ MMVP  Pcart
+
+where MMVP indicates the MVP matrix and Pcart is the corresponding Cartesian coordi-
+nate. The ﬁrst two elements of Pview compose the plane coordinate of the viewport. The
+last element indicates the distance from the viewport, which is ignored in this rending
+process. The coordinate conversion process is completed inside the GPU rather than pre-
+calculated in the central processing unit. This takes advantage of the GPU’s parallel
+processing capability to allow dynamic vertical scaling, which is a challenge in inter-
+active visualization in many climate visualization systems (Liang et al. 2014).
+   In parallel with the location-identiﬁcation workﬂow, the other workﬂow (right hand
+thread in Figure 4) is enabled to resolve the climate variable data from the WebGL
+texture ﬁle being received by the client. Because the original 3D data values have been
+reduced and rearranged in a 2D raster before transferring to the client, a reverse value-
+encoding process is needed to attain the 3D-gridded data. Once the original data value
+12       W. LI AND S. WANG
+
+
+is obtained, it is applied to a color scheme to represent the change in a certain climate
+variable, such as temperature or humidity, for GPU rendering. If a loss compression
+technique is applied here, the decoded data value may introduce some oﬀset based on
+diﬀerent YUV color models and video compression codec used.
+   To remedy this, each voxel’s projected position in the viewport and the correspond-
+ing color are obtained. The client GPU then renders this data frame on the virtual globe
+using WebGL. If more than two voxels are positioned to the same location in the
+viewport, the WebGL blending function iteratively blends all of the representative colors
+together to get a transparent view. When time series data are requested, the streaming
+data are decoded and rendered in sequence using the same workﬂow.
+   Utilizing the same workﬂow, vector data values such as wind speed and direction can be
+eﬃciently transmitted to the browser side as well. To vividly and clearly visualize these
+values, we introduce a moving streamline. Using three raw-grid datasets that provide the
+wind speed along two perpendicular horizontal directions and one vertical direction, we
+construct a continuous 3D vector ﬁeld using 3D-linear interpolation. Over a half million
+streamlines are randomly placed in the vector ﬁeld. Following the velocity value (containing
+both direction and magnitude) provided by the vector ﬁeld, streamlines stretch and move in
+the space to convey the direction of wind. Denser streamlines are used to represent higher
+wind speed. Figure 5 shows the eﬀect of this streamline visualization.
+
+
+5. System demonstration
+Figure 5 demonstrates the system prototype, PolarGlobe, which integrates the proposed
+techniques for web visualization of time-series climate data. An online portal is available
+
+
+
+
+Figure 5. Graphic user interface of the visualization prototype PolarGlobe.(a) A panorama view of
+temperature data (on 1 January 2012) over the North Pole; (b) screenshots during animation of
+temperature data over Greenland on 1 March 2012 (b1) and on 1 August 2012 (b2); (c) visualization of
+vector wind data (Winter Cyclone Ulli – 3 January 2012); (d) vertical proﬁle visualization (temperature
+data on 1 January 2012); (e) value picking and query (temperature data on 1 January 2012).
+                          INTERNATIONAL JOURNAL OF GEOGRAPHICAL INFORMATION SCIENCE       13
+
+
+at http://polar.geodacenter.org/polarglobe. The dataset is generated from the climate
+simulation model Polar-WRF (Weather Research and Forecasting) with a timespan of
+12 years (2000–2012).
+   Figure 5(a) shows a panoramic view of Arctic temperature data on 1 January 2012.
+This dataset covers not only the data near the Earth’s surface but also those in the
+atmosphere (29 pressure levels in total). Blue represents cold temperatures, red repre-
+sents high temperatures. It can easily be seen that above Greenland, there is a cold spot.
+Ground data establish that this is due to its high altitude and presence of a huge
+iceberg. Figure 5(b) demonstrates the results of applying a spatial ﬁlter on the original
+data to focus on the climate in Greenland. The screenshots show temperature variations
+at two timestamps 1 March 2012 (top) and 1 August 2012 (bottom) during an animation.
+Figure 5(c) demonstrates the visualization of a very strong winter cyclone, Ulli, using
+particle visualization of the vector wind data. Figure 5(d) shows an example of vertical
+proﬁle visualization by which a researcher can examine the variation of climate variable
+inside of the data cube. Each value on the vertical proﬁle data can be selected to create
+a chart for a speciﬁc data query and analysis (Figure 5(e)).
+
+
+6. Experiments
+For consistency, we use the same dataset used in Section 5 for our experiments. The
+PolarWRF dataset was retrieved from the arctic system reanalysis project in NetCDF
+format. The dataset consists of temperature data, relative humidity data, water vapor
+mixing ratio and wind data (including direction and speed) with a 30-km horizontal
+resolution, 29 vertical pressure levels and a 3-h time resolution lasting from 1 January
+2000 to 31 December 2012. From this dataset, 91-day temperature data from 1 January
+2012 to 31 March 2012 with a total of 728 frames were chosen.
+   Section 6.1 compares the encoding and decoding performance, and data accuracy
+when applying video compression using diﬀerent video codec and chroma subsampling
+combinations. We then select video encoding parameters that balance between perfor-
+mance and data accuracy for comparison with popular image-based and text-based
+compression approaches (Sun et al. 2012b, Li et al. 2015) in terms of transfer eﬃciency of
+big climate data in Section 6.2.
+
+
+6.1. Video compression performance and accuracy
+We perform three experiments – encoding speed, decoding speed and data accuracy –
+to examine the advantages and disadvantages of diﬀerent codec and chroma subsam-
+pling combinations and determine a proper bitrate for the encoded video ﬁle. In each
+experiment, all feasible combinations of video codec and chroma subsampling in a web
+environment are compared. The main parameter settings for these combinations are
+presented in Table 1.
+   The independent variable is the video bitrate, which decides the average data size
+per second and determines the total size of the video ﬁle. A higher bitrate supplies
+better quality but a larger video size. Other variables include the frame rate, which is set
+to 1 FPS for normalization purposes. In real-world applications, the client can set a
+corresponding decoding frame rate for parsing the video stream at a proper speed for
+14       W. LI AND S. WANG
+
+
+Table 1. Parameter settings for video encoding.
+ Video codec Chroma subsampling Color bit depth Frames rate (fps) Encoding mode Encoding quality/speed
+ H.264       yuv420p                    8               1        2-pass          Best/Slowest
+ vp8         yuv420p                    8               1        2-pass          Best/Slowest
+ vp9         yuv420p                    8               1        2-pass          Best/Slowest
+ vp9         yuv444p                    8               1        2-pass          Best/Slowest
+
+
+
+each frame rate set in the encoding phase. The two-pass encoding mode, which
+provides a more accurate data rate control, is adopted to produce a better video quality
+(at the cost of more time than the default one-pass mode). Similarly, we sacriﬁce
+encoding time for more precise data values in the settings for encoding speed and
+quality control, since encoding is conducted at the data preparation phase in which time
+cost is less critical than data accuracy.
+   All three experiments were performed using (1) a workstation with 8 cores at 3.4 GHz and
+8 GB memory size, (2) an FFmpeg with the libraries libx264 and libvpx for H.264 and vp8/vp9
+video encoding and (3) an FFmpeg decoder to emulate client decoding. The encoding time
+cost, decoding time cost and data accuracy results are shown in Figures 6–8.
+   Figure 6 shows the time cost for video encoding by the diﬀerent codecs. The x-axis
+shows the bitrate, increasing from 0.25 to 8 Mbps. The y-axis represents the time cost
+normalized by the total number of frames (728). It can be determined that the average
+time cost to encode a single frame does not increase rapidly as the bit rate increases,
+except for when a vp9 codec with a YUV 4:4:4 color model is used. This is because the
+other three encoding settings use the YUV 4:2:0 color model, which introduces an
+incomplete chrominance subsampling and downgraded data quality.
+   Overall, the vp9 codec with both YUV 4:2:0 and YUV 4:4:4 color format encodes more
+slowly than the other codecs. In comparison, the vp8 codec achieves the fastest encod-
+ing speed while the H.264 codec takes approximately twice the time as vp8 encoding.
+All codecs share similar time costs when the bitrate ranges from 0.25 to 6.5 Mbps.
+However, when bitrate reaches 6.5 Mbps and higher, the average time cost of the vp9
+codec with YUV 4:2:0 color format starts to decline and the vp9 codec with YUV 4:4:4
+color format keeps increasing.
+
+
+
+
+Figure 6. Comparison of video-encoding eﬃciency using diﬀerent codec.
+                          INTERNATIONAL JOURNAL OF GEOGRAPHICAL INFORMATION SCIENCE        15
+
+
+   Client decoding performance is demonstrated in Figure 7. Like Figure 6, the x-axis
+shows the bitrate and the y-axis shows the decoding time cost per frame. As with the
+encoding results, the vp8 codec performs the best in terms of speed. The H.264 codec
+takes longer than the vp8, especially when the bitrate is high. The vp9 codec with color
+format YUV 4:2:0 presents a comparable result with H.264, while the vp9 codec with YUV
+4:4:4 color format takes the longest decoding time in the entire bitrate range.
+   Figure 8 shows the result of data accuracy when applying the video encoding to
+original data. Its x-axis still shows the bitrate change while the y-axis presents the mean
+absolute error (MAE) in Kelvin degree. MAE measures how close the decoded values are
+to the original ones after the lossy compression procedure. Mathematically, it can be
+represented as
+
+                                            1Xi¼1
+                                    MAE ¼         jti  di j
+                                            n n
+
+where n is the number of all values in the dataset, ti is the original (or true) value and di
+stands for the decoded value.
+   The highest data errors are found in the vp8 codec results. The data quality of the
+H.264 and vp9 codec with YUV 4:2:0 color model is slightly better than the vp8,
+
+
+
+
+Figure 7. Comparison of video-decoding eﬃciency using diﬀerent codec.
+
+
+
+
+Figure 8. Comparison of video-encoding accuracy.
+16      W. LI AND S. WANG
+
+
+demonstrating almost the same data error curves. All three results show a signiﬁcant
+MAE decrease at low bitrates. However, when the bitrate is higher than 2 Mbps, there is
+no obvious further decrease of MAE because of the constraint in the YUV 4:2:0 color
+model. The data quality of the vp9 codec with YUV 4:4:4 color model is much better than
+the other three, especially at a high bitrate.
+   Based on these results, we conclude that (1) a high bitrate (approximately ≥2 Mbps)
+does not provide better precision of video encoded data when adopting a YUV 4:2:0
+color format; (2) vp8 could be a proper codec for relatively low-performance clients
+because of its fast encoding and decoding speeds; (3) for high-performance clients, it is
+better to provide data compressed by the vp9 codec along with the YUV 4:4:4 color
+format, due to its high data accuracy over other options in the same data size; and (4)
+data encoded with vp9 using YUV 4:2:0 color format is not recommended for use in the
+web-based visualization system, since H.264 provides comparable data accuracy but
+faster encoding and decoding speed.
+
+
+6.2. Comparison of data transfer eﬃciency
+The following experiments are carried out to compare video encoding eﬃciency for
+transferring time-varied multidimensional data with other spatial data compression
+techniques used in a web environment (Sun et al. 2012b, Li et al. 2015). We compare
+the data transfer time/speed using four diﬀerent data compression methods: (1) video
+compression using vp9 codec with YUV 4:4:4 color format at a bitrate of 1.5 Mbps
+where the data error decreasing speed slows down; (2) JPEG image encoding which is
+also a lossy compression method; (3) PNG image encoding providing lossless data
+compression; and (4) JSON-formatted data compressed with GZIP. Methods 2 and 3
+are applied to the series of images produced through the method described in
+Section 4.2. We also ensure that images formatted in JPEG share the similar data
+error with the video encoded data by adjusting the JPEG encoding parameter. In
+method 4, all of the original data are sequentially stored in a 1D array and encapsu-
+lated in a JSON ﬁle.
+   The experiments were conducted under three network environments. All data were
+prepared and hosted in a server located at Arizona State University (ASU). Client 1 is also
+located at ASU and connected via a cable to emulate the local area network (LAN)
+environment with an approximate downloading speed of 50 Mbps. Client 2 also emu-
+lates a LAN environment but is connected via WiFi (WiFi + LAN). It is capable of
+downloading data at a speed of about 15 Mbps. Client 3 is a node of the HPC facility
+Resourcing Open Geospatial Education and Research located at the University of Illinois
+Urbana-Champaign. It emulates the wide area network (WAN) with a download speed of
+about 1 Mbps. To better demonstrate the results, we chart both transfer speed and time
+cost per frame. Results are presented in Figures 9 and 10.
+   In Figure 9, the x-axis shows the three diﬀerent network conditions and the y-axis
+shows the data transferring speed. The video codec approach takes the least amount of
+time for transferring the same amount of original climate data across all environments,
+particularly via WAN where it obtains signiﬁcantly higher acceleration ratios than the
+JSON + GZIP method. This acceleration is mainly owing to the smaller data size this
+approach generates. For example, video-encoded data are approximately half the size of
+                           INTERNATIONAL JOURNAL OF GEOGRAPHICAL INFORMATION SCIENCE   17
+
+
+
+
+Figure 9. Comparison of data transfer time using diﬀerent compression techniques.
+
+
+
+
+Figure 10. Comparison of data transfer speed using diﬀerent compression techniques.
+
+
+JPEG-encoded data. In addition, the communication overhead between the client and
+server is also smaller when the video encoding method is used as only one HTTP
+connection is needed for transferring video data. In contrast, multiple connections
+must be established when multidimensional data, such as time-series data, are
+requested through image-based or text-based approaches.
+   In Figure 10, the x-axis is the same as Figure 9 while the y-axis represents the
+speed for transferring data per one timestamp. We can see that the video-encoding
+approach is signiﬁcantly faster than the other approaches, particularly in the LAN
+environment, in delivering the needed data to the client. Among all approaches, the
+JSON + GZIP method performs the worst. It takes more than 2 s to fetch a single
+frame in LAN, which makes it diﬃcult to accomplish real-time rendering for time-
+series data. The data encoded by JPEG and PNG perform reasonably well in the LAN
+and WiFi + LAN environments. However, both take too long to fetch the data in the
+WAN environment, which is the most common network environment in real-world
+scenarios.
+   From the above experiments, it can be concluded that the JSON + GZIP is not a
+proper method for compressing and transferring time-series data for real-time render-
+ing. Image-based encoding is suﬃcient in LAN when connected by either cable or
+18      W. LI AND S. WANG
+
+
+WiFi, but its data fetching speed in WAN is not satisfactory. The data encoded by
+video codec transfer much faster than other approaches and adapt to all network
+environment.
+
+
+7. Conclusions and discussion
+This paper reports our eﬀorts to date in developing a cyberinfrastructure solution for
+visualizing big, multivariate and time-varying climate data. These data are rather volu-
+minous. Therefore, a major challenge for collaborative scientiﬁc analysis has been how
+to handle the organization, transmission and rendering of these data over the web. The
+proposed video encoding and compression techniques eﬃciently organize big, multi-
+variate data and speed up transmission eﬃciency by taking advantage of the highly
+correlative nature of spatial data values at successive timestamps.
+   Video encoding enables a high compression ratio that facilitates real-time rendering
+in a web-based computing paradigm. Compression techniques reorganize and re-
+arrange multidimensional data into 2D time-series images that are then fed into a
+video data frame. This is accomplished via a dimension-reduction algorithm that max-
+imizes data-processing speed and video compression accuracy as well as optimizes GPU
+memory allocation. We also introduce a GPU-accelerated rendering strategy that assigns
+computing to the backend only and pushes rendering to the browser side (web client)
+such that the web server is not overloaded by massive requests from the client. In this
+way, the computation load is balanced between the server and the web client. Through
+a series of experiments, we compare the proposed techniques to traditional visualization
+techniques to verify their eﬃcacy.
+   Finally, we demonstrate the applicability of the video encoding technique in the
+PolarGlobe web-based visualization platform and suggest ideal choices for video com-
+pression techniques under various network environments. Using the PolarGlobe system,
+climate scientists and the public located anywhere around the world are able to view
+climate information and identify its changes in a virtual globe environment. Thus, the
+proposed techniques are shown to enable web-scale access, real-time visualization and
+online interactive analysis of scientiﬁc data.
+   We continue to make improvements to the PolarGlobe system so that we may move it
+beyond simply a visualization system to a knowledge system. Ultimately, this knowledge
+system will incorporate advanced data mining and intelligent analysis capabilities (Wang
+et al. 2016), such as machine learning techniques, to automatically capture abnormalities
+in the climate system, such as extreme weather, cyclones, their moving trajectories etc.
+In addition, we plan to extend the application of PolarGlobe to other Earth science and
+social science domains that have urgent needs in understanding big multidimensional
+data. Thus, this platform will enable broader collaborative scientiﬁc analysis and deci-
+sion-making for addressing global wicked problems.
+
+
+Acknowledgments
+This project is supported by the National Science Foundation (PLR-1349259, BCS-1455349, and
+PLR-1504432). Dr. Roger Barry proofread an earlier draft of this manuscript. The author would also
+like to thank the UIUC team who provides HPC facility ROGER for our experiments.
+                             INTERNATIONAL JOURNAL OF GEOGRAPHICAL INFORMATION SCIENCE               19
+
+
+Disclosure statement
+No potential conﬂict of interest was reported by the authors.
+
+
+Funding
+This project is supported by the National Science Foundation (PLR-1349259, BCS-1455349, and
+PLR-1504432).
+
+
+
+
+References
+AGI. 2015. Cesium-WebGL Virtual Globe and Map Engine. https://cesiumjs.org/. [Accessed January
+   17 2015]
+Ahrens, J., Geveci, B., and Law, C., 2005. ParaView: an End-User Tool for Large-Data Visualization.
+   In: C.R. Johnson and C.D. Hansen, ed. Visualization handbook. Burlington, USA: Elsevier
+   Butterworth–Heinemann, 717–731.
+Atkins, D. (2003). Revolutionizing science and engineering through cyberinfrastructure. Report of
+   the National Science Foundation blue-ribbon advisory panel on cyberinfrastructure. National
+   Science Foundation. http://hdl.handle.net/10150/106224. (Accessed in May 2016)
+Bankoski, J. (2011, June). Intro to webm. In Proceedings of the 21st international workshop on
+   Network and operating systems support for digital audio and video (pp. 1–2). ACM.
+Batstone, G. 2013. See Beyond Reality – 3D transformation of Analytics. http://www.ngrain.com/3-
+   reasons-why-visualization-is-the-biggest-v-for-big-data/. [Accessed May 2016]
+Bell, D.G., et al. (2007). NASA World Wind: opensource GIS for mission operations. In Aerospace
+   Conference, 2007 IEEE (pp. 1–9). IEEE.
+Berberich, M., et al. (2009, October). Geospatial visualization using hardware accelerated real-time
+   volume rendering. In OCEANS 2009, MTS/IEEE Biloxi-Marine Technology for Our Future: Global and
+   Local Challenges (pp. 1–5). IEEE.
+Berrick, S.W., et al., 2009. Giovanni: a web service workﬂow-based data visualization and analysis
+   system. IEEE Transactions on Geoscience and Remote Sensing, 47 (1), 106–113. doi:10.1109/
+   TGRS.2008.2003183
+Butler, D., 2006. Virtual globes: the web-wide world. Nature, 439 (7078), 776–778. doi:10.1038/
+   439776a
+Chen, A., et al., 2009. Visualization of A-Train vertical proﬁles using Google Earth. Computers &
+   Geosciences, 35 (2), 419–427. doi:10.1016/j.cageo.2008.08.006
+Chen, I.C., et al., 2011. Rapid range shifts of species associated with high levels of climate warming.
+   Science, 333 (6045), 1024–1026. doi:10.1126/science.1206432
+Cobb, K.M., et al., 2003. El Nino/Southern Oscillation and tropical Paciﬁc climate during the last
+   millennium. Nature, 424 (6946), 271–276. doi:10.1038/nature01779
+Congote, J., et al. (2011, June). Interactive visualization of volumetric data with webgl in real-time.
+   In Proceedings of the 16th International Conference on 3D Web Technology (pp. 137–146). ACM.
+Folk, M., McGrath, R.E., and Yeager, N. (1999). HDF: an update and future directions. In Geoscience
+   and Remote Sensing Symposium, 1999. IGARSS’99 Proceedings. IEEE 1999 International (Vol. 1,
+   pp. 273-275). IEEE.
+Giorgi, F. and Mearns, L.O., 1991. Approaches to the simulation of regional climate change: a
+   review. Reviews of Geophysics, 29 (2), 191–216. doi:10.1029/90RG02636
+Goodchild, M.F., 2015. Two decades on: critical GIScience since 1993. The Canadian Geographer/Le
+   Géographe Canadien, 59 (1), 3–11. doi:10.1111/cag.12117
+Hecher, M., et al. (2015). Web-based visualization platform for geospatial data. In IVAPP (pp. 311–316).
+Joint Video Team (JVT), 2002. “Joint Video Team (JVT) of ISO/IEC MPEG & ITU-T VCEG”, JVT-F100d2.
+   doc. In: 6th Meeting, Awaji, Island, JP, 5–13.
+20       W. LI AND S. WANG
+
+
+Jourdain, S., Ayachit, U., and Geveci, B. (2010, July). ParaViewWeb, a web framework for 3d
+   visualization and data processing In IADIS international conference on web virtual reality and
+   three-dimensional worlds (Vol. 7, p. 1).
+Kehrer, J. and Hauser, H., 2013. Visualization and visual analysis of multifaceted scientiﬁc data: A
+   survey. IEEE Transactions on Visualization and Computer Graphics, 19 (3), 495–513. doi:10.1109/
+   TVCG.2012.110
+Kekre, H.B. and Thepade, S.D. (2009, March). Using YUV color space to hoist the performance of
+   block truncation coding for image retrieval. In IEEE International Advanced Computing
+   Conference (pp. 6–7).
+Le Gall, D., 1991. MPEG: A video compression standard for multimedia applications.
+   Communications of the ACM, 34 (4), 46–58. doi:10.1145/103085.103090
+Li, J., et al., 2011. Visualizing dynamic geosciences phenomena using an octree-based view-
+   dependent LOD strategy within virtual globes. Computers & Geosciences, 37 (9), 1295–1302.
+   doi:10.1016/j.cageo.2011.04.003
+Li, W., et al., 2015. Performance improvement techniques for geospatial web services in a
+   cyberinfrastructure environment–A case study with a disaster management portal. Computers,
+   Environment and Urban Systems, 54, 314–325. doi:10.1016/j.compenvurbsys.2015.04.003
+Liang, J., et al., 2014. Visualizing 3D atmospheric data with spherical volume texture on virtual
+   globes. Computers & Geosciences, 68, 81–91. doi:10.1016/j.cageo.2014.03.015
+Liu, P., Gong, J., and Yu, M., 2015. Visualizing and analyzing dynamic meteorological data with
+   virtual globes: A case study of tropical cyclones. Environmental Modelling & Software, 64, 80–93.
+   doi:10.1016/j.envsoft.2014.11.014
+Luber, G. and McGeehin, M., 2008. Climate change and extreme heat events. American Journal of
+   Preventive Medicine, 35 (5), 429–435. doi:10.1016/j.amepre.2008.08.021
+Maxwell, T.P., 2012. Advanced visualization and analysis of climate data using DV3D and UV-CDAT.
+   In AGU Fall Meeting Abstracts, 1, 03.
+McMichael, A.J., Woodruﬀ, R.E., and Hales, S., 2006. Climate change and human health: present and
+   future risks. The Lancet, 367 (9513), 859–869. doi:10.1016/S0140-6736(06)68079-3
+Ohlhorst, F.J., 2012. Big data analytics: turning big data into big money. Hoboken, NJ: John Wiley &
+   Sons, 176.
+Overpeck, J.T., et al., 2011. Climate data challenges in the 21st century. Science (Washington), 331
+   (6018), 700–702. doi:10.1126/science.1197869
+Patz, J.A., et al., 2005. Impact of regional climate change on human health. Nature, 438 (7066), 310–
+   317. doi:10.1038/nature04188
+Post, E., et al., 2009. Ecological dynamics across the Arctic associated with recent climate change.
+   Science, 325 (5946), 1355–1358. doi:10.1126/science.1173113
+Poynton, C. (2008). Chroma subsampling notation. http://w.poynton.com/PDFs/Chroma_subsam
+   pling_notation.pdf. [Accessed June 19 2016].
+Rew, R., and Davis, G., 1990. Netcdf: an interface for scientiﬁc data access. Ieee Computer Graphics
+   And Applications, 10 (4), 76–82. doi: 10.1109/38.56302
+Root, T.L., et al., 2003. Fingerprints of global warming on wild animals and plants. Nature, 421
+   (6918), 57–60. doi: 10.1038/nature01333
+Sheppard, S.R. and Cizek, P., 2009. The ethics of Google Earth: crossing thresholds from spatial data
+   to landscape visualisation. Journal of Environmental Management, 90 (6), 2102–2117.
+   doi:10.1016/j.jenvman.2007.09.012
+Sun, M., et al., 2012a. A web-based geovisual analytical system for climate studies. Future Internet, 4
+   (4), 1069–1085. doi:10.3390/ﬁ4041069
+Sun, X., et al., 2012b. Development of a Web-based visualization platform for climate research
+   using Google Earth. Computers & Geosciences, 47, 160–168. doi:10.1016/j.cageo.2011.09.010
+Vasseur, D.A., et al., 2014. Increased temperature variation poses a greater risk to species than
+   climate warming. Proceedings of the Royal Society of London B: Biological Sciences, 281 (1779),
+   20132612. doi: 10.1098/rspb.2013.2612
+Walther, G.R., et al., 2002. Ecological responses to recent climate change. Nature, 416 (6879), 389–
+   395. doi: 10.1038/416389a
+                           INTERNATIONAL JOURNAL OF GEOGRAPHICAL INFORMATION SCIENCE          21
+
+
+Wang, F., Li, W., and Wang, S., 2016. Polar Cyclone Identiﬁcation from 4D Climate Data in a
+  Knowledge-Driven Visualization System. Climate, 4 (3), 43. doi:10.3390/cli4030043
+Wang, Y., Huynh, G., and Williamson, C., 2013. Integration of Google Maps/Earth with microscale
+  meteorology models and data visualization. Computers & Geosciences, 61, 23–31. doi:10.1016/j.
+  cageo.2013.07.016
+Williams, D. N., et al., 2013. Ultrascale visualization of climate data. Computer, 46 (9), 68–76.
+Zhang, T., et al., 2016. A cloud-enabled remote visualization tool for time-varying climate data
+  analytics. Environmental Modelling & Software, 75, 513–518. doi:10.1016/j.envsoft.2015.10.033
+

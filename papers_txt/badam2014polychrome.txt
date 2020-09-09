@@ -1,0 +1,735 @@
+ITS 2014 • Multi-Surface                                                                                                 November 16-19, 2014, Dresden, Germany
+
+
+
+                        PolyChrome: A Cross-Device Framework for
+                             Collaborative Web Visualization
+
+                                             Sriram Karthik Badam1 and Niklas Elmqvist2
+                                 1   Department of Computer Science and 2 College of Information Studies
+                                             University of Maryland, College Park, MD, USA
+                                                         {sbadam, elm}@umd.edu
+
+                                                                Tablet                                              Tablet
+                              Device 1:
+                              {touchstart, 628, 145},
+                              {touchmove, 629, 147},
+                              {touchmove, 630, 150},
+                                                                                          {touchstart, 636, 157},
+                              {touchend, 634, 154}
+                                                                                          {touchmove, 640, 159},
+                              Device 2:                                                   {touchmove, 642, 160},
+                              {touchstart, 636, 157},                                     {touchend, 649, 166}
+                              {touchmove, 640, 159},
+                              {touchmove, 642, 160},
+                              {touchend, 649, 166}
+
+               Server Side - Event log
+                                                                                  Interaction events                                                      Display Wall
+                                                                           Client-Server                       Peer-to-Peer (P2P)
+Figure 1. A web-based collaborative visualization of a scatterplot matrix of Anderson’s Iris dataset with brush and link interaction enabled. Using
+PolyChrome, the brushes created on the tablets are represented on the display wall through operation distribution, and are also stored on a server.
+
+
+ABSTRACT                                                                                                 INTRODUCTION
+We present PolyChrome, an application framework for creat-                                               Given today’s relentless advancements in display technology,
+ing web-based collaborative visualizations that can span mul-                                            mobile devices, and wireless connectivity, the concept of col-
+tiple devices. The framework supports (1) co-browsing new                                                laborative visualization on multiple devices such as large dis-
+web applications as well as legacy websites with no migration                                            plays, tabletops, tablets, and smartphones is becoming in-
+costs (i.e., a distributed web browser); (2) an API to develop                                           creasingly prominent [23]. In parallel development, the web
+new web applications that can synchronize the UI state on                                                is quickly turning into a prime platform for managing and
+multiple devices to support synchronous and asynchronous                                                 analyzing large amounts of data using visualization [7] and
+collaboration; and (3) maintenance of state and input events                                             visual analytics [33]. Collaborative web browsing [9, 14] (co-
+on a server to handle common issues with distributed ap-                                                 browsing), where browsers on multiple different devices are
+plications such as consistency management, conflict resolu-                                              connected, is one paradigm that allow us to combine both
+tion, and undo operations. We describe PolyChrome’s gen-                                                 of these trends to enable cross-device interaction [42]. So
+eral design, architecture, and implementation followed by ap-                                            far mostly restricted to applications within human-computer
+plication examples showcasing collaborative web visualiza-                                               interaction, co-browsing synchronizes browsers by sharing
+tions created using the framework. Finally, we present per-                                              both current browser state and interaction events, including
+formance results that suggest that PolyChrome adds minimal                                               navigation through scrolling, selection through mouse clicks,
+overhead compared to single-device applications.                                                         and input from keyboard and touch displays. Applying this
+                                                                                                         idea to visualization and visual analytics would turn the web
+ACM Classification Keywords                                                                              browser into an environment for cross-device visualization.
+H.5.2 Information Interfaces and Presentation:    User
+                                                                                                         The concept of harnessing multiple networked devices for
+Interfaces—Interaction styles; I.3.6 Computer Graphics:
+                                                                                                         deep data analytics anywhere and anytime is called ubiq-
+Methodology and Techniques—Interaction techniques
+                                                                                                         uitious analytics (ubilytics) [12], and draws upon a signifi-
+                                                                                                         cant body of existing work that supports synchronous and co-
+Author Keywords
+                                                                                                         located collaboration using distributed user interfaces [30],
+Co-browsing; cross-device interaction; multi-display                                                     distributed visualization [18], and post-WIMP interaction
+environments; distributed visualization;                                                                 models [16]. Ubiquitous analytics is inspired from Mark
+                                                                                                         Weiser’s vision (ubiquitous computing [42]) of seamless in-
+Permission to make digital or hard copies of all or part of this work for personal or
+                                                                                                         teraction with everyday objects and activities for information
+classroom use is granted without fee provided that copies are not made or                                processing. Utilizing the web as a medium for collaboration
+distributed for profit or commercial advantage and that copies bear this notice and                      can easily be the most platform-independent way to make
+the full citation on the first page. Copyrights for components of this work owned by
+others than ACM must be honored. Abstracting with credit is permitted. To copy
+                                                                                                         further progress towards these common visions of ubiquitous
+otherwise, or republish, to post on servers or to redistribute to lists, requires prior                  computing and analytics. However, to build ubilytics environ-
+specific permission and/or a fee. Request permissions from permissions@acm.org.                          ments using multi-device ecosystems over the web, we need
+ITS 2014, November 16–19, 2014, Dresden, Germany.
+Copyright © 2014 ACM 978-1-4503-2587-5/14/11...$15.00.
+http://dx.doi.org/10.1145/2669485.2669518
+
+                                                                                                 1
+
+                                                                                            109
+ITS 2014 • Multi-Surface                                                           November 16-19, 2014, Dresden, Germany
+
+
+a unified framework to replicate shared state and manage the             new opportunity for social analysis and enhanced collabora-
+shared visual space of multiple devices.                                 tion in analytics by acting as a space to share visualizations,
+                                                                         opinions, and conjectures.
+In this paper, we address this need by presenting P OLY-
+C HROME, a web application framework for exploring the de-               In the past decade, toolkits designed for supporting web visu-
+sign choices in sharing and synchronizing web applications in            alization such as Protovis [6], JavaScript InfoVis toolkit [5],
+collaborative settings. Because the framework is built entirely          and D3 [7] have come into prominent use. Protovis [6] aimed
+in JavaScript, participating devices need no special software            at making visualizations more accessible to the web and inter-
+beyond a modern web browser. Interaction sharing and syn-                action designers by using a declarative specification of visual-
+chronization among devices using PolyChrome is performed                 ization as consisting of graphical primitivates called “marks”,
+through a secure peer-to-peer (P2P) network, while persistent            such as bars (for bar charts), lines (for line charts), and labels.
+data such as login details, display configuration preferences,           In contrast, D3 [7], created by Bostock et al., supports web vi-
+shared state, and consistency management is managed by a                 sualization through direct manipulation of the document ob-
+dedicated server. PolyChrome provides three contributions to             ject model (DOM) of a webpage without any intermediate
+the visualization on interactive surfaces community:                     representations. D3 uses the document as the scene graph
+                                                                         and performs at least twice as fast as Protovis [6]. While these
+• Augmented legacy websites: Augmenting standard web                     toolkits are oriented towards building visualizations over the
+  browsers to distribute legacy websites and visualizations
+                                                                         web, they have not yet attempted to support features for col-
+  across multiple devices and synchronize interaction be-
+                                                                         laboration between multiple users.
+  tween them. We target both dynamic websites for visu-
+  alization created using toolkits such as D3 [7], as well as            Collaboration in the analytics process has been shown to in-
+  static websites such as Wikipedia.                                     crease sensemaking performance: Mark et al. [28] showed
+                                                                         significant benefits in using collaborative visualizations in
+• Collaborative web visualizations: Providing the interac-               both distributed and co-located settings, and Balakrishnan et
+  tion and display space distribution mechanisms to create               al. [4] found better performance for analysts using shared vi-
+  new collaborative web visualizations that utilize multiple             sualization compared to single-user ones. Drawing on this
+  devices. This is widely useful in all types of collaboration,          body of work, Isenberg et al. [23] define the research area of
+  including the four combinations of synchronous vs. asyn-               collaborative visualization and derive its unique challenges.
+  chronous and co-located vs. distributed collaboration [3].             Collaborative visualizations in co-located settings often uti-
+• Consistency and synchronization management: Providing                  lize large wall displays, floor displays, tabletops and tablets.
+  framework modules to store the user interaction (repre-                Accordingly, several visualizations have been adapted to such
+  sented as operations). Combined with the initial state of              settings [22, 25, 40]. Some approaches exist to facilitate
+  a website, the interaction logs are useful for synchronizing           the collaborative sensemaking itself; for example, Branch-
+  devices within the collaborative environment, consistency              Explore-Merge [29] supports the whole spectrum of coupled
+  management, and interaction replay [27].                               and decoupled collaboration when analyzing datasets.
+The remainder of this paper is structured as follows: we first           Collaborative Browsing and Cross-Device Interaction
+review existing research on web-based visualizations, collab-            Collaborative web browsing [9, 14] involves multiple users
+orative visualizations, collaborative web browsing, and oper-            viewing a single webpage collaboratively using their individ-
+ation transformation algorithms for groupware. We then de-               ual devices through synchronous or asynchronous coupling of
+rive and motivate design considerations for our framework.               their browser interfaces. Traditionally, this is accomplished
+We present the PolyChrome architecture and give several ap-              either by replicating the content of one browser over the con-
+plication examples of using PolyChrome for both new and                  nected browsers in distributed collaboration or by allowing
+legacy web-based visualization. We close the paper by dis-               virtual avatars to operate on a single web browser in case of
+cussing advantages and disadvantages of PolyChrome along                 co-located collaboration. GroupWeb [15, 17] presents one of
+with a preliminary evaluation.                                           the earliest groupware adaptations of a web browser. It al-
+                                                                         lows (1) document slaving for synchronized pages by making
+BACKGROUND
+                                                                         sure that the browsers display the same webpage, (2) relaxed
+In this section, we review existing research in the related ar-          “what you see is what I see” by keeping the visuals similar
+eas in visualization, cross-device interaction, and operation            across devices, (3) view slaving for synchronous scrolling,
+transformation for groupware.                                            gestures through telepointers, and (4) group annotations.
+Web-based and Collaborative Visualizations                               Another way to look at co-browsing is to see it as a medium
+Rohrer and Swing [35] more than a decade ago discussed                   for cross-device interaction [42]: interaction that spans two
+the possiblity of utilizing the web as a visualization platform,         or more devices. Accordingly, over the past decade and half,
+citing its inherent device and platform independence as well             collaborative browsing has evolved from simplistic meth-
+as its pervasiveness, but it is only recently that the web be-           ods to chain multiple displays into full multi-device envi-
+came both the source of information as well as the underly-              ronments. Websplitter [20] targets web-based presentations
+ing delivery mechanism for interactive visualization. Many               involving multiple displays and hand-held devices. Instead
+Eyes [41] was among the first to allow a visualization of ar-            of mirroring webpages across devices, they provide the abil-
+bitrary datasets over the web. By doing so, they opened up a             ity to orchestrate a composite presentation, including audio
+
+                                                                    2
+
+                                                                   110
+ITS 2014 • Multi-Surface                                                           November 16-19, 2014, Dresden, Germany
+
+
+and video, across multiple devices according to their capa-               DESIGN: CROSS-DEVICE VISUALIZATION TOOLKITS
+bilities. PlayByPlay [43] supports synchronous and asyn-                  Multi-device ecosystems are becoming increasingly popular
+chronous collaborative browsing and allows the user to tog-               in office and academic settings [13, 34]. The presence of
+gle options for receiving actions of other users, sending their           large screens, tabletops, and tablets not only increases the
+own actions, and resyncing with a previously synchronized                 screen space but also the interaction space to utilize the vari-
+user. Synchronite [39] works with more dynamic webpages                   ous unique abilities of each device. Many existing platforms
+by capturing the mousing events and replicates them among                 utilize the idea of connecting the devices in the ecosystem
+connected devices, thus creating low latency collaboration                with a client-server or a peer-to-peer architecture [25, 29], to
+and reduced data traffic.                                                 allow for ubiquitous analytics [12]. With the increasing use of
+                                                                          the web as a platform for visualization and visual analytics,
+Hydrascope [21], a framework for adapting existing web ap-
+                                                                          we believe that it is time to augment toolkits for web visu-
+plications (legacy) to multi-surface environments, faces is-
+                                                                          alizations with the ability to allow collaboration at a device
+sues with its approach for reverse-engineering these applica-
+                                                                          level. Here we describe the design choices involved in build-
+tions, and they counter this by providing some general design
+                                                                          ing ubiquitous visual analytics applications over the web and
+guidelines for web applications. Calderon et al. [8] mention
+                                                                          how these choices can be supported through a software frame-
+the general requirements for going beyond common browser
+                                                                          work for binding web browsers on separate devices together.
+interactions and coupling mobile displays as lessons learned
+while developing the RED framework for multi-display appli-               Operation Distribution
+cations. More recently, Panelrama [44] allows development                 At a software level, interaction events or operations, a com-
+of web-based collaborative applications through custom pan-               mon term in Operation Transformation, form the building
+els, but this work does not fully support legacy applications or          blocks for any interaction with a visualization. For example,
+dynamic web visualizations. Other research work in develop-               brush-and-link coordination is one of the common interaction
+ment of cross-device web interfaces includes XDStudio [31].               techniques used in multi-view visualizations, and it is per-
+In contrast to these frameworks, PolyChrome utilizes existing             formed through one or more selection operations. In multi-
+HTML elements, supports legacy applications while provid-                 device ecosystems for ubiquitous analytics, these operations
+ing a developer API for designing cross-device applications,              need to be captured and shared with other devices to propa-
+couples any two devices with a web broswer, and synchro-                  gate the effects of an interaction on the display space. While
+nizes using interaction events.                                           a simple model for operation distribution would involve send-
+                                                                          ing every operation to all the devices in the network, this may
+Operation Transformation
+                                                                          not turn out to be useful in some collaborative scenarios. We
+Real-time collaborative applications often require manage-                have identified various styles (design patterns) of operation
+ment of consistency and conflicts inherently caused by simul-             distribution or replication (Figure 2).
+taneous collaborative use. In the quest to allow concurrent use
+in distributed environments, operation transformation (OT)               P1 Explicit Sharing: Here the visualization user explicitly
+has become an established method compared to the alterna-                   decides when the operation sharing should happen, which
+tives such as turn-taking, locking, and serialization [10, 11].             operations to share and whom to share them with. This is
+                                                                            helpful in building private and public workspaces that can
+The early approaches GROVE [10] and REDUCE [37, 38]                         allow for branch and merge style collaboration [29]. While
+both adopt fully distributed architectures and maintain a                   an operation that happens on the private workspace is not
+buffer of executed operations on each device. In particular,                shared with others, the operation that happens on a public
+the REDUCE approach promises intention preservation—the                     space is passed on to all the devices with user intervention.
+final state on all devices being what the user intended—along
+with convergence and causality preservation. REDUCE in-                  P2 Implicit Sharing: Here the operations are automatically
+troduces two kinds of operation transformations: inclusion                  shared with the connected devices without the need for ad-
+transformations (IT) that transforms an operation Oa against                ditional application logic. This creates a fully-aware en-
+operation Ob such that the impact of Ob is included, and ex-                vironment where each device knows the interaction hap-
+clusion transformation (ET) that transforms an operation Oa                 pening on others. This method requires additional appli-
+against operation Ob such that the impact of Ob is excluded.                cation logic for consistency management since interaction
+                                                                            can happen at the same time on multiple devices. Typical
+The JUPITER approach [32] serves as an inspiration for re-                  usage scenarios include distributed user collaboration sce-
+cent OT algorithms used in Google Docs. Kumawat and
+                                                                            narios that provide the visual feedback of a user interaction
+Khunteta [26] review OT algorithms along with the chal-
+                                                                            to all the other users.
+lenges faced in the field and recent achievements. Current
+frameworks designed with built-in mechanisms for consis-                  The explicit and implicit sharing models form the two ex-
+tency management include Apache Wave [1] and ShareJS [2]                  tremes of a hypothetical operation sharing scale (Figure 2). In
+that work with a centralized server, linear history buffer, and           a typical collaboration, some of the devices may use explicit
+operation transformation for managing the global state. In                sharing through user intervention, while others may prefer
+PolyChrome, we draw upon this work to achieve consistency                 implicit sharing. Another sharing model on this hypotheti-
+in collaborative visualizations by utilizing operation transfor-          cal scale, is the unilateral sharing model where one device
+mation algorithms through a framework that sees user interac-             (leader) always shares its operations automatically, while the
+tion on the web as a series of native browser-level operations.           other devices (lagger) only listen to the operations shared by
+
+                                                                    3
+
+                                                                   111
+ ITS 2014 • Multi-Surface                                                                            November 16-19, 2014, Dresden, Germany
+
+       Fully Implicit              Unilateral                   Fully Explicit
+
+                                                                                          A B                   AB                   A     B         AB
+                                                                                          (a) Stitching       (b) Replication     (c) Nesting     (d) Overloading
+                                                                                        Figure 3. Various display space configurations for a two-device environ-
+                                                                                        ment. (a) Splitting the display space between the two devices is useful
+                                                                                        for multi-screen displays, (b) replicating (mirroring) the display space
+                                                                                        among the two devices is useful during distributed collaboration, and (c,
+                               Sharing Models
+                                                                                        d) nesting and overloading are useful for small-screen mobile devices.
+                                 Explicit Sharing by application logic
+                                 Implicit Sharing by PolyChrome
+ Figure 2. A hypothetical sharing scale ranging from fully implicit to fully
+                                                                                        whole or part of the global display space, or the unified dis-
+ explicit sharing. During implicit sharing, the operations are automati-                play space covering all the devices. Figure 3 shows several
+ cally shared with all connected devices. On the other end, explicit shar-              local display configurations for a two-display environment.
+ ing allows the developer of the collaborative visualization to define ex-              Considering these aspects, one of the design considerations
+ plicit application logic for sharing interaction. Unilateral sharing model             here is to support the following patterns for distributing the
+ is a real-world example that can be applied during presentations.
+                                                                                        display space between multiple devices (inspired by Javed
+                                                                                        and Elmqvist [24]).
+ the leader. This model is useful during presentations and                             P5 Replicating: This strategy shows the exact same view on
+ many other guided collaboration scenarios.                                               all devices. The global display space of the ecosystem is,
+ To achieve the various design choices in operation distribu-                             therefore, a superimposition of the individual screens. This
+ tion especially in concurrent use, transformation of these op-                           pattern typically occurs during webpage mirroring in co-
+ erations (OT) to the context also needs to be taken into ac-                             browsing, and is widely useful in distributed collaboration
+ count. Previous research in OT mostly deals with collabora-                              where the users work from different locations.
+ tive text editors and document editors where the operations                              Usage scenarios: Public presentations where the view of
+ are clearly defined (for example, insert and delete) and the                             the presentor can be mirrored on the displays held by
+ applications allow undo/redo by default. In contrast, typi-                              the audience, or distributed collaboration between multi-
+ cal web visualizations directly deal with the document object                            ple users to perform document analysis through tools such
+ model (DOM), thus providing different ways to realize oper-                              as Jigsaw [36] that require building synchronized views.
+ ations. The definition of operation guides the operation trans-
+ formation algorithms [26, 37, 38] for concurrent use of web                           P6 Stitching: Here the entire display space is split between
+ applications. Some example operation definitions include,                                devices, with no two devices sharing any part of the dis-
+                                                                                          play. The global display space is now formed by juxtapos-
+P3 Data-centric operation: Here an operation can be defined                               ing, or stitching, the individual displays.
+   on the data structures guiding the visualizations. Any in-
+   teraction performed in this approach needs to be translated                            Usage scenarios: Multi-display visual analytics.
+   into a change in the data variables (operation) that is shared
+   with other devices in the network.                                                  P7 Nesting: Here one or more devices hold the entire dis-
+                                                                                          play space, while others show bits and pieces of the display
+P4 Interaction-centric operation: Here an operation can                                   space relevant to the device or the user.
+   be defined as an interaction event that is handled by the                              Usage scenarios: Co-located settings with mobile devices
+   web browser. This includes different types of browser-                                 alongside large displays and desktop computers.
+   level events such as scroll, mouse events such as mouse
+   click, move and mouse up, touch events such as touch                                 Javed et al. [24] also discuss overloading, where a view uti-
+   start, touch move, and touch end, and key presses. These                             lizes the space allocated for another view, and this is cov-
+   events/operations can be captured, shared, and then per-                             ered by nesting in the context of web visualizations. Figure 3
+   formed on the DOM of the webpage on each device.                                     shows the design patterns in display space configuration.
+
+ As most OT algorithms dictate, collaborative visualizations                            Supporting Legacy Applications
+ also require a way to save operations on a server (i.e., an inter-                     While supporting development of new web-based collabora-
+ action log) to maintain the global state and resynchronize de-                         tive visualizations, it is equally important to provide as much
+ vices that are out-of-sync using context-specific algorithms.                          backward compatibility to the numerous existing web-based
+                                                                                        visualizations. For example, there are web visualizations built
+ Display Space Management                                                               using D3, Protovis, and the JavaScript InfoVis Toolkit. These
+ Multi-device environments often consist of devices of differ-                          generally depend on the native browser events for the event
+ ent resolutions, aspect ratios, and screen sizes. This causes                          handling, and SVG, CSS, and HTML5 for graphical render-
+ a distribution of the unified display space, i.e., the rendering                       ing. To support these legacy applications, we propose to use
+ of the web visualization in the browser between multiple de-                           a proxy module that augments a standard web visualization
+ vices in the ecosystem. The distribution of the display space                          or web application with additional support for event sharing
+ leads to different renderings on the devices that may cover                            and display configuration between the involved devices.
+
+                                                                                  4
+
+                                                                                 112
+ITS 2014 • Multi-Surface                                                            November 16-19, 2014, Dresden, Germany
+
+
+Additional Design Considerations                                                                ExternalPResourcesP-PWeb
+The intended user of this design treatment for cross-device
+                                                                         PolyChromePServerP               Visualization                         Input
+visualization toolkits is an application programmer (i.e., an                                             Client                      EventPHandlingP
+“end-user” programmer), who is building ubiquitous web                               ProxyPServer
+                                                                                                                              VisualPRepresentations
+visualizations. Thus, we must consider the above design
+                                                                                                                          PolyChromePAPI
+choices for operation management, display space configura-                        InteractionPLog
+                                                                                                           EventPSharing        DisplayPConfiguration
+tion, conflict resolution, consistency management, and syn-                    CommunicationP
+chronization among devices. In addition to these, we must                        Modules                           CommunicationPModulesP
+also support multiple device modalities for both input and
+                                                                         Figure 4. Architecture: The visualization client is connected to the Poly-
+output including tabletops, multi-screen displays, desktop               Chrome API modules for event sharing and display configuration. The
+computers, and mobile devices. Finally, a software frame-                PolyChrome API automatically connects all the devices over a peer-to-
+work for this should also accommodate future technologies                peer network for event sharing. Every client is also connected to the
+and allow third parties to contribute new functionality.                 PolyChrome server to store the interaction. This framework also pro-
+                                                                         vides proxy server modules for using legacy applications collaboratively.
+
+THE POLYCHROME FRAMEWORK
+PolyChrome is a generic software framework for building                  mouse can lead to conflicts and consistency issues when con-
+web-based cross-device visualizations. It is implemented us-             currently performed on multiple devices. For example, in a
+ing HTML, JavaScript, and CSS. Due to this strict reliance               two-device environment, if the mouse movement is attached
+on standard web technology, it is entirely cross-platform and            to an event handler, sharing the mouse movement with other
+works on any device with a modern web browser. Poly-                     devices can lead to conflicts in terms of both events and order
+Chrome consists of both client and server-side modules. The              of the events, and this can propagate into a consistency issue
+server modules of PolyChrome have been built using Node.js,              if the handling sequence and context are different. In fact, the
+as the event-driven nature and non-blocking I/O of Node.js               effects can be fatal if the application logic for handling such
+helps in efficiently managing interaction logs of multiple               scenarios through OT logic is not encoded into the system.
+users over time. The client-side modules of PolyChrome con-
+tain the PolyChrome API that supports operation distribution             The PolyChrome clients are connected over a peer-to-peer
+and display space configuration. Figure 4 depicts the Poly-              channel for event sharing, and they can also choose to con-
+Chrome architecture, including the proxy server that converts            nect to the server to store their interaction logs. This counters
+legacy web applications into collaborative applications, oper-           the major setback of using client-level web technologies, i.e.,
+ation distribution, input, and rendering (visual representation)         the lack of proper persistent storage of the interaction of a
+layers. The framework interacts directly with the document               user when the webpage is closed. For example, when a client
+object model (DOM) structure within the browser for display              drops out of the network, the interaction made on the client
+space configuration and also capturing browser events as op-             is lost if it is not stored on some other host. Unless there is a
+erations (design pattern P4). PolyChrome framework uses                  common global state maintained by all devices, this leads to
+PeerJS1 for P2P communication (using WebRTC2 ) between                   data loss and consistency issues. To counter this, PolyChrome
+the devices such as tabletops, tablets, and multi-screen dis-            maintains the state of all devices on a server in the form of an
+plays, and communication via sockets from a client to server.            event log that contains the information and order of all events
+                                                                         generated on all connected devices in a session over time.
+PolyChrome consists of four modules: (1) operation (event)
+sharing; (2) display space configuration; (3) conflict, con-             The PolyChrome framework currently allows space configu-
+currency, and synchronization management; and (4) a proxy                ration, i.e., the choice of rendering part or whole of the web
+server for serving legacy applications. The design philosophy            application based on the design pattens (P5 to P7) in the De-
+of PolyChrome is to treat the view of a web visualization at             sign section by assuming the global space to be the default
+any time instance as a state that changes with user interac-             state of a webpage rendered in a normal browser. The global
+tion (as in Figure 5). In essence, browser-level DOM events              space configuration is therefore device and webpage indepen-
+are the operations in PolyChrome applications. By capturing              dent, and is encoded into each PolyChrome client to facili-
+the user operations at the most atomic level on the browser              tate seemless conversion from the local to the global config-
+in the form of DOM events, we can reconstruct the state of               urations. Every PolyChrome client transforms events to the
+the visualization from the original rendering. For this rea-             global space configuration, and these events are interpreted
+son, the communication between clients of PolyChrome only                accordingly on other clients by an inverse transformation.
+happens in the form of event sharing, thus leaving the job               The concurrency and synchronization modules of Poly-
+of rendering to the clients (a philosophy inspired by Syn-               Chrome can be used for handling (1) newly joined clients
+chronite [39]). Browser-level events can be recreated using              that require the previous user interactions to work in collabo-
+the event details such as event type, coordinates with respect           ration or interaction replay, (2) multiple collaboration scenar-
+to the page and client, and the target element in the DOM,               ios including co-located collaboration on a display wall in-
+but interaction over time with continuous movement of the                volving multiple mobile devices, and unilateral collaboration
+                                                                         during presentations involving a presentor and audience with
+1 http://peerjs.com/                                                     their own personal devices, and (3) synchronization of clients
+2 http://www.w3.org/TR/webrtc/                                           that are out-of-sync with interaction on other devices. This
+
+                                                                    5
+
+                                                                   113
+ITS 2014 • Multi-Surface                                                                   November 16-19, 2014, Dresden, Germany
+
+
+
+                       mousedown at (1181, 772)                   mousedown at (111, 22)                   mousedown at (627, 156)
+                            mousemove*                                mousemove*                               mousemove*
+                        mouseup at (862, 536)                     mouseup at (512, 357)                     mouseup at (823, 407)
+
+
+
+                                                                                                                                * multiple events generated
+Figure 5. An example interaction with a Choropleth map of unemployment rates in U.S from 2008, created using D3. Upon user interaction (by
+drawing a rectangular shape on the map), the counties within a selected region are highlighted. PolyChrome provides API-level support for capturing
+and sharing the browser events that are triggered during this interaction with other connected devices, thus supporting collaborative visualization.
+
+
+happens when the users work on their private space without                      during presentations (for example) where the presentor per-
+sharing or receiving interaction events [29]. The PolyChrome                    forms the interaction which is shared with the audience, with
+server modules also provide the ability to load collaborative                   no communication in the opposite direction.
+versions of legacy applications with the help of a proxy server
+that attaches PolyChrome client software to the web source of                   Display Space Configuration Modules
+legacy websites. In the next few subsections we will elaborate                  Webpage rendering on a standard browser is defined through
+on PolyChrome’s modules in more detail.                                         the HTML for the static elements, JavaScript for the dynamic
+                                                                                structure, and CSS for the style elements for managing align-
+Event Sharing Modules                                                           ment, colors, transforms, and effects such as shadows. For
+The event sharing modules provide the basic network-level                       PolyChrome, the rendering of a webpage or a dynamic vi-
+communication support to share and synchronize the user op-                     sualization depends on the device type on which it is ren-
+erations on different devices. PolyChrome achieves this by                      dered. For example, rendering on a multi-screen display re-
+capturing browser events, communicating these events in a                       quires splitting and stitching the webpage across the multiple
+serialized form through a shared peer-to-peer channel created                   screens. PolyChrome allows individual devices to manage the
+using PeerJS, and then triggering DOM events encapsulated                       local configuration while keeping them informed of the global
+in a PolyChrome Event class on each client. PolyChrome al-                      space. The global space configuration is the DOM rendering
+lows two types of event capture mechanisms:                                     of the webpage on a standard web browser. Events gener-
+                                                                                ated on each device are scaled to this global space, and then
+1. Explicit capture: An application developer using Poly-
+                                                                                sent to other devices by the PolyChrome API, where they are
+   Chrome API can choose to handle event sharing explicitly.
+                                                                                transformed to the corresponding local configuration. For ex-
+   By verifying whether an event is generated PolyChrome
+                                                                                ample, in a multiple monitor setup, the webpage rendering is
+   (encapsulated in a PolyChrome event class) or otherwise,
+                                                                                split and stitched from multiple parts, and PolyChrome main-
+   the users can recycle native DOM events, which involves
+                                                                                tains the local transforms of each monitor to convert the spa-
+   sharing the event with all devices in the P2P network (de-
+                                                                                tial coordinates of an event into the local space using an affine
+   sign pattern P1). The recycled DOM event is then triggered
+                                                                                2D transform that can take the local translation, scaling, and
+   by PolyChrome. The event is at the same time shared with
+                                                                                rotation of each display into account. Events generated on a
+   the server by the PolyChrome client (on which the event
+                                                                                device can accordingly be converted to the global space using
+   was created). The events are stored on the server asyn-
+                                                                                the inverse transform.
+   chronously on an interaction/operation log in the filesystem
+   with details such as the client identifier, timestamp, event                 This method applies to any screen configuration through
+   type, spatial co-ordinates and target DOM element details.                   CSS-level element transformations that are graphics acceler-
+                                                                                ated on modern browsers, such as Google Chrome. An al-
+2. Implicit capture: PolyChrome also allows the users to
+                                                                                ternative mechanism would require device-dependent display
+   choose an implicit capture style in which all the events gen-
+                                                                                states that are prone to complex operation distribution logic.
+   erated on a client are automatically captured at the docu-
+   ment level irrespective of their targets. The events captured
+                                                                                Persistence, Consistency, and Synchronization
+   are analyzed to find their actual targets and are automati-
+   cally shared with other clients without explicit application                 Persistence in PolyChrome is achieved by clients sharing
+   logic (design pattern P2). The events are then handled by                    their events with a server, which stores the timestamped
+   the original client (on which they were created) through the                 events in an interaction log. Since the Node.js server is asyn-
+                                                                                chronous in nature, the clients can continue their workflow
+   application logic created for handling the respective event.
+                                                                                once the events are sent to the server. This event log can act
+These methods for event capture allow for different styles of                   as an history buffer that is typically used in some modern OT
+collaboration as discussed in the Design section. These cap-                    algorithms [26, 32] for consistency management. Further-
+ture methods can also be applied to settings such as collabo-                   more, the PolyChrome framework creates an opportunity to
+rative search, team analytics [25], and general brainstorming                   fully allow collaborative use of web visualizations by embed-
+processes involving divergence and convergence [19], where                      ding a concurrency management model. This event log on the
+the users enjoy the private space on their tablets and merge                    server can also be used to update newly joined devices with
+their ideas with the common displays after a significant break-                 past interaction events, and also opens up the design space
+through. PolyChrome can also be used to emulate a unilateral                    for event caching and chunking on the server to distinguish
+sharing model, as defined previously in the Design section,                     the semantic importance of various events. For example, in a
+
+                                                                          6
+
+                                                                       114
+ITS 2014 • Multi-Surface                                                                November 16-19, 2014, Dresden, Germany
+
+
+visual exploration scenario, while all the events are recorded,          APPLICATION EXAMPLES
+only a few might be responsible for the detection of a trend             We describe two collaborative visual applications for interac-
+or an anomaly during the sensemaking process. Tagging and                tive surfaces built using PolyChrome as well as one example
+caching these events can help during (for e.g.) report genera-           of a legacy visualization. The PolyChrome source, along with
+tion when these events can be replayed to recreate the process           several examples, are publicly available on GitHub.4
+by which the corresponding trend or the anomaly was found.
+                                                                         Scatterplot Matrix Exploration
+Proxy Server                                                             Scatterplot matrices (SPLOMs) allow exploration of the re-
+To support legacy applications currently available on the web,           lationship between groups of every two variables in a multi-
+PolyChrome also contains a proxy server built using Node.js              variate dataset, and expands in size for every new dimension
+that automatically injects the PolyChrome client modules into            added to the dataset. For example, Anderson’s Iris dataset
+legacy websites and web applications. PolyChrome uses an                 consists of four variables: sepal width, sepal length, petal
+invisible HTML div element spanning the entire webpage to                width, and petal lengths of three species of flowers. The
+capture an event and then identify the target behind this in-            SPLOM in Figure 6 contains sixteen scatterplots. With in-
+visible element. The events captured are automatically syn-              creasing dataset size, screen space becomes an increasingly
+chronized, thus allowing collaborative use of legacy applica-            valuable commodity for visual exploration. To facilitate col-
+tions. This automatic sharing approach for legacy applica-               laborative analysis of SPLOMs, we have created a web appli-
+tions can face issues in the presence of custom application-             cation using PolyChrome and D3 that visualizes a given mul-
+specific events (such as D3’s brush events). Although these              tivariate dataset. Brush-and-link interaction is enabled on the
+modules are currently experimental, they allow for running               visualization to allow the user to see patterns of data points
+a wide range of sample visualizations created with D33 in a              selected on one scatterplot (using brushing) on other scatter-
+multi-device environment.                                                plots in the tabular view (linking) through highlighting. Using
+                                                                         the PolyChrome API, a device-specific interaction handling
+IMPLEMENTATION                                                           is embedded within the code by identifying mobile devices.
+We have implemented PolyChrome as a heterogeneous                        The brushes created on the mobile devices are shared with a
+JavaScript framework that uses PeerJS for peer-to-peer event             display wall and are highlighed as rectangles on the display
+sharing and a Node.js server application with modules for                wall. The event sharing in this example only happens from
+proxy server, interaction log management, and server-based               mobile devices to the display wall (unilateral sharing model),
+consistency and synchronization. The basic PolyChrome                    thus creating an interaction overview on the shared space.
+client consists of approximately 1,500 lines of JavaScript
+code and works with the most popular D3 visualization
+toolkit for both computers and mobile devices.
+To avoid dependency problems of asynchronous updates,
+PolyChrome events maintain the ID of the target element in                                                                  Representation of brushes
+                                                                                                                            created on mobile devices
+the DOM. Based on the target ID, the corresponding element
+in the DOM becomes the target on the connected devices.
+                                                                           Interaction through
+Since one cannot be sure whether every element in the DOM                 brushing and linking
+has an ID, the deterministic structure of a DOM tree is utilized
+to assign an ID to each element during PolyChrome initial-
+ization. Newly created DOM elements are also assigned with
+an ID by the PolyChrome API when needed, thus account-
+ing for the dynamic nature of modern websites. PolyChrome
+also provides modules to generate pseudo-random values to                Figure 6. A collaborative web for exploring a scatterplot matrix using
+achieve similar DOM trees even for webpages with random                  brush-and-link interaction on multiple devices.
+alignment. This mechanism can also be used to distribute
+identical random numbers across the lightly-connected com-               The application allows users to work on their tablets using
+ponents in the network. For example, since a force-directed              brush and link interaction to explore the dataset, while visu-
+layout starts with random spatial positions, distributing them           alizing the brushes on an overview visualization on the dis-
+on multiple devices can lead to inconsistencies.                         play wall. The visualizations and the interaction are created
+                                                                         using D3, and the entire application is written using HTML,
+The PolyChrome framework contains modules for a control                  JavaScriptS, and CSS with less than 30 lines of code to initi-
+panel that is automatically attached to each client. This panel          ate PolyChrome, configure the display, and share events. This
+is opened through a toggle button and provides additional                example is currently available with the PolyChrome source.
+controls for event sharing and display configuration to the
+user, including shortcut methods for some display configu-               Geographical Map Exploration
+rations. It also shows a list of connected devices along with            The second example uses Google Maps for map exploration
+the events generated by each device. Users can also use the              using pan and zooming on a web-based multi-display en-
+control panel to toggle event sharing for specific event types.          vironment (Figure 7). Instead of using the native mouse
+3 https://github.com/mbostock/d3/wiki/Gallery                            4 https://github.com/karthikbadam/PolyChrome
+
+
+
+                                                                    7
+
+                                                                   115
+ITS 2014 • Multi-Surface                                                                                                November 16-19, 2014, Dresden, Germany
+
+
+movement events to share the pan interactions, we detect the
+
+
+
+
+                                                                               Executionbdelayb(inbmilliseconds)
+change in the center of the Google Map (supported by Google                                                        40
+Maps API) and share this visual event as a PolyChrome cus-
+tom application-specific event. These type of events are more                                                      30
+meaningful as they represent a visual change, and therefore,
+they can be semantically tagged for consistency management                                                         20
+and synchronization.
+                            PolyChrome example:
+                                                                                                                   10
+                            Mirrored display setup
+                          for sharing pan interaction
+                                      on a                                                                         0
+                                mobile device
+                                     with a                                                                               1    3      5   1   3   5   1   3   5   1   3   5
+                                 42'' display.                                                                                Click       Mousebdown Mousebmove   Mousebup
+                              User Interaction
+                                                                                                                          NumberbofbPolyChromebclientsbgroupedbbybeventbtype
+
+Figure 7. Cross-device Google Maps example where PolyChrome cus-              Figure 9. A preliminary performance evaluation of PolyChrome: Three
+tom event modules are triggered when the map is panned on a device.           different setups were tested for delays caused by the PolyChrome client
+                                                                              in executing various events.
+This example was created using HTML, JavaScript, and CSS
+using the Google Maps JavaScript API for the map view, and                    on all connected devices (execution delay) during the implicit
+D3 to show some targets on the map to guide exploration.                      sharing model (used in legacy applications). We used a ba-
+This example uses less than 20 lines of code using the Poly-                  sic drawing application as a surrogate for the legacy visual-
+Chrome client API modules, which includes creating an event                   izations with options to add strokes and also perform mouse
+handler, capturing, and sharing navigation events.                            clicks. Ten strokes spanning a diagonal of the displays were
+                                                                              drawn (> 100 mousemove events per stroke) and ten mouse
+Legacy Application
+                                                                              clicks were performed on each client for one, three, and five
+PolyChrome supports legacy visualizations built using visu-                   PolyChrome client setups. These interactions were handled
+alization toolkits such as D3. Figure 8 shows an example of a                 through click, mousedown, mousemove, and mouseup events.
+web-based ScatterDice tool applied to box office data.5 Poly-                 When the execution delays were analyzed, we found that for
+Chrome fetches the legacy application using the proxy server                  the three setups (one, three, and five clients), execution delays
+and attaches the PolyChrome client modules to it, thus allow-                 increased as the number of clients increased, but they were
+ing for collaborative exploration of the movie data. The inter-               still in the order of milliseconds (Figure 9). Furthermore, we
+action events that happen on one device are shared implicitly                 also found out that the operation of identifying the target el-
+with others by the PolyChrome client. This includes the click                 ement is the root cause of the these delays as it requires a
+events, mouse events for drawing shapes, and selection events                 traversal of the DOM tree. The delay was minimal for mouse-
+supported by the legacy application.                                          move events, because when this event follows a mousedown
+PolyChrome also works with the examples provided as part                      the targets of both are the same and therefore, PolyChrome
+of the D3 toolkit, as well as other toolkits that enable ex-                  skips the target identification step in this case. This analysis
+ploration of SVG visualizations, such as VisDock.6 How-                       helped us identify the potential aspects for further analysis,
+ever, running some of these legacy applications depends on                    and also the median increase in delay (< 10 ms from three to
+the security configuration, event handling mechanisms in the                  five clients) with more clients in the environment.
+source webpage, and the capabilities of the proxy server.                     This suggests that we should strive to achieve better target
+                                                                              identification with lower delays. Furthermore, it guides our
+                                                                              future evaluation efforts for PolyChrome in terms of the over-
+                                                                              all performance by profiling event distribution process, devel-
+                                                                              oper adoption, and even the mechanics of multi-device visu-
+                                                                              alization and display space configuration strategies.
+
+                                                                              IMPLICATIONS
+                                                                              The definition of operation as discussed in the design patterns
+Figure 8. ScatterDice project attached with PolyChrome client modules         P3 and P4 opens a new space in the field of collaborative vi-
+to synchronize interaction among the devices.                                 sualization for Operation Transformation. This leads to the
+                                                                              concurrent use of collaborative web visualization without the
+                                                                              need for locking and turn-taking methods to restrict concur-
+EVALUATION
+                                                                              rency. The operations in PolyChrome are browser events, and
+We performed a preliminary analysis to see the impact of the                  this design choice may lack support for “undo” in some cases.
+number of clients using PolyChrome on the time delay be-                      On the other hand, using a data-centric operation that essen-
+tween the creation of an event and the execution of the event                 tially works with the data variables guiding the visualization
+5 http://tiny.cc/scatterdice                                                  lacks the ability to support legacy applications and custom
+6 https://github.com/VisDockHub/NewVisDock                                    data structures. Further evaluation of this is needed.
+
+                                                                         8
+
+                                                                        116
+ITS 2014 • Multi-Surface                                                           November 16-19, 2014, Dresden, Germany
+
+
+The choice of hybrid communication modules with peer-to-                   5. Belmonte, N. G. The JavaScript InfoVis Toolkit.
+peer (P2P) and client/server for operation distribution and in-               http://philogb.github.io/jit/, accessed March
+teraction log respectively leads to fault tolerant yet real-time              2014.
+system. The hybrid system has the ability to surpass the lia-
+                                                                           6. Bostock, M., and Heer, J. Protovis: A graphical toolkit
+bilities of both communication types. P2P-based distributed
+                                                                              for visualization. IEEE Transactions on Visualization
+systems face consistency issues in regards to display synchro-
+                                                                              and Computer Graphics 15, 6 (2009), 1121–1128.
+nization and event sharing, while client-server systems face
+scalability, robustness, security, and trust issues. By combin-            7. Bostock, M., Ogievetsky, V., and Heer, J. D3 :
+ing both and using client/server only for operation/interaction               Data-driven documents. IEEE Transactions on
+log (for conflict management) the PolyChrome framework                        Visualization and Computer Graphics 17, 12 (2011),
+gains the advantages of both communication methods.                           2301–2309.
+In the end, no single toolkit works for all situations, and Poly-          8. Calderon, R., Blackstock, M., Lea, R., Fels, S.,
+Chrome is just the first offering of many potential toolkits for              de Oliveira Bueno, A., and Anacleto, J. Red: a
+cross-device visualization. We look forward to seeing other                   framework for prototyping multi-display applications
+toolkits that take different design approaches than us.                       using web technologies. In Proceedings of the ACM
+                                                                              International Symposium on Pervasive Displays (2014).
+CONCLUSION AND FUTURE WORK
+We have presented the PolyChrome framework for building                    9. Domingue, J., Dzbor, M., and Motta, E. Collaborative
+web-based collaborative visualizations for multi-surface en-                  semantic web browsing with magpie. In The Semantic
+vironments. Beyond the basic functionality to utilize im-                     Web: Research and Applications. 2004, 388–401.
+plicit, explicit sharing models, and display space configura-             10. Ellis, C. A., and Gibbs, S. J. Concurrency control in
+tion through transformation to the global shared space, Poly-                 groupware systems. In Proceedings of the ACM
+Chrome comes with a proxy server that supports collabora-                     SIGMOD Record (1989), 399–407.
+tive use of legacy websites. Due to the presence of a server,
+operations on various devices can be stored, utilized, and an-            11. Ellis, C. A., Gibbs, S. J., and Rein, G. Groupware: some
+alyzed for many purposes. These interaction logs can be used                  issues and experiences. Communications of the ACM 34,
+to serve newly joined devices with previous interaction, re-                  1 (1991), 39–58.
+play events during asynchronous collaboration, and maintain               12. Elmqvist, N., and Irani, P. Ubiquitous analytics:
+synchronization among devices. We validated PolyChrome                        Interacting with big data anywhere, anytime. IEEE
+using several applications built using the framework as well                  Computer 46, 4 (2013), 86–89.
+as with some informal performance testing.
+                                                                          13. Endert, A., Bradel, L., Zeitz, J., Andrews, C., and North,
+In the future, we plan on extending the framework to pro-                     C. Designing large high-resolution display workspaces.
+vide ways to support standard collaboration styles out of                     In Proceedings of the ACM Conference on Advanced
+the box, embed operation transformation strategies into the                   Visual Interfaces (2012), 58–65.
+framework, allow interpretion through tagging event logs on
+the devices, adapt the framework to additional hardware and               14. Esenther, A. W. Instant co-browsing: Lightweight
+software platforms, and perform an in-depth evaluation.                       real-time collaborative web browsing. In Proceedings of
+                                                                              the World Wide Web Conference (2002), 107–114.
+ACKNOWLEDGMENTS                                                           15. Greenberg, S. Collaborative interfaces for the Web. In
+This work was partially supported by U.S. National Science                    Human Factors and Web Development (1997), 241–254.
+Foundation award IIS-1253863. Any opinions, findings, and
+conclusions or recommendations expressed in this article are              16. Greenberg, S., Marquardt, N., Ballendat, T.,
+those of the authors and do not necessarily reflect the views                 Diaz-Marino, R., and Wang, M. Proxemic interactions:
+of the funding agency.                                                        the new ubicomp? Interactions 18, 1 (2011), 42–50.
+                                                                          17. Greenberg, S., and Roseman, M. GroupWeb: A WWW
+REFERENCES                                                                    browser as real time groupware. In Extended Abstracts
+ 1. Apache Wave. http://incubator.apache.org/wave/,                           of the ACM Conference on Human Factors in
+    accessed June 2014.                                                       Computing Systems, ACM (1996), 271–272.
+ 2. ShareJS. http://sharejs.org/, accessed June 2014.                     18. Grimstead, I. J., Walker, D. W., and Avis, N. J.
+ 3. Baecker, R. M. Readings in Groupware and                                  Collaborative visualization: A review and taxonomy. In
+    Computer-Supported Cooperative Work. Morgan                               Proceedings of the Symposium on Distributed
+    Kaufmann Publishers, San Francisco, 1993.                                 Simulation and Real-Time Applications (2005), 61–69.
+ 4. Balakrishnan, A. D., Fussell, S. R., and Kiesler, S. Do               19. Hailpern, J., Hinterbichler, E., Leppert, C., Cook, D.,
+    visualizations improve synchronous remote                                 and Bailey, B. P. TEAM STORM: demonstrating an
+    collaboration? In Proceedings of the ACM Conference                       interaction model for working with multiple ideas
+    on Human Factors in Computing Systems (2008),                             during creative group work. In Proceedings of the ACM
+    1227–1236.                                                                Conference on Creativity & Cognition (2007), 193–202.
+
+                                                                     9
+
+                                                                    117
+ITS 2014 • Multi-Surface                                                      November 16-19, 2014, Dresden, Germany
+
+
+20. Han, R., Perret, V., and Naghshineh, M. WebSplitter: a           32. Nichols, D. A., Curtis, P., Dixon, M., and Lamping, J.
+    unified XML framework for multi-device collaborative                 High-latency, low-bandwidth windowing in the jupiter
+    web browsing. In Proc. ACM Conference on Computer                    collaboration system. In Proceedings of the ACM
+    Supported Cooperative Work (2000), 221–230.                          Symposium on User Interface and Software Technology
+                                                                         (1995), 111–120.
+21. Hartmann, B., Beaudouin-Lafon, M., and Mackay, W. E.
+    Hydrascope: creating multi-surface meta-applications             33. Payne, J., Solomon, J., Sankar, R., and McGrew, B.
+    through view synchronization and input multiplexing. In              Grand challenge award: Interactive visual analytics
+    Proceedings of the ACM International Symposium on                    palantir: The future of analysis. In Proceedings of the
+    Pervasive Displays (2013), 43–48.                                    IEEE Symposium on Visual Analytics Science and
+22. Isenberg, P., and Carpendale, S. Interactive tree                    Technology (2008), 201–202.
+    comparison for co-located collaborative information              34. Raskar, R., Welch, G., Cutts, M., Lake, A., Stesin, L.,
+    visualization. IEEE Transactions on Visualization and                and Fuchs, H. The office of the future: A unified
+    Computer Graphics 13, 6 (2007), 1232–1239.                           approach to image-based modeling and spatially
+23. Isenberg, P., Elmqvist, N., Scholtz, J., Cernea, D., Ma,             immersive displays. Computer Graphics 32 (1998),
+    K.-L., and Hagen, H. Collaborative visualization:                    179–188.
+    definition, challenges, and research agenda. Information
+    Visualization 10, 4 (2011), 310–326.                             35. Rohrer, R. M., and Swing, E. Web-based information
+                                                                         visualization. IEEE Computer Graphics & Applications
+24. Javed, W., and Elmqvist, N. Exploring the design space               17, 4 (1997), 52–59.
+    of composite visualization. In Proceedings of the IEEE
+    Pacific Symposium on Visualization (2012), 1–8.                  36. Stasko, J., Görg, C., and Liu, Z. Jigsaw: Supporting
+                                                                         investigative analysis through interactive visualization.
+25. Kim, K., Javed, W., Williams, C., Elmqvist, N., and                  Information visualization 7, 2 (2008), 118–132.
+    Irani, P. Hugin: A framework for awareness and
+    coordination in mixed-presence collaborative                     37. Sun, C., and Ellis, C. Operational transformation in
+    information visualization. In Proceedings of the ACM                 real-time group editors: issues, algorithms, and
+    Conference on Interactive Tabletops and Surfaces                     achievements. In Proceedings of the ACM conference on
+    (2010), 231–240.                                                     Computer supported cooperative work (1998), 59–68.
+26. Kumawat, S., and Khunteta, A. A survey on operational            38. Sun, C., Jia, X., Zhang, Y., Yang, Y., and Chen, D.
+    transformation algorithms: Challenges, issues and                    Achieving convergence, causality preservation, and
+    achievements. International Journal of Computer                      intention preservation in real-time cooperative editing
+    Applications 3, 12 (2010), 3038.                                     systems. ACM Transactions on Computer-Human
+27. Manohar, N. R., and Prakash, A. The session capture                  Interaction 5, 1 (1998), 63–108.
+    and replay paradigm for asynchronous collaboration. In           39. Thum, C., and Schwind, M. Synchronite – a service for
+    Proceedings of the European Conference on                            real-time lightweight collaboration. In Proceedings of
+    Computer-Supported Cooperative Work (1995),                          the International Conference on P2P, Parallel, Grid,
+    149–164.                                                             Cloud and Internet Computing (2010), 215–221.
+28. Mark, G., Kobsa, A., and Gonzalez, V. Do four eyes see
+    better than two? collaborative versus individual                 40. Tobiasz, M., Isenberg, P., and Carpendale, S. Lark:
+    discovery in data visualization systems. In Proceedings              Coordinating co-located collaboration with information
+    of the International Conference on Information                       visualization. IEEE Transactions on Visualization and
+    Visualisation (2002), 249–255.                                       Computer Graphics 15, 6 (2009), 1065–1072.
+
+29. McGrath, W., Bowman, B., McCallum, D.,                           41. Viégas, F. B., Wattenberg, M., Van Ham, F., Kriss, J.,
+    Hincapie-Ramos, J.-D., Elmqvist, N., and Irani, P.                   and McKeon, M. ManyEyes: A site for visualization at
+    Branch-explore-merge: Facilitating real-time revision                internet scale. IEEE Transactions on Visualization and
+    control in collaborative visual exploration. In                      Computer Graphics 13, 6 (2007), 1121–1128.
+    Proceedings of the ACM Conference on Interactive                 42. Weiser, M. The computer for the 21st Century. Scientific
+    Tabletops and Surfaces (2012), 235–244.                              American 265, 3 (1991), 94–104.
+30. Modahl, M., Bagrak, I., Wolenetz, M., Hutto, P., and
+    Ramachandran, U. Mediabroker: An architecture for                43. Wiltse, H., and Nichols, J. PlayByPlay: collaborative
+    pervasive computing. In Proceedings of the IEEE                      web browsing for desktop and mobile devices. In
+    Conference on Pervasive Computing and                                Proceedings of the ACM Conference on Human Factors
+    Communications (2004), 253–262.                                      in Computing Systems (2009), 1781–1790.
+
+31. Nebeling, M., Mintsi, T., Husmann, M., and Norrie, M.            44. Yang, J., and Wigdor, D. Panelrama: enabling easy
+    Interactive development of cross-device user interfaces.             specification of cross-device web applications. In
+    In Proceedings of the ACM Conference on Human                        Proceedings of the ACM conference on Human factors
+    Factors in Computing Systems (2014).                                 in computing systems (2014), 2783–2792.
+
+                                                                10
+
+                                                               118
+

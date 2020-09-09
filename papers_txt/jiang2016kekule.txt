@@ -1,0 +1,379 @@
+                                                                                                                                                                                                                                                      Article
+
+                                                                                                                                                                                                                                          pubs.acs.org/jcim
+
+
+
+
+                                                                                                          Kekule.js: An Open Source JavaScript Chemoinformatics Toolkit
+                                                                                                          Chen Jiang,*,† Xi Jin,‡ Ying Dong,† and Ming Chen†
+                                                                                                          †
+                                                                                                           Department of Organic Chemistry and ‡Department of Foreign Languages, China Pharmaceutical University, Nanjing 210009,
+                                                                                                          Jiangsu, China
+                                                                                                              *
+                                                                                                              S Supporting Information
+
+
+
+                                                                                                              ABSTRACT: Kekule.js is an open-source, object-oriented JavaScript toolkit
+                                                                                                              for chemoinformatics. It provides methods for many common tasks in
+                                                                                                              molecular informatics, including chemical data input/output (I/O), two-
+See https://pubs.acs.org/sharingguidelines for options on how to legitimately share published articles.
+
+
+
+
+                                                                                                              and three-dimensional (2D/3D) rendering of chemical structure, stereo
+  Downloaded via UNIV OF MASSACHUSETTS BOSTON on July 1, 2020 at 14:19:54 (UTC).
+
+
+
+
+                                                                                                              identiﬁcation, ring perception, structure comparison, and substructure
+                                                                                                              search. Encapsulated widgets to display and edit chemical structures directly
+                                                                                                              in web context are also supplied. Developed with web standards, the toolkit
+                                                                                                              is ideal for building chemoinformatics applications over the Internet.
+                                                                                                              Moreover, it is highly platform-independent and can also be used in desktop
+                                                                                                              or mobile environments. Some initial applications, such as plugins for
+                                                                                                              inputting chemical structures on the web and uses in chemistry education,
+                                                                                                              have been developed based on the toolkit.
+
+
+                                                                                                          1. INTRODUCTION                                                              In this article, a new open source toolkit developed with web
+                                                                                                                                                                                    standards is described. Written in JavaScript, it mainly focuses
+                                                                                                          Dozens of proprietary and open source chemoinformatics
+                                                                                                                                                                                    on organic molecules, runs on a web client, and implements
+                                                                                                          toolkits, as foundation to build chemistry software, have been
+                                                                                                                                                                                    more chemoinformatics algorithms and functions but requires
+                                                                                                          developed in the past decades.1 For the advantage of executing            no backend server. It is released under an MIT license,10 and
+                                                                                                          speed, those existing toolkits are usually written in compiled            the source code is published on GitHub.11 Documentation, a
+                                                                                                          languages such as C/C++ and Java.2 Although proven to be                  tutorial, and demonstrations of the toolkit can be found in the
+                                                                                                          quite successful in desktop applications, their popularity has            Supporting Information of this manuscript or at Kekule.js
+                                                                                                          been challenged by the increasing use of web and mobile                   website.12
+                                                                                                          platforms, which the traditional compiled languages have
+                                                                                                          diﬃculties to execute on or port to.                                      2. TECHNOLOGIES
+                                                                                                             Currently the only widely accepted programming language
+                                                                                                          for web clients is JavaScript, which, together with other web                2.1. JavaScript. JavaScript is a dynamic programming
+                                                                                                          standards such as HTML (Hyper Text Markup Language)3 and                  language originating from web browsers and, despite its name,
+                                                                                                          CSS (Cascade Style Sheet),4 forms the basis of web                        has no direct relation to Java. For many years, JavaScript was
+                                                                                                          applications. On the mobile side, the situation is much more              regarded as a slow interpreted language and has been used only
+                                                                                                                                                                                    as a tool to add simple interactivity to web pages. However, in
+                                                                                                          complicated as diﬀerent systems use diﬀerent architectures and
+                                                                                                                                                                                    recently years, just-in-time compiler and high level optimization
+                                                                                                          propose diﬀerent programming languages. Fortunately, all
+                                                                                                                                                                                    has been introduced in several powerful JavaScript engines
+                                                                                                          modern mobile operation systems support web standards well                which greatly enhanced the execution speed of JavaScript code.
+                                                                                                          and even some of them are built upon it (such as Firefox OS5).            Our toolkit beneﬁts from that, and it is proven that most
+                                                                                                          As a result, a chemoinformatics toolkit developed on web                  chemoinformatics operations on a molecule can be executed
+                                                                                                          technologies is ideal for cross-platform purposes.                        swiftly in a web browser.
+                                                                                                             During the past few years, several such libraries or programs             As a dynamic language, JavaScript does provide some
+                                                                                                          have emerged. Most of them are web viewers and editors                    practical features that our toolkit can take advantage of. For
+                                                                                                          focusing on molecule output and input, including free ones                example, the class system in JavaScript is prototype-based,
+                                                                                                          such as JSME,6 ketcher,7 and JSMol.8 Some libraries provide               diﬀerent from strongly typed languages like C++ or Java.
+                                                                                                          more functions. For instance, ChemDoodle Web Components9                  Object instances are not deriving from static class but inheriting
+                                                                                                          provides some basic chemoinformatics algorithms in JavaScript             from dynamic prototype. The prototype is mutable at runtime
+                                                                                                          code to deduce bonds and hydrogens, split disconnected                    and can be modiﬁed (e.g., add new properties or methods) as
+                                                                                                          molecule structures, and detect/search rings on client side               any other normal objects while the modiﬁcation will inﬂuence
+                                                                                                          while it also allows to perform more complex tasks such as
+                                                                                                          molecule comparing by connecting to iChemLabs cloud                       Received: March 22, 2016
+                                                                                                          services.                                                                 Published: May 31, 2016
+
+                                                                                                                                        © 2016 American Chemical Society     1132                                                   DOI: 10.1021/acs.jcim.6b00167
+                                                                                                                                                                                                                         J. Chem. Inf. Model. 2016, 56, 1132−1138
+Journal of Chemical Information and Modeling                                                                                               Article
+
+all instances inherited from this prototype. That feature is              found to be quite fast in modern hardware in our test, are
+utilized for reducing memory usage in the toolkit. For instance,          written directly in the main thread to avoid complexity.
+atoms are implemented in our toolkit as objects inherited from               2.3. Emscripten. As there already have been plenty of
+the same prototype. Atom has common properties (e.g., atomic              libraries written in compiled language implementing a vast
+number and mass number) as well as some additional                        number of chemoinformatics tasks, rewriting every piece of
+properties required by certain operations (e.g., coordinate for           code into JavaScript for web usage is a duplication of labor.
+drawing molecule and label for canonicalization of molecule).             Emscripten,15 a special compiler that compiles C/C++ code to
+Rather than deﬁning those properties all at once, a coordinate            highly optimizable JavaScript, provides an easy way to port
+and canonicalization label are added to the atom prototype only           existing libraries to the web.
+when they are actually needed (as shown in Figure 1). So if an               An experimental porting of the OpenBabel16 library is
+                                                                          performed in our work. OpenBabel is originally written in C++
+                                                                          and is famous for its ability to convert diﬀerent formats of
+                                                                          chemical data. In our work, it is ﬁrst compiled into JavaScript
+                                                                          code by Emscripten, then with the help of some adapter classes,
+                                                                          the compiled code can be integrated into our toolkit as an extra
+                                                                          module, which provides additional abilities such as supporting
+                                                                          tens more chemical ﬁle formats and running molecule force
+                                                                          ﬁeld calculation. What’s more, in our test, the compiled
+                                                                          JavaScript runs smoothly in both traditional and mobile
+                                                                          environments, even nearly as fast as native code in some web
+Figure 1. Mutable prototype used in toolkit to reduce memory              browsers (details are provided in the Support Information of
+consumption.                                                              this manuscript). However, the compiled JavaScript code of
+                                                                          OpenBabel is about 10 MB, which may require a long time to
+application using the toolkit does not involve molecule drawing           be transferred over the Internet. So we decide to provide it as
+and canonicalization, memory will not be consumed to store a              an optional module of our toolkit.
+coordinate or label. That approach is used in many parts of the
+toolkit and proved to be helpful in devices with limited memory           3. IMPLEMENTATION AND FEATURES
+size (e.g., some mobile phones).                                          In our toolkit, all classes, objects, and functions are
+   2.2. Web Worker. Traditionally, JavaScript code is executed            encapsulated in namespace Kekule so that they will not
+in the main thread of web browser. The long time calculation              obtrude other JavaScript libraries if used in the same web
+task may cause the browser UI (user interface) to be blocked              application. The whole toolkit is divided into several relatively
+and stop reﬂecting user input. The web worker standard13 was              independent modules, user or developer only need to load
+introduced in HTML514 to solve that problem and provides a                essential ones in their application or web page by assigning
+simple means for web content to run scripts in background                 additional parameters in script tag of HTML. For example:
+threads. In our toolkit, web worker is used to perform time-
+consuming jobs (e.g., generating 3D molecule structures from
+topological ones), while many other algorithms about normal               the script tag above will load algorithm, chemistry widget, and
+size molecule, including substructure search and ring detection,          their prerequest modules while other nonrelative modules will
+
+
+
+
+Figure 2. Simpliﬁed UML diagram of core classes.
+
+                                                                   1133                                                  DOI: 10.1021/acs.jcim.6b00167
+                                                                                                              J. Chem. Inf. Model. 2016, 56, 1132−1138
+Journal of Chemical Information and Modeling                                                                                               Article
+
+not be transferred. That approach can eﬀectively reduce the                  Currently, MDL mol/rxn/sdf,19 CML,20 and SMILES21 (for
+transferred data size through network and is quite necessary on           output) are supported in the toolkit natively. A special format
+the Internet. Features and implementations of some important              to store chemistry objects directly into JSON (JavaScript
+modules are brieﬂy explained here.                                        Object Notation)22 is also introduced. If the JavaScript porting
+   3.1. Core Module. This module contains classes that                    of the OpenBabel library is applied, more formats are available
+represent basic chemical concepts such as element, atom, bond,            as mentioned before.
+molecule, and reaction. Figure 2 shows a simpliﬁed UML                       3.3. Algorithm Module. Some typical chemoinformatics
+diagram explaining the inheritance hierarchy between some of              algorithms mainly based on chemical graph theory are
+the fundamental classes.                                                  implemented in this module, including stereo atom/stereo
+   In the above diagram, it is noteworthy that the relation               bond identiﬁcation,23 ring perception for ﬁnding all rings or
+between Atom and Bond, the two most important classes to                  Smallest Set of Smallest Rings (SSSR),24 aromatic ring
+form Molecule, diﬀer from many other chemoinformatics                     recognization by the Hückel rule,25 molecule canonicaliza-
+libraries. In the class Bond (and its ancestor class                      tion,26 structure comparison, and substructure search.27 All
+ChemStructureConnector), property connectedObjs that                      those algorithms are written in JavaScript code, and the
+stores all objects the bond connected with is actually a dynamic          calculations can be done purely in a client web browser without
+array of ChemStructureObjs, the common ancestor of both                   any help from the server side.
+Atom and Bond. The extraordinary design enables the bond to                  As there often exists many diﬀerent algorithms for the same
+link up with an unlimited number of end points while the end              chemoinformatics task, the algorithm module is also designed
+point can be either an atom or another bond. That ability is              in a ﬂexible way. For instance, the molecule canonicalization in
+quite useful to represent molecules with multicenter bonds                the toolkit is based on a variation of the Morgan algorithm by
+(e.g., ferrocene) or unusual bond−bond connections (e.g.,                 default, but if the user wants to use a diﬀerent approach, he can
+Zeise’s salt).                                                            create a new canonicalization executor class and register it to
+   In order to reduce the memory consumption, the ﬂyweight                replace the default one.
+pattern17 is also used in those core classes. Instead of storing             3.4. Render Module. The ability to display and manipulate
+the atomic number and mass number in each single Atom                     intuitive image of molecule (and other chemical objects) is one
+object, the instance of Isotope is created and shared by all              of the most important features of chemoinformatics-related
+atoms of the same type. A similar pattern is used between Bond            programs. This render module provides a set of classes and
+and BondForm classes.                                                     functions to render 2D or 3D drawings of chemical structures
+   3.2. I/O Module. This module provides the ability to input/            in a web context. The module is written in a ﬂexible and
+output chemical data and ﬁles. All data I/O classes inherit from          expandable way. Figure 3 shows a simpliﬁed UML diagram of
+either ChemDataReader or ChemDataWriter. Each data format                 the 2D render system. The factory method pattern is also
+is represented by two separate classes implementing one of                applied here. For each type of chemical object that needs a
+those interfaces. The factory method pattern18 is used in this            visual form, a specialized renderer class is made and registered.
+module to simplify the work of supporting new formats.                    All renderer classes are deprived from the same ancestor and
+Meanwhile, users do not have to know the details of concrete I/           override some key methods (e.g., draw). So when a new type of
+O classes since a set of facade methods are provided to load or           chemical object is added to the toolkit, only one new renderer
+save chemical data as shown in the following codes:                       class will be written and all other existing code does not need
+                                                                          be modiﬁed at all. The composite renderer, which holds and
+                                                                          utilizes a set of child renderers, is also introduced for complex
+                                                                          chemical objects. For example, Reaction2DRenderer assigns its
+                                                                          child Mol2DRenderers the concrete rendering job to draw
+                                                                          reactants and products in a reaction.
+                                                                             The render system also needs to overcome the fragmentation
+                                                                          of graphic technologies in a web environment. For example,
+                                                                          there are several standards and technologies to manipulate 2D
+
+
+
+
+Figure 3. Simpliﬁed UML diagram of the render module.
+
+                                                                   1134                                                  DOI: 10.1021/acs.jcim.6b00167
+                                                                                                              J. Chem. Inf. Model. 2016, 56, 1132−1138
+Journal of Chemical Information and Modeling                                                                                                  Article
+
+graphics on the web. The most dominating ones include VML                      Aside from those related to chemistry, the toolkit ships with a
+(The Vector Markup Language),28 SVG (Scalable Vector                        series of general-purpose widgets like button, drop box, text
+Graphics),29 and Canvas2D.30 They are supported by diﬀerent                 editor, tab group, and menu. They can be used to build general
+web browsers. Instead of calling to those technologies directly             web applications of other areas.
+in renderer, the bridge pattern31 is used here to achieve                      3.6. Localization Module. All text constants used by
+platform independence as shown in Figure 3. The renderer                    toolkit are stripped out from the code and deﬁned in separated
+assigns the concrete drawing work to a speciﬁed drawing bridge              language ﬁles. During runtime, the toolkit can automatically
+which is created automatically based on the current environ-                detect the language of web browser and choose the right
+ment. In most modern web browsers, the 2D drawing will be                   localization resources to load. Currently two language sets,
+based on Canvas2D for better performance. When Canvas is                    English and Chinese, are shipped with the toolkit.
+not available SVG will be chosen, and VML is used for some                     3.7. Test Cases. To ensure the quality our toolkit, a series
+very ancient browsers.                                                      of automatic unit tests on algorithms and I/O modules are
+   The 3D rendering faces a similar problem to 2D. WebGL32 is               used. Two famous and widely used chemoinformatics libraries:
+the default drawing technology for outputting 3D models at a                CDK (the Chemistry Development Kit)35 and RDKit36 are
+high speed. If WebGL is not available, the system will fall back            used as the sources and references of those tests. Each test on
+to Canvas2D or SVG.                                                         basic molecule algorithms (including ring perception, stereo
+   Two additional JavaScript libraries, Raphael.js 33 and                   identiﬁcation, aromatic ring recognization, and substructure
+Three.js34 are currently used in render module for low level                search) follows the similar process: loads a test molecule from
+drawing functions in SVG/VML and WebGL. They should be                      ﬁle (many of which are also from CDK or RDKit test set), then
+also included together with Kekule.js when 2D or 3D drawing                 performs operation on molecule (e.g., ﬁnding all rings), at last
+is required.                                                                compares the results (e.g., ring number, atoms and bonds in
+   3.5. Widget Module. In order to simplify the usage of our                ring) with the ones returned by CDK or RDKit, ensures they
+toolkit, additional web widgets based on HTML/CSS and                       are identical. The I/O functions are also automatically tested
+JavaScript is built, which can be integrated into web                       with a series of data ﬁles borrowed from CDK and RDKit test
+applications directly. For example, the user can create a                   collections, ensuring the correct molecule structures are parsed
+periodical table widget, set its properties, and insert it to an            from sources. As mentioned before, a variation of the Morgan
+HTML element in several lines of JavaScript code:                           algorithm is used for molecule canonicalization and the
+                                                                            algorithm is diﬀerent from the one used in CDK or RDKit,
+                                                                            so canonicalization tests are not compared with other libraries
+                                                                            but ensure the same results are returned on molecules with
+                                                                            randomized atom and bond indexes. All those unit tests have
+                                                                            passed and their source code can be found in the Supporting
+                                                                            Information of this manuscript.
+                                                                               Other modules like the renderer and widget module, which
+                                                                            involve the user interface and interaction, are also tested by a
+  Another way to add widget is using speciﬁed data attribute in             set of manual tests.
+normal HTML element. The following HTML code will bind
+the periodical table widget directly to the div element and some            4. APPLICATIONS
+properties of the widget are set by data attributes simulta-
+neously:                                                                    Nowadays an online HTML editor is an indispensable
+                                                                            component in forums, chat rooms, content management
+                                                                            systems (CMSs), and learning management systems (LMSs)
+                                                                            to enable loading and display of rich format texts and images. It
+                                                                            is a pity that almost no popular online editors are designed for
+                                                                            chemistry. Usually chemists have to convert a chemical
+                                                                            structure into a bitmap image then insert it into the editor,
+                                                                            enduring the loss of all chemical information. To solve the
+   The two most useful widgets in the chemistry widget set are              problem, a special plug-in for the widely used CKEditor37 is
+Viewer and Composer as shown in Figures 4 and 5. The Viewer                 made by us. It utilizes the Kekule.js toolkit, especially the
+is designed to display 2D or 3D chemical structures in web                  Viewer and Composer widget, and provides an interface to
+page. It is also able to react to user interaction and perform              insert 2D and 3D chemical structures directly into the editor or
+basic manipulations including zoom, rotation, changing display              to edit existing structures with full chemical data reserved.
+type (skeletal or condensed for 2D molecule, wire, stick, ball              Similar plug-ins can be made to other HTML editors as well;
+stick, or spaceﬁll for 3D molecule), and exporting structure                however, all those plug-ins need to be installed on the server
+data. The Composer widget is a 2D chemical structure editor                 side by webmasters. Another approach to solve the problem is a
+capable of handling both molecule structure and other objects               Kekule.js based web browser extension which can be installed
+such as the text block and reaction symbol. It also supports                by chemists on their own computer for desktop Firefox or
+unlimited undo/redo stack, clipboard operations, and styles                 Chrome. Users are able to insert/edit chemical structures in
+setting for individual chemical object, including (but not limited          any editable area on a web page and publish it to a server
+to) color, stroke width, font, and text size of atom and bond.              without any modiﬁcation to the server side. People who have
+What’s more, embedded structure tree and object inspector in                installed that extension are able to get both the visual forms and
+Composer provides an advanced way for users to inspect and                  raw chemical data from published content while others may still
+customize almost every aspect of chemical objects.                          read structure images at least. It can be a handy complement to
+                                                                     1135                                                   DOI: 10.1021/acs.jcim.6b00167
+                                                                                                                 J. Chem. Inf. Model. 2016, 56, 1132−1138
+Journal of Chemical Information and Modeling                                                                             Article
+
+
+
+
+Figure 4. 2D and 3D chem viewer widget in a web browser.
+
+
+
+
+Figure 5. Chem composer widget designed to edit 2D chemical structures in a web browser.
+
+
+
+
+Figure 6. Plug-in for online editor and web browser to input chemical structure directly.
+
+
+
+                                                                      1136                             DOI: 10.1021/acs.jcim.6b00167
+                                                                                            J. Chem. Inf. Model. 2016, 56, 1132−1138
+Journal of Chemical Information and Modeling                                                                                                             Article
+
+editor plug-ins. The interfaces of both solutions are shown in                       (7) Ketcher Home Page. http://lifescience.opensource.epam.com/
+Figure 6.                                                                           ketcher/index.html (accessed May 15, 2016).
+   Furthermore, the toolkit has already been applied to the                          (8) JSMol Home Page. http://sourceforge.net/projects/jsmol/
+education of organic chemistry at our university. A series of                       (accessed May 15, 2016).
+web pages utilize the Viewer widget to demonstrate 3D models                         (9) Burger, M. C. ChemDoodle Web Components: HTML5 Toolkit
+                                                                                    for Chemical Graphics, Interfaces and Informatics. J. Cheminf. 2015, 7,
+of organic molecules, helping students to comprehend molecule
+                                                                                    35.
+conformation and chirality in stereochemistry. An online                             (10) The MIT License. http://opensource.org/licenses/mit-license.
+organic reaction self-test system utilizes it to let students edit                  php (accessed May 15, 2016).
+molecule structures of reactions on a web page and to compare                        (11) Kekule.js Project on Github. https://github.com/partridgejiang/
+answers submitted by students with predeﬁned keys. As all jobs                      Kekule.js (accessed May 15, 2016).
+are able to be done on the client side, the system is even                           (12) Kekule.js Website. http://partridgejiang.github.io/Kekule.js/
+available to static web servers.                                                    (accessed May 15, 2016).
+                                                                                     (13) Web Worker Standard. https://html.spec.whatwg.org/
+5. CONCLUSION                                                                       multipage/workers.html (accessed May 15, 2016).
+                                                                                     (14) HTML Standard. https://html.spec.whatwg.org/ (accessed May
+We have presented a brief introduction of a new open-source
+                                                                                    15, 2016).
+chemoinformatics toolkit written mainly in JavaScript. The                           (15) Emscripten Home Page. http://kripken.github.io/emscripten-
+toolkit includes classes to represent core chemistry concepts, to                   site/ (accessed May 15, 2016).
+read and write chemical data, to display and edit chemical                           (16) O’Boyle, N. M.; Banck, M.; James, C. A.; Morley, C.;
+structures on the screen, and to perform common chemo-                              Vandermeersch, T.; Hutchison, G. R. Open Babel: An Open Chemical
+informatics algorithms. It is also well designed and ﬂexible                        Toolbox. J. Cheminf. 2011, 3, 33.
+enough to be easily extended in functions. Developed with web                        (17) Erich, G.; Helm, R.; Johnson, R.; Vlissides, J. Design Patterns:
+standards, the toolkit is highly platform-independent and can                       Elements of Reusable Object-Oriented Software; Addison-Wesley, 1995;
+be utilized to build applications in many circumstances: from                       pp 205−206.
+website to oﬄine application, from desktop to mobile device,                         (18) Erich, G.; Helm, R.; Johnson, R.; Vlissides, J. Design Patterns:
+even on the server side with the help of Node.js.38 The toolkit                     Elements of Reusable Object-Oriented Software; Addison-Wesley, 1995;
+is released under MIT license which puts very limited                               pp 108−109.
+restrictions and requirements on reuse of code. So it is                             (19) CTﬁle Formats. http://download.accelrys.com/freeware/ctﬁle-
+available for both free and proprietary software. Some initial                      formats/ctﬁle-formats.zip (accessed May 15, 2016).
+                                                                                     (20) Murray-Rust, P.; Rzepa, H. S. Chemical Markup XML, and the
+applications have proven the value of the toolkit, and we expect                    Worldwide Web. 1. Basic Principles. J. Chem. Inf. Comput. Sci. 1999,
+more in the near future.
+
+■
+                                                                                    39, 928−942.
+                                                                                     (21) Weininger, D. SMILES, a Chemical Language and Information
+     ASSOCIATED CONTENT                                                             System. 1. Introduction to Methodology and Encoding Rules. J. Chem.
+*
+S Supporting Information                                                            Inf. Model. 1988, 28, 31−36.
+The Supporting Information is available free of charge on the                        (22) Introducing JSON. http://www.json.org/ (accessed May 15,
+ACS Publications website at DOI: 10.1021/acs.jcim.6b00167.                          2016).
+                                                                                     (23) Dalby, A.; Nourse, J. G.; Hounshell, W. D.; Gushurst, A. K.;
+     Detailed description of unit tests, detailed data of                           Grier, D. L.; Leland, B. A.; Laufer, J. Description of Several Chemical
+     executing speed between native and emscripten compiled                         Structure File Formats Used By Computer Programs Developed at
+     OpenBabel library, and comparison of composer widget                           Molecule Design Limited. J. Chem. Inf. Model. 1992, 32, 244−255.
+     and other web molecule editors (PDF)                                            (24) Hanser, Th.; Jauffret, Ph.; Kaufmann, G. A New Algorithm for
+     Demos of the toolkit (ZIP)                                                     Exhaustive Ring Perception in a Molecular Graph. J. Chem. Comput.
+     Tutorial of the toolkit (ZIP)                                                  Sci. 1996, 36, 1146−1152.
+                                                                                     (25) Roos-Kozel, B. L.; Jorgensen, W. L. Computer-Assisted
+     Unit test source ﬁles of the toolkit (ZIP)
+
+■
+                                                                                    Mechanistic Evaluation of Organic Reactions: 2. Perception of
+                                                                                    Rings, Aromaticity, and Tautomers. J. Chem. Inf. Model. 1981, 21,
+     AUTHOR INFORMATION                                                             101−111.
+Corresponding Author                                                                 (26) Morgan, H. L. The Generation of a Unique Machine
+*E-mail: partridge@cpu.edu.cn.                                                      Description for Chemical Structures - A Technique Developed at
+                                                                                    Chemical Abstracts Service. J. Chem. Doc. 1965, 5, 107−113.
+Notes                                                                                (27) Xu, J. GMA:A Generic Match Algorithm for Structural
+The authors declare no competing ﬁnancial interest.
+
+■
+                                                                                    Homomorphism, Isomorphism, and Maximal Common Substructure
+                                                                                    Match and Its Applications. J. Chem. Inf. Comput. Sci. 1996, 36, 25−34.
+     REFERENCES                                                                      (28) Vector Markup Language. http://www.w3.org/TR/NOTE-
+ (1) Chen, W. L. Chemoinformatics: Past, Present, and Future. J.                    VML (accessed May 15, 2016).
+Chem. Inf. Model. 2006, 46, 2230−2255.                                               (29) Scalable Vector Graphics. http://www.w3.org/Graphics/SVG/
+ (2) Cheminformatics Toolkits. https://en.wikipedia.org/wiki/                       (accessed May 15, 2016).
+Cheminformatics_toolkits (accessed May 15, 2016).                                    (30) HTML Canvas 2D Context. http://www.w3.org/TR/
+ (3) What is HTML. http://www.w3.org/html/ (accessed May 15,                        2dcontext/ (accessed May 15, 2016).
+2016).                                                                               (31) Erich, G.; Helm, R.; Johnson, R.; Vlissides, J. Design Patterns:
+ (4) Cascading Style Sheets Home Page. http://www.w3.org/Style/                     Elements of Reusable Object-Oriented Software; Addison-Wesley, 1995;
+CSS/ (accessed May 15, 2016).                                                       pp 158−160.
+ (5) Firefox OS. https://www.mozilla.org/en-US/ﬁrefox/os/ (ac-                       (32) WebGL Speciﬁcation. https://www.khronos.org/registry/
+cessed May 15, 2016).                                                               webgl/specs/1.0/ (accessed May 15, 2016).
+ (6) Bienfait, B.; Ertl, P. JSME: a Free Molecule Editor in JavaScript. J.           (33) RaphaëlJavaScript Library. http://dmitrybaranovskiy.github.
+Cheminf. 2013, 5, 24.                                                               io/raphael/ (accessed May 15, 2016).
+
+                                                                             1137                                                      DOI: 10.1021/acs.jcim.6b00167
+                                                                                                                            J. Chem. Inf. Model. 2016, 56, 1132−1138
+Journal of Chemical Information and Modeling                                                              Article
+
+ (34) Three.js Home Page. http://threejs.org/ (accessed May 15,
+2016).
+ (35) Steinbeck, C.; Han, Y. Q.; Kuhn, S.; Horlacher, O.; Luttmann,
+E.; Willighagen, E. The Chemistry Development Kit (CDK): An
+Open-Source Java Library for Chemoand Bioinformatics. J. Chem. Inf.
+Comput. Sci. 2003, 43, 493−500.
+ (36) RDKit: Open-Source Cheminformatics Software. http://www.
+rdkit.org (accessed May 15, 2016).
+ (37) CKEditor Home Page. http://ckeditor.com/ (accessed May 15,
+2016).
+ (38) Node.js Home Page. https://nodejs.org/ (accessed May 15,
+2016).
+
+
+
+
+                                                                      1138              DOI: 10.1021/acs.jcim.6b00167
+                                                                             J. Chem. Inf. Model. 2016, 56, 1132−1138
+

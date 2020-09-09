@@ -1,0 +1,382 @@
+         3D Geographic Scenes Visualization Based on
+                          WebGL
+
+               Ru Miaoa                                                 Jia Songb,c                                           Yunqiang Zhub,d
+     a                                                  b                                                         b
+      School of Computer and                              State Key Laboratory of Resources                         State Key Laboratory of Resources
+     Information Engineering,                               and Environmental Information                            and Environmental Information
+ School of Economics Postdoctoral                         System, Institute of Geographical                         System, Institute of Geographical
+         Research Station                                   Sciences and Natural Resources                           Sciences and Natural Resources
+         Henan University                                   Research, Chinese Academy of                             Research, Chinese Academy of
+          Kaifeng, China                                                Sciences                                                Sciences
+       mr1015@henu.edu.cn                                            Beijing, China                                           Beijing, China
+                                                          c                                                       d
+                                                            Jiangsu Center for Collaborative                        Collaborative Innovation Centre for
+                                                              Innovation in Geographical                              Baiyangdian Basin Ecological
+                                                         Information Resource Development                           Protection and Jingjinji Regional
+                                                                    and Application                                     Sustainable Development
+                                                              Nanjing Normal University                                     Hebei University
+                                                                     Nanjing, China                                          Baoding, China;
+                                                                * Corresponding author:                                    zhuyq@igsnrr.ac.cn
+                                                                   songj@lreis.ac.cn
+                                                                Tel.: +86-10-6488-9906
+
+
+    Abstract—With the fast development of the Internet, the                       experience of 3D visualization for users. The paper provides a
+lightweight 3-dimension (3D) geographic scenes visualization                      very effective and promising method for establishing 3D WebGIS
+system is expected to play more important roles in web-based                      realization.
+GIS. Finding an effective solution to render 3D geospatial data
+has great significance in Cartography and Geographic                                  Keywords—WebGIS; WebGL; 3D visualization; occlusion
+Information Systems. The emergence of HTML5, as well as                           culling; city roaming
+WebGL (Web Graphics Library), provides a new approach for
+3D WebGIS. WebGL is a JavaScript API for rendering 3D                                                        I.       INTRODUCTION
+graphics within compatible web browsers. Other plugins are no
+longer required for displaying 3D objects. WebGL is regarded as                       The emergence of Web3D technology has injected new
+a part of new generation web standards and is completely                          vigor into 3D graphics fields. Now, Web3D technology mainly
+integrated into most popular browsers. It allows GPU accelerated                  includes VRML, X3D, Viewpoint, Java3D, and Shockwave3D;
+usage of physics and image processing. WebGL elements can be                      the combination of Java3D with VRML [1] and GeoVRML [2]
+mixed with other HTML elements and composited with other                          is the main one. The emergence of HTML5, as well as
+parts of the page or page background. This paper discusses the                    WebGL, provides a new approach for 3D WebGIS [3]. WebGL
+design and implementation of a digital city roaming system based                  is a JavaScript API [4-6] and is a cross-platform, royalty-free
+on WebGL technology. Users can make cartographic analysis,                        web standard for low-level 3D graphics API based on OpenGL
+destination query, data query and map mark with the system in                     ES 2.0. WebGL elements can be mixed with other HTML
+browsers. All 3D models in the scene are converted to glTF (GL                    elements and composited with other parts of the page or page
+Transmission Format), and can be used to load 3D scenes and                       background. In Internet Explorer, WebGL can currently only
+models. For the complex scenes, this system only downloads the
+                                                                                  be used through plugins, and the model data and the core part
+scene data within the current view using visibility culling
+                                                                                  of system functions are concentrated in the server side.
+techniques, then joins these data into the rendering queues. At
+the same time, the data request task is managed in queue by the                   Additionally, the client side can only install a browser that can
+management layer using prefetching strategy. On the client-side,                  do simple interactions, such as moving, scaling, and querying.
+a method is proposed to deal with occlusion culling based on the                  WebGL is widely supported by mainstream hardware products
+parameters of current scene, geometry shape and positional                        and mobile web browsers like Mozilla Firefox, Google
+relation. The client-side removes the occluded model data from                    Chrome, Safari, and Opera. With the rapid development of
+memory, while the remaining visible data is passed to the GPU                     Web3D technology, various kinds of Browser/Server (B/S) 3D
+rendering pipeline. Then the client-side renders the scene in                     scene models also come up.
+browser according to the parameters of these glTF files. The
+experiment result shows that this system can smoothly render the
+                                                                                     In the past, most software did not have the capability of
+city 3D scene in the browser without any plugins. The city                        loading large-scale urban 3D models, and some serious
+roaming system based on WebGL shows a good interactive                            hysteresis phenomena appeared when browsing these large-
+
+
+
+
+   Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on June 08,2020 at 14:14:47 UTC from IEEE Xplore. Restrictions apply.
+scale scenes. Also, 3D city scenes have a great amount of data,
+including tens of thousands of buildings. Among these
+buildings, a large amount of data information (such as texture,
+lighting, and coordinates) is also needed in drawing and
+rendering the virtual scene. Users need a long time to
+download these city scenes, the model data of the whole scene
+cannot be called into the system memory at any single given
+moment, and the GPU cannot render in real-time. Therefore,
+the primary problem of 3D geographic scenes visualization is
+to solve the transmission bottleneck caused by network
+bandwidth. At present, there are some solutions: the                                       Fig. 1. A framework for 3D geographic scenes visualization.
+simplification of 3D models, the compression of model data,
+the prefetching strategy, and others. Schroeder [7], Isler [8],                        In the framework, the web server side mainly provides data
+and Hoppe [9] proposed a variety of ways to simplify 3D                            services and stores the 3D scene data in g1TF format. The
+models and generate streaming coding. The streaming                                large-scale complex 3D scene of the city was based on the
+encoding technology enables users to reconstruct a rough 3D                        actual collected city data by 3Ds Max software. Then, all 3D
+scene even with less model data and also accelerates the                           models in the scene were converted to glTF (GL Transmission
+client’s response speed.                                                           Format, a runtime 3D resources format). The network transport
+                                                                                   layer was mainly responsible for scheduling scene data using
+    The transmission bottleneck by the bandwidth is eased to a                     the prefetching strategy based on prediction trajectories.
+certain degree by these methods. However, the streaming                            Finally, the client side rendered the 3D scene efficiently using
+coding generated in the simplification process is not very                         occlusion culling technology. View frustum culling and
+compatible with the current 3D scenes visualization                                occlusion culling technology based on the parameters of the
+mechanism, and it is impossible to unify the data formats                          current scene, geometry shape, and positional relations, were
+provided by different models. At the same time, there are no                       proposed to deal with occlusion culling to accelerate rendering.
+generic interfaces to parse and show the model, and significant
+time is wasted before rendering the scene. The system must                         A. Construction and Organization of 3D Scenes
+also install some plugins before running, and the configuration
+                                                                                       When browsing 3D city scenes on the fly, 3D building
+process is complex and has poor portability. In addition,
+                                                                                   model data is one of the main types of data in the network
+simplification and compression of 3D models reduces the data
+                                                                                   transmission. Since the amount of scene data, network
+volume to a certain extent, but they may not be reduced enough
+                                                                                   transmission mode, and client group scheduling policy will be
+to satisfy the client response. Due to the scope of vision and
+                                                                                   directly affected by the structure of the model data, a general
+object occlusion, users can only see parts of the scene during a
+                                                                                   3D model format with little space occupation, rapid
+certain time. Therefore, when the user is roaming, if we can
+                                                                                   transmission, and good graphical interface is needed.
+determine the next scenes that the users might see, then these
+scenes can be downloaded to the client side in advance. This                           The glTF designed especially for the WebGL interface was
+would greatly reduce the response time, and improve the speed                      used in this paper [10]. The structure of the glTF format is
+of loaning in complex scenes, and thus meet the demand of                          shown in Fig. 2. It is mainly divided into 4 parts. 1. JSON file
+showing scenes in real time.                                                       (.gltf). This is the core of the entire model, and stores the nodes
+                                                                                   level, material quality, cameras, and lighting parameters of the
+    According to the above problem, in this paper, we studied
+                                                                                   model. 2. Binary file (.bin). This is used for storing models of
+the architecture of Web-based 3D city model scenes, the 3D
+                                                                                   graphic data, such as vertex coordinates, texture coordinates,
+model formats and scene organizations, and 3D scene
+                                                                                   indices, animation, and so on. 3. Image file (.png, .jpg, etc.).
+scheduling methods. We then designed and implemented a
+                                                                                   This is used for the texture model. 4. Shader file (.glsl). This
+digital city roaming system based on WebGL technology. The
+                                                                                   includes the vertex shader and fragment shader, which are
+experiment results showed a good interactive experience of 3D
+                                                                                   required for graphics rendering.
+visualization for users based on WebGL in the browser,
+without any plugins.
+
+                         II.     METHODOLOGY
+    Aimed at the problems in large-scale 3D scene
+visualization, a framework fully considering the efficiency of
+the visualization was designed in this paper, as shown in Fig. 1.
+
+
+
+
+                                                                                                                Fig. 2. glTF format.
+
+                                                                                       The main advantages of using glTF to build 3D scenes are
+                                                                                   as follows:
+    This study was supported by the National Natural Science Foundation of
+China (No. 41501432; No. 41201411); National Special Program on Basic
+Works for Science and Technology of China (No. 2013FY110900);
+Foundation of State Key Laboratory of Resources and Environmental
+Information System (No. O88RA20CYA).
+
+
+
+
+    Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on June 08,2020 at 14:14:47 UTC from IEEE Xplore. Restrictions apply.
+    Firstly, the data compression is reasonable, and binary files                 the next scenes that user may be interested in. It would greatly
+and JSON data files, which occupy little space, are used for                      reduce the response time and improve the flow of scenes.
+storage.
+                                                                                      When roaming, there is a certain pattern of changes of the
+    Secondly, glTF defines an extensible, common publishing                       user's viewpoint. Therefore, we can download some scenes in
+format for 3D content tools and services. It uses a JSON format                   advance by predicting user trajectory. Predicting the trajectory
+to store the main information of the model. This format is                        of users is based on the user's browsing history. The client
+suitable for Web transmission and convenient for JS parsing.                      records trajectory coordinates by monitoring the user's
+At the same time, the image format supported by JS is used as                     keyboard response events. Then, the average of historical
+the texture data, such as JPG, PNG, etc.                                          trajectories is calculated, and the next scenes are predicted by
+                                                                                  recording the location of the view movement and sending this
+    Thirdly, glTF offers full rendering optimization. The model                   data to the server side (Fig. 4).
+contains the GLSL shader, which can be applied to the GL
+interface directly. Meanwhile, the binary file is used for storing
+graphic data, and the data buffer can be created conveniently
+and quickly.
+   Finally, glTF is well connected to the GL interface. The
+property parameters of the model can be mapped to the
+functions and parameters of the GL interface easily.
+     In this paper, we used the glTF file to organize the 3D
+model data efficiently. The glTF file recorded the ID, name,
+latitude and longitude, orientation, scale, and model links of all
+models in the scene. The model links are shown by the uniform
+                                                                                                      Fig. 4. Trajectory prediction method.
+resource locator (URL, the standard resource address on
+Internet), which is the storage location on the web server.                           First, a historical trajectory is a set of points made up of
+    The specific process of building the city scene is shown in                   track points, which can be represented as Tra {lc1, lc2, lc3…}.
+Fig. 3.                                                                           Each track point in the historical trajectory lci ѮTra can be
+                                                                                  expressed in a triad: lci = (lat, lng, t). lat and lng respectively
+                                                                                  represent the latitude and longitude of the moving object at
+                                                                                  sampling time t.
+                                                                                     Next, the client completes the recording of the trajectory
+                                                                                  coordinates by monitoring the user's keyboard response events.
+                                                                                      Then, a linear function of time is used to represent the
+                                                                                  position and time of moving objects. For example, if the
+                                                                                  position of the moving object is recorded as lc at a given time
+              Fig. 3. Construction flowchart of a 3D scene.                       tc, and the speed is called vc, then the position of this object
+                                                                                  after a period of time h can be calculated by a linear formula,
+   In Step 1, we used a 3D Studio Max, which is a 3D                              as in (1):
+modeling and rendering software, to make large-scale 3D city
+scenes based on the actual city data.                                                       position(h) = lc + vc × (h − tc ) .           (1)
+                                                                                      According to (1), we can then obtain a series of position
+   In Step 2, these 3D models were exported in COLLADA                            information, Pre {p1, p2, p3…}, which is called predicted
+format using the third-party format plugin OpenCollada.                           vector.
+   Then, in Step 3, all COLLADA models in the scene were                             Finally, the server generates a pre-download scenes queue
+converted to the glTF format by the transformation tool                           based on the user's viewpoint information and the predicating
+provided in an open source “cesium” project.                                      vector coordinates.
+   Finally, in Step 4, these scene data were uploaded to the                          These scenes are pre-downloaded to the client before the
+web server according to the storage location of the scene data                    client makes a request to the server. This strategy of
+described in the glTF files.                                                      downloading and rendering can improve the rendering speed.
+B. Prefetching Strategy Based on Prediction Trajectories                          C. Occlusion Culling Technology
+    For 3D virtual scenes, the data volume is growing in                              After downloading the model data to the client using the
+intensity. However, users can only see part of a scene within a                   prefetching strategy based on prediction trajectories, view
+certain time due to the scope of their vision and object                          frustum culling and occlusion culling technology were used to
+occlusions. Therefore, when a user is roaming, the system                         improve rendering efficiency.
+should download the local scene automatically by determining
+                                                                                      View frustum culling eliminates objects that are not in the
+                                                                                  current view frustum, and only loads into memory objects that
+
+
+
+
+   Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on June 08,2020 at 14:14:47 UTC from IEEE Xplore. Restrictions apply.
+are in the current view frustum [11]. This method relies directly                 collision, intersection, and inclusion. Models that were
+on the observed parameters returned by the current system.                        separation and collision relative to the view frustum were
+Meanwhile, occlusion culling eliminates objects or parts of the                   eliminated.
+objects that are invisible to users due to occlusion judging [12].
+When watching a 3D scene, the occlusion phenomenon                                    Models that were intersection and inclusion of the view
+between ground objects is prominent. Actually, most objects in                    frustum need to be occlusion culled according to visibility
+the view frustum are invisible in the current position, and the                   judgment. The invisible faces of the objects were eliminated.
+data of these objects do not need to be rendered into memory.                     For a convex polyhedron, the visibility judgment of surfaces
+This can further reduce the scope of loaded objects.                              can be based on the angle (ș) of the outer normal vector (N) of
+                                                                                  the surface and the visual vector (V) of users, as shown in Fig.
+    All scenes in the current visual field were projected to                      7. If the angle between the 2 vectors is greater than or equal to
+generate the view frustum. Then, objects not in the view                          0 degrees and less than or equal to 90 degrees, the surface is
+frustum were eliminated, as shown in Fig. 5. In this figure, the                  visible. If the angle is greater than 90 degrees and less than or
+dotted portions are eliminated objects or invisible surfaces of                   equal to 180 degrees, the surface is not visible.
+objects.
+
+
+
+
+           Fig. 5. View frustum culling and occlusion culling.
+
+    The eliminated objects are usually thought to be of 2 kinds:
+                                                                                                  Fig. 7. Visibility judgment of object surfaces.
+those out of the view frustum (blue objects), and those
+occluded (red and yellow objects). For the blue objects, we
+                                                                                     For each model in the view frustum, we first calculated the
+eliminated them using the view frustum culling geometric
+                                                                                  outer normal vector Ni of every surface according to the vertex
+algorithm [13].
+                                                                                  coordinates.
+    The view frustum consists of 6 sides: the top, bottom, left,
+                                                                                      Then, for each surface Pi of the model, we calculated the
+right, near, and far. First, we determined the scope of the view
+                                                                                  visual vector Vi according to the viewpoint’s coordinates.
+frustum according to the current camera parameters, and
+established the equation of the 6 sides of the view frustum. The                      Next, we calculated the cosine of angle și of the Ni and Vi
+points A1, A2, A3, A4, Pb, and Pt are known, as shown in Fig. 6.                  as in (2):
+The view frustum is identified by these points.
+                                                                                                                        N i <Vi
+                                                                                                          cos θ i =                                           (2)
+                                                                                                                      | N i || Vi |
+                                                                                                                                      .
+                                                                                      If cosθi ≥ 0, that is, when 0 ≤θi ≤ ʌ/2, the surface Pi faces
+                                                                                  forward and is visible. If cosθi < 0, that is, when ʌ/2 <θi ≤ ʌ,
+                                                                                  the surface Pi faces toward the back and is invisible.
+                                                                                      Finally, we marked all visible surfaces, and put the scene
+                                                                                  data after occlusion culling into the rendering pipeline.
+
+                                                                                                          III.   APPLICATION CASE
+
+                                                                                  A. Architecture of the 3D Roaming System
+              Fig. 6. Coordinates for view frustum culling.                           Aimed to tackle the problems of large-scale 3D scene
+                                                                                  visualization, a B/S mode system service architecture fully
+    Then, the minimum cube boxes of the models in the scene                       considering visual efficiency was designed, as shown in Fig. 8.
+sets are obtained, and the bounding box is the external cuboid
+surrounding the models.
+    Next, we calculated the intersection between bounding
+boxes and the current view frustum. From this, we obtained
+different positions relative to the view frustum: separation,
+
+
+
+
+   Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on June 08,2020 at 14:14:47 UTC from IEEE Xplore. Restrictions apply.
+                                                                                  software environment was the Linux operating system and
+                                                                                  Tomcat server. The client used the Chrome Brower. The
+                                     Chrome Brower
+                                                                                  platform’s first transmission response time was less than 3 s,
+      Application                                                                 and the average response time was less than 1 s. The average
+        Layer                              WebGL                                  frame rate of scene browsing was 36 fps. The roaming speed of
+                                                                                  the platform was fast, and the picture rendering was fluent. The
+                              Visibility            Scenes
+                                                                                  3D scenes models and rendering of New York City are shown
+                             Elimination           Rendering
+                                                                                  in Fig. 9.
+
+
+
+
+      Management             Prefetching          Model Data
+        Layer                 Strategy            Management
+
+
+
+
+       Web Layer                Web Server          Files Server
+
+
+                                                                                                    (a) 3D buildings of New York City, USA
+
+
+                     3Ds Max          ColladaToGltf            glTF
+
+
+
+               Fig. 8. Architecture of 3D roaming system.
+
+    The web server mainly provided data services that stored
+3D scenes data in glTF formats. The client side was divided
+into the management layer and application layer, which were
+mainly responsible for scheduling and rendering of scenes data.
+When the scenes were rendered, the application layer made
+requests to the local cache for scene data. If no data for a task
+was located in the local cache, it made a request to the server.
+As the same time, the data request task was managed in queue                                                   (b) Building details
+by the management layer using the prefetching strategy. The
+client side could download some scenes in advance by                                                Fig. 9. 3D scene of New York City, USA.
+predicting user trajectory. Finally, the scenes were rendered
+efficiently based on the visibility elimination strategy in the
+application layer. The 3D scenes visualization platform was                                                  IV. CONCLUSION
+developed based on Cesium. Cesium was developed by an                                 Based on analysis of the Web 3D scene data transmission
+open-source community, with support from the Cesium                               and visual characteristics, a new 3D model structure glTF was
+Consortium [14]. Cesium JS is a JS library for map rendering                      proposed in this paper. Since glTF is very suitable for Web
+in the GIS industry, using WebGL for rendering maps. Using                        exchange and rendering, a 3D scene organization and
+HTML5, rendering maps can be constructed in 3D.                                   construction method was proposed based on glTF. We also
+                                                                                  designed a system service architecture based on the glTF
+B. Experiment and Results                                                         format, prefetching strategy based on prediction trajectories,
+     To prove the advantage of the proposed method based on                       occlusion culling technology, and WebGL. Experimental
+system architecture, the 3D scene data of part of New York                        results showed that the proposed system service framework
+City was for experiments. This data included 765 models,                          could alleviate the pressure of bandwidth, and improve
+354,249 polygons, and 549,702 vertexes. There was 35.6 Mb                         visualization efficiency.
+disk space size taken up by the scene data before conversion,
+but this was reduced to 27.7 Mb after conversion to the glTF                                                ACKNOWLEDGMENT
+format. This suggests that the scene data based on glTF took up
+little space, and had a high compression ratio.                                      This study was supported by the National Natural Science
+                                                                                  Foundation of China (No. 41501432; No. 41201411); National
+   The server side hardware environment was an Intel E5-                          Special Program on Basic Works for Science and Technology
+1650V4 6 cores 3.60 GHz CPU, and the memory was 16GB                              of China (No. 2013FY110900); Foundation of State Key
+ECC. The video card was NVIDIA M4000, 8GB DDR5. The
+
+
+
+
+   Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on June 08,2020 at 14:14:47 UTC from IEEE Xplore. Restrictions apply.
+Laboratory of Resources and Environmental Information                                [7]     W. J. Schroeder, J. A. Zarge, W. E. Lorense, "Decimation of triangle
+System (No. O88RA20CYA).                                                                    meshes", ACM Siggraph Computer Graphics, ACM, 1992, vol.26(2),
+                                                                                            pp: 65-70.
+                                                                                     [8]    V. Isler, R. W. H. Lau, W. H. Lau, "Real-time multi-resolution modeling
+                                                                                            for complex virtual environments", Symposium on virtual reality
+                                REFERENCES                                                  software and technology, 1996, pp: 11-20.
+[1]   G. Bell, A. Parisi and M. Pesce, "The Virtual Reality Modeling                 [9]    H. Hoppe, T. DeRose, T. Duchamp, "Mesh optimization", Proceedings
+      Language: Version 1.0 Specification", URL: http://vrml. wired.                        of the 20th annual conference on Computer graphics and interactive
+      com/vrml. tech/vrml10-3. html, 1995.                                                  techniques, ACM, 1993, pp: 19-26.
+[2]   M. Reddy, L. Iverson, Y. G. Leclerc, "Under the hood of GeoVRML                [10]   Fabrice Robinet, "glTF-the runtime asset format for WebGl, OpenGL
+      1.0", Symposium on Virtual Reality Modeling Language, ACM, 2000,                      ES, and OpenGL[DB/OL]", America:Fabrice Robinet, 2014,
+      pp:23-28.                                                                             http://github.com/KhronosGroup/glTF/blob/master/specification/READ
+                                                                                            ME.md.
+[3]   M. Christen, S. Nebiker, and B. Loesch, "Web-Based Large-Scale 3D-
+      Geovisualisation Using WebGL: The OpenWebGlobe Project",                       [11]   J. El-Sana, N.Sokolovsky, C. T. Silva, "Integrating occlusion culling
+      International Journal of 3-D Information Modeling, vol. 1(3), pp: 16-25,              with view-dependent rendering", Conference on Visualization, IEEE
+      2012.                                                                                 Computer Society, 2001, pp: 371-378.
+[4]   C. Marin, "WebGL Specification", Khronos WebGL Working Group,                  [12]   S. Coorg, S. Teller, "Real-time occlusion culling for models with large
+      Retrieved from https://www.khronos.org/registry/webgl/specs/1.0/,                     occluders", Symposium on Interactive 3d Graphics, ACM, 1997, pp: 83-
+      2011.                                                                                 ff.
+[5]   R. Wüest, M. Christen, H. Eugster, "Processing and Rendering Massive           [13]   R. Kodituwakku, K. Wijeweera, M. Chamikara, "Anefficientline
+      3D Geospatial Environments using WebGL", The Graphical Web, 2012.                     clipping algorithm for 3D space", International Journal of Advanced
+                                                                                            Research in Computer Science and Software Engineering, vol.2(5), pp:
+[6]   M. Mer, R. Gutbell, "A case study on 3D geospatial applications in the                96-101, 2012.
+      web using state-of-the-art WebGL frameworks", International
+      Conference on 3d Web Technology, ACM, 2015, pp:189-197.                        [14]   U. D. Staso, M. Soave, A. Giori, "Heterogeneous-Resolution and Multi-
+                                                                                            Source Terrain Builder for CesiumJS WebGL Virtual Globe", Icvaiv
+                                                                                            2016, International Conference on Visual Analytics and Information
+                                                                                            Visualisation, 2016.
+
+
+
+
+      Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on June 08,2020 at 14:14:47 UTC from IEEE Xplore. Restrictions apply.
+

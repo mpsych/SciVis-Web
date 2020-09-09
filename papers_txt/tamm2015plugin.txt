@@ -1,0 +1,873 @@
+       PROCEEDINGS OF SPIE
+       SPIEDigitalLibrary.org/conference-proceedings-of-spie
+
+
+
+
+                   Plugin free remote visualization in the
+                   browser
+
+
+
+
+                   Tamm, Georg, Slusallek, Philipp
+
+
+
+
+                                  Georg Tamm, Philipp Slusallek, "Plugin free remote visualization in the
+                                  browser," Proc. SPIE 9397, Visualization and Data Analysis 2015, 939705 (8
+                                  February 2015); doi: 10.1117/12.2077761
+
+                                  Event: SPIE/IS&T Electronic Imaging, 2015, San Francisco, California, United
+                                  States
+
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020 Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                                Plugin free Remote Visualization in the Browser
+                                                              Georg Tamma and Philipp Slusallekb
+                                                                  a DFKI,       Saarbrücken, Germany;
+                                                                   b DFKI,      Saarbrücken, Germany
+
+                                                                                 ABSTRACT
+                Today, users access information and rich media from anywhere using the web browser on their desktop computers,
+                tablets or smartphones. But the web evolves beyond media delivery. Interactive graphics applications like
+                visualization or gaming become feasible as browsers advance in the functionality they provide. However, to
+                deliver large-scale visualization to thin clients like mobile devices, a dedicated server component is necessary.
+                Ideally, the client runs directly within the browser the user is accustomed to, requiring no installation of a plugin
+                or native application. In this paper, we present the state-of-the-art of technologies which enable plugin free
+                remote rendering in the browser. Further, we describe a remote visualization system unifying these technologies.
+                The system transfers rendering results to the client as images or as a video stream. We utilize the upcoming
+                World Wide Web Consortium (W3C) conform Web Real-Time Communication (WebRTC) standard, and the
+                Native Client (NaCl) technology built into Chrome, to deliver video with low latency.
+                Keywords: remote rendering, visualization, server-based, real-time, browser, web, internet, plugin free, mobile,
+                state-of-the-art, video streaming, WebRTC, NaCl
+
+                                                                          1. INTRODUCTION
+                Graphics-intense interactive applications like scientific visualization or games require computing and storage
+                resources, which may not be available on all display devices. Especially mobile devices may lack the capabilities
+                to handle large scenes and data sets at interactive frame rates or at all. In case of the browser, persistent client-
+                side storage is limited, and rendering algorithms are bound by the OpenGL subset WebGL provides. It may
+                not even be feasible to download simulation data off a supercomputer in a future exascale scenario. Further, the
+                data may be confidential.
+                   Remote rendering tackles these restrictions, most importantly by providing visualization to devices with
+                limited resources. A rendering server or cluster of servers generates images, and transfers them to the client for
+                display. Client-side requirements are minimal. However, network latency, bandwidth and reliability can impact
+                quality and responsiveness of the application. Therefore, a capable client-side renderer may still be feasible if
+                the data sets can be distributed to the clients.
+                    The browser has established itself as a ubiquitous application across operating systems, step by step closing in
+                on functionality otherwise provided by native applications. Persistent client-server connections via WebSockets
+                (WS), client-side graphics via WebGL, and audio and video media support are now widespread available as
+                built-in features, requiring no plugin. Efforts to reflect these developments in HTML-conform standards, and
+                thus make them more accessible to the web developer, appear on the horizon, like declarative 3D12 or real-time
+                communication.3 Further, the cloud concept becomes increasingly popular to provide data and services to users
+                anywhere. These developments enable new types of applications like games, visualization, videoconferencing or
+                collaborative e-learning being built to run within the browser.
+                    In this paper, we provide a classification and description of technologies enabling plugin free remote rendering
+                in the browser. We present an interactive remote visualization system, which unifies these technologies. Support-
+                ing several technologies enables widespread support across desktop and mobile browsers, as well as adaptivity to
+                network conditions and application requirements.
+                    While developing a browser plugin or using an existing one like Flash for the client functionality is one
+                solution, this has several disadvantages. Plugins with full privileges on the client system (NPAPI, ActiveX)
+                are a stability and security risk. A user dialog is thus required for installation. Browser developers move away
+                from these plugins,4 and instead continue to extend the browser’s functionality to support more use cases. If a
+
+                            Visualization and Data Analysis 2015, edited by David L. Kao, Ming C. Hao, Mark A. Livingston, Thomas Wischgoll,
+                                              Proc. of SPIE-IS&T Electronic Imaging, Vol. 9397, 939705 · © 2015 SPIE-IS&T
+                                                         CCC code: 0277-786X/15/$18 · doi: 10.1117/12.2077761
+
+
+                                                                      Proc. of SPIE-IS&T/ Vol. 9397 939705-1
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                plugin is proprietary, a tailored version has to be provided and maintained for each supported browser. There
+                is no standardized plugin mechanism across browsers, which complicates development. If an existing solution
+                is used, it may not be available on all platforms (e.g. Apple does not support Flash in their mobile products).
+                Concluding, we do not consider plugins future proof to develop browser applications.
+                   Our solution therefore stays close to HTML5, and within the functionality the browser provides. Adhering to
+                W3C standards simplifies possible integration into other conform technologies like XML3D,1 and accessibility for
+                web-developers. If browsers widely adapt the standard, a single client application with no or minor cross-browser
+                tweaks can be maintained. This ultimately enables users to access the application from any capable browser
+                wherever needed.
+                   Our system supports several methods to transport image data to the client. First, the server transfers
+                rendering results as encoded images. In addition to JPEG and Motion JPEG (MJPEG), we support S3 texture
+                compression (S3TC),5 enabling decoding on the GPU.
+                    Second, the server utilizes the upcoming WebRTC3 technology to stream video directly into the web page’s
+                video element. WebRTC is primarily intended for browser to browser real-time communication via webcam and
+                microphone. The video stream is thus optimized for low latency, which is a major requirement in our scenario.
+                Consequently, we have adapted the WebRTC framework and plugged in our rendering component.
+                   Third, we support the NaCl technology6 available in Chrome to receive a video stream. With NaCl, native
+                code can be run safely within the browser’s sandbox, allowing to close in on a native application’s performance.
+                   In the next section, we describe related work in the area of remote rendering in the browser, with a focus
+                on real-time video streaming. We then provide a classification of the technologies fitting our requirements.
+                The implementation section describes our system unifying these technologies. The results section provides
+                measurements and comparisons. The paper finishes with a conclusion and future directions.
+
+                                                                         2. RELATED WORK
+                One application area of remote rendering is scientific visualization. EnVision7 enables remote rendering in Java-
+                enabled browsers, and uses Virtual Network Computing as the strategy to deliver rendered images from the
+                server to a Java applet.
+                   PureWeb8 is a framework to instrumentalize applications for server-side deployment as a service. Users can
+                then access an application like a scientific visualization online and from mobile devices. The system supports
+                plugin-based browser clients (using Flash, Java or Silverlight) as well as a HTML5-only client.
+                   ParaViewWeb9 is a visualization framework for the web, which allows to receive remotely rendered images
+                within a Java or Flash plugin. In addition, a plugin free client using HTTP long-polling is available. Other
+                plugin free approaches relying on HTTP exist.10 McLane et al.11 use Ajax communication to receive base64
+                encoded JPEG images in a XML response.
+                    Such HTTP requests represent no persistent connection. After the client has received an image, the connection
+                is dropped and needs to be reestablished to request the next one. This a considerable overhead in our interactive
+                context, especially in high network latency situations. A better approach is to use Motion JPEG over HTTP,
+                where the browser keeps the connection open to receive consecutive images as a multipart message. Kaspar et
+                al.12 use MJPEG in their remote volume rendering.
+                   Also, with the advent of WebSockets, persistent connections are now possible and provide a viable alternative
+                to transfer images. Related to our image-based implementation is the method described by Wessels et al.13
+                ParaViewWeb has been extended to support WebSockets.14
+                    While most of the above scientific visualization approaches focus on image transfer, video encoding can
+                provide superior compression, which makes it especially viable in situations where bandwidth is a bottleneck.
+                Note that multiple rendering sessions generating network load may be active on a server. Video streaming can
+                also absorb packet loss to some degree. The user perceived quality might still be acceptable, even if artifacts
+                appear. Video is thus especially suited for unreliable networks like the Internet or wireless networks. Live video
+                streaming has been widely adopted by cloud gaming platforms, where a possibly large number of clients need to
+                be served concurrently. There is recent research to optimize the video stream for such platforms1516 .17
+
+
+
+
+                                                                      Proc. of SPIE-IS&T/ Vol. 9397 939705-2
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                   Chen et al.18 list some platforms. We only consider the ones providing a browser client. OnLive19 provides
+                demos within the browser, while the user needs to download a native client for full games. Gaikai20 delivers
+                games as video stream to Java or Flash enabled browsers. Video LAN Client and Silverlight are other plugins
+                supporting live video. Gaikai has also developed a plugin free client using NaCl.6
+                   Otoy21 presented the ORBX codec,22 which is supported in ORBX.js for video decoding and display entirely
+                with JavaScript (JS) and WebGL. The approach does thus not rely on browser-specific video codecs, or native
+                code dependencies. In cooperation with Mozilla, Autodesk and Amazon, this technology has now been deployed
+                on Amazon Web Services, providing remote gaming and desktop applications to users. While not much detail is
+                available at the moment, this might be a promising alternative if en- and decoder become available in the future.
+                    Another way to transmit live video to the browser without a plugin is segmented streaming over HTTP.
+                Bringuier23 discusses and compares existing methods. Mostly proprietary solutions are available (Apple HTTP
+                Live Streaming, Adobe HTTP Dynamic Streaming, Microsoft Smooth Streaming). While DASH24 is a ISO
+                standard, there is no widespread adaption and interoperability across browsers yet. Further, the segmentation
+                into many small video files, and the continuous download of these files over TCP/HTTP, introduces overhead and
+                buffering delay, which our interactive remote rendering application is very sensitive to (in contrast to a sports
+                event or similar, where even several seconds delay are usually acceptable). While HTTP streaming can avoid
+                traversal issues with Firewalls and NATs in contrast to UDP/RTP based solutions, this no major requirement for
+                us. We assume a dedicated server is available, which the client can connect to. Also, WebRTC has mechanisms
+                in place to overcome such connection establishment issues.
+                   We require instant reaction to user input. WebRTC3 has been designed for real-time purposes, and is a
+                upcoming standard with a JS API already adopted by the major browsers Chrome, Firefox and Opera.
+
+                                                                         3. CLASSIFICATION
+                We can identify seven methods, which can be used for plugin free remote rendering functionality in the browser.
+                However, not every method is suitable for us. In Section 2, we have outlined why JS video decoding (ORBX.js)
+                and segmented HTTP video streaming are no options at the moment. This leaves us with five approaches, which
+                Table 1 classifies.
+                                     Table 1. Technologies enabling plugin free, interactive remote rendering in the browser.
+
+                                                     Method                  Transport               Display
+                                                     Image-based methods
+                                                     JPEG/PNG                WebSocket               img tag
+                                                     Motion JPEG             HTTP                    img tag
+                                                     S3TC                    WebSocket               WebGL with S3TC
+                                                     Video-based methods
+                                                     WebRTC                  RTCPeerConnection       video tag
+                                                     NaCl                    TCP/UDPSocket           OpenGL ES
+
+
+
+                3.1 Image-based methods
+                The first approach requires a WebSocket connection to receive the images encoded by the server. There is even
+                a fallback to the HTTP long-polling technique using XMLHttpRequest possible, should WS not be supported.
+                As this method has significant disadvantages (see Section 2), and WS is widespread available today, we do not
+                consider it. Therefore, WS support is the minimum requirement.
+                   Any image format the browser supports natively is suitable. The client translates a received image to a JS
+                image object, either by using createObjectURL, or by base64 encoding the binary data. We do not recommend
+
+
+
+
+                                                                      Proc. of SPIE-IS&T/ Vol. 9397 939705-3
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                to perform the encoding on the server, as it increases the network traffic. The browser takes care of the decoding.
+                Display is done directly with the img tag, or by drawing into a HTML5 canvas element.
+                    The main advantage of this method is its simplicity, and almost ubiquitous availability. Even if no other
+                method is supported in a browser, we almost certainly will be able to fall back here. Android Browser is a rare
+                exception not supporting WS. However, in unreliable networks, we want to be able to switch to a video based
+                solution, which is more bandwidth-efficient, and can absorb packet loss.
+                    The second approach utilizes Motion JPEG, which has plugin free support in Safari, Chrome and Firefox,
+                including Chrome and Firefox for Android, and Safari on iOS. The web page contains a img tag with the src
+                attribute pointing to the rendering server. The browser then takes care of establishing a persistent HTTP
+                connection and receiving and displaying the images. The server sends each JPEG as part of a HTTP multipart
+                message. The overhead attributed to HTTP is negligible.
+                   While not as ubiquitously available as WS, the advantage of MJPEG is the bypassing of WS and JS to receive
+                and display the images. The browser performs these steps natively, and can apply any optimization it sees fit.
+                Also, no base64 encoding is required.
+                    The third approach utilizes WebGL capable browsers, which support the S3 texture compression extension.
+                S3TC is a lossy block-compression technique (achieving a 6:1 compression ratio for 24bit RGB images), designed
+                for fast parallel en- and decoding. Decoding is supported on the GPU with the aforementioned WebGL extension.
+                The client can thus upload compressed images as is to the GPU for display.
+                    S3TC cannot achieve the compression rate of the other methods. In closed scenarios, where the necessary
+                bandwidth is known to be available, and possible visual artifacts attributed to S3TC (mostly visible when
+                encoding sharp edges and gradients) are acceptable, its fast en- and especially client-side decoding performance
+                make it a feasible approach to achieve high frame rates. There are similar texture compression methods available
+                (e.g. PVRTC, ETC). We choose S3TC as it is the only method with broad support across browsers, including
+                Chrome and Firefox for Android.
+
+                3.2 WebRTC
+                The goal of WebRTC is to enable real-time video and audio applications to run within the browser, only using
+                HTML5 and JS. The WebRTC specification25 is in the process of standardization. While the central use case is
+                browser to browser communication in a peer-to-peer fashion, the native WebRTC framework is open source, and
+                can be used to integrate the technology in other applications. Here, this means enabling our native rendering
+                server to stream WebRTC video. The client uses the RTCPeerConnection JS API to setup the connection. The
+                browser takes care of display in the HTML5 video element.
+
+                3.2.1 Architecture
+                Figure 1 shows the components of WebRTC.
+                    To enable the exchange of video and audio data between two endpoints, first a session has to be estab-
+                lished. This involves negotiating session parameters using the Session Description Protocol and an offer/answer
+                scheme (e.g. finding video settings supported on both sides), and finding reachable address and port candidates
+                for endpoints possibly behind a NAT or firewall. WebRTC gathers candidates with Interactive Connectivity
+                Establishment (ICE), using STUN servers and, if no direct connection is possible, TURN servers to relay traffic.
+                   How session description and candidates are signaled to the other side is not specified. Applications may use
+                any channel of communication suitable. We consider XMLHttpRequest support as the minimum requirement to
+                setup the signaling. Usually, a publicly reachable server is deployed to forward signaling messages between the
+                endpoints. After signaling has concluded, media streaming can begin. In addition, the endpoints can exchange
+                arbitrary messages using a data channel. WebRTC uses DTLS-SRTP over TCP or UDP for the media transport,
+                and SCTP encapsulated in DTLS over UDP for the data channel. Encryption is mandatory in WebRTC.
+
+
+
+
+                                                                      Proc. of SPIE-IS&T/ Vol. 9397 939705-4
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                                                                                        SDP
+                                                                                      Candidates
+
+
+                                                                                      Signaling
+                                                                                       Server
+
+
+
+                                                                                        STUN
+                                                                               ICE                  ICE
+
+
+                                                            Peer                        TURN                   Peer
+
+                                                                                      Video/Audio
+                                                                                       Raw Data
+
+                                                                        Figure 1. WebRTC architecture.
+
+
+                3.2.2 Advantages and Drawbacks
+                We decided to use WebRTC video streaming for our remote visualization for the following reasons. The tech-
+                nology is a upcoming standard allowing plugin free browser clients, and integration into other HTML-conform
+                technologies. Second, the video streaming has been specifically designed for real-time purposes. Third, there
+                is already wide browser support with Chrome, Firefox and Opera, including Chrome and Firefox for Android,
+                and Opera Mobile. We expect the standardization to progress, and become even more widespread. In addition,
+                WebRTC is the technology of choice if confidential transfer of the generated images is required.
+                    However, there are also drawbacks. While there are efforts to push the standardization, there is no agreement
+                with all parties yet. There is an alternative proposal from Microsoft with CU-RTC-Web.26 Apple has not made
+                their position clear yet. There is an ongoing debate whether H.264 should be used instead of the VP8 codec
+                (and later VP9), which is currently used in WebRTC.27 One argument is the widespread hardware support
+                for H.264, especially on mobile devices, where CPU decoding of high-resolution video can be a bottleneck, and
+                drains the battery quicker. Further, the WebRTC API has been designed to ease access for web developers, which
+                is feasible. But it therefore provides only a high level access to the underlying video streaming and encoding
+                parameters, which makes tweaking towards a special use case difficult. As we have shown, applications beyond
+                communication exist.
+                   At this point, our implementation demonstrates the feasibility of the technology for remote rendering in the
+                browser (Section 4.5). WebRTC development is ongoing, and we expect improvements in the future, such as
+                extended hardware support, additional API features, or the upgrade to VP9 encoding.
+
+                3.3 NaCl
+                NaCl enables application developers to run native code safely within the sandbox environment of the Chrome
+                browser. NaCl automatically validates code to adhere to the security requirements (e.g. direct system calls to the
+                OS are prohibited), and thus requires no user dialog to obtain permission. Similar to a plugin, a NaCl module
+                can be embedded into a web page, optionally covering a visible area. Page and module can communicate using
+                a simple API. Within the module, the Pepper Plugin API (PPAPI) provides functionality, including networking
+                and restricted access to local storage. Many existing libraries have already been ported to run under NaCl, and
+                are made available via naclports. NaCl is developed as the replacement for the legacy NPAPI plugins, which
+                have full access to the OS, and thus require user installation due to security and stability considerations.
+                    Using NaCl, a client to receive and display a video stream in various formats (e.g. H.264) from the rendering
+                server can be implemented. The server can transfer the stream over WS or raw TCP/UDP sockets. FFmpeg
+                and Libav are available in naclports, and can decode the video. The client can display frames with the PPAPI
+                Graphics2D class or a Graphics3D context and OpenGL ES 2.0.
+
+
+
+
+                                                                      Proc. of SPIE-IS&T/ Vol. 9397 939705-5
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                    The main advantage towards WebRTC is the accessibility for the developer. Within the proprietary solution,
+                fine-tuning and tweaking for a specific use case, or a closed scenario with known network conditions, is possible.
+                This includes flexibility in the video codec to use (as long as it is real-time capable, and can be ported to
+                NaCl), or whether encryption is required, which is mandatory in WebRTC. With the high-level WebRTC API,
+                adaptability is limited, especially on the client side.
+                    While with the release of PNaCl,28 applications can be published on the open web (instead of requiring the
+                Chrome Web Store for distribution), NaCl is still only supported in the desktop version of the Chrome browser.
+                It is no HTML5 conform standard technology with widespread support like WebRTC.
+                    NaCl modules can close in on a native application’s performance, but there is still a transition phase from
+                NPAPI to NaCl. The PPAPI does not expose functionality required for some use cases. In our case, hardware-
+                accelerated H.264 video decoding is desirable. Specialized platform-specific libraries or optimizations applying
+                to such use cases could be used in a NPAPI plugin, but do not run in NaCl due to the sandbox’s restrictions.
+                However, we expect NaCl to become more accessible in the future, and close the gap to NPAPI.
+                    Given the large user base of Chrome, and the flexibility NaCl provides on the development side, we decided
+                to incorporate it in addition to WebRTC to enable video-based remote rendering. On a side note, we could
+                also implement the image-based methods in NaCl. We deem this unnecessary, as it can be achieved with more
+                standardized browser functionality (Section 3.1), which is widespread available and close to HTML5.
+
+                                                                       4. IMPLEMENTATION
+                We have presented a classification and description of technologies, which enable to receive image or video data
+                produced by a rendering server in the browser in real-time, not requiring a plugin. In this section, we present a
+                interactive remote visualization system, which unifies these technologies.
+                     By supporting several methods, we expand the overall support across browsers, and thus platforms. Our
+                client is able to automatically run in a wide range of browsers, including mobile ones. Further, being able to
+                select from several methods in capable browsers increases adaptability to different conditions and requirements.
+                The switch to a video streaming solution is feasible, and may even be required to maintain interactive frame rates,
+                if limited bandwidth and packet loss become the bottleneck. Being bandwidth-efficient is especially relevant if
+                multiple clients are connected to a server. We are able to deploy the application under real-world conditions,
+                where such restrictions can occur (the Internet, wireless networks), but also fine-tune in closed scenarios (e.g.
+                switching to fast S3TC en-/decoding in high-speed networks to keep up with a desired high rendering frame
+                rate). Using WebRTC, we can provide a secured connection.
+
+                4.1 Rendering System
+                The rendering API used in our system is generic, and allows different kinds of renderers to be plugged in. The
+                core concept is a multi-resolution representation of data sets. A data set is represented by one or more quality
+                levels (QL), which the server can independently render. The QLs are totally ordered, and detail increases with
+                the level number. At least the first level should render fast enough to provide interactive frame rates. Consecutive
+                QLs progressively refine the view once interaction stops.
+                   Any renderer which can map its data sets to QLs can be plugged in. An application where QLs are not
+                required can still be used by advertising only a single QL to the API. The renderer must be interruptible during
+                view refinement to maintain responsiveness. We make no assumptions about the rendering time of QLs apart
+                from the first one.
+                    We have tested the system with two renderers so far. The Tuvok volume rendering system29 provides a
+                hierarchical, level-of-detail-based renderer, which maps directly to QLs (Figure 2). Secondly, we used a propri-
+                etary geometry renderer based on progressive meshes30 (Figure 3). The rendering server is multithreaded, and
+                supports simultaneous connections from multiple clients.
+
+
+
+
+                                                                      Proc. of SPIE-IS&T/ Vol. 9397 939705-6
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                      Figure 2. A volume data set31 with four QLs, rendered                    Figure 3. A mesh data set32 with six QLs (QL6 with
+                      with Tuvok (QL1 (left), QL4 with 512x512x1884 8-bit                      10 million triangles shown).
+                      voxels).
+
+
+                4.2 Handshake
+                Before the remote visualization session begins, the client needs to determine which of the transfer methods
+                depicted in Table 1 it supports, and then provide the user with an option to select the method for this session.
+                Checking for support includes verifying the existence of the JS objects WebSocket and RTCPeerConnection
+                (currently still via the polyfill adapter.js, as the WebRTC interface is prefixed in Chrome and Firefox until
+                standardization progresses), WebGL with the S3TC extension, and the NaCl mime type application/x-(p)nacl.
+                We call the connection to transfer image or video data from the server to the client display channel.
+                    Further, the client establishes the synchronization (sync) channel. This channel is used to initialize the render
+                session (the handshake). The client sends information such as the selected display channel type, the resolution
+                and data set for rendering, and also the preferred streaming frequency and bit rate for the video. The server
+                supports all display channel types, and sets up its end of the connection according to what the client chooses.
+                Connection setup with WebRTC is a special case, as it involves a signaling stage before establishing the sync
+                channel (Section 4.5). In addition, the sync channel is later used to synchronize the user interaction affecting
+                the rendering (Section 4.3). Most importantly, there are transformation changes, but other parameters like the
+                resolution, data set, or a transfer function in case of the volume renderer also fit in here.
+                    The sync channel is a reliable connection. Figure 4 gives an overview of the different sync and display channel
+                type combinations our system supports. Note that further mix up is possible. The minor overhead attributed
+                to the WS protocol could be avoided by using raw TCP connections in NaCl. As this is negligible, the current
+                combinations are sufficient. For WebRTC, data channel encryption can be bypassed by switching to a WS sync
+                channel. On the other hand, we might add encryption support for image-based remote visualization by using the
+                data channel. For MJPEG, this only applies to the sync channel, as the browser establishes the HTTP display
+                channel internally. One interesting note is that the data channel is currently the only way to access UDP from
+                JS within a normal web page.
+                    The client also creates the DOM element for display according to the selected display channel type (e.g.
+                embedding a NaCl module in the page where the video is to be shown), and establishes the display channel to
+                receive the image or video data. We cover the architecture specific to each display channel type in Section 4.4
+                to 4.6.
+
+                4.3 Synchronization
+                The client handles the user interaction in JS independent of the sync and display channel type. It captures
+                mouse and keyboard events, or touch events in a mobile browser, and requests the rendering of the data set for
+                a new transformation over the sync channel. After the first QL of a frame has been completed, a small time
+                interval is used before rendering the consequent QLs for view refinement. If a new transformation arrives within
+                the interval, the next frame can be immediately started without the renderer possibly having to abort ongoing
+                rendering. This can be a noticeable overhead, depending on how fine-grained the renderer can be interrupted.
+                Therefore, we only start rendering QLs for view refinement after the interval passed.
+
+
+
+
+                                                                      Proc. of SPIE-IS&T/ Vol. 9397 939705-7
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                                                                                Sync     WS    WebRTC        NaCl
+                                                                                                (data)      (TCP)
+
+                                                                     WS
+
+
+
+
+                                                         Display
+                                                                     HTTP
+
+                                                                     WebRTC (media)
+
+                                                                     NaCl (UDP)
+
+
+                                                                      Images (JPEG/S3TC)            Video (WebRTC VP8)
+                                                                       Images (MJPEG)               Video (NaCl H.264)
+
+                                                                   Figure 4. Sync and display channel combinations.
+
+
+                   The synchronization of user input can operate in two modes. First, the client does not send the next
+                transformation before having displayed the rendering result for the previous one. This sequential mode gives the
+                notion of the real achievable frame rate dependent on the latency. However, after sending a completed QL to
+                the client, the renderer is idle waiting for the next transformation, which takes at least the round-trip plus the
+                display time. Vice versa, the client is idle while network and renderer are busy.
+                    In contrast, the non-sequential mode decouples sync and display channel, allowing parallel utilization of
+                server, client and network. The client sends transformations with a fixed frequency (30 per second by default),
+                while it receives rendering results asynchronously on the display channel. The user perceives a constant response
+                delay, but the frame rate can stay smooth independent of the latency. This is true if server, network and client
+                are capable to reflect the frame rate dictated by the transformation send frequency.
+                    However, if the frequency is higher than the achievable frame rate, updates are either lost or have to be queued
+                at the point of the bottleneck. If rendering is the bottleneck (which may be view-dependent, e.g. falling short
+                for close views in a pixel shading heavy volume renderer), the server will unnecessarily receive transformation
+                updates while still rendering the first QL for a previous transformation. The transformations are consequently
+                either lost (except the most recent one), or have to be queued. Though, losing transformations sporadically is not
+                crucial, and barely noticeable. We prefer this approach over queuing. Queuing results in the display becoming
+                decoupled from the user input if we are a noticeable amount of frames behind, which is the worse side effect than
+                gaps occurring after skipping updates.
+                    The network link can be the bottleneck if it cannot transfer encoded frames fast enough due to limited
+                bandwidth or packet loss. The client might not be able to receive and display frames at the rate the server sends
+                them. Network and client-side bottlenecks are more crucial, as they result in images being wastefully rendered
+                only to be dropped further down the pipeline. In contrast, sending a few bytes of superabundant transformations
+                is no major overhead.
+                   The frame rate is limited to the transformation send frequency. The renderer is done early if it processes
+                transformations faster than new ones arrive. This capping is reasonable, as it frees resources, which is especially
+                a consideration in multiple client scenarios.
+
+                4.4 Remote Visualization using Images
+                The architecture of image-based remote visualization is depicted in Figure 5.
+                    For JPEG and S3TC, the client establishes sync and display channel as a WebSocket connection. The
+                client receives encoded images similar to the system outlined by Wessels et al.13 However, our server sends
+                images directly as WS binary frame, bypassing the base64 encoding. WS support for binary data is now widely
+                implemented in browsers.
+                   The client uses the browser’s createObjectURL function to load the JPEG images into a image object, and
+                then draw the raw pixel data into a HTML canvas element. Using WebGL, the client directly uploads S3TC
+                compressed images to the GPU for decoding and display.
+
+
+
+
+                                                                          Proc. of SPIE-IS&T/ Vol. 9397 939705-8
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                                                                                    User input              Rendering
+                                                       Client
+                                                                                                             Server
+                                                                                       Images
+
+                                                       Browser                                            Native application
+
+                                                                      WebSocket
+                                                                      WebSocket, HTTP
+
+                                                        Figure 5. Image-based remote visualization architecture.
+
+
+                   To save en-/decoding time and bandwidth, the server only encodes the area of the frame buffer occupied by
+                the data set, which is determined by projecting the data set’s bounding box into screen space and then using
+                the Sutherland-Hodgman clipping algorithm.33 The client shows the resulting sub-image inside the canvas with
+                the corresponding offset. For S3TC, we upload the sub-image with compressedTexSubImage2D, and adapt the
+                transformation and texture coordinates of the quad, which the image is mapped onto, accordingly.
+                   For MJPEG, the display channel is a persistent HTTP connection between the browser internally and the
+                rendering server. The server advertises a multipart message to the browser in a HTTP response (content type
+                multipart/x-mixed-replace), and then sends the rendered JPEGs as parts of that message delimited by a boundary.
+                Decoding and display is done natively by the browser.
+                    In Firefox, the img tag’s onload event is fired for each JPEG decoded as part of the multipart stream.
+                This allows us to support the sequential synchronization mode (Section 4.3) by waiting for the onload event to
+                fire before sending the next transformation. However, Chrome behaves differently, and does only fire the event
+                once for the first decoded image. Therefore, the sequential synchronization mode cannot be directly supported in
+                Chrome for the MJPEG display channel. We still enable it using a workaround which is described in Section 4.5.1
+                for WebRTC.
+
+                4.5 Remote Visualization using WebRTC
+                The architecture of the WebRTC based remote visualization approach is shown in Figure 6. The server delivers
+                rendering results to the client with low-latency video streaming.
+
+
+                                                                                    Signaling
+                                                         1. Offer
+                                                                                     Server               2. Answer
+                                                        Candidates                                        Candidates
+                                                                                     Native or
+                                                                                 node.js application
+                                                                                          3.
+
+                                                                                    User input                 Rendering
+                                                       Client                                                   Server
+                                                                                        Video
+
+                                                       Browser                 Confirmations (optional)   Native application
+
+                                                                       WebSocket, TCP
+                                                                       Video channel
+                                                                       WebSocket or data channel
+
+                                                      Figure 6. WebRTC-based remote visualization architecture.
+
+                   Using the WebRTC JS API, the client creates an offer containing the session description. The client sends
+                the offer and the candidates gathered by ICE to the signaling server via a WebSocket connection. We have
+
+
+
+
+                                                                      Proc. of SPIE-IS&T/ Vol. 9397 939705-9
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                implemented the signaling server as a native application with proprietary WS support, and as a node.js34
+                application using the WebSocket-Node module. The signaling server forwards the client messages to the rendering
+                server using a TCP connection. We could also merge signaling and rendering server. The system is not dependent
+                on a separate signaling server being present, but separation reflects the WebRTC architecture (Section 3.2.1).
+                The rendering server utilizes the native WebRTC API, and responds with an answer and candidates according
+                to the client’s offer. Since WebRTC is a peer-to-peer approach, the roles could also be exchanged by letting
+                the rendering server initiate connection establishment. Once the client has received the answer and a matching
+                candidate to receive the video stream has been found, the session is established. The rendering server should be
+                reachable with a public address. Existing STUN and TURN solutions can be easily integrated if the system is
+                to be deployed under less transparent conditions.
+                    The client displays the video stream produced by the server in a HTML5 video element. Note that WebRTC
+                tries to use UDP for the media transport, but might switch to TCP if a UDP connection cannot be established
+                (e.g. due to UDP ports being blocked by a firewall).
+
+                4.5.1 Synchronization
+                The system supports two ways to synchronize user input with the rendering server. First, the client sends
+                transformations to the rendering server with a WS sync channel. Alternatively, a reliable WebRTC data channel
+                can be used. However, there is no API available which allows us to determine when a newly rendered QL
+                encoded at the server side is reflected in the video. Thus, the client cannot wait for the display of a video frame
+                before sending the next transformation. This prevents us from implementing the sequential synchronization
+                mode directly, which is the same issue we described for MJPEG in Chrome (Section 4.4).
+                    Therefore, in both cases, when using the sequential synchronization mode, the server sends a confirmation
+                over the sync channel after the first QL of a new frame has been rendered. The client does not send the next
+                transformation before having received the confirmation for the last one. However, this is no exact solution, as the
+                confirmation messages are not synchronized with the video stream and the actual display of a QL. As outlined
+                in Section 3.2.2, WebRTC currently only provides a high-level API which can complicate fine grained adaption
+                to special scenarios.
+
+                4.5.2 Video Streaming Discussion
+                The video streaming is independent of the rendering process, and happens concurrently. The server can signal
+                images to the encoding pipeline with a fixed frequency. However, there is possible fluctuation in the rendering
+                frame rate, resulting in misalignment with the fixed signaling. Especially in the sequential synchronization mode,
+                fluctuation is likely as the rendering frame rate is not bound by the transformation send frequency. If rendering is
+                fast, more images may be wastefully produced than signaled. Vice versa, if rendering is slow, the last image may
+                be repeatedly signaled while rendering a new image, which can have a slight impact on the rendering performance.
+                The impact is negligible during view refinement, but may be noticeable during interactive rendering. Therefore,
+                the server also supports a signaling frequency aligned with the rendering frame rate. In the non-sequential
+                synchronization mode, frame rate and consequently signaling frequency ideally reflect the fixed transformation
+                send frequency (Section 4.3).
+                    In either case, if there is no interaction ongoing, the server signals the last image repeatedly with a fixed
+                frequency as requested by the client during handshake (by default, this is equal to the transformation send
+                frequency). This allows the decoding quality on the client to progressively reach the maximum level depending
+                on the video bit rate.
+
+                4.6 Remote Visualization using NaCl
+                The architecture of the NaCl based remote visualization approach is shown in Figure 7. The server delivers
+                rendering results to the client with a H.264 video stream tuned for the lowest latency.
+                    The client places a NaCl module (written in C++) in the page, which implements the display channel to
+                receive the video stream. We support TCP and UDP for the transport, with UDP being the preferred method
+                as indicated in Figure 4. However, Chrome only permits raw socket communication if the web site is packaged
+                as an app with special permissions, requiring a user dialog before execution like a plugin. Therefore, we also
+
+
+
+
+                                                                     Proc. of SPIE-IS&T/ Vol. 9397 939705-10
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                                                       Client
+
+                                                     UI     NaCl                    User input             Rendering
+                                                                                                            Server
+                                                                                       Video
+
+                                                       Browser                                           Native application
+
+                                                                      WebSocket or TCP
+                                                                      TCP or UDP
+                                                                      local
+
+                                                          Figure 7. NaCl-based remote visualization architecture.
+
+
+                support WS transport. The server uses a constant bit rate (with some tolerance for divergence), which can be
+                selected by the client during handshake to account for the expected link characteristics. The module displays
+                frames using a Graphics2D context.
+                    The module also includes a native sync channel implementation using TCP. The web page passes handshake
+                information and transformations to NaCl for sending. Optionally, the sync channel can be established as a WS
+                connection in JS. Should the sync channel be native, it is feasible to handle the interaction directly within the
+                module, thus avoiding overhead when communicating from JS to NaCl. As the overhead is minor, we have not
+                added this option yet.
+                    Using NaCl, we can avoid the encryption overhead mandatory to WebRTC. In our use case, confidential
+                transfer of the encoded video frames is less likely a concern than in a communication scenario, where audio data
+                is also transmitted. The source data sets never leave our server.
+                    We outlined the video streaming process in Section 4.5.2, which also applies here. Specific to this version, to
+                progressively refine the quality for the last rendered image in a static view, streaming continues until the encoder
+                produces a key frame. The server then pauses the stream until new transformations arrive to save bandwidth.
+                We use libav (with the x264 library enabled) on the server and client to en-/decode the video. On the dedicated
+                server, we are free to include any hardware-accelerated video encoder, and plan this in a future revision to increase
+                the scalability, and facilitate high resolution streaming. Though, NaCl does have no hardware-accelerated video
+                decoding capabilities yet.
+
+                                                                                 5. RESULTS
+                In this section, we will demonstrate the usage of the remote visualization methods. The machines in Table 2
+                were used for the tests, and connected in a LAN. We deployed Dummynet35 to simulate limited bandwidth.
+                We ran the tests using the sequential synchronization mode, which enabled us to measure the actual achievable
+                frame rate, and the latency. Here, we define latency as the time from requesting the first QL of a frame for
+                rendering until its display minus the rendering time. Thus, latency includes encoding, decoding and display as
+                well as network transfer and round-trip time (RTT).
+
+                                                          Table 2. Server and client machine used for the results.
+
+                                                          CPU & Memory                              GPU & Network
+                                           Server         Intel i7-4770K @ 3.5GHz & 16GB            GeForce GTX 760 & 1GBit/s
+                                           Client         Intel i7-2600K @ 3.4GHz & 16GB            GeForce GTX 680 & 1GBit/s
+
+
+                   We used a up-to-date Chrome browser on the client machine. For MJPEG, we used a up-to-date Firefox
+                browser, as it supports the sequential synchronization mode directly (Section 4.4). The image resolution is
+
+
+
+
+                                                                     Proc. of SPIE-IS&T/ Vol. 9397 939705-11
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                1280x720. We set up WebRTC on the server side to allow for higher streaming rates than the default 30 frames
+                per second. We used Tuvok and the data set shown in Figure 2 for rendering.
+                   To perform comparable and reproducible runs, the client automatically played back a predefined one minute
+                loop of interaction events in each run. The focus is on continuous movement. For view refinement in static
+                phases, where QLs may take an arbitrary amount of rendering time, a latency difference of even several 100
+                milliseconds has no considerable impact on the user experience. On the other hand, latency becomes crucial
+                when a real-time frame rate has to be maintained, which is the context we compare our methods in.
+                     Table 3 shows the measurements without constraints regarding RTT, bandwidth and packet loss.
+                                           Table 3. Statistics for remote visualization under high-bandwidth conditions.
+
+                                                                                             Images                     Video
+                                                                               JPEG        MJPEG      S3TC      WebRTC          NaCl
+                                        Frames per second                      103.1       109.8      121.6     40.1            30.5
+                                        KBytes/s sent                          1469.5      1564.5     13650.1   229.4           99.2
+                                        Latency (ms) per frame                 3.7         2.9        1.9       15.5            22.6
+
+
+                     The image-based methods provide the superior performance. With network limitations being of negligible
+                concern, en-/decoding and rendering time dictate the frame rate. Especially parallelized S3TC en- and decoding
+                is extremely fast. The slight advantage of MJPEG towards JPEG can be attributed to the bypassing of JS and
+                WS to receive and display the images. However, we can also see the video based methods are far more bandwidth
+                efficient. They uphold comparable visual quality.
+                    The generally low latency can be explained by examining the interaction loop, which contains several fast to
+                encode sections. In these sections, the data set covers only part of the screen, with the rest being a regular black
+                background (similar to what is shown in Figure 8 and 9). The pixel-shader bound volume renderer also performs
+                well for such views, enabling the high frame rates. The especially low latency for the image-based methods is
+                attributed to an encoding optimization, which is discussed further below.
+                    For both video streaming methods, there is currently no hardware-acceleration deployed. In NaCl, the
+                decoder has shown to perform underwhelming in comparison to the server-side encoder (decoding even takes
+                slightly longer), though both use libav. Also, the mere display of a decoded frame introduces unexpectedly high
+                delay. Due to the sandbox’s restrictions, we can only use a libav version with disabled assembly optimizations
+                for now. There is currently no stable API exposed or external library available to provide hardware-acceleration.
+                Concluding, there is room for improvement in NaCl to tackle these bottlenecks. There is already ongoing
+                development towards a video decoding API within the PPAPI, which we will investigate in a future revision. On
+                the server, we will add a hardware-accelerated encoder. For WebRTC’s VP8 codec, hardware-acceleration is not
+                widespread available.
+                   To demonstrate the advantage of the video-based methods in bandwidth limited scenarios, we simulated a
+                bandwidth reduction to 2MBit/s. Table 4 shows the measurements under this restriction.
+                   The image-based methods begin to break, especially S3TC, which requires the most bandwidth. The per-
+                formance loss is substantial compared to Table 3. In contrast, the video-based methods can uphold a smoother
+                frame rate, which is much closer to what we observed under unrestricted conditions. WebRTC and NaCl are
+                now closer together, as WebRTC uses more bandwidth per frame, which is the bottleneck in this scenario. The
+                underwhelming decoding and display performance in NaCl is thus less of a factor.
+                    Finally, for the image-based methods, the server optimizes the encoding based on the screen space bounding
+                box of the data set (Section 4.4). This optimization is of great benefit for the interaction loop, where the data
+                set often covers only a fraction of the screen. To illustrate this, we repeated the run for MJPEG (no bandwidth
+                limitation), but disabled the optimization this time. We measured 59.3 frames per second, 1547.9 KBytes/s sent,
+                and a Latency (ms) per frame of 8.3, which is substantially worse than what we see in Table 3. However, given
+
+
+
+
+                                                                     Proc. of SPIE-IS&T/ Vol. 9397 939705-12
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                                          Table 4. Statistics for remote visualization under limited bandwidth conditions.
+
+                                                                                             Images                    Video
+                                                                                 JPEG       MJPEG     S3TC     WebRTC          NaCl
+                                          Frames per second                      12.9       13.7      4        23              20.5
+                                          KBytes/s sent                          151        157.7     215.4    142.1           65.5
+                                          Latency (ms) per frame                 53.7       50.2      231.5    33.9            36.2
+
+
+
+                a different data set and/or sequence of view changes, the optimization might be of less or no benefit. In such a
+                scenario, the advantage of the image-based methods in Table 3 would be less significant, while the video-based
+                methods would have a stronger lead in Table 4.
+
+                                                       6. CONCLUSION AND FUTURE WORK
+                The contribution of this paper is as follows. We have presented a state-of-the art classification of technologies,
+                which enable plugin free, interactive remote rendering in the browser. We then described a visualization system
+                built on top of these technologies as a proof of concept, which supports multi-resolution data sets, and allows
+                different renderers to be plugged in. The system unifies the technologies to achieve widespread browser support,
+                and adaptivity to different connection conditions and application requirements. We have demonstrated the
+                application of WebRTC beyond communication. To our knowledge, this is the first remote visualization system
+                utilizing WebRTC.
+                     Figure 8 and 9 show the remote visualization deployed on desktop and mobile browsers.
+
+
+                                                                                ._.
+
+
+
+
+                Figure 8. Remote visualization using MJPEG in Chrome (left, the geometry renderer), JPEG in Opera Mobile (volume
+                rendering), and NaCl in Chrome.
+
+
+
+
+                Figure 9. Remote visualization with S3TC in Firefox for Android (left), and WebRTC in Chrome (middle) and Chrome
+                for Android.
+
+                    While this paper focused on the visualization of multi-resolution data sets, the methods can also be applied
+                to other applications like simulations, games or virtual worlds. We further plan to consider collaborative appli-
+                cations. However, there is a lack of multicast support in WebRTC and NaCl, which makes these methods less
+                suitable for such applications. A native legacy plugin is still required to enable multicast in the browser, but
+                support for these plugins is dwindling (Section 1).
+
+
+
+
+                                                                     Proc. of SPIE-IS&T/ Vol. 9397 939705-13
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                    Remote rendering is affected by the conditions of the network. Bandwidth, latency and reliability become
+                issues, especially in best-effort networks like the Internet. Further, providing the server scalability to uphold
+                interactive frame rates for multiple clients may require considerable investments in hardware infrastructure.
+                Today, even thin mobile devices may have a considerable amount of computing capabilities available. These
+                resources are left idle by remote rendering, where the client is merely used for display. Therefore, we will
+                consider hybrid rendering methods, where both server and client resources are utilized. Client-side rendering
+                can bypass network issues, and reduce server load.
+                    Currently, the display channel type selected by the client is fixed during a visualization session. We consider
+                monitoring the connection characteristics at run-time, and automatically switch to the most suitable method.
+                If bandwidth is determined as the bottleneck, switching from image to video transfer is the most prominent
+                example. Though, establishing a new display channel might not be entirely transparent to the user if setup takes
+                a moment. Also, in non-sequential synchronization mode, we could automatically adapt transformation send,
+                rendering and streaming frequency in response to bottlenecks in the pipeline to prevent overhead (e.g. reducing
+                the transformation send frequency if rendering cannot keep up with it).
+
+                                                                      ACKNOWLEDGMENTS
+                This work was supported by the ”Software Innovations for the Digital Company” (SINNODIUM) and the Eu-
+                ropean Union funded ”Dreamspace” project.
+
+                                                                              REFERENCES
+                 [1] Sons, K., Klein, F., Rubinstein, D., Byelozyorov, S., and Slusallek, P., “Xml3d: interactive 3d graphics
+                     for the web,” in [Web3D ’10: Proceedings of the 15th International Conference on Web 3D Technology],
+                     175–184, ACM, New York, NY, USA (2010).
+                 [2] Behr, J., Eschler, P., Jung, Y., and Zöllner, M., “X3dom: a dom-based html5/x3d integration model,” in
+                     [Proceedings of the 14th International Conference on 3D Web Technology ], Web3D ’09, 127–135, ACM, New
+                     York, NY, USA (2009).
+                 [3] Loreto, S. and Romano, S. P., “Real-time communications in the web: Issues, achievements, and ongoing
+                     standardization efforts,” Internet Computing, IEEE 16(5), 68–73 (2012).
+                 [4] Schuh, Justin, “Saying goodbye to our old friend npapi,” (2013). http://blog.chromium.org/2013/09/
+                     saying-goodbye-to-our-old-friend-npapi.html.
+                 [5] Hong, Z., Iourcha, K., and Nayak, K., “System and method for fixed-rate block-based image compression
+                     with inferred pixel values,” (Sept. 21 1999). US Patent 5,956,431.
+                 [6] Yee, B., Sehr, D., Dardyk, G., Chen, J., Muth, R., Ormandy, T., Okasaka, S., Narula, N., and Fullagar,
+                     N., “Native client: A sandbox for portable, untrusted x86 native code,” in [Security and Privacy, 2009 30th
+                     IEEE Symposium on ], 79–93 (2009).
+                 [7] Johnson, G., Mock, S., Westing, B., and Johnson, G., “Envision: A web-based tool for scientific visualiza-
+                     tion,” in [Cluster Computing and the Grid, 2009. CCGRID ’09. 9th IEEE/ACM International Symposium
+                     on], 603–608 (2009).
+                 [8] Calgary Scientific, “Pureweb,” (2013). http://www.calgaryscientific.com/pureweb.
+                 [9] Jomier, J., Jourdain, S., Ayachit, U., and Marion, C., “Remote visualization of large datasets with midas
+                     and paraviewweb,” in [Proceedings of the 16th International Conference on 3D Web Technology ], Web3D
+                     ’11, 147–150, ACM, New York, NY, USA (2011).
+                [10] Jankun-Kelly, T. J., Kreylos, O., Ma, K.-L., Hamann, B., Joy, K. I., Shalf, J., and Bethel, E. W., “Deploying
+                     web-based visual exploration tools on the grid,” IEEE Comput. Graph. Appl. 23, 40–50 (Mar. 2003).
+                [11] McLane, J. C., Czech, W. W., Yuen, D. A., Knox, M. R., Wang, S., Greensky, J. B. S., and Sevre, E. O. D.,
+                     “Ubiquitous interactive visualization of large-scale simulations in geosciences over a java-based web-portal,”
+                     Concurr. Comput. : Pract. Exper. 22, 1750–1773 (Aug. 2010).
+                [12] Kaspar, M., Parsad, N. M., and Silverstein, J. C., “Cowebviz: interactive collaborative sharing of 3d stereo-
+                     scopic visualization among browsers with no added software,” in [Proceedings of the 1st ACM International
+                     Health Informatics Symposium ], IHI ’10, 809–816, ACM, New York, NY, USA (2010).
+
+
+
+
+                                                                     Proc. of SPIE-IS&T/ Vol. 9397 939705-14
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+                [13] Wessels, A., Purvis, M., Jackson, J., and Rahman, S. S., “Remote data visualization through websockets,”
+                     in [Proceedings of the 2011 Eighth International Conference on Information Technology: New Generations ],
+                     ITNG ’11, 1050–1051, IEEE Computer Society, Washington, DC, USA (2011).
+                [14] Marion, C., Pouderoux, J., Jomier, J., Jourdain, S., Hanwell, M., and Ayachit, U., “A hybrid visualization
+                     system for molecular models,” in [Proceedings of the 18th International Conference on 3D Web Technology ],
+                     Web3D ’13, 117–120, ACM, New York, NY, USA (2013).
+                [15] Hemmati, M., Javadtalab, A., Nazari Shirehjini, A. A., Shirmohammadi, S., and Arici, T., “Game as video:
+                     bit rate reduction through adaptive object encoding,” in [Proceeding of the 23rd ACM Workshop on Network
+                     and Operating Systems Support for Digital Audio and Video ], NOSSDAV ’13, 7–12, ACM, New York, NY,
+                     USA (2013).
+                [16] Suselbeck, R., Schiele, G., and Becker, C., “Peer-to-peer support for low-latency massively multiplayer
+                     online games in the cloud,” in [Network and Systems Support for Games (NetGames), 2009 8th Annual
+                     Workshop on], 1–2 (2009).
+                [17] Shi, S., Hsu, C.-H., Nahrstedt, K., and Campbell, R., “Using graphics rendering contexts to enhance the
+                     real-time video coding for mobile cloud gaming,” in [Proceedings of the 19th ACM international conference
+                     on Multimedia], MM ’11, 103–112, ACM, New York, NY, USA (2011).
+                [18] Chen, K.-T., Chang, Y.-C., Tseng, P.-H., Huang, C.-Y., and Lei, C.-L., “Measuring the latency of cloud
+                     gaming systems,” in [Proceedings of the 19th ACM international conference on Multimedia ], MM ’11, 1269–
+                     1272, ACM, New York, NY, USA (2011).
+                [19] OnLive, “Onlive,” (2013). http://www.onlive.com.
+                [20] Gaikai, “Gaikai,” (2013). http://www.gaikai.com.
+                [21] Otoy, Mozilla, “Mozilla and otoy deliver the power of native pc applications to the web, unveil next gener-
+                     ation javascript video codec for movies and cloud gaming,” (May 2013). http://www.otoy.com/130501_
+                     OTOY_release_FINAL.pdf.
+                [22] Otoy, “Orbx 2 technical introduction,” (Oct. 2013). http://aws.otoy.com/docs/ORBX2_Whitepaper.pdf.
+                [23] Bringuier, L., “Ott streaming,” (Sept. 2011). http://www.anevia.com/wp-content/uploads/2012/07/
+                     anevia-white-paper-ott-streaming-2nd-edition.pdf.
+                [24] Sodagar, I., “The mpeg-dash standard for multimedia streaming over the internet,” MultiMedia,
+                     IEEE 18(4), 62–67 (2011).
+                [25] W3C WebRTC Working Group, “Webrtc 1.0: Real-time communication between browsers,” (2012). http:
+                     //www.w3.org/TR/webrtc.
+                [26] Microsoft Open Technologies, “Cu-rtc-web,” (2013). http://html5labs.interoperabilitybridges.com/
+                     prototypes/cu-rtc-web/cu-rtc-web/info.
+                [27] Boman, B. and Isomaki, M. and Aboba, B. and Martin-Cocher, G. and Mandyam, G. and Marjou,
+                     X., “H.264 as mandatory to implement video codec for webrtc,” (2013). http://tools.ietf.org/id/
+                     draft-burman-rtcweb-h264-proposal-01.html.
+                [28] Donovan, A. and Muth, R. and Chen, B. and Sehr, D., “Pnacl: Portable native client executables,” (Feb.
+                     2010). http://www.chromium.org/nativeclient/reference/research-papers.
+                [29] Fogal, T. and Krüger, J., “Tuvok - an architecture for large scale volume rendering,” in [Proceedings of the
+                     15th Vision, Modeling and Visualization Workshop 2010 ], (2010).
+                [30] Hoppe, H., “Progressive meshes,” in [Proceedings of the 23rd annual conference on Computer graphics and
+                     interactive techniques ], SIGGRAPH ’96, 99–108, ACM, New York, NY, USA (1996).
+                [31] U.S. National Library of Medicine, “The visible human project,” (Apr. 2012). http://www.nlm.nih.gov/
+                     research/visible.
+                [32] Stanford Computer Graphics Laboratory, “The stanford 3d scanning repository,” (Sept. 2011). http:
+                     //graphics.stanford.edu/data/3Dscanrep.
+                [33] Sutherland, I. E. and Hodgman, G. W., “Reentrant polygon clipping,” Commun. ACM 17, 32–42 (Jan.
+                     1974).
+                [34] Tilkov, S. and Vinoski, S., “Node.js: Using javascript to build high-performance network programs,” IEEE
+                     Internet Computing 14, 80–83 (Nov. 2010).
+                [35] Carbone, M. and Rizzo, L., “Dummynet revisited,” SIGCOMM Comput. Commun. Rev. 40, 12–20 (Apr.
+                     2010).
+
+
+
+
+                                                                     Proc. of SPIE-IS&T/ Vol. 9397 939705-15
+Downloaded From: https://www.spiedigitallibrary.org/conference-proceedings-of-spie on 25 Jun 2020
+Terms of Use: https://www.spiedigitallibrary.org/terms-of-use
+

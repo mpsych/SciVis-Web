@@ -1,0 +1,257 @@
+                                                                        SoftwareX 9 (2019) 328–331
+
+
+
+                                                              Contents lists available at ScienceDirect
+
+
+                                                                            SoftwareX
+                                                        journal homepage: www.elsevier.com/locate/softx
+
+
+Original software publication
+
+spot: Open Source framework for scientific data repository and
+interactive visualization
+                          ∗                       ∗
+Faruk Diblen a , , Jisk Attema a , , Rena Bakhshi a , Sascha Caron b , Luc Hendriks b ,
+Bob Stienen b
+a
+    Netherlands eScience Center, Science Park 140, 1098 XG Amsterdam, The Netherlands
+b
+    Institute for Mathematics, Astro- and Particle Physics IMAPP, Radboud Universiteit, Nijmegen, The Netherlands
+
+
+
+article                info                            a b s t r a c t
+
+Article history:                                       spot is an open source and free visual data analytics tool for multi-dimensional data-sets. Its web-based
+Received 20 September 2018                             interface enables user to do a quick and interactive analysis of complex data. Various operations on
+Received in revised form 4 April 2019                  data are implemented such as aggregation and filtering. The interface supports OpenGL acceleration,
+Accepted 4 April 2019
+                                                       which makes the generated charts very responsive. In order to have scalability, the software also
+Keywords:                                              supports PostgreSQL as its database. It follows FAIR principles to allow reuse and comparison of the
+Visualization                                          published data-sets.
+High-dimensional data                                         © 2019 The Authors. Published by Elsevier B.V. This is an open access article under the CC BY license
+Theoretical models                                                                                                (http://creativecommons.org/licenses/by/4.0/).
+Open data
+FAIR
+Particle physics
+
+
+
+
+Code metadata
+          Current code version                                                                     0.1.0
+          Permanent link to code/repository used for this code version                             https://github.com/ElsevierSoftwareX/SOFTX_2018_178
+          Legal Code License                                                                       Apache License 2.0
+          Code versioning system used                                                              Git
+          Software code languages, tools, and services used                                        Javascript, Node.js, SQL, PostreSQL
+          Compilation requirements, operating environments & dependencies                          npm
+          If available Link to developer documentation/manual                                      https://nlesc.github.io/spot-framework/
+          Support email for questions                                                              f.diblen@esciencecenter.nl, j.attema@esciencecenter.nl
+
+
+
+
+Software metadata
+        Current software version                                                                     0.1.0
+        Permanent link to executables of this version                                                https://github.com/NLeSC/spot/releases/tag/0.1.0
+        Legal Software License                                                                       Apache License 2.0
+        Computing platforms/Operating Systems                                                        web based
+        Installation requirements & dependencies                                                     Node.js
+        If available, link to user manual — if formally published include a                          https://research-software.nl/software/spot
+        reference to the publication in the reference list
+        Support email for questions                                                                  f.diblen@esciencecenter.nl, j.attema@esciencecenter.nl
+
+
+                                                                                          1. Motivation and significance
+    ∗ Corresponding authors.
+                                                                                             Many scientific fields compare experimental data to complex
+      E-mail addresses: f.diblen@esciencecenter.nl (F. Diblen),
+j.attema@esciencecenter.nl (J. Attema), r.bakhshi@esciencecenter.nl
+                                                                                          theoretical simulations. These simulations can be based on ap-
+(R. Bakhshi), scaron@nikhef.nl (S. Caron), luchendriks@gmail.com (L. Hendriks),           proximations or full theoretical models and can have intrinsic
+B.Stienen@science.ru.nl (B. Stienen).                                                     complex structure consisting of multiple parameters or multiple
+
+https://doi.org/10.1016/j.softx.2019.04.006
+2352-7110/© 2019 The Authors. Published by Elsevier B.V. This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/).
+                                                   F. Diblen, J. Attema, R. Bakhshi et al. / SoftwareX 9 (2019) 328–331                                  329
+
+
+                                                                                       2.1. Software architecture
+
+                                                                                          The software consists of three components: a framework, a
+                                                                                       frontend, and a server. A brief description for each of these com-
+                                                                                       ponents follows:
+                                                                                       spot-framework. The framework provides classes for data-sets,
+                                                                                       data views, partitions, aggregation and filtering. A data-set con-
+                                                                                       sists of a number of items (or rows), and each item has a set
+                                                                                       of facets. Facets can be used to partition the data, or they can
+                                                                                       be aggregated (counted). For numerical, data more complex op-
+                                                                                       erations are possible, namely, summation, averaging, extremes
+                                                                                       and standard deviation. One or more facets make up a filter,
+                                                                                       and all filters combined together form the data view. The user
+                                                                                       interacts with the framework by setting ranges or selections for
+                                                                                       the filters, and by adding or removing filters from the data view.
+                                                                                       After filtering, the partitioned and aggregated data is available
+                                                                                       as a simple array, which can be plotted or further processed. All
+Fig. 1. A typical scientific results from the field of High-Energy-Physics [6]. A      filters in a data view are linked, and a change in one filter triggers
+model with 19 parameters (Supersymmetry) has been tested again the data to             an update of the whole data view.
+determine if parameter sets are excluded by the data or not. Here the fraction of
+model parameter sets (as color code) are plotted for two observables predicted         Frontend. The frontend is a web-based application with separate
+by the model as x- and y-axis. This shows how difficult it is to visualize a           pages where a user can upload and define data-sets, a dash-
+19-dimensional model on a paper and how much information is then lost .
+                                                                                       board page that provides the main interaction, and a page where
+(For interpretation of the references to color in this figure legend, the reader is
+referred to the web version of this article.)
+                                                                                       analyses can be downloaded or shared. The frontend is built on
+                                                                                       a number of open-source JavaScript packages, such as Chart.js,
+                                                                                       Vis.js, and Sigma.js for animated plots, and Ampersand.js and
+                                                                                       Material Design Lite for the interface. The filtering is implemented
+observables. Thus, these data-sets can be regarded as point clouds                     using asynchronous functions, so updates can start as soon as
+in a high-dimensional space. Due to the restrictions imposed by                        the first results become available. The visualization libraries are
+folding multi-dimensional structures on low-dimensional visual-                        HTML Canvas based, and offer OpenGL accelerated rendering
+ization, e.g. a figure in a journal, much of the information con-                      where available.
+tained in the multi-dimensional graph is lost. A typical example                       Server. The server processes requests for data and applies the
+is Fig. 1.                                                                             necessary filtering and aggregation. When data becomes avail-
+    However, such a two dimensional (2D) representation ob-                            able, it is pushed to the client which can then update the charts.
+scures most of the correlations within the solution space. In order                    We currently have two different implementations for the server
+to encourage the publication of high-level data in the complete                        component. The first one, which is included in spot-framework,
+                                                                                       is based on Crossfilter.js and runs in the user’s web browser
+high-dimensional space, without restrictions, data visualization
+                                                                                       without requiring any further resources or even internet access.
+can be done via web-based tools which allow for, for example, an                       The second implementation (spot-server), provides a bridge to an
+automatic generation of multiple histograms. The aim of SPOT [1]                       external PostgreSQL database for scalability. Database queries are
+is to provide a flexible data visualization framework to visualize                     run in parallel, and make use of indices for extra performance.
+such data. spot, which is typically coupled to a database holding                      Connections to other datastores, like MySQL or MongoDB, can
+the data-sets is a tool to promote the use of open research data                       easily be achieved by extending the server component.
+and open science [2]. It follows FAIR [3] principles to allow reuse                    2.2. Software functionality
+and comparison of the published data-sets (see Fig. 2). This paper
+briefly introduces spot. General information about the software,                       Data import and database connection. There are two options to
+and related information is given at [4]. The source code and the                       import a new data-set. In the first option, users can upload
+documentation is available at SPOT Github page [5].                                    data available on their own system. The software supports most
+                                                                                       common data formats CSV and JSON, to make data import process
+                                                                                       easy for different scientific domains. After the import, the data is
+                                                                                       checked to automatically detect data types, such as integers and
+2. Software description                                                                strings. Users can then fix auto detection issues. In the second
+                                                                                       option, the data is imported from spot-server. The meta data for
+                                                                                       a data-set (e.g. the name and description) can easily be set in a
+   spot provides users with an interactive data exploration envi-                      configuration file stored on the server.
+ronment for high-dimensional data-sets. The focus is on scientific
+                                                                                       Dashboard. spot has eight ready-to-use chart types, namely, hor-
+use, with the aim of facilitating open science, data sharing and                       izontal and vertical histograms, line chart, pie chart, bubble chart,
+reuse (see Fig. 2). It is ideal for numerical data, but categorical                    3-d scatter chart, radar chart and network chart. Charts are added
+(labeled) and temporal data is also supported.                                         to the dashboard by clicking the chart icon. The chart’s filter
+   Built on a number of concepts from the field of information                         requires one or more facets to partition over, and can take up to 4
+visualization, it allows a user to create multiple coordinated views                   facets to aggregate. Charts show their configuration pane by de-
+                                                                                       fault. A visual feature of the chart can be linked to a specific facet
+called charts, showing the data from different perspectives. All
+                                                                                       by dragging a facet from the top of the screen and dropping it on a
+charts allow direct manipulation (i.e., selecting and zooming)                         slot in the configuration pane. A Partition or Aggregation can be
+of the data, and provide visual clues or animations when data                          further configured by clicking on its name on the configuration
+changes due to user interaction.                                                       pane.
+330                                              F. Diblen, J. Attema, R. Bakhshi et al. / SoftwareX 9 (2019) 328–331
+
+
+
+
+                                                                     Fig. 2. Workflow of spot.
+
+
+
+
+Fig. 3. Web-interface of spot. (1) Main menu: to navigate between different pages. Users can upload data (Datasets page), analyze it (Analyze page), share selection
+and charts as a session (Share page), and read help documentation (Help page); (2) Information bar: provides basic statistics about selected data; (3) Chart bar: in
+order to add available charts to the dashboard; (4) Variable bar: lists available variables within the data-set; (5) The dashboard.
+
+
+
+
+Download and share. The dashboard generated by the user can                          facets, which can be dragged-and-dropped into the empty charts
+be saved as a single file, a session file, in JSON format. This file                 to create any visualization of any parameter(s).
+contains aggregated data and settings of the dashboard such as
+existing charts, existing filters. The session file then can be used to              3.2. Example from high-energy physics
+restore the analysis. In addition, the session file can be uploaded
+to cloud storage or file-sharing platform where it can be shared.                        A real world example where spot can help the scientific com-
+                                                                                     munity is visualizing, for example, models of high-energy physics.
+3. Illustrative examples                                                             The data in this field is typically high-dimensional and even
+                                                                                     though different models have different theoretical parameters,
+   We show the applicability and the features of the spot soft-                      they share the same observables. spot allows comparison of
+ware on two examples of data-set: (1) the Titanic data-set [7], a                    these observables from different data-sets, providing the user an
+well-known data-set in data science, and (2) a high-dimensional                      unprecedented ability to compare the model space. In Fig. 4, two
+data-set containing models for dark matter (see [8,9] for more                       data-sets for models predicting Dark Matter are compared for
+information).                                                                        three observables: the dark matter mass, a annihilation proba-
+                                                                                     bility σ v and a cosmic density Ω h2 .
+3.1. Titanic data-set
+                                                                                     4. Impact
+   Visualization plots of the Titanic data-set are provided in
+Fig. 3; the data can be viewed interactively on the idark survey                        The high-dimensional space can be stored in the spot database
+website by clicking on Demo link [10].                                               so that the data-set can be published along with the paper. While
+   The top of the figure shows the chart types, each of which can                    the paper still contains the most relevant 2D plots, a researcher
+be selected to make a new chart. Directly below that are the data                    can plot different variables using spot for further research. By
+                                                F. Diblen, J. Attema, R. Bakhshi et al. / SoftwareX 9 (2019) 328–331                                               331
+
+
+                                                                                    collaborate by comparing their data-sets to identify the differ-
+                                                                                    ences. This makes spot a perfect candidate for FAIR data plat-
+                                                                                    forms.
+
+                                                                                    CRediT authorship contribution statement
+
+                                                                                        Luc Hendriks: Validation, Writing - review & editing.
+
+                                                                                    Acknowledgments
+
+                                                                                      This work is supported by the Netherlands eScience Center
+                                                                                    under the project iDark: The intelligent Dark Matter Survey.
+
+                                                                                    References
+
+                                                                                      [1] Attema J, Diblen F. Nlesc/spot: version 0.1.0. 2017, http://dx.doi.org/10.
+Fig. 4. An example 3D visualization of a comparison between two dark matter               5281/zenodo.1003346.
+model data-sets. There are three shared observables. When hovering over a data        [2] Machado J. Open data and open science. Open Sci. 2015;189.
+point, a pop-up tooltip will show the actual values of the model point.               [3] Wilkinson MD, Dumontier M, Aalbersberg IJ, Appleton G, Axton M, Baak A,
+                                                                                          Blomberg N, Boiten J-W, da Silva Santos LB, Bourne PE, et al. The fair
+                                                                                          guiding principles for scientific data management and stewardship. Sci.
+                                                                                          Data 2016;3.
+intuitively making cuts in histograms, researchers can investigate                    [4] Spot research software directory page. 2018, https://research-software.nl/
+the high-dimensional space in an unprecedented way. In addition,                          software/spot.
+comparison between data-sets on shared observables is likely to                       [5] Spot github page. 2018, https://github.com/NLeSC/spot.
+lead to new research questions.                                                       [6] Aad G, et al., ATLAS Collaboration Collaboration Summary of the atlas
+    Intuitive data visualization is still in its infancy, especially                      experiment’s sensitivity to supersymmetry after lhc run 1 interpreted
+                                                                                          in the phenomenological MSSM. J High Energy Phys 2015;10:134. http:
+in the field of high energy physics. Although advanced analysis
+                                                                                          //dx.doi.org/10.1007/JHEP10(2015)134, arXiv:1508.06608.
+frameworks were developed for this field, such as ROOT [11],                          [7] Kagglecom. Titanic: machine learning form disaster. 2018, https://www.
+they still require expert knowledge. spot aims to be the first tool                       kaggle.com/c/titanic/data. Online. (accessed 01 June 2018).
+to provide an intuitive interface for visualizing high-dimensional                    [8] Achterberg A, van Beekveld M, Caron S, Gómez-Vargas GA, Hendriks L,
+data-sets and as a place for researcher to store their                                    de Austri RR. Implications of the fermi-lat pass 8 galactic center excess on
+high-dimensional data.                                                                    supersymmetric dark matter. J Cosmol Astropart Phys 2017;2017(12):040.
+                                                                                      [9] Achterberg A, Amoroso S, Caron S, Nikhef A, Hendriks L, Austri RRd,
+    Thus, there are two categories of applications that are re-
+                                                                                          Weniger C. A description of the galactic center excess in the minimal
+lated to spot: online sharing services and visualization libraries.                       supersymmetric standard model. J Cosmol Astropart Phys 2015;2015(08).
+The most relevant to spot are Microsoft Power BI [12], Spot-                              http://dx.doi.org/10.1088/1475-7516/2015/08/006.
+fire [13] and Tableau [14] but these are commercial products.                        [10] Idak survey webpage. 2018, http://www.idarksurvey.com.
+The most popular sharing services include data sharing platform                      [11] Brun R, Rademakers F. Root—an object oriented data analysis framework.
+Zenodo [15], digital repository for sharing Figshare [16], and high-                      Nucl Instrum Methods Phys Res A 1997;389(1–2):81–6.
+                                                                                     [12] Lachev T, Price E. Applied microsoft power BI: bring your data to life!. 3rd
+energy physics specific platform Hepdata [17]. In comparison
+                                                                                          edition. Prologika Press; 2018.
+with spot, however, these services basically provide only storage                    [13] Ahlberg C. Spotfire: an information exploration environment. SIGMOD Rec.
+that allow researchers to upload and publicly store their data and                        1996;25(4):25–9.
+figures, but not compare different visualizations from different                     [14] Heer J, Mackinlay J, Stolte C, Agrawala M. Graphical histories for visualiza-
+articles. On the other hand, visualization frameworks such as                             tion: supporting analysis, communication, and evaluation. IEEE Trans. Vis.
+Dash [18] is a Python framework that gives users possibility of                           Comput. Graph. 2008;14(6).
+                                                                                     [15] OpenAIRE CERN. Zenodo. 2018, https://zenodo.org/.
+interactive visualization, but also it requires users to have an
+                                                                                     [16] DScience. Figshare. 2018, http://figshare.com.
+advance knowledge to create a desired dashboard.                                     [17] Maguire E, Heinrich L, Watt G. Hepdata: a repository for high energy
+                                                                                          physics data. In: Journal of Physics: Conference Series, vol. 898, IOP
+5. Conclusions                                                                            Publishing; 2017, p. 102006.
+                                                                                     [18] Plotly. Dash. 2018, http://dash.plot.ly.
+   The software has been written to provide a free and open
+state-of-the-art platform for researchers in many scientific do-
+mains. It helps researchers to publish, share their data-sets, and
+

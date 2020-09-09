@@ -1,0 +1,1064 @@
+See discussions, stats, and author profiles for this publication at: https://www.researchgate.net/publication/316105344
+
+
+
+Implementing WebGL and HTML5 in Macromolecular Visualization and
+Modern Computer-Aided Drug Design
+
+Article in Trends in Biotechnology · April 2017
+DOI: 10.1016/j.tibtech.2017.03.009
+
+
+
+
+CITATIONS                                                                                              READS
+
+19                                                                                                     2,154
+
+
+3 authors:
+
+             Shuguang Yuan                                                                                        H. C. Stephen Chan
+             Shenzhen Institutes of Advanced Technology Chinese Academy of Sciences                               30 PUBLICATIONS 361 CITATIONS
+             63 PUBLICATIONS 1,290 CITATIONS
+                                                                                                                     SEE PROFILE
+                 SEE PROFILE
+
+
+
+             Zhenquan Hu
+             Hefei Institute of Physical Sciences, Chinese Academy of Sciences
+             38 PUBLICATIONS 238 CITATIONS
+
+                 SEE PROFILE
+
+
+
+
+Some of the authors of this publication are also working on these related projects:
+
+
+
+               biocatalysis View project
+
+
+
+               Can picolinamide be a promising cocrystal former? View project
+
+
+
+
+ All content following this page was uploaded by Shuguang Yuan on 28 September 2017.
+
+ The user has requested enhancement of the downloaded file.
+ TIBTEC 1485 No. of Pages 13
+
+
+
+
+Review
+Implementing WebGL and
+HTML5 in Macromolecular
+Visualization and Modern
+Computer-Aided Drug Design
+Shuguang Yuan,1,* H.C. Stephen Chan,2 and Zhenquan Hu3
+Web browsers have long been recognized as potential platforms for remote
+                                                                                                                        Trends
+macromolecule visualization. However, the difﬁculty in transferring large-
+                                                                                                                        To maximize the potential of WebGL in
+scale data to clients and the lack of native support for hardware-acceler-                                              drug discovery, many online tools have
+ated applications in the local browser undermine the feasibility of such                                                been developed for macromolecule
+                                                                                                                        visualization.
+utilities. With the introduction of WebGL and HTML5 technologies in recent
+years, it is now possible to exploit the power of a graphics-processing unit                                            Recent progress in WebGL and
+(GPU) from a browser without any third-party plugin. Many new tools have                                                HTML5 technologies has facilitated
+                                                                                                                        online computational biology fpr var-
+been developed for biological molecule visualization and modern drug                                                    ious uses. It has also signiﬁcantly
+discovery. In contrast to traditional ofﬂine tools, real-time computing, inter-                                         improved the efﬁciency of modern
+                                                                                                                        computational drug discovery.
+active data analysis, and cross-platform analyses feature WebGL- and
+HTML5-based tools, facilitating biological research in a more efﬁcient                                                  Using WebGL and HTML5 will also
+and user-friendly way.                                                                                                  beneﬁt other areas of research in the
+                                                                                                                        foreseeable future.
+
+Implementing WebGL and HTML5 in Macromolecular Visualization
+Traditional Ofﬂine Macromolecular Visualization Tools
+Proteins are the most versatile macromolecules in living cells, and they have an essential role in
+all biological processes. They function as catalysts, transporters, means for oxygen storage,
+immune protectors, growth controllers, and signal transductors [1,2]. The biological and
+pharmacological functions of all proteins are determined by their unique 3D structures [3–
+6]. Thus, studying the structural properties of proteins is a centrally important question in both
+biological and pharmaceutical research.
+
+Rational drug design combines structural biology and computational biology approaches. It is
+an inventive process of ﬁnding new drug molecules, based on understanding a biological target
+or known compounds [4,7]. Currently, this process relies heavily on computer visualization and
+modeling, also known as computer-aided drug design (CADD) (see Glossary) [8,9]. CADD
+                                                                                                                    1
+involves various computational procedures, with the visualization of molecules being its ﬁrst                         Swiss Federal Institute of Technology
+                                                                                                                    Lausanne (EPFL), SB ISIC LCPPM, H
+task [4].                                                                                                           B3 495 (Bâtiment CH), Station 6, CH-
+                                                                                                                    1015 Lausanne, Switzerland
+                                                                                                                    2
+The top three most widely used macromolecular visualization software packages [10] are                                Faculty of Life Sciences, University of
+                                                                                                                    Bradford, Bradford, BD7 1DP, UK
+PyMOL [11], VMD [12], and UCSF Chimera [13]. Each visualization platform has been                                   3
+                                                                                                                      High Magnetic Field Laboratory,
+optimized for a different set of tasks. The Python-based PyMOL can create detailed                                  Chinese Academy of Sciences, Hefei,
+images and is highly scriptable by using Python scripts from the PyMOL Wiki community                               China
+
+[14]. VMD is designed for molecular dynamics and is an essential package used to read,
+visualize, and analyze various kinds of simulation trajectory. It uses tcl/tk scripts as add-                       *Correspondence:
+ons for analysis and function enhancements [12]. UCSF Chimera is a highly extensible                                shuguang.yuan@gmail.com (S. Yuan).
+
+
+
+
+                                                       Trends in Biotechnology, Month Year, Vol. xx, No. yy   http://dx.doi.org/10.1016/j.tibtech.2017.03.009     1
+                                                                                                                      © 2017 Elsevier Ltd. All rights reserved.
+    TIBTEC 1485 No. of Pages 13
+
+
+
+
+program for the interactive visualization and analysis of molecular structures and related                  Glossary
+data, including density maps, supramolecular assemblies, sequence alignments, docking                       ADMET: an abbreviation for
+results, trajectories, and conformational ensembles [12]. Although these packages can                       absorption, distribution, metabolism,
+perform various kinds of visualization and analysis (Figure 1), they are not designed for                   and excretion, in the context of
+                                                                                                            pharmacokinetics and pharmacology.
+online communications or real-time collaborations between computational chemists and                        It describes the disposition of a drug
+medicinal chemists [10].                                                                                    molecule within an organism.
+                                                                                                            Cloud computing: Internet-based
+                                                                                                            computing that provides shared
+From Ofﬂine Visualization to WebGL and HTML5
+                                                                                                            computer-processing resources and
+Although the ofﬂine visualization tools are powerful and provide users with vivid images of                 data to computers and other devices
+macromolecular structures [4], they still have some obvious limitations. For instance, they                 on demand.
+cannot share the visualization scene in real-time between users in different places directly. All of        Computer-aided drug design
+                                                                                                            (CADD): an inventive process of
+these tools are platform dependent, and developers have to provide various codes for
+                                                                                                            ﬁnding new drug molecules based
+installation on different operating systems (OSs). By contrast, visualization of a macromolecule            on some knowledge of a biological
+through a Web browser with WebGL [15] and HTML5 [16] technology can overcome these                          target. It encompasses all theoretical
+weaknesses. All of the data can be shared among users in different locations, and no other                  methods and computational
+                                                                                                            techniques to mimic the atomic
+plugins need to be preinstalled for a Web browser [17].
+                                                                                                            behaviors of molecules, ranging from
+                                                                                                            small molecules to large biological
+GPU-accelerated computing is the use of a GPU [18], together with a computer-processing                     assemblies, in a physical or
+unit (CPU), to accelerate scientiﬁc applications. GPUs have an essential role in accelerating               physiological environment.
+                                                                                                            Graphics processing unit (GPU): a
+applications in platforms, ranging from biological research, to artiﬁcial intelligence, industrial          specialized electronic circuit
+design, and so on. A CPU comprises a few cores optimized for sequential serial processing,                  designed to rapidly manipulate and
+while a GPU has a massively parallel architecture consisting of thousands of smaller, more                  alter memory to accelerate the
+efﬁcient cores designed for handling multiple tasks simultaneously. This unique physical                    creation of images in a frame buffer
+                                                                                                            intended for output to a display
+property enables GPUs to process large computational jobs in a much more efﬁcient way.                      device.
+                                                                                                            HTML5: a markup language used for
+WebGL is a low-level application programming interface (API) for accessing 3D graphics                      structuring the content on the World
+                                                                                                            Wide Web. HTML5 is the ﬁfth
+hardware and is based on the OpenGL Embedded System (ES). The shading code of OpenGL
+                                                                                                            generation, as well as the current
+(GLSL) forms a sophisticated programming environment [19], and the compiler of GLSL is                      version, of the HTML standard,
+included in the drivers of GPUs, enabling the optimization of shading codes (such as frequency              which improves the language with
+reduction and algorithmic approximation) for a particular hardware architecture and, thus, the              support for the latest multimedia but
+                                                                                                            remains easily readable by humans
+massive acceleration of image processing. Meanwhile, the JavaScript-based control code of
+                                                                                                            and compatible with computer
+WebGL is tightly integrated with HTML5 elements, creating a powerful scripting environment to               devices, such as Web browsers.
+prototype 3D graphics [17]. As a result, the WebGL API gains almost direct access to the                    Web Graphics Library (WebGL): a
+OpenGL graphics drivers and is capable of rendering 3D graphics within any compatible Web                   JavaScript application programming
+                                                                                                            interface (API) for rendering 3D
+browsers without any plugins [17,20]. For example, WebGL and HTML5 can be used to create
+                                                                                                            graphics within any compatible Web
+graphs, photo compositions, and animations, and even to process or render video in real-time                browser without the use of plugins.
+within a browser [19,21].                                                                                   WebGL is integrated completely into
+                                                                                                            all the Web standards of the
+                                                                                                            browser, allowing GPU-accelerated
+The latest versions of the three most popular ofﬂine visualization tools (PyMOL [22], VMD [37_TD$IF][12],   usage of image processing and
+and UCSF Chimera [38_TD$IF][23]) implement this new function of exporting ofﬂine scenes to a WebGL-         graphic effects as part of the Web
+based HTML5 ﬁle. In PyMOL, to embed a 3D scene into a Web browser by WebGL, an internal                     page canvas.
+command plugin ‘pymol2glmol’ exports the scene to GLmol, which is a molecular viewer based
+on WebGL and JavaScript. The scene can be zoomed and rotated directly in a Web browser
+without additional plugins (Figure 1). Moreover, different molecular representations can be
+chosen within the HTML-embedded pull-down menu. In addition, PyMOL also supports
+exporting a scene to a Virtual Reality Modeling Language (VRML) 3D object, which can also
+be embedded into a Web browser, using the [39_TD$IF]tag of HTML5 (Box 1). VMD has the option to
+export scene descriptions to various formats, including VRML-1, VRML-2, X3D, and X3DOM,
+all of which can be embedded into a Web browser by WebGL and HTML5. In UCSF Chimera,
+the 3D scene can be exported as a HTML5 ﬁle directly through the ‘export’ menu. Moreover, it
+can also export to other 3D objects, such as COLLADA [.dae], VRML [.wrl, .vrml], and X3D.
+
+
+
+
+2    Trends in Biotechnology, Month Year, Vol. xx, No. yy
+ TIBTEC 1485 No. of Pages 13
+
+
+
+
+ (A)                                                  (B)                                                   (C)
+
+
+
+
+ (D)                                                  (E)                                                   (F)
+
+
+
+
+Figure 1. Traditional Visualizers and their WebGL Derivatives. The crystal structure of GFP [Protein Data Bank (PDB): 1EMA] visualized in (A) PyMOL, (B), VMD,
+(C) UCSF Chimera, and in WebGL derivatives of (D) PyMOL (http://Webglmol.osdn.jp/glmol/viewer.html), (E) VMD (www.gpcrm.org/vmd.html), and (F) UCSF Chimera
+(www.gpcrm.org/chimera.html).
+
+
+Macromolecular Visualization under WebGL and HTML5
+Besides the ofﬂine tools and their WebGL derivatives, many dedicated online tools (Table 1)
+have implemented both WebGL and HTML5 to facilitate the visualization of a macromolecule
+through Web browsers (Figure 2, Key Figure) [340_TD$IF][24,25].
+
+As an example, the NGL Viewer [341_TD$IF][24] can interactively display large molecular complexes
+(Figure 3) and is also unaffected by the retirement of third-party plugins, such as Flash and
+Java Applets [341_TD$IF][24]. Generally, this Web application offers comprehensive molecular visualization
+through a graphic interface so that life scientists can easily access and beneﬁt from available
+structural data in various ways: showing the bond orders of a small molecule, displaying
+electrostatic maps, showing X-ray electron density maps, displaying protein–ligand interac-
+tions, showing a molecular dynamics (MD) simulation water box, playing movies based on a MD
+simulation trajectory (Movie 1, an MD simulation trajectory played in NGL Viewer), and many
+others (Figure 3). NGL Viewer supports common structural ﬁle formats, such as pdb, mol2, and
+gro. Users can also generate different molecular representations, such as cartoons, ball-and-
+sticks, surfaces, and meshes with NGL Viewer. In addition, several useful analysis functions
+including distance measurement and residue labeling, and so on, have been implemented in
+NGL. Furthermore, the viewer can be easily integrated into other Websites, providing profes-
+sional visualizations of structural entries [341_TD$IF][24].
+
+Another impressive WebGL application is the iView tool [21]. Besides showing structures in
+various styles, iView is unique in exploiting hardware acceleration rather than software
+
+
+
+
+                                                                                                            Trends in Biotechnology, Month Year, Vol. xx, No. yy   3
+    TIBTEC 1485 No. of Pages 13
+
+
+
+
+ Box 1. File and Visualization Formats Involved in WebGL
+ Cascading Style Sheets (CSS): a style sheet language used for describing the presentation of a document written in a
+ markup language [327_TD$IF][17,51].
+
+
+ DAE: an interchange ﬁle format for interactive 3D applications [328_TD$IF][52].
+
+
+ Extensible Markup Language (XML): a markup language that deﬁnes a set of rules for encoding documents in a
+ format that is both human readable and machine readable [329_TD$IF][57].
+
+
+ GRO: Gromacs molecular coordinate ﬁle format (www.gromacs.org).
+
+
+ HyperText Markup Language (HTML): the standard markup language for creating web pages and web applications.
+ With CSS and JavaScript, it forms a triad of cornerstone technologies for the World Wide Web (www.w3.org/wiki/).
+
+
+ JS: the ﬁle format for JavaScript, a high-level, dynamic, and interpreted programming language [30_TD$IF][53].
+
+
+ MOL2: Sybyl chemical modeler input ﬁle [31_TD$IF][54].
+
+
+ Protein Data Bank (PDB): the PDB format provides a standard representation for macromolecular structure data
+ derived from X-ray diffraction and NMR studies (www.rcsb.org).
+
+
+ SDF: text-based chemical ﬁle formats that describe molecules and chemical reactions. One format, for example, lists
+ each atom in a molecule, the x-y-z coordinates of that atom, and the bonds among the atoms [31_TD$IF][54].
+
+
+ TCL: a high-level, general-purpose, interpreted, dynamic programming language.
+
+
+ TK: an extension for the Tcl scripting language.
+
+
+ TRJ: Gromacs MD simulation trajectory ﬁle format.
+
+
+ Virtual Reality Markup Language (VRML): a standard ﬁle format for representing 3D interactive vector graphics,
+ designed particularly with the World Wide Web in mind [32_TD$IF][55].
+
+
+ X3D: a royalty-free ISO standard XML-based ﬁle format for representing 3D computer graphics. It is the successor to
+ VRML [3_TD$IF][56].
+
+
+
+rendering. It features three special stereo effects (anaglyph, parallax barrier, and oculus rift),
+resulting in visually appealing identiﬁcation of intermolecular interactions [21]. Anaglyph 3D
+refers to achieving a stereoscopic 3D effect by encoding the image of each eye, using ﬁlters of
+different colors (typically red and cyan) [342_TD$IF][26]. Anaglyph 3D images contain two differently ﬁltered
+colored images, one for each eye. When viewed through the anaglyph glasses, each of the two
+images reaches the eye for which it is intended, revealing an integrated stereoscopic image
+[342_TD$IF][26]. By contrast, instead of using 3D glasses, a parallax barrier is a device placed in front of any
+           2D image source, such as a liquid crystal display (LCD), to allow it to show a stereoscopic or
+           multiscopic image [34_TD$IF][27] directly. By comparison, the Oculus Rift is a virtual-reality (VR) headset
+developed and manufactured by Oculus VR [34_TD$IF][28]. This unique and useful feature enables users
+           to view a more vivid chemical stereo environment for online drug design in situ. Creative ideas
+           for lead optimization can be investigated by these stereo effects. More recently, with advances
+           in WebGL and VR technology, Autodesk Inc. created Autodesk Molecule Viewer to explore the
+           protein world in VR. This application can visualize a protein structure in stereo with a mobile
+           phone Web browser, where the user changes their head orientation to control the movements
+           of a molecule.
+
+
+
+
+4    Trends in Biotechnology, Month Year, Vol. xx, No. yy
+  TIBTEC 1485 No. of Pages 13
+
+
+
+
+Table 1. WebGL- and HTML5-Based Tools for Macromolecular Visualization and Modern Computational
+Drug Discovery
+ Type of [324_TD$IF]tool                       Description/features                           URL
+
+ Visualization and [325_TD$IF]analysis tools
+
+ 3Dmol                                         Online PH4 model visualization                 http://3dmol.csb.pitt.edu
+
+ Arpeggio                                      Calculating interatomic interactions in        http://bleoberis.bioc.cam.ac.
+                                               protein structures                             uk/arpeggioWeb
+
+ AutoDesk Molecule Viewer                      Various representation and supports for VR     https://moleculeviewer.
+                                                                                              bionano.autodesk.com
+
+ Bio3D-Web                                     Protein property and MD simulation analysis    http://thegrantlab.org/bio3d/
+                                                                                              Webapps
+
+ CH5M3D                                        An online small-molecule building tool         http://ch5m3d.sourceforge.
+                                                                                              net
+
+ ChemDoodle                                    Online 3D movie tool                           https://Web.chemdoodle.com
+
+ GLmol                                         Improved representations for both protein      www.glmol.com
+                                               and small-molecule structures
+
+ gMOL                                          An interactive visualization system used to    https://github.com/tjod/gMol
+                                               display and manipulate 3D models of
+                                               scientiﬁc data, such as molecular structures
+                                               and surfaces
+
+ GPCRdb                                        GPCR sequence alignments and structure         http://gpcrdb.org
+                                               viewer. It also supports interactive GPCR
+                                               annotations and analysis
+
+ iCn3D                                         WebGL version of Cn3D                          https://github.com/ncbi/icn3d
+
+ iMolecule                                     Python-based interactive visualizations        http://patrickfuller.github.io/
+                                                                                              imolecule
+
+ iView                                         Various representations and surface            http://istar.cse.cuhk.edu.hk/
+                                               representations; supports three unique         iview
+                                               stereo modes
+
+ MDTraj                                        A Python-based analysis toolkit for            http://mdtraj.org
+                                               visualizing protein structures and MD
+                                               simulation trajectories
+
+ MoFlow                                        Visualizing conformational changes in          www.mathmed.org/moﬂow
+                                               molecules as molecular ﬂow improves
+                                               understanding
+
+ Mol3D                                         A simple molecular visualization tool          https://github.com/mohebifar/
+                                                                                              mol3d
+
+ Molecular Machinery                           Online visualization for all proteins in PDB   http://mm.rcsb.org
+
+ Molecular Rift                                VR for drug designers                          https://github.com/
+                                                                                              Magnusnorrby/MolecularRift
+
+ MolView                                       Online small-molecule building and             http://molview.org
+                                               visualization
+
+ NGL Viewer                                    Various representations; supports density      http://arose.github.io/ngl
+                                               map visualizations for X-ray and cryo-
+                                               electron microscopy; playing movies for MD
+                                               simulation trajectories
+
+ PLIP                                          Protein–Ligand Interaction Proﬁler. Supports   https://projects.biotec.
+                                               PyMOL sessions                                 tu-dresden.de/plip-web/plip
+
+ ProSAT+                                       Exploring the relation between sequence        http://prosat.h-its.org
+                                               and structural properties
+
+ Protter                                       Interactive protein domain annotation with     http://wlab.ethz.ch/protter/
+                                               experimental evidences                         start
+
+
+
+
+                                                                                                                         Trends in Biotechnology, Month Year, Vol. xx, No. yy   5
+    TIBTEC 1485 No. of Pages 13
+
+
+
+
+Table 1. (continued)
+ Type of [324_TD$IF]tool                     Description/features                           URL
+
+ PV                                          A simple structure visualization tool          https://biasmv.github.io/pv
+
+ RING                                        Interactive protein residue-residue            http://protein.bio.unipd.it/ring
+                                             interaction network visualization
+
+ Speck                                       Multiple options for online real-time          www.tyro.github.io/speck
+                                             endering. Rendered ﬁgures can be
+                                             saved locally
+
+ ThreeJS                                     Online small molecule ball-and-stick           https://threejs.org/examples/
+                                             model display                                  Webgl_loader_pdb.html
+
+ Drug [326_TD$IF]discovery tools
+
+ 1-Click Scaffold Hop                        Draw a reference structure and discover        https://mcule.com/apps/
+                                             new scaffolds                                  1-click-scaffold-hop
+
+ 1-click-docking                             Online molecule building and docking           https://mcule.com/apps/
+                                                                                            1-click-docking
+
+ 3D-Lab                                      A collaborative Web-based platform for drug    www.astrazeneca.com
+                                             discovery
+
+ Amber 16                                    With Jupyter notebook, one can perform         http://ambermd.org/tutorials/
+                                             real-time MD simulations and analysis in a     #pytraj
+                                             Web browser; however, AmberTools 16 is
+                                             needed
+
+ Autodesk Molecular Design Toolkit           Online MD simulation; supports various         http://bionano.autodesk.com/
+                                             forceﬁelds and simulations                     MolecularDesignToolkit
+
+ Chemozart                                   A small-molecule modeling tool                 https://chemozart.com
+
+ CYRUS                                       Cloud computing. Interactive homology          https://cyrusbio.com
+                                             modeling and protein design
+
+ idock                                       Online docking and virtual screening           http://istar.cse.cuhk.edu.hk/
+                                                                                            idock
+
+ iSyn                                        De novo drug design                            http://istar.cse.cuhk.edu.hk
+
+ I-Tasser                                    Online homology modeling and structural        http://zhanglab.ccmb.med.
+                                             visualization                                  umich.edu/I-TASSER
+
+ Pharmit                                     Online PH4 modeling                            http://pharmit.csb.pitt.edu
+
+ Plotly                                      WebGL-based interactive data analysis          https://plot.ly
+                                             toolkits; supports for Python, R and Matlab;
+                                             Cloud storage for data
+
+ Swiss-model                                 Online homology modeling and structural        https://swissmodel.expasy.
+                                             visualization                                  org
+
+
+
+
+Macromolecular Analysis under WebGL and HTML5
+Besides focusing on visualizing the structural information alone, an increasing number of tools
+have been developed for structural analysis (Table 1) [345_TD$IF][21,29–35]. For instance, molecular
+recognition, the process of biological macromolecules interacting with each other or with
+various small molecules, constitutes the basis of all processes in living organisms [37].
+Therefore, depicting the protein–ligand interactions is essential to understanding biological
+events at the atomic level [346_TD$IF][36]. The Protein–Ligand Interaction Proﬁler (PLIP) [347_TD$IF][30] is a WebGL-
+based tool that uses cloud computing [348_TD$IF][37] to analyze noncovalent interactions in protein–
+ligand complexes. PLIP enables users to retrieve structures from the Protein Data Bank (PDB)
+or submit a local PDB ﬁle without further preparation of the structure [347_TD$IF][30]. After analyzing the
+complex in the backend server, the results page lists all detected noncovalent interactions,
+including hydrogen bonds, water bridges, salt bridges, p-stacking, p–cation interactions,
+
+
+6     Trends in Biotechnology, Month Year, Vol. xx, No. yy
+ TIBTEC 1485 No. of Pages 13
+
+
+
+
+Key Figure
+WebGL and HTML5 Facilitate Macromolecular Visualization and Mod-
+ern Computer-Aided Drug Design
+
+
+
+
+Figure 2.
+
+
+
+
+halogen bonds, hydrophobic interactions, and metal complexes. As a result of WebGL and
+HTML5 technology, without any plugins, the 3D protein–ligand interaction diagrams can be
+viewed within a browser (Figure 4A). Furthermore, the results are available for download in ﬂat
+text and machine-readable XML format. An ofﬂine PyMOL session ﬁle (pse) is also generated by
+the backend calculation for downloading.
+
+Another example is the Bio3D-Web APP (Table 1). Bio3D-Web is an online WebGL application,
+built on top of the Bio3D package [349_TD$IF][29], for the user-friendly investigation of protein structure
+ensembles (Figure 4B). Bio3D-Web provides a rapid and rigorous tool for the identiﬁcation and
+
+
+                                                                                                    Trends in Biotechnology, Month Year, Vol. xx, No. yy   7
+    TIBTEC 1485 No. of Pages 13
+
+
+
+
+    (A)                                                         (B)                                              (C)
+
+
+
+
+    (D)                                         (E)                                  (F)                                 (J)
+
+
+
+
+    (G)                                         (H)                                  (I)
+
+
+
+
+Figure 3. Gallery of Molecular Visualizations Showing Various Representations in NGL Viewer. (A) Visualization of the bond orders of a small molecule. (B)
+The crystal unit cell of metarhodopsin [Protein Data Bank (PDB): 3PQR]. (C) The X-ray electron density map of metarhodopsin (PDB: 3PQR). (D) The electrostatic surface
+of crambin (PDB: 1CRN) calculated by the APBS tool. (E) HIV-1 capsid structure (PDB: 3J3Y) showing the backbone colored by chain index. (F) Structure of the
+Norovirus capsid (PDB: 1IHM) that forms the outer shell of the virus, colored by chain index. (G) The electron microscopy map of mammalian 80S HCV-IRES (PDB:
+4UJD). (H) A cartoon of DNA (PDB: 1D66). (I) The POPC lipid bilayer for molecular dynamics (MD) simulations. (J) The crystal structure of metarhodopsin (PDB: 3PQR);
+surfaces (transparent gray) and labels (blue font) can be shown in NGL.
+
+
+
+
+comparative analysis of protein structures for a user-deﬁned protein family. Methods in Bio3D-
+Web include a range of conventional sequences and structure conservation assessment
+methods, as well as interconformer characterization with ensemble normal mode analysis
+(eNMA) and principal component analysis (PCA), for comparison of predicted ﬂexibilities and
+major structural displacements. The eNMA module in Bio3D-Web provides a conventional
+single protein structure normal mode analysis. Options in Bio3D-Web cover a range of popular
+elastic network models (ENMs), as well as enhanced analyses, including protein amino acid
+side-chain ﬂuctuations, protein intrinsic ﬂexibility visualization, residue dynamic cross-correla-
+tions, and so on (Figure 4B). Bio3D-Web has some prominent advantages compared with the
+ofﬂine Bio3D package. First, with the ofﬂine package, users need to install the package locally,
+which can be time-consuming to resolve library-dependency issues. Second, unlike the ofﬂine
+version, which requires manually inputting various complicated command lines for analysis, the
+Bio3D-Web is so user-friendly that all jobs can be easily completed by clicking buttons. Finally,
+the results can be visualized online interactively without the installation of any plugins.
+
+Many other useful tools have been developed, including the Autodesk Molecule Viewer,
+GPCRdb, Speck ChemDoodle, and so on. These tools are summarized in Table 1.
+
+
+
+
+8    Trends in Biotechnology, Month Year, Vol. xx, No. yy
+ TIBTEC 1485 No. of Pages 13
+
+
+
+
+(A)                                                                                 (B)
+
+
+
+
+Figure 4. Exempliﬁed Applications Based on WebGL and HTML5. (A) The resulting page of PLIP tools showing a 3D model of protein–ligand interactions. (B)
+The interactive analysis results of Bio3D-Web. A WebGL-based 3D model is shown on the page.
+
+
+Implementing WebGL and HTML5 in Modern CADD
+          Modern CADD
+          The process of modern drug discovery covers: target discovery; active compound discovery
+          and screening; lead optimization (ADMET) [350_TD$IF][38] study; development; and registration. It is
+          expensive both in time and monetary costs (Box 2) [4]. Bringing a drug to market now takes at
+          least 10 years and costs US$2 billion on average [351_TD$IF][39–41]. CADD is an efﬁcient technology that
+          can accelerate the drug discovery and development process. Compared with traditional
+          biological and chemical methods, computational drug discovery also reduces costs noticeably
+          [352_TD$IF][42]. As an example, it costs US$1 million–10 million plus 1–2 months to investigate 10–100
+000 compounds for each target, using traditional high-throughput screening (HTS) robots
+[35_TD$IF][43,44]. By contrast, performing virtual screening against several million diverse compound
+          libraries in a workstation only consumes electricity and takes a few days to a few weeks [354_TD$IF][45,46].
+
+Computational drug discovery is so useful that almost all pharmaceutical companies have
+introduced this technology in their drug discovery and development pipeline [35_TD$IF][47]. In April 2015,
+Sanoﬁ invested US$120 million in Schrödinger, a leading computational biology company, to
+guide ten drug discovery programs with computational drug design technology. In June 2016,
+another three pharmaceutical giants (Pﬁzer, GSK, and AbbVie) joined a US$51.5 million
+collaboration on computational drug discovery at Morphic Therapeutic. More recently, the
+Third Rock Ventures and D.E. Shaw Research announced the formation of Relay Therapeutics
+with US$57 million Series A ﬁnancing, to integrate the mobility information of proteins through
+all-atom, long timescale, MD simulations into drug discovery.
+
+WebGL and HTML5 in Modern CADD
+Although the traditional ofﬂine CADD tools contribute greatly to modern drug discovery, as with
+many other technologies, they also have some limitations. For instance, some CADD software
+
+
+                                                                                                              Trends in Biotechnology, Month Year, Vol. xx, No. yy   9
+ TIBTEC 1485 No. of Pages 13
+
+
+
+
+ Box 2. CADD in the Pipeline of Modern Drug Discovery
+ Figure I depicts a typical drug discovery pipeline. In the upstream stage, bioinformatics, system biology, and reverse-
+ docking methods can be applied for target identiﬁcation; once a target is validated, in silico methods, such as homology
+ modeling or de novo structure building, can be developed to predict its 3D structure before experimental determination;
+ CADD methods can also be used to predict target druggability. With virtual screening or de novo computational
+ methods, potential lead compounds can be identiﬁed. In the downstream stage, lead optimization can be performed by
+ some advanced CADD technologies, such as scaffold hopping, in situ design, or free energy calculation. Moreover, in
+ silico ADMET prediction and physiologically based pharmacokinetic simulations can also be conducted to model the
+ preclinical test, to reduce costs.
+
+
+
+
+           1–2 years       1–2 years       1–2 years          1–3 years     1–2 years
+              Target           Target          Lead              Lead        Preclinical   Clinical
+           idenﬁcaon       validaon       discovery        opmizaon        test        trials
+
+
+
+     • Bioinformacs • Target         • Virtual screening • Scaﬀold • In silico ADMET
+     • Reverse docking druggability • De novo design        hopping    predicon
+     • Computaonal      predicon                        • SAR      • DMPK simulaon
+       chemical biology • Computaonal                      analysis • Computaonal
+                          system                          • In situ    system biology
+                            biology                                design
+
+
+
+
+ Figure I. The Pipeline of Modern Drug Discovery and the Role of Computer-Aided Drug Design (CADD) in
+ Modern Drug Discovery. The modern drug discovery pipeline can be divided into three major stages: (i) target
+ identiﬁcation and validation; (ii) lead discovery and optimization; and (iii) clinical study. The whole process takes more
+ than 10 years and costs at least US$2 billion. CADD methods and tools have extended to both the upstream and
+ downstream modern drug discovery process pipeline. Abbreviation: SAR, structure–activity relationship.
+
+
+
+
+applications only support a speciﬁc platform or OS that is sometimes not widely used; some
+CADD software is difﬁcult to install because of its dependency on many other libraries or
+plugins; some of them only support a quad-buffered hardware-driven stereo mode, which
+requires the support of an expensive and professional GPU; some of them only work in a local
+machine; and, most importantly, many CADD applications have difﬁculties in sharing data in
+real-time.
+
+By contrast, WebGL- and HTML5-based computational tools overcome most of these issues.
+As a cross-platform tool, when jobs are submitted through a Web browser, various computing
+tasks are distributed to different software in the backend server (Box 3). As soon as the jobs are
+done, all data can be analyzed and shared in a WebGL-based visualizer, which beneﬁts from
+GPU acceleration [20]. Based on a speciﬁc JavaScript, WebGL visualizers can present 2D and/
+or 3D graphics or even animations for chemical structures in a Web browser smoothly. Various
+stereo effects can also be achieved with an elementary GPU instead of a dedicated one [21].
+Furthermore, all of the resulting data can be shared by various users in any location in real-time.
+As a result of these advantages, many WebGL-based CADD platforms and tools have been
+developed (Table 1). Users can submit their jobs through any compatible Web browser, and the
+jobs are then delivered to a server for cloud computing (Box 3). As soon as the jobs are
+completed, users can retrieve and visualize the results in a Web browser. Post-job analysis,
+ﬁgure rendering and movie making can also be done in a Web browser.
+
+As an example, the Autodesk Bionano Molecular Design Toolkit (ABMDT) is an integrated
+molecular simulation platform. ABMDT can perform online molecular visualization and cloud
+
+
+
+10     Trends in Biotechnology, Month Year, Vol. xx, No. yy
+ TIBTEC 1485 No. of Pages 13
+
+
+
+
+ Box 3. The Development of WebGL and WebGL-Based CADD Platforms
+ The ﬁrst Web3D application can be traced back to 1994 (Figure I) when the Virtual Reality Modeling Language (VRML)
+ was created as a standard ﬁle format for representing 3D interactive vector graphics within the World Wide Web. In
+ 1997, a new version of the format was ﬁnalized, as VRML97, and became an ISO standard [32_TD$IF][55]. In 2004, with the
+ development of XML technology, the successor of VRML97 evolved into X3D [3_TD$IF][56]. In 2007, Web2.0 was developed for
+ the World Wide Web, and allowed users to interact and collaborate with each other in a virtual community [34_TD$IF][58,59]. In
+ 2011, the WebGL 1.0 was developed. WebGL is integrated completely into all of the Web standards of the browser,
+ allowing GPU-accelerated usage of image processing and graphic effects as part of the Web page canvas [19]. In 2017,
+ the second generation of WebGL, called WebGL 2.0, was released. Real-time rendering and VR supports feature in
+ WebGL 2.0. Currently, WebGL 2.0 is supported by the latest versions of the Firefox, Google Chrome, and Edge
+ browsers.
+
+
+
+
+                                                                                     e
+                                                                                 lin
+    (A)
+                                                                              pe
+
+
+
+
+                                                                                                                                  g
+                                                                     ab nd
+
+
+
+
+                                                                                                                            de d
+                                                                                                                              rin
+                                                                           pi
+
+
+
+
+                                                                                                                          en rte
+            e ink
+
+
+
+
+                                                                          d
+                                                                   m a
+                                                                        le
+
+
+
+                                                                       te
+
+
+
+
+                                                                                                                       e r po
+                                                                m L
+                              Us ava
+          ag erl
+
+
+
+
+                                                              ra XM
+
+
+
+
+                                                                     or
+
+
+
+
+                                                                                                        Us
+
+
+                                                                                                                     m up
+       a p yp
+
+
+
+
+                           GP d J
+
+
+
+
+                                                                  pp
+
+
+
+
+                                                                                                     GP
+
+
+                                                                                                                  al- -s
+    in l+h
+
+
+
+
+                        no h an
+
+
+
+
+                                                               su
+
+
+
+
+                                                                                                                re VR
+                                                                                                  -in
+        e
+
+
+
+
+                                                            Us
+                                                      og
+     od
+
+
+
+
+                                                                                               ilt
+                          s
+                      Fla
+
+
+
+
+                                                         GP
+                                                    pr
+
+
+
+
+                                                                                            Bu
+  M
+
+
+
+
+      1994           1997                        2004               2007                  2011                  2017
+
+
+   VRML 1.0         VRML 97                        X3D            Web 2.0                WebGL1.0 WebGL2.0
+                    Web 1.0
+    (B)
+
+
+       WebGL+HTML5                                                                       Applicaon
+
+
+
+                                                                                         Virtual screening       Data analysis
+                                                                         MD simulaon
+                             Internet                                                       Plaorm
+
+                                                                             Identy                               Queue
+                                                                                         Infrastructure
+           Clients
+                                                                                                                Network
+                                                                             Compute
+                                                   Server                                       Block storage
+
+
+                                                                                  Cloud compung
+
+
+ Figure I. The History of Web3D (A) and the Architecture of WebGL-Based Cloud Computing (B). In
+ WebGL- and HTML5-based cloud computing, end users can submit their jobs to a server in any compatible Web
+ browser. Various computational tasks can be performed in the backend. The ﬁnal calculation results can be analyzed
+ through a Web browser.
+
+
+
+
+computing. It uses HTML5, JavaScript (d3.js, 3Dmol.js), and iPywidgets for notebook-based UI
+framework and 3D molecular visualization, combining with openMM, AmberTools, BioPython,
+and PySCF for molecular modeling on the server side. Many advanced molecular modeling and
+simulation tasks, including interactive molecule design, structural analysis, ab initio quantum
+mechanics calculation, and molecular dynamic simulations, can be performed using the
+ABMDT platform.
+
+Another example is the 3D-Lab, a collaborative WebGL-based platform for molecular modeling
+developed by AstraZeneca for internal collaboration [356_TD$IF][48]. It uses HTML5 and OpenEye
+
+
+
+                                                                                                                                 Trends in Biotechnology, Month Year, Vol. xx, No. yy   11
+    TIBTEC 1485 No. of Pages 13
+
+
+
+
+3DViewer JavaScript for the graphical user interface (GUI), combining OEChemTK and other                                                         Outstanding Questions
+OpenEye software on the server for computing. As a user-friendly and collaborative Web-                                                          Could more advanced technology,
+                                                                                                                                                 such as autostereoscopic 3D or holog-
+based platform for modeling, 3D-Lab is capable of performing fast virtual screening [356_TD$IF][48]. It also
+                                                                                                                                                 raphy, be integrated into HTML5- and
+provides an interface for automatic molecular modeling, such as conformer generation, ligand                                                     WebGL-based CADD?
+alignments, protein–ligand dockings, and quantum chemistry protocols [356_TD$IF][48]. It has been
+designed to be a modulator facilitating the sharing of 3D information between different users                                                    With the development of HTML5 and
+[356_TD$IF][48]. Moreover, Molecular Rift [357_TD$IF][49], a VR-enhanced tool, has been integrated into 3D-Lab.                                  WebGL, could CADD calculations be
+                                                                                                                                                 performed directly within a Web
+                                                                                                                                                 browser?
+Furthermore, Cyrus Bench is Rosetta’s [358_TD$IF][50] (commercial) molecular modeling and design
+toolkit, mainly used for cloud computing with Rosetta packages for protein design. Besides
+the above well-integrated platform/toolkit, a user can also develop a notebook style cloud
+computing system at their own will, by incorporating Python Web server, JavaScript for
+molecular visualization, and computational packages on the server.
+
+Finally, MD simulations have an important role in CADD. The latest version of AmberTools16
+combines Pytraj and NGLView tools, facilitating real-time MD simulations and trajectory
+analysis through a Web browser. These tools have been integrated into the Jupyter notebooki[35_TD$IF],
+a Web application that allows users to create and share documents that contain live code,
+equations, visualizations, and explanatory text. The Jupyter notebook can perform various
+tasks, including data cleaning and transformation, numerical simulation, statistical modeling,
+machine learning, and so on. As a result of the integration of the NGLView tool, 3D structural
+visualizations and trajectory-based movie making can be easily performed in the Jupyter
+notebook.
+
+Concluding Remarks
+With the tremendous advances in both hardware and software developments in recent years,
+computational biology has an increasingly important role in modern drug discovery. Many
+leading pharmaceutical companies have invested huge amounts of money in the infrastructure
+of CADD. Although traditional ofﬂine computational tools contribute greatly to this process, their
+inherent weaknesses mean that they can no longer fulﬁll the needs of modern CADD. WebGL-
+and HTML5-based CADD tools overcome most of the deﬁciencies of the traditional tools,
+inspiring new customized options for CADD designers (see Outstanding Questions). Plugin-
+free, online stereo visualization with potential VR supports, interactive design, cloud computing,
+and real-time data sharing all feature in WebGL/HTML5-based next-generation CADD.
+
+Resources
+i
+http://jupyter.org
+
+
+Supplemental Information
+Supplemental Information associated with this article can be found, in the online version, at http://dx.doi.org/10.1016/j.
+tibtech.2017.03.009.
+
+
+References
+1. Xie, Q. et al. (2017) Structure and function of the non-structural    5. Tian, P. et al. (2015) Structure of a functional amyloid protein
+   protein of Dengue virus and its applications in antiviral therapy.       subunit computed using sequence variation. J. Am. Chem. Soc.
+   Curr. Top. Med. Chem. 17, 371–380                                        137, 22–25
+2. Yuan, S. et al. (2016) Mechanistic studies on the stereoselectivity   6. Liao, C. et al. (2016) Conformational heterogeneity of Bax Helix 9
+   of the serotonin 5-HT1A receptor. Angew. Chem. Int. Ed. Engl.            dimer for apoptotic pore formation. Sci. Rep. 6, 29502
+   55, 8661–8665                                                         7. Mavromoustakos, T. (2011) Strategies in the rational drug design.
+3. Holm, R.H. et al. (1996) Structural and functional aspects of metal      Curr. Med. Chem. 18, 2517–2530
+   sites in biology. Chem. Rev. 96, 2239–2314                            8. Callebaut, I. et al. (2017) Molecular modelling and molecular
+4. Yuan, S. et al. (2017) Using PyMOL as a platform for computa-            dynamics of CFTR. Cell. Mol. Life Sci. 74, 3–22
+   tional drug design. Wiley Interdisciplinary Reviews: Computational    9. Manas, E.S. and Green, D.V. (2017) 2017 CADD medicine:
+   Molecular Science 2017, e1298                                            design is the potion that can cure my disease. J. Comput. Aided
+                                                                            Mol. Des. Published online January 9, 2017. http://dx.doi.org/
+                                                                            10.1007/s10822-016-0004-3
+
+
+
+
+12    Trends in Biotechnology, Month Year, Vol. xx, No. yy
+       TIBTEC 1485 No. of Pages 13
+
+
+
+
+    10. Craig, P.A. et al. (2013) A survey of educational uses of molecular    37. Mell, P.M. and Grance, T. (2011) The NIST Deﬁnition of Cloud
+        visualization freeware. Biochem. Mol. Biol. Educ. 41, 193–205              Computing, National Institute of Standards & Technology
+    11. DeLano, W.L. (2009) PyMOL molecular viewer: Updates and                38. Pandey, R.K. et al. (2017) Structure-based virtual screening,
+        reﬁnements. The 238th ACS National Meeting 238.                            molecular docking, ADMET and molecular simulations to develop
+    12. Humphrey, W. et al. (1996) VMD: visual molecular dynamics.                 benzoxaborole analogs as potential inhibitor against Leishmania
+        J. Mol. Graph. Model. 14, 33–38                                            donovani trypanothione reductase. J. Recept. Signal Transduct.
+                                                                                   Res. 37, 60–70
+    13. Yang, Z. et al. (2012) UCSF Chimera, MODELLER, and IMP. an
+        integrated modeling system. J. Struct. Biol. 179, 269–278              39. Adams, C.P. and Brantner, V.V. (2006) Estimating the cost of new
+                                                                                   drug development: is it really 802 million dollars? Health Aff.
+    14. Yuan, S. et al. (2016) PyMOL and Inkscape bridge the data and
+                                                                                   (Millwood) 25, 420–428
+        the data visualization. Structure 24, 2041–2042
+                                                                               40. Dickson, M. and Gagnon, J.P. (2004) The cost of new drug
+    15. Pettit, J.B. and Marioni, J.C. (2013) bioWeb3D: an online webGL
+                                                                                   discovery and development. Discov. Med. 4, 172–179
+        3D data visualisation tool. BMC Bioinform. 14, 185
+                                                                               41. Paul, S.M. et al. (2010) How to improve R&D productivity: the
+    16. Taylor, S. and Noble, R. (2014) HTML5 PivotViewer: high-
+                                                                                   pharmaceutical industry’s grand challenge. Nat. Rev. Drug
+        throughput visualization and querying of image data on the
+                                                                                   Discov. 9, 203–214
+        web. Bioinformatics 30, 2691–2692
+                                                                               42. Tropsha, A. and Bajorath, J. (2016) Computational methods for
+    17. Hoy, M.B. (2011) HTML5: a new standard for the Web. Med. Ref.
+                                                                                   drug discovery and design. J. Med. Chem. 59, 1
+        Serv. Q. 30, 50–55
+                                                                               43. Roy, A. et al. (2010) Open access high throughput drug discovery
+    18. Mano, O. and Clark, D.A. (2017) Graphics processing unit-accel-
+                                                                                   in the public domain: a Mount Everest in the making. Curr. Pharm.
+        erated code for computing second-order wiener kernels and
+                                                                                   Biotechnol. 11, 764–778
+        spike-triggered covariance. PLoS One 12, e0169842
+                                                                               44. Hughes, J.P. et al. (2011) Principles of early drug discovery. Br. J.
+    19. Halic, T. et al. (2012) A framework for web browser-based medi-
+                                                                                   Pharmacol. 162, 1239–1249
+        cal simulation using WebGL. Stud. Health Technol. Inform. 173,
+        149–155                                                                45. Geromichalos, G.D. (2016) Overview on the current status of
+                                                                                   virtual high-throughput screening and combinatorial chemistry
+    20. Rego, N. and Koes, D. (2015) 3Dmol.js: molecular visualization
+                                                                                   approaches in multi-target anticancer drug discovery; Part I. J
+        with WebGL. Bioinformatics 31, 1322–1324
+                                                                                   BUON 21, 764–779
+    21. Li, H. et al. (2014) iview: an interactive WebGL visualizer for
+                                                                               46. Cheng, T. et al. (2012) Structure-based virtual screening for drug
+        protein?ligand complex. BMC Bioinform. 15, 56
+                                                                                   discovery: a problem-centric review. AAPS J. 14, 133–141
+    22. Anon (2015) The PyMOL Molecular Graphics System, Version
+                                                                               47. Leung, C.H. and Ma, D.L. (2015) Recent advances in virtual
+        1.8, Schrödinger, LLC
+                                                                                   screening for drug discovery. Methods 71, 1–3
+    23. Pettersen, E.F. et al. (2004) UCSF Chimera–a visualization system
+                                                                               48. Grebner, C. et al. (2016) 3D-Lab: a collaborative web-based
+        for exploratory research and analysis. J. Comput. Chem. 25,
+                                                                                   platform for molecular modeling. Future Med. Chem. 8, 1739–
+        1605–1612
+                                                                                   1752
+    24. Rose, A.S. and Hildebrand, P.W. (2015) NGL Viewer: a web
+                                                                               49. Norrby, M. et al. (2015) Molecular rift: virtual reality for drug
+        application for molecular visualization. Nucleic Acids Res 43,
+                                                                                   designers. J. Chem. Inf. Model. 55, 2475–2484
+        W576–W579
+                                                                               50. Bradley, P. et al. (2005) Toward high-resolution de novo structure
+    25. Rose, A.S. et al. (2016) Web-based molecular graphics for large
+                                                                                   prediction for small proteins. Science 309, 1868–1871
+        complexes. In Proceedings of the 21st International Conference
+        on Web3D Technology (Zone R., ed.), pp. 185–186, ACM                   51. Dmitrieva, O. et al. (2012) Consistent data recording across a
+                                                                                   health system and web-enablement allow service quality com-
+    26. Zone, R. (2005) 3-D Filmmakers: Conversations with Creators of
+                                                                                   parisons: online data for commissioning dermatology services.
+        Stereoscopic Motion Pictures, Scarecrow Press
+                                                                                   Stud. Health Technol. Inform. 174, 84–88
+    27. Kim, S.U. et al. (2016) Concept of active parallax barrier on
+                                                                               52. ISO (2012) COLLADA digital asset schema speciﬁcation for 3D
+        polarizing interlayer for near-viewing autostereoscopic displays.
+                                                                                   visualization of industrial data, ISO/PAS 17506: Industrial auto-
+        Opt. Express 24, 25010–25018
+                                                                                   mation systems and integration. https://www.iso.org/standard/
+    28. Munafo, J. et al. (2017) The virtual reality head-mounted display          59902.html.
+        Oculus Rift induces motion sickness and is sexist in its effects.
+                                                                               53. Yachdav, G. et al. (2016) MSAViewer: interactive JavaScript
+        Exp. Brain Res. 235, 889–901
+                                                                                   visualization of multiple sequence alignments. Bioinformatics
+    29. Skjaerven, L. et al. (2014) Integrating protein structural dynamics        32, 3501–3503
+        and evolutionary analysis with Bio3D. BMC Bioinform. 15, 399
+                                                                               54. Dalby, A. et al. (1992) Description of several chemical structure ﬁle
+    30. Salentin, S. et al. (2015) PLIP: fully automated protein-ligand            formats used by computer programs developed at Molecular
+        interaction proﬁler. Nucleic Acids Res. 43, W443–W437                      Design Limited. J. Chem. Inf. Comput. Sci. 32, 244–255
+    31. Johansson, M.U. et al. (2012) Deﬁning and searching for struc-         55. Hendin, O. et al. (1998) Medical volume rendering over the WWW
+        tural motifs using DeepView/Swiss-PdbViewer. BMC Bioinform.                using VRML and JAVA. Stud. Health Technol. Inform. 50, 34–40
+        13, 173
+                                                                               56. Brutzman, D. and Daly, L. (2007) X3D: Extensible 3D Graphics for
+    32. Isberg, V. et al. (2016) GPCRdb: an information system for G               Web Authors, Elsevier
+        protein-coupled receptors. Nucleic Acids Res. 44, D356–D364
+                                                                               57. Cusack, R. et al. (2014) Automatic analysis (aa): efﬁcient neuro-
+    33. Omasits, U. et al. (2014) Protter: interactive protein feature visu-       imaging workﬂows and parallel processing using Matlab and
+        alization and integration with experimental proteomic data. Bio-           XML. Front. Neuroinform. 8, 90
+        informatics 30, 884–886
+                                                                               58. Konstantinidis, S.T. et al. (2009) The use of open source and
+    34. Burger, M.C. (2015) ChemDoodle Web Components: HTML5                       Web2.0 in developing an integrated EHR and e-learning system
+        toolkit for chemical graphics, interfaces, and informatics. J.             for the Greek Smoking Cessation Network. Stud. Health Technol.
+        Cheminform. 7, 35                                                          Inform. 150, 354–358
+    35. Dabdoub, S.M. et al. (2015) MoFlow: visualizing conformational         59. Loyek, C. et al. (2011) Web2.0 paves new ways for collaborative
+        changes in molecules as molecular ﬂow improves understanding.              and exploratory analysis of chemical compounds in spectrometry
+        BMC Proc. 9 (Suppl. 6), S5                                                 data. J. Integr. Bioinform. 8, 158
+    36. Du, X. et al. (2016) Insights into protein–ligand interactions:
+        mechanisms, models, and methods. Int. J. Mol. Sci. 17, E144
+
+
+
+
+                                                                                                                                            Trends in Biotechnology, Month Year, Vol. xx, No. yy   13
+
+View publication stats
+

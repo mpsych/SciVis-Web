@@ -1,0 +1,420 @@
+Journal of Computer-Aided Molecular Design (2018) 32:869–876
+https://doi.org/10.1007/s10822-018-0141-y
+
+
+
+
+HTMoL: full‑stack solution for remote access, visualization,
+and analysis of molecular dynamics trajectory data
+Mauricio Carrillo‑Tripp1 · Leonardo Alvarez‑Rivera2 · Omar Israel Lara‑Ramírez3 · Francisco Javier Becerra‑Toledo2 ·
+Adan Vega‑Ramírez2 · Emmanuel Quijas‑Valades2 · Eduardo González‑Zavala2 · Julio Cesar González‑Vázquez2 ·
+Javier García‑Vieyra3 · Nelly Beatriz Santoyo‑Rivera2 · Sergio Victor Chapa‑Vergara3 · Amilcar Meneses‑Viveros3
+
+Received: 15 May 2018 / Accepted: 1 August 2018 / Published online: 6 August 2018
+© Springer Nature Switzerland AG 2018
+
+
+Abstract
+Research on biology has seen significant advances with the use of molecular dynamics (MD) simulations. The MD meth-
+odology enables explanation and discovery of molecular mechanisms in a wide range of natural processes and biological
+systems. The need to readily share the ever-increasing amount of MD data has been hindered by the lack of specialized
+bioinformatic tools. The difficulty lies in the efficient management of the data, i.e., in sending and processing 3D information
+for its visualization. In this work, we present HTMoL, a plug-in-free, secure GPU-accelerated web application specifically
+designed to stream and visualize MD trajectory data on a web browser. Now, individual research labs can publish MD data
+on the Internet, or use HTMoL to profoundly improve scientific reports by including supplemental MD data in a journal
+publication. HTMoL can also be used as a visualization interface to access MD trajectories generated on a high-performance
+computer center directly. Furthermore, the HTMoL architecture can be leveraged with educational efforts to improve learning
+in the fields of biology, chemistry, and physics.
+
+Keywords Data sharing · Data publishing · Data streaming · Graphical processing unit · Webgl · Web application ·
+Interactive structure · Interactive dynamics
+
+
+Introduction                                                                complementary to experimental techniques, because of its
+                                                                            proven descriptive and predictive power. The use of MD is
+Acceleration of numerical processing has increased the                      not restricted to study proteins [1], but also biological mem-
+use of computational techniques to study biological sys-                    branes [2], genetic material [3], drug design and discovery
+tems at the molecular level. It is expected that this tendency              [4, 5], and enhanced sampling strategies to study complex
+will grow with the advent of the so-called ’exascale’ era.                  biological systems [6–9].
+In particular, molecular dynamics (MD) has become an                           Currently, there are several packages available to perform
+ubiquitous computational methodology in the life sciences,                  MD numerical simulations. Among the most popular are
+                                                                            Gromacs [10], Charmm [11], Amber [12], or NAMD [13].
+                                                                            All of these packages are scalable and run in specialized
+* Mauricio Carrillo‑Tripp                                                   high-performance parallel computing centers. In most cases,
+  mauricio.carrillo@cinvestav.mx                                            the access to such computational resources is through an
+1
+                                                                            internet connection, i.e. remotely log in on a terminal. MD
+    Biomolecular Diversity Lab, Centro de Investigación y
+    de Estudios Avanzados del Instituto Politécnico Nacional                simulations can generate large binary files containing the 3D
+    Unidad Monterrey, Vía del Conocimiento 201, Parque                      space trajectory of all the atoms in the studied system as a
+    de Investigación e Innovación Tecnológica., C.P. 66600,                 function of time due to the intra- and inter-molecular forces.
+    Apodaca, Nuevo León, México                                             Statistical analysis of the trajectory file is usually performed
+2
+    Ingeniería en Sistemas, Instituto Tecnológico Superior de               in situ. However, the data has to be transferred to a local
+    Irapuato, Irapuato, Guanajuato, México                                  computer for offline visualization. Desktop applications are
+3
+    Departamento de Computación, Centro de Investigación y                  available for such purpose, e.g., VMD [14] and Pymol [15].
+    de Estudios Avanzados del Instituto Politécnico Nacional,
+    Ciudad de México, México
+
+
+                                                                                                                                 13
+                                                                                                                            Vol.:(0123456789)
+870                                                                        Journal of Computer-Aided Molecular Design (2018) 32:869–876
+
+
+   Sharing and publishing the MD trajectory data, product          MD trajectories to the client, which can then be visualized
+of scientific research, has been significantly hindered in         on a browser with the JavaScript NGL Viewer [24].
+the past. It is not trivial how to transfer the binary files          In this work, we introduce HTMoL, an alternative open-
+from a server to the client and then visualize the three-          source tool in the life sciences for securely streaming and
+dimensional time-dependent MD data directly on a web               visualizing MD trajectories in a browser. Like other availa-
+browser. Also, there has to be an efficient management of          ble tools, HTMoL integrates the latest web technologies and
+large amounts of data on client applications that can run          native hardware acceleration on the client-side (JavaScript
+on several kinds of computing devices, such as desktops,           + HTML5 + WebGL). However, HTMoL takes advantage
+laptops, and mobile.                                               of the server-side Node.js runtime engine and its growing
+   In terms of infrastructure, developments based on optical       open-source library ecosystem. The importance of this is
+networks have been achieved to store, process and visual-          that HTMoL provides a language-consistent full-stack core
+ize large amounts of data, in specific OptiPuter [16]. This        foundation. An additional feature of HTMoL is that it has no
+network has a large bandwidth and is capable of transmitting       dependencies on a third-party 3D library on the client-side,
+terabytes per second in wide area networks (WAN). This             reducing the package’s size and achieving higher frame rates
+network has the advantage of managing the infrastructure of        through direct calls to the GPU.
+data storage, processing clusters and visualization clusters
+in a WAN in a distributed way. Applications that run on an
+OptiPuter infrastructure are supported by LambdaRAM mid-           Methods
+dleware. This middleware allows managing shared memory
+distributed in wide area networks [17]. The applications that      HTMoL software architecture
+work in this infrastructure have been successfully tested,
+e.g., SAGE [18]. However, it is not common to have this            The HTMoL architecture is based on the client-server par-
+kind of infrastructure in many research centers or countries.      adigm, i. e., a dedicated full-stack tool that integrates the
+Therefore, alternatives should be sought that allow the visu-      latest web technologies (NodeJS + WebGL + HTML5 +
+alization of large volumes of data using the available com-        CSS3), allowing to execute several remote tasks through
+munications technology.                                            calls between the client and a web server. In general, this
+   On the other hand, efforts have been made to leverage           paradigm increases efficiency by balancing tasks on both
+technological advances in the fields of software development       sides, making a mobile computation offloading for tasks that
+and hardware acceleration on the client side. In particular,       are expensive on the client side and optimizing the use of
+molecular visualization on modern web browsers has seen            the network for the transfer of the data to be viewed [25,
+a remarkable thrust in recent years thanks to the introduc-        26]. The term full-stack refers to an inclusion of all lay-
+tion of HTML5 and WebGL. The combination of both para-             ers in computer software development. In other words, it
+digms allow the use of the client’s graphical processing card      involves code that runs in the web server (back-end) and
+(GPU) by the browser without the need of any additional            code that runs in the client (front-end). An schematic of
+software, e.g., Flash or Java. The native use of the GPU           the global architecture of HTMoL is shown in Fig. 1. On
+by the web browser has been the base for the development
+of an increasing number of open-source online molecular
+visualization applications for structural analysis which can
+interactively display complex molecular systems, recently
+reviewed by Yuan et al. [19]. However, only a few of such
+applications have the ability to both stream and display MD
+trajectories from a remote server. JSMol [20] can display
+structural data stored in multi-model text flat files as trajec-
+tories but it is not optimized to display biological systems
+larger than a few hundred atoms, limiting its applicability.
+Mwalongo et al. [21] developed a server-side extension to
+MegaMol [22] for efficient remote rendering of dynamic
+data using the libwebsockets C library. Nonetheless, since
+MegaMol is a platform framework for visualization research,
+there is no user-friendly tool currently available for the life
+                                                                   Fig. 1  HTMoL software architecture. The molecular structure and
+sciences. Lastly, MDsrv [23] is a server-side Python com-          dynamic data is transferred from the server(s) to the client through a
+ponent that can be run on top of the Apache HTTP Server            Websocket connection. The data is then processed by the computer’s
+through the mod_wsgi module. This allows deployment of             GPU and displayed on a browser
+
+
+13
+Journal of Computer-Aided Molecular Design (2018) 32:869–876                                                                  871
+
+the back-end, HTMoL provides specialized code to send the          atom’s positions and representations through the WebGL
+MD trajectory file located on the server to the client over        API, the two functions are executed by a call to gl.drawAr-
+an Internet connection. On the front-end, HTMoL provides           rays, which computes the shaders on the GPU. All the mol-
+methods to parse and interpret molecular dynamics data             ecule’s structural data is handed over to the GPU through
+on the client. Therefore, MD data is processed in the input        attributes. Every MD frame is then processed from the data
+stream to avoid local storage on the client side, i. e., there     buffer through a loop, updating the atom positions on screen.
+is no need to download the trajectory in advance. A graphi-
+cal user interface (GUI) interactively displays the molecular      Implementation
+three-dimensional structure and dynamics on a web browser
+using GPU-accelerated computational techniques. Source             Detailed documentation and instructions for installation and
+code, documentation, and examples can be obtained at the           configuration are available at the HTMoL website (http://
+HTMoL website (http://htmol​.tripp​lab.com).                       htmol.​ trippl​ ab.com). Since the HTMoL functionality is writ-
+                                                                   ten in JavaScript, there is no need to compile. The server
+Back‑end                                                           administrator (back-end-user) only has to edit a configura-
+                                                                   tion file (HTMoL/local/config.js -tested default values are
+In HTMoL, the back-end follows a microservice pattern.             provided-) to set the parameter values that define the net-
+The atomic coordinates are defined on a file handled by the        work (a public IP with an open Port > 1024) and the loca-
+Apache Server over a standard HTTP connection, as usually          tion of the MD data (path to the coordinate and trajectory
+done. However, the MD trajectory files are handled by the          files). The Node.js server is started by running the provided
+Node.js server. This package provides the required modules         script (node BinServer.js). The server’s netstat or nc com-
+to transfer binary data through WebSockets with the help           mand line tools can be used to verify that the BinServer is
+of express.js and binary.js. Node.js is built on Chrome’s V8       active and listening. At this point, the MD data is readily
+engine. It uses an asynchronous event-driven, non-blocking         accessible by a client’s browser by going to the correspond-
+I/O model, and it is lightweight. WebSockets are a bidirec-        ing server’s URL (http://www.serve​r-name-or-IP/HTMoL​/
+tional way for the client to communicate back and forth with       HTMoL​.html).
+the web server without all the overhead of a standard HTTP             HTMoL can be used through the provided HTMoL.html
+connection. Even though it might be more convenient in             file as is (Full-window mode), or embedded on a web page
+some cases, the Apache and Node servers do not have to be          with the addition of a single <iframe> HTML tag in the
+running on the same computer.                                      body of the index or landing file. HTMoL can also be con-
+                                                                   figured to extend the File menu, allowing the front-end-user
+Front‑end                                                          to specify the name of the coordinates and trajectory files to
+                                                                   be loaded. Another parameter in the configuration file allows
+The full HTMoL functionality is written in JavaScript. The         or prevents the downloading of the data to the client’s com-
+use of this technology allows HTMoL to be presented as an          puter. This configuration flexibility is essential if HTMoL is
+open application, which implies that it can be used on any         to be used as a visualization interface of a high-performance
+platform, ranging from desktop computers and laptops to            computer cluster were the MD data is generated remotely.
+mobile devices such as tablets or smart phones [27]. This
+also allows the incorporation of a responsive user interface       User interface
+which remains functional and usable. A service worker
+handles the WebSocket connection with the binary server,           The interactive GUI is built with HTML5 and CSS3. It is
+and the MD trajectory starts to fill up a data buffer. Once        the main interface the front-end-user has to interact with
+a defined amount of data has been received, the visualiza-         the application. It consists of several elements, all of which
+tion of the molecular structure and dynamics is handed over        remain functional while the MD trajectory is being played.
+to the GPU-accelerated WebGL rendering engine. Since               A main Menu gives access to several functionalities grouped
+WebGL runs on the graphics processing unit of the client’s         in five categories, namely, Files, Representations, Tools, and
+computer, HTMoL provides the necessary code in the form            Views (Fig. 2a1). A principal info-bar indicates when the
+of two primary functions called the vertex shader and the          data files are being transferred, if there is a communica-
+fragment shader. The first one processes the vertex posi-          tion error, or the progress of the MD trajectory in frames,
+tions which will be rendered into various kinds of primitives,     percentage, and time lapsed in pico-seconds when played
+i.e., points, lines, and triangles. In turn, a set of primitives   (Fig. 2a2). Trajectory controls allow the user to play, pause,
+defines a surface mesh of a complex object, e.g., a sphere         or move one frame forward or backward (Fig. 2a3). A
+or cylinder. The second function computes the color for            secondary bar gives information on the loaded molecular
+each pixel of the primitive being drawn. After setting up the      structure (name and number of atoms) and trajectory data
+
+
+                                                                                                                       13
+872                                                                             Journal of Computer-Aided Molecular Design (2018) 32:869–876
+
+
+
+
+Fig. 2  HTMoL GUI, displaying the MD trajectory of previously           VDW representation, atom name colors) [30], c three anesthetic drug
+reported works (clockwise): a an enzyme (lines representation), with    molecules (VDW representation, chain name colors) interacting with
+N-, C-terminals, and residues of type THR highlighted (VDW repre-       a DPPC bilayer (line representation, atom name colors), where the
+sentation using magenta, yellow, and atom name colors, respectively)    Cartesian axes and computational cell box are shown (in press). In all
+[28], b an Amphotericin B drug dimer inter-molecular interaction        cases, the water molecules are not shown for clarity. These examples
+(VDW representation, atom name colors) [29], d a biological mem-        are accessible through the HTMoL website
+brane (phospholipids in line representation, cholesterol molecules in
+
+
+(name and number of frames), Fig. 2b1, 2. When different                are defined in the back-end’s configuration file. The front-
+molecules in the system are identified by a distinctive Chai-           end-user can access the information set without disrupting
+nID in the coordinates file, the labels found are displayed             the display view by clicking on the MD-button. A modal-
+(Fig. 2b3). The labels function as a switch to turn on (white           window will show all the information set in the configura-
+label) or off (red label) the display of the corresponding              tion file under the MDTitle and MDdescription parameters
+molecule.                                                               (Fig. 3a1). A common action is to measure the distance
+    The user can rotate the view at any time by click-and-drag          between two atoms or the angle defined by three atoms.
+with the mouse anywhere inside the application’s viewport               HTMoL provides this function through the Menu-Tools-
+(Fig. 2c1). Clicking on an atom will show related informa-              Measures (Fig. 3a2). Once selected, the front-end-user can
+tion (atom’s number, type, name, and X–Y–Z coordinates,                 click on two atoms to display the distance, or three atoms
+and molecule’s name and number) in the principal info-bar.              to display the angle. The selected atoms will be highlighted
+If the simulation box is defined in the coordinates file, the           in green (Fig. 3b1,2). The measured value will be displayed
+computational cell can be displayed (yellow lines) along                and updated on every MD frame as the trajectory is played.
+with the coordinates system (X in red, Y in green, and Z in                Furthermore, HTMoL implements a non-deterministic
+blue lines), through the Menu-Tools-Axis&SimBox function                finite automaton (NFA) to make atom selections by a set
+(Fig. 2c2, 3). HTMoL uses a perspective camera to display               of commands parsed through a syntactic analyzer. The
+the system (Fig. 2d1). The user can zoom the view in or out             selection can then be modified by a variety of visualiza-
+through the corresponding control buttons (Fig. 2d2).                   tion options through the back-end’s configuration file, the
+    The back-end-user can provide information on the molec-             Console on the Tools menu (Fig. 3a3), or directly on the
+ular system and the MD simulation protocol details. These               Representations menu. These include different geometries
+
+
+13
+Journal of Computer-Aided Molecular Design (2018) 32:869–876                                                                        873
+
+                                                                         are shown in Fig. 2). Likewise, the front-end-user can also
+                                                                         modify and interact with the molecular system through the
+                                                                         Console interface when the application is on Full-window
+                                                                         mode (Fig. 3c1). The Console interface is disabled when the
+                                                                         applications is embedded on a webpage because the view-
+                                                                         port size restrictions would make it impractical to use. The
+                                                                         set includes a select command. It selects a range of atoms by
+                                                                         the index defined in the coordinates file or following the rule
+                                                                         atom-type : residue-type : chain. For example, select 0:3:2
+                                                                         selects all atoms of the third residue of the second chain or
+                                                                         molecule, select 4-23,N:GLY:A selects atoms with index 4
+                                                                         through 23 and atoms of type N (nitrogen) of the residues
+                                                                         of type GLY (glycine) on the molecule labeled as chain A
+                                                                         in the coordinates file. Then, the selection can be modified
+                                                                         by the show command to change the representation used
+                                                                         (geometries), and the color command. The view and zoom
+                                                                         commands can be used to change the camera location or
+                                                                         zoom in or out. An elaborated sequence of commands might
+                                                                         look like: select 1-9;show VDW;color 1.0,0.0,1.0;select
+                                                                         3540-3549;show VDW;color green;select 0:TRP:0;show
+                                                                         VDW;color atom;select none;view BackView;zoom 3. Sev-
+                                                                         eral examples are available at the HTMoL website (http://
+                                                                         htmol​.tripp​lab.com).
+
+
+                                                                         Results
+
+                                                                         The HTMoL functionality and current feature set achieves
+                                                                         its primary goal which is to stream and interactively visu-
+                                                                         alize 3D MD data generated or stored on a remote server
+                                                                         directly on the client’s web browser without the need of any
+                                                                         plug-in. It implements fundamental molecular representa-
+                                                                         tions through direct calls to the GPU. This allows to quickly
+                                                                         highlight different dynamic aspects of the studied biological
+                                                                         system.
+                                                                             As a full-stack package written entirely in JavaScript,
+                                                                         HTMoL has been published on the npm registry (https​://
+                                                                         www.npmjs.​ com/packag​ e/htmol)​ . npm is a package manager
+                                                                         for the JavaScript programming language, similar to other
+                                                                         projects such as PEAR (PHP), PIP (Python), and CPAN
+Fig. 3  HTMoL GUI’s tools: a MD simulation details, b inter-atomic
+                                                                         (Perl). It is the default package manager for the runtime envi-
+distance measurement tool, and c the console interface enabled on        ronment Node.js. In addition to manage dependencies and
+Full-window mode, both located in the Tools menu. Since these fea-       making package installation easier, npm provides mecha-
+tures run independently of the trajectory controls, the front-end user   nisms to ensure the code is secure. After running an analysis
+can access them while the MD is played in the background
+                                                                         of the HTMoL code and its dependencies against the Node
+                                                                         Security Platform database of JavaScript vulnerabilities,
+(e.g. line or Bond, ball+stick or CPK, spacefill or VDW,                 the audit security report showed no known weaknesses that
+and back-bone trace) and different color schemes (name or                could be exploited.
+RGB values). A command set is defined in HTMoL. Hence,                       We performed tests to evaluate the effect that the use of
+the back-end-user can set-up a stage which accents or high-              third-party 3D libraries have on the application’s front-end
+lights an important region or molecule in the system for                 performance. In particular, three.js was developed to cre-
+the front-end-user to appreciate by just opening the appli-              ate and display animated 3D computer graphics on the web
+cation and playing the MD trajectory (several examples                   browser. It is the library generally used in other front-end
+
+
+                                                                                                                             13
+874                                                                                Journal of Computer-Aided Molecular Design (2018) 32:869–876
+
+visualization web applications, and up to version 2.0, it was              on a longer term, not as much as popularity. However, both
+the 3D engine in HTMoL. Although the use of three.js mini-                 tools work in other environments as well, e. g. Windows
+mizes code implementation work, we found a detrimental                     Explorer, although not as efficiently given the low/slow
+impact on the application’s performance. Hence, HTMoL                      support to modern technologies. Both tools were installed
+abandoned the use of such libraries in version 3.0. Now,                   side-by-side on the same web server and streamed the same
+we have implemented code with native primitives built-in.                  set of data files. The benchmark set can be accessed at the
+This strategy reduced the total weight of the application and              HTMoL web site.
+consistently increased the rendering performance one order                    Even though decrease of GUI responsiveness on either
+of magnitude in all browsers and platforms tested at the time              tool was minimal as the number of atoms increased, we
+of this writing (Table 1).                                                 quantified the load on the client’s GPU by measuring the
+   In order to establish a comparison with other available                 video card frame rate, expressed in frames per second (FPS).
+tools, we tested HTMoL and NGL + MDsrv on a variety of                     Of note, this metric measures how many times per second
+environments (OS + browser), molecular representations,                    the scene on screen is redrawn, not how many MD simu-
+and biological system sizes. Our choice of options on how                  lation frames per second can be displayed. In order to do
+to run the tests was based on how well an environment is                   this, we used the native development tools provided by the
+maintained and supported, an indication of its robustness                  browsers while the dynamics were being played. A total of
+                                                                           120 combinations were evaluated, averaging the FPS values
+                                                                           of three independent measurements in each case. To prevent
+Table 1  Infrastructure used in this work to conduct tests                 that the client-server communications altered the results in
+Architecture                   OS                     Browser              any way, the set up was allowed to finish one complete MD
+                                                                           trajectory cycle before measuring every combination. After
+PC 24GB RAM Intel Xeon         Linux 32.0 Ubuntu      Chromium             this ’stabilization cycle’, the FPS was recorder during 60,000
+ 3.07 GHz Nvidia Quadro         12.04 64 bit           37.0.2062.120,
+                                                                           ms and then averaged. Our results are shown in Fig. 4. In
+ 2000 1024 MB                                          Firefox Quan-
+                                                       tum 60.0            general, HTMoL has a higher frame rate, most likely due to
+Macbook Pro 8GB RAM            X 10.11.5 64 bit       Chrome               the fact that it makes direct calls to the GPU instead of using
+ Intel Core i7 2.4 GHz                                 66.0.3359.170,      three.js as the 3D engine. Decrease of frame rate reaches a
+ AMD Radeon 1024 MB                                    Firefox Quan-       minimum when the number of atoms increases up to 20,000.
+                                                       tum 60.0
+                                                                           At this point, both tools show similar behaviour in all cases
+
+
+
+
+Fig. 4  Correlation of HTMoL’s MD visualization front-end perfor-          column-), and browser (Chrome -circles-, and Firefox -squares-). In
+mance, in frames per second (FPS), as a function of number of atoms        the first column, an amino acid -TRP- is used to exemplify the dif-
+in the biological system (log scale), with respect to the molecular        ferent molecular representations used. Comparison of HTMoLv3.5
+representation used [bonds (a), balls and stick (b), and spacefill (c)],   (black) and NGLv0.10.5-18 + MDsrv0.3.5 (red). Impostors disabled
+operating system (OS X -second column- and Linux Ubuntu -third             in the later for comparison reasons
+
+
+13
+Journal of Computer-Aided Molecular Design (2018) 32:869–876                                                                       875
+
+tested. The type of molecular representation, basically lines     do not have large computational features in an interactive
+versus spheres, does not seem to have a significant impact on     and responsive way. The JavaScript Node.js runtime engine
+performance. However, differences in WebGL implementa-            and the package’s open-source libraries ecosystem provide a
+tion can be seen between operating systems and browsers.          consistent full-stack development framework and solid foun-
+This behavior is independent of either tool.                      dation for a rich-client application. Since HTMoL does not
+    We gave preference to standardized data formats in the        depend on a third-party 3D library, it is a light-weight tool
+HTMoL’s core engine. In this respect, the Protein Data Bank       reaching high frame rates. The modular design of the core
+(PDB) format for describing molecular structures is still the     engine ensures that HTMoL will be adaptable to future tech-
+most commonly used way to store and share atomic coordi-          nological improvements. HTMoL can be used as a stand-
+nates. Although the data is kept in flat ASCII files, the PDB     alone web tool, embedded on a web page or a blog, or used
+format is ubiquitous in the life sciences. In terms of MD         as an interface on a high performance computing center.
+trajectory data, currently there is no one single standard-           HTMoL is used primarily by research on life sciences, but
+ized format. Each major MD package has proposed a differ-         is just as applicable to other fields, like learning and educa-
+ent way to store such information. Hence, the HTMoL core          tion, due to its simple yet powerful architecture. HTMoL
+engine provides parsers for the most common MD trajectory         documentation, installation, and complete examples can be
+binary formats, namely, Gromacs XTC, Charmm DCD, and              found at http://htmol.​ trippl​ ab.com. The source code is avail-
+Amber NC. This set represents a very wide range of users.         able under an academic open-source license and is acces-
+Nonetheless, extension to support other data formats, both        sible at http://githu​b.com/tripp​lab/HTMoL​. The current
+structural/topology and dynamics, will be achieved by the         release at the time of this writing is version 3.5.
+development of specialized JavaScript Node.js modules.
+This has been also the trend in the Python ecosystem, where       Acknowledgements The authors want to acknowledge all the persons
+                                                                  involved in the review process. Their comments have helped to greatly
+specialized libraries have been proposed. An example is the       improve this report and the functionality of the tool.
+MDTraj library [31], which allows users to manipulate MD
+trajectories, and is the base of MDsrv.                           Funding This work has been supported by the Consejo Nacional de
+    As a work in progress, extensions over the current            Ciencia y Tecnología México (Grant Number 132376 to M.C.-T.).
+HTMoL core engine are being developed. For instance,
+enabling a dynamic data buffer to be able to process MD           Data availability HTMoL is available free of charge for academic use.
+                                                                  All major browsers are supported. Online documentation, available at
+trajectory files of Giga or TeraBytes in size, automatically      the HTMoL website http://htmol​.tripp​lab.com, includes instructions
+filtering out specific types of atoms on the fly (e. g. water),   for download, installation, configuration, and examples.
+and the implementation of more molecular representations
+(e. g. licorice, hyperballs, secondary structure depictions
+based on a protein’s backbone atoms like cartoon, tube,
+or ribbon), as well as methods to directly support coarse-        References
+grained models. Also, HTMoL performance will increase in
+                                                                   1. Perilla JR, Goh BC, Cassidy CK, Liu B, Bernardi RC, Rudack T,
+following versions with the implementation of the ray-casted
+                                                                      Yu H, Wu Z, Schulten K (2015) Curr Opin Struct Biol 31:64–74
+impostors strategy which reduces the geometric complexity          2. Venable RM, Brown FL, Pastor RW (2015) Chem Phys Lipids
+of the system and increases the frame rate. This, together            192:60–74
+with the constant enhancement of web browsers and GPU              3. Wang X, Wang Y, Zheng L, Chen J (2014) Curr Med Chem
+                                                                      21:1968–1975
+speed, will allow the visualization of the 3D MD trajectory
+                                                                   4. Zhao H, Caflisch A (2015) Eur J Med Chem 91:4–14
+of very large systems ­(105–106 atoms) in the near future. We      5. Aci-Sèche S, Ziada S, Braka A, Arora R, Bonnet P (2016) Future
+also expect the efficiency to increase with the implementa-           Med Chem 8:545–566
+tion of rising technologies like webassembly and webpack,          6. Bernardi RC, Melo MC, Schulten K (1850) Biochim Biophys Acta
+                                                                      2015:872–877
+or techniques like HTML web components or progressive
+                                                                   7. Weng J, Wang W (2014) Adv Exp Med Biol 805:305–329
+application development to run on mobile devices.                  8. Kalyaanamoorthy S, Chen YP (2014) Prog Biophys Mol Biol
+                                                                      114:123–136
+                                                                   9. Vlachakis D, Bencurova E, Papangelopoulos N, Kossida S (2014)
+                                                                      Adv Protein Chem Struct Biol 94:269–313
+Conclusion                                                        10. Abraham MJ, Murtola T, Schulz R, Pall S, Smith JC, Hess B,
+                                                                      Lindahl E (2015) SoftwareX 1–2:19–25
+HTMoL is a tool for the life sciences to securely stream and      11. Brooks BR (2009) J Comput Chem 30:1545–1614
+visualize MD trajectories in a web browser. It leverages the      12. Salomon-Ferrer R, Case DA, Walker RC (2013) Wiley Interdiscip
+                                                                      Rev: Comput Mol Sci 3:198–210
+latest web technologies and native hardware acceleration
+                                                                  13. Phillips JC, Braun R, Wang W, Gumbart J, Tajkhorshid E, Villa E,
+to distribute workloads between the client and the server,            Chipot C, Skeel RD, Kalac L, Schulten K (2005) J Comput Chem
+allowing large volumes of data to be viewed on devices that           26:1781–1802
+
+
+                                                                                                                           13
+876                                                                          Journal of Computer-Aided Molecular Design (2018) 32:869–876
+
+14. Humphrey W, Dalke A, Schulten K (1996) J Mol Graphics            25. Kovachev D, Yu T, Klamma R (2012) Adaptive computation off-
+    14:33–38                                                             loading from mobile devices into the cloud. In: 2012 IEEE 10th
+15. Schrödinger LLC (2015) The PyMOL Molecular Graphics Sys-             International symposium on parallel and distributed processing
+    tem, Version 2.0. https​://pymol​.org/                               with applications (ISPA), pp 784–791
+16. Smarr LL, Chien AA, DeFanti T, Leigh J, Papadopoulos PM          26. Deng S, Huang L, Taheri J, Zomaya AY (2015) IEEE Trans Paral-
+    (2003) Commun ACM 46:58–67                                           lel Distrib Syst 26:3317–3329
+17. Vishwanath V, Burns R, Leigh J, Seablom M (2009) Future Gener    27. Hernandez IMT, Viveros AM, Rubio EH (2013) Analysis for the
+    Comput Syst 25:184–191                                               design of open applications on mobile devices. In: International
+18. Renambot L et al (2004) Sage: the scalable adaptive graphics         Conference on Electronics, Communications and Computing
+    environment. In: Proceedings of WACE. pp 2004–2009                   (CONIELECOMP) 2013. pp 126–131
+19. Yuan S, Chan HS, Hu Z (2017) Trends Biotechnol 35:559–571        28. Noda-Garcia L, Camacho-Zarco AR, Medina-Ruiz S, Gaytan P,
+20. Hanson RM, Prilusky J, Renjian Z, Nakane T, Sussman JL (2013)        Carrillo-Tripp M, Fulop V, Barona-Gomez F (2013) Mol Biol
+    Isr J Chem 53:207–216                                                Evol 30:2024–34
+21. Mwalongo F, Krone M, Becher M, Reina G, Ertl T (2016) Graph      29. Antillon A et al (2016) PLoS ONE 11:e0162171
+    Models 88:57–65                                                  30. Carrillo-Tripp M, Feller SE (2005) Biochemistry 44:10164–10169
+22. Grottel S, Krone M, Mller C, Reina G, Ertl T (2015) IEEE Trans   31. McGibbon RT, Beauchamp KA, Harrigan MP, Klein C, Swails
+    Visual Comput Graphics 21:201–214                                    JM, Hernández CX, Schwantes CR, Wang L-P, Lane TJ, Pande
+23. Tiemann JKS, Guixa-Gonzalez R, Hildebrand PW, Rose AS,               VS (2015) Biophys J 109:1528–1532
+    Hildebrand PW (2017) Nat Methods 14:1123–1124
+24. Rose AS, Hildebrand PW (2015) Nucleic Acids Res
+    43:W576–W579
+
+
+
+
+13
+

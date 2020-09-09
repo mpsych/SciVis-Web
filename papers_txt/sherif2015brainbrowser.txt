@@ -1,0 +1,595 @@
+                                                                                                        TECHNOLOGY REPORT ARTICLE
+                                                                                                                          published: 13 January 2015
+NEUROINFORMATICS                                                                                                        doi: 10.3389/fninf.2014.00089
+
+
+
+BrainBrowser: distributed, web-based neurological data
+visualization
+Tarek Sherif , Nicolas Kassis , Marc-Étienne Rousseau , Reza Adalat and Alan C. Evans *
+McGill Centre for Integrative Neuroscience, McConnell Brain Imaging Centre, Montreal Neurological Institute, McGill University, Montreal, QC, Canada
+
+
+
+Edited by:                              Recent years have seen massive, distributed datasets become the norm in neuroimaging
+John Van Horn, University of            research, and the methodologies used to analyze them have, in response, become
+California at Los Angeles, USA
+                                        more collaborative and exploratory. Tools and infrastructure are continuously being
+Reviewed by:
+                                        developed and deployed to facilitate research in this context: grid computation platforms
+Graham J. Galloway, The University
+of Queensland, Australia                to process the data, distributed data stores to house and share them, high-speed
+Hidetoshi Ikeno, University of          networks to move them around and collaborative, often web-based, platforms to
+Hyogo, Japan                            provide access to and sometimes manage the entire system. BrainBrowser is a
+*Correspondence:                        lightweight, high-performance JavaScript visualization library built to provide easy-to-use,
+Alan C. Evans, McGill Centre for
+                                        powerful, on-demand visualization of remote datasets in this new research environment.
+Integrative Neuroscience,
+McConnell Brain Imaging Centre,         BrainBrowser leverages modern web technologies, such as WebGL, HTML5 and Web
+Montreal Neurological Institute,        Workers, to visualize 3D surface and volumetric neuroimaging data in any modern web
+McGill University, 3801 University      browser without requiring any browser plugins. It is thus trivial to integrate BrainBrowser
+Street, Webster 2B #208, Montreal,
+QC, H3A 2B4, Canada
+                                        into any web-based platform. BrainBrowser is simple enough to produce a basic
+e-mail: alan.evans@mcgill.ca            web-based visualization in a few lines of code, while at the same time being robust enough
+                                        to create full-featured visualization applications. BrainBrowser can dynamically load the
+                                        data required for a given visualization, so no network bandwidth needs to be waisted on
+                                        data that will not be used. BrainBrowser’s integration into the standardized web platform
+                                        also allows users to consider using 3D data visualization in novel ways, such as for data
+                                        distribution, data sharing and dynamic online publications. BrainBrowser is already being
+                                        used in two major online platforms, CBRAIN and LORIS, and has been used to make the
+                                        1TB MACACC dataset openly accessible.
+
+                                        Keywords: visualization, neuroimaging, neurology, WebGL, HTML5
+
+
+
+
+1. INTRODUCTION                                                                  from the platform in order to be visualized in the local environ-
+BrainBrowser is an open source JavaScript library exposing a                     ment. Web-based visualization tools, on the other hand, present
+set of web-based 3D visualization tools primarily targeting neu-                 significant benefits in the context of distributed research plat-
+roimaging. Using open web technologies, such as WebGL and                        forms:
+HTML5, it allows for real-time manipulation and analysis of 3D
+imaging data through any modern web browser. BrainBrowser                        • They can be easily integrated into existing web-based plat-
+includes two major components. The BrainBrowser Surface                            forms.
+Viewer (Figure 1) is a WebGL-based 3D viewer capable of display-                 • Other than the web browser, no software or libraries need to be
+ing 3D surfaces in real time and mapping various sorts of data to                  installed.
+them. The BrainBrowser Volume Viewer (Figure 2) is an HTML5                      • If a visualization doesn’t require the entirety of a remote dataset
+Canvas-based viewer allowing slice-by-slice traversal of 3D or 4D                  at once, it can load required data on-demand, potentially
+MINC volumetric data (Vincent et al., 2004).                                       saving bandwidth.
+    In recent years, neuroimaging research has seen itself inun-
+dated by large, distributed datasets that have necessitated a shift              Ideally, a web-based visualization tool might have the following
+in how scientists approach their research: guiding hypotheses                    properties:
+are often articulated after analyzing the mass of available data
+(Margulies et al., 2013), and data sharing has become a necessity                • Performant and responsive: If network latency or lag-
+for scientific discovery (Jomier et al., 2011). Several large-scale,               ging performance interfere with usability, researchers will not
+distributed, collaborative platforms have been developed to facil-                 use it.
+itate this new approach, and they tend to integrate poorly with                  • Doesn’t require any browser plugins (e.g., Java, Flash):
+traditional visualization tools requiring a local installation and                 Plugins add extra friction to the deployment of tools that
+local data. These tools and their dependencies would have to be                    depend on them. They require users to install software on their
+installed locally, and data would generally have to be exported                    machines and keep it up to date. Furthermore, not all users
+
+
+
+Frontiers in Neuroinformatics                                       www.frontiersin.org                                  January 2015 | Volume 8 | Article 89 | 1
+Sherif et al.                                                                                                                   BrainBrowser
+
+
+
+
+  FIGURE 1 | The BrainBrowser Surface Viewer.
+
+
+
+
+  FIGURE 2 | The BrainBrowser Volume Viewer.
+
+
+
+
+  have the administrative access to their machines that is required   for the creation of high-performance, web-based applications
+  to install most plugins.                                            that rival much of what is available offline. Improvements to the
+• Dynamic and interactive: If the tool is to be used to explore       JavaScript language itself and the optimizations made by browser
+  data, it should allow that data to be loaded, removed, manipu-      vendors such as Google and Mozilla to their JavaScript engines
+  lated and modified with minimal effort.                             have created a base on which robust applications can be built. At
+• Extensible: Many labs use different data formats, standards         the same time, Graphical Processing Unit (GPU) access through
+  and requirements can change rapidly, so the tool should be able     WebGL, and multi-threaded processing through Web Workers,
+  to adapt.                                                           blur the lines between what is possible on native versus web
+• Open source: It’s easier for researchers to trust the results       applications.
+  they’re seeing if they can verify how the tool is functioning. If      The fact that these technologies are now a part of the hyper-
+  need be, they can also extend, customize and tweak the tool to      connected web platform has also made it possible to consider
+  fit their needs.                                                    using visualization technologies in novel ways:
+
+While this shift in research requirements has been taking place,      • Publication: With scientific articles now being published
+modern web standards have introduced a host of new technolo-            online, publishers are looking for ways to disseminate
+gies that are built directly into modern web browsers and allow         datasets and present them in more meaningful ways (Jomier
+
+
+
+Frontiers in Neuroinformatics                             www.frontiersin.org                          January 2015 | Volume 8 | Article 89 | 2
+Sherif et al.                                                                                                                           BrainBrowser
+
+
+
+
+  et al., 2011). It is now possible to replace the static visual          loading of remote data. It uses WebGL, the HTML5 Canvas and
+  media of traditional print publications, such as static fig-            Web Workers to push as much of the processing client-side as
+  ures or charts, with more dynamic, interactive 2D or 3D                 possible, thus minimizing the effect of network lag on its usage
+  visualizations1.                                                        and eliminating the need for browser plugins. BrainBrowser is an
+• Distribution: Online visualization tools can also be used               open-source project, meaning that its users can verify the code
+  as a means to distribute data, as researchers can use the               directly and even modify it to fit their needs.
+  tools to explore a remote dataset directly. BrainBrowser, for
+  example, was used to share the MACACC dataset, as will                  2. RELATED WORK
+  be discussed further in Section 4.1. TissueStack, which will            Early attempts at advanced web-based visualization required plu-
+  be discussed in Section 2, was used for remote visualiza-               gins of one form or another, as standard web technologies could
+  tion of the BigBrain dataset (Amunts et al., 2013) upon its             not provide the functionality and performance required for more
+  release.                                                                advanced applications. The Java Internet Viewer (JIV, Cocosco
+                                                                          and Evans, 2001) is an example of this type of solution. JIV could
+As will be discussed in Section 2, approaches to using the afore-         run as a standalone application or as a Java applet embedded in a
+mentioned web technologies for visualization can be broadly split         web page. JIV presented the user with three orthogonal slices of a
+into two categories. The first requires some back-end infrastruc-         MINC volume that could be navigated by manipulating a cursor
+ture to support a front-end client. This infrastructure will usually      on each of the slices.
+involve some processing of the data to be served, and might also             As more advanced web standards were proposed and imple-
+include some proxying or database support. The second runs                mented, many research groups began to show an interest in
+completely in the browser, requiring the back end to do noth-             exploiting the new robustness of the web platform for various
+ing more than serve static files. BrainBrowser takes the latter           forms of advanced visualization. Google Body (now Zygote body,
+approach for the following reasons:                                       Blume et al., 2011) was an early example of what had become
+                                                                          possible. Google Body renders several layers of a human body,
+1. Scalability: Both approaches require that the resources avail-         from muscle tissues to blood vessels, and allows layers to be
+   able on the server be capable of handling the user load at all         manipulated (e.g., by toggling their visibility or rendering them
+   times, but a fully front-end application puts a much lighter           transparently) to facilitate viewing.
+   load on those resources. For back-end infrastructure, growth              In the domain of neuroimaging, several tools have been devel-
+   of the user base necessitates an expansion of infrastructure           oped, each offering a different approach to the problem of visual-
+   resources to prevent the application from blocking. In a com-          ization. We present here a few examples that we believe exemplify
+   mercial setting, where new users bring increased revenues, this        the two approaches, back-end infrastructure and fully front-end,
+   type of expansion might not be considered problematic. In              that were discussed in Section 1:
+   a research setting, however, where the relationship between
+   users and revenue is not so direct, the cost of scaling becomes            ParaViewWeb (Jourdain et al., 2011) functions as a web
+   a major concern.                                                           client for ParaView2 , an open-source, server-side, parallel
+2. Network latency: If simple manipulations of a visualiza-                   data visualization framework. ParaView uses the Visualization
+   tion require continuous network traffic, the responsiveness                Toolkit3 (VTK) to generate visualizations on the server that
+   of the application will be bound by network latency. After                 the ParaViewWeb client interacts with through a web service
+   the initial load of the data to be visualized, most fully                  proxy.
+   front-end applications will no longer be dependent on the                  TissueStack4 (Lin et al., 2013) is an open-source application
+   network.                                                                   for visualizing MINC and NIfTI (Cox et al., 2004) files on the
+3. Flexibility: Being independent of any particular server allows             web. It is composed of an image server that tiles the volume to
+   a fully front-end application to pull its data from essentially            be visualized, a configuration database and an HTML5-based
+   anywhere. An application could allow users visualize data they             client for rendering the tiles.
+   have stored locally on their machines without being required               The X Toolkit5 (XTK, Hähn et al., 2014) is an open-source,
+   to upload them to a server. There is also nothing preventing               front-end JavaScript library that, unlike the previous two
+   fully front-end application from requesting data from a server             applications, does not require any back-end infrastructure.
+   with more elaborate infrastructure, thus allowing it to benefit            Images can be loaded directly into the browser and rendered
+   from both approaches.                                                      using WebGL. XTK supports volume rendering, as well as
+                                                                              cross-sectional slicing that can be navigated programmati-
+BrainBrowser has been developed to facilitate the exploitation                cally. It allows labels and colors to be mapped to a surface
+of modern web technologies for a wide range of purposes. It                   and can also perform lower-level geometric functions such as
+exposes an application programming interface (API) that is sim-               constructive solid geometry.
+ple enough to create a basic, interactive visualization in a few
+lines of code, while being deep enough to build more com-                 2 http://www.paraview.org/
+plex visualizations involving dynamic, on-demand fetching and             3 http://vtk.org/
+                                                                          4 https://github.com/NIF-au/TissueStack
+1 For example: http://onpub.cbs.mpg.de/role-brocas-area-language.html     5 http://goxtk.com
+
+
+
+
+Frontiers in Neuroinformatics                                   www.frontiersin.org                            January 2015 | Volume 8 | Article 89 | 3
+Sherif et al.                                                                                                                           BrainBrowser
+
+
+
+
+    Papaya6 , like XTK, is an open-source visualization tool that       responsive to the user while these heavy operations are being
+    operates completely in the browser. Unlike XTK, however,            performed.
+    Papaya is implemented as an independent application rather
+    than a library. It uses the 2D HTML5 Canvas API to imple-           3.2. BRAINBROWSER
+    ment an orthogonal viewer for NIfTI volumetric data that can        At its core, BrainBrowser is a JavaScript library that can be
+    be navigated using the keyboard or mouse. Users can manip-          inserted into an ordinary web page. It exposes an intuitive API
+    ulate the color mapping and thresholding of the intensity data      to the developer that is simple enough to begin visualizing a
+    being displayed.                                                    dataset in 5–10 lines of JavaScript code, while at the same time
+                                                                        being robust enough perform more complex color mapping,
+3. MATERIALS AND METHODS                                                thresholding or blending of datasets.
+3.1. CORE TECHNOLOGIES                                                      Much of this flexibility comes from the modular approach
+The HTML5 Canvas element is a high-performance, scriptable              taken in BrainBrowser’s design. The library has been built from
+2D drawing surface. Originally introduced by Apple in their Safari      several independent, interconnected layers. The BrainBrowser
+browser, it was eventually standardized by the Web Hypertext            core contains modules and functions related to functionality
+Application Working Group7 (WHATWG). The canvas element                 required by both the Surface Viewer and Volume Viewer: data
+provides both a 2D drawing context exposing an API for draw-            loading over the network or from the file system, color mapping
+ing basic 2D shapes and images, and a WebGL context exposing            of intensity data, event handling, data storage and various util-
+an API for high-performance 3D graphics. The key aspect of the          ity functions. Aside from this shared core, the Surface Viewer and
+2D API used by BrainBrowser is a set of functions for pixel-level       Volume Viewer each contain modules encapsulating more specific
+image processing and manipulations. The Volume Viewer makes             functionality.
+heavy use of this functionality to colorize and render volume slices
+to the screen.                                                          3.2.1. Surface viewer
+    WebGL is a low-level JavaScript graphics API that makes use         Rendering a model using the BrainBrowser Surface Viewer
+of the HTML5 Canvas element to provide web pages with access            requires only a few method calls (Listing 1), but behind these calls
+to the GPU of the client computer. WebGL provides a plat-               are several layers interacting to optimize performance (Figure 3):
+form for high-end, web-based 3D graphics programming without
+requiring any browser plugins. The API consists of control code         1. Model geometry data are loaded asynchronously over the net-
+written in JavaScript and GLSL shader code which runs directly             work using AJAX11, or from the file system using the FileReader
+on the GPU. WebGL is designed and maintained by the Khronos                JavaScript API12. Geometry data can be described in sev-
+Group8. The BrainBrowser Surface Viewer makes use of WebGL                 eral parts, depending on the data format, and these will be
+through the three.js JavaScript library.                                   parsed as different shapes in the Surface Viewer object model.
+    Three.js9 is a lightweight, open-source JavaScript library devel-      Different shapes can be manipulated either individually or
+oped to abstract away much of the complexity of using the WebGL            collectively (see item 4). Data can be in one of several sup-
+API directly. It implements a scene graph and allows one to                ported binary or text formats commonly used in neuroimag-
+manipulate the scene using intuitive constructs such as objects,           ing research: MNI OBJ13, Freesurfer binary and Freesurfer
+lights and cameras, rather than the more mathematical buffers              ASC14. The Surface Viewer also supports Wavefront OBJ15, as
+and matrices of the raw WebGL API. Three.js also provides intu-
+itive APIs for more complex operations such as ray casting. The
+BrainBrowser Surface Viewer was built using three.js.                     Listing 1 | BrainBrowser API code to create an instance of the
+    Web Workers are a recent standard adopted by the World                Surface Viewer and use it to load and display surface and
+Wide Web Consortium10 (W3C) and WHATWG providing an                       intensity data.
+API to run multiple JavaScript processing threads concurrently            BrainBrowser.SurfaceViewer.start("visualization-div",
+in the same browser. Prior to the introduction of Web Workers,            function(viewer) {
+one of the glaring weaknesses of JavaScript, when it came to                 viewer.render();
+building performance-intensive applications, was that it was                 viewer.loadColorMapFromURL("color-map.txt");
+                                                                              viewer.loadModelFromURL("brain.obj" {
+designed to be a single-threaded language. As such, all pro-                    complete: function() {
+cessing, rendering and event-handling code had to share the                        viewer.loadIntensityDataFromURL("cortical-
+same processing thread, even if running on a multi-core com-                       thickness.txt");
+                                                                                }
+puter. BrainBrowser makes extensive use of Web Workers to
+                                                                              });
+parse large data files in threads that are separate from the              });
+main UI and rendering threads, allowing the interface to remain
+
+6 https://github.com/rii-mango/Papaya/                                  11 https://developer.mozilla.org/en-US/docs/AJAX
+7 https://whatwg.org/                                                   12 https://developer.mozilla.org/en-US/docs/Web/API/FileReader
+8 http://www.khronos.org/                                               13 http://www.bic.mni.mcgill.ca/users/mishkin/mni_obj_format.pdf
+9 http://threejs.org/                                                   14 http://www.grahamwideman.com/gw/brain/fs/surfacefileformats.htm
+10 http://www.w3.org/                                                   15 http://en.wikipedia.org/wiki/Wavefront_.obj_file
+
+
+
+
+Frontiers in Neuroinformatics                               www.frontiersin.org                                January 2015 | Volume 8 | Article 89 | 4
+Sherif et al.                                                                                                                         BrainBrowser
+
+
+
+
+  FIGURE 3 | Surface Viewer workflow for loading surface geometry.
+
+
+
+   well as a custom JSON16-based format we developed to facil-              Listing 2 | The BrainBrowser Surface Viewer object model.
+   itate exporting surfaces out of external applications and into
+   the Surface Viewer. Supporting these formats directly, rather               {
+   than requiring they be converted beforehand, is what allows                     type: ("line" | "polygon"),
+                                                                                   name: "...",
+   the Surface Viewer to remain independent of any server-side                     vertices: [...],
+   infrastructure that would be necessary to preprocess them.                      normals: [...],
+2. Geometry data are sent to one of several Web Workers for                        colors: [...],
+   parsing. Each supported file type in the Surface Viewer is asso-                shapes: [
+                                                                                     {
+   ciated with a Web Worker that can be spawned to convert a                            name: "...",
+   given geometry description into the geometry object model                            indices: [...]
+   that the Surface Viewer uses internally (Listing 2). This archi-                  },
+                                                                                     {
+   tecture, in which one Web Worker is responsible for each data
+                                                                                        name: "...",
+   format, exposes a plugin framework that can be used to add                           indices: [...]
+   support for other data formats. Adding support for a new for-                     }
+   mat requires only the creation of a Web Worker script that can                  ]
+                                                                               }
+   convert the new format into the Surface Viewer object model.
+3. Once data are converted to the Surface Viewer object model,
+   a final step is required before the data can be displayed. One
+   of the weaknesses of the current WebGL specification is that              BufferGeometry. Otherwise, the vertex colors will be set to
+   indices describing how to build a mesh from individual ver-               gray, and the normals will be inferred from the geometry
+   tices are limited to 16 bits in size. This puts a limit of 65536          using available three.js utility methods. If several shapes were
+   vertices on indexed models in WebGL. The Surface Viewer                   described in the input data, each shape will get its own
+   is meant to handle datasets that fall well outside this limit             BufferGeometry object. This allows each shape to be manipu-
+   (the DTI sample on the BrainBrowser website17, for exam-                  lated individually (to apply different opacity levels to different
+   ple, contains 560674 vertices). To get around this problem,               parts, for example) or collectively (for rotating the model as a
+   BrainBrowser will send model data to a second Web Worker                  whole, for example).
+   that de-indexes the model data, essentially “unrolling” the
+   indices so that simply traversing the list of vertices is sufficient   If per-vertex intensity data are to be mapped to a loaded model,
+   to draw the model.                                                     three additional steps are taken (Figure 4):
+4. Once model data are prepared, they are passed to a high-
+   performance three.js BufferGeometry object to prepare them             1. A color map file is loaded. Similarly to the model data, this can
+   for display. The Surface Viewer supports displaying models                be either over the network or from the local file system. Since
+   made out of polygons (used for most surfaces) or lines (used              parsing color map files is an inexpensive operation, however,
+   for tractography data). If normals or vertex colors are provided          it is done directly in the main thread, rather than in a Web
+   in the model description, they will also be passed to the                 Worker.
+                                                                          2. The intensity data are loaded and parsed. Loading, as with
+16 https://developer.mozilla.org/en-US/docs/Glossary/JSON                    the other forms of data described, can occur over the net-
+17 https://brainbrowser.cbrain.mcgill.ca/surface-viewer#dti                  work or from the local file system. Parsing is done similarly to
+
+
+
+Frontiers in Neuroinformatics                                  www.frontiersin.org                           January 2015 | Volume 8 | Article 89 | 5
+Sherif et al.                                                                                                                            BrainBrowser
+
+
+
+
+   the geometry data, with separate Web Workers being imple-                 picking to dynamically load intensity data based on the selected
+   mented for each supported intensity data type. As with the                vertex.
+   geometry, this creates a plugin framework for intensity data                   The Surface Viewer also implements an annotation system that
+   support, making it straightforward to add support for new for-            is built on top of the picking mechanism. Annotations allow a
+   mats. Currently, plain-text, Freesurfer binary and Freesurfer             user to select a specific vertex and associate arbitrary data with
+   ASC intensity data formats are supported.                                 it: links, images, charts, text, etc. The annotation is rendered as a
+3. The color map is used to assign a color to the intensity                  colored dot on the model, and the user can later click on the dot
+   scalar associated with each vertex. The mapped colors are then            to retrieve the annotation. Internally, annotations are stored in a
+   applied to the BufferGeometry color buffer, which updates the             basic JavaScript object that can easily be converted to JSON for
+   model’s colors on a per-vertex basis.                                     persistent storage in a back-end database.
+
+Once a model is loaded and colorized, it can be manipulated in               3.2.2. Volume viewer
+several ways:                                                                Like the Surface Viewer, the Volume Viewer only requires a few
+                                                                             simple method calls to render a volume to the screen (Listing 3).
+                                                                             Behind the scenes, the following steps are taken (Figure 5):
+• Intuitive mouse and touch controls to rotate, pan and zoom.
+• A wireframe view that provides a clearer view of a model’s
+                                                                             1. A color map is loaded via the network or the local file sys-
+  geometry.
+                                                                                tem. Unlike the Surface Viewer, the Volume Viewer requires
+• Setting opacity on different parts of the model to reveal internal
+                                                                                the color map to be loaded beforehand as the volume is pure
+  elements.
+                                                                                scalar intensity data, without any explicit geometry, so there
+• Loaded intensity data can be manipulated in various ways
+                                                                                can be no visualization without a color map.
+  such as setting intensity thresholds for color mapping, blending
+                                                                             2. A volume is loaded over the network or from the local file
+  multiple datasets and programmatically modifying the dataset
+                                                                                system. This data will be loaded in two parts: (a) the raw inten-
+  itself.
+                                                                                sity data, (b) header information describing the dimensions of
+                                                                                the data and relationship between the voxel and world coordi-
+A key feature of the Surface Viewer is the picking mechanism that               nate spaces. Currently, only MINC data are directly supported,
+it implements. A simple method call that takes arbitrary x and y                but similarly to the Surface Viewer, volume preparation
+coordinates on the canvas (defaulting to the current mouse posi-
+tion) will return information about the vertex rendered closest to
+the given point. Returned data includes:                                       Listing 3 | BrainBrowser API code to create an instance of the
+                                                                               Volume Viewer and use it to load and display a MINC volume.
+• The index of the vertex in the list of vertices.                              BrainBrowser.VolumeViewer.start("visualization-div",
+• The x, y, and z coordinates of the selected vertex.                           function(viewer) {
+• The specific shape in the model that contains the selected                      viewer.render();
+                                                                                  viewer.loadDefaultColorMapFromURL("color-map.txt");
+  vertex.
+                                                                                  viewer.loadVolume({
+                                                                                    type: "minc",
+This picking mechanism makes it possible to implement more                          header_url: "volume.mnc.header",
+                                                                                    raw_data_url: "volume.mnc.raw"
+complex interactions with a rendered model based on the spe-                      });
+cific vertex with which a user is interacting. The MACACC dataset               });
+viewer that will be discussed in Section 4.1, for example, uses
+
+
+
+
+  FIGURE 4 | Surface Viewer workflow for coloring a surface based on per-vertex intensity data.
+
+
+
+
+Frontiers in Neuroinformatics                                    www.frontiersin.org                            January 2015 | Volume 8 | Article 89 | 6
+Sherif et al.                                                                                                                          BrainBrowser
+
+
+
+
+  FIGURE 5 | Volume Viewer workflow for loading a volume.
+
+
+
+   is done with a plugin architecture that makes it straightforward     more complex applications. To simplify the creation of such user
+   to add support for other formats.                                    interfaces when multiple volumes are loaded, the Volume Viewer
+3. The color map is used to assign a color to the intensity             also provides a templating mechanism that allows a single UI
+   scalar associated with each voxel. These colors are used the         template to be defined and repeatedly instantiated for multiple
+   create the image rendered for a given slice through the              volumes. The developer simply creates a template using standard
+   volume.                                                              HTML. When loading the volumes, the Volume Viewer fetches
+4. Other options can also be set, including setting the panel size      the template, instantiates the UI and then inserts the display
+   and creating an overlay view of the loaded models.                   canvases at the appropriate location.
+
+Once a volume is loaded, three orthogonal slices of the volume          4. RESULTS
+along the sagittal, transverse and coronal planes will be displayed     BrainBrowser has already been deployed for web-based visu-
+on three separate canvases. Each canvas also renders a cursor           alization on a variety of platforms. Here, we will dis-
+indicating the current display position of the volume along the         cuss three cases that we believe highlight BrainBrowser’s
+given plane. The view of the volume can be manipulated in the           strengths.
+following ways:
+                                                                        4.1. THE MACACC DATASET
+• Moving the cursor using mouse or touch controls updates the           The MACACC Dataset (Lerch et al., 2006) is a database of struc-
+  displayed orthogonal slices in real time.                             tural correlations across the cortex derived from the International
+• If the volume is four-dimensional, the time dimension can be          Consortium for Brain Mapping (Mazziotta et al., 2001). Cortical
+  manipulated programmatically.                                         thickness at each of 81924 3D locations were calculated using
+• Keyboard controls are also available for all dimensions to            the CLASP algorithm (Kim et al., 2005). The MACACC Dataset
+  facilitate more precise navigation through the volume.                contains maps for all cortical vertices for each of three vertex-
+• The current position of cursor in the in volume can be retrieved      wise morphological variables: thickness, area and volume. The
+  in both voxel and world coordinates. The Volume Viewer                total number of permutations encoded in the dataset is 81924
+  provides methods that perform the conversion automatically.           vertices × 9 blurring kernels × 3 morphological indices × 3
+• The distance in world coordinates between two points can be           statistical indices for a total of 6.3 million data maps, requiring
+  measured.                                                             over 1TB of storage space. The MACACC dataset presents an
+• Intensity thresholds can be set to focus on particular ranges.        ideal use case for BrainBrowser in that its size makes it extremely
+                                                                        inconvenient to distribute or to visualize using traditional, locally
+If more than one volume is loaded, then the following function-         installed tools. These tools would generally necessitate the trans-
+alities also become available:                                          fer of the entire dataset to the machine on which it is to be
+                                                                        visualized. BrainBrowser, on the other hand, makes it trivial
+                                                                        to explore this dataset in an intuitive manner. The MACACC
+• The volumes can be combined into an overlaid view for com-
+                                                                        Viewer18 (Figure 6) uses the picking mechanism described in
+  parison. The blending weights for each volume can be set to
+                                                                        Section 3.2.1 to fetch vertex information based on the point where
+  favor one or the other.
+                                                                        the user clicks on the screen. This vertex information is used
+• The cursors can be synchronized across volumes to facilitate
+                                                                        to make a network request for the correlation map associated
+  comparisons.
+                                                                        with the selected vertex and then use it to colorize the model.
+Any of these functionalities can be hooked into standard user
+interface callbacks for events such as clicks or text input to create   18 https://brainbrowser.cbrain.mcgill.ca/macacc-viewer
+
+
+
+
+Frontiers in Neuroinformatics                               www.frontiersin.org                               January 2015 | Volume 8 | Article 89 | 7
+Sherif et al.                                                                                                                            BrainBrowser
+
+
+
+
+  FIGURE 6 | The MACACC Viewer: A viewer built using the BrainBrowser Surface Viewer to visualize the MACACC dataset (Lerch et al., 2006).
+
+
+
+This dynamic fetching means that only the portion of the 1TB               1. Register data with CBRAIN. This can be done by either cre-
+MACACC dataset associated with the selected vertex (approxi-                  ating a new Data Provider or by uploading data to one that
+mately 455kB) is transferred over the network, thus minimizing                already exists.
+bandwidth usage and increasing accessibility.                              2. Visualize data as a preparatory quality control step before
+                                                                              submitting them to an HPC.
+4.2. CBRAIN                                                                3. Submit a job to an HPC through the web interface. This typ-
+CBRAIN (Sherif et al., 2014) is a distributed, collaborative, web-            ically involves selecting the processing tool one wishes to use
+based, grid computing platform developed at McGill University.                and the HPC on which to run the job.
+CBRAIN has been in active production since 2009 and currently              4. Once the job is complete, results are saved back to the user’s
+has over 250 users from 53 cities in 21 countries around the world.           account.
+CBRAIN is a complex system comprised of many interconnected                5. Visualize results as a means of ensuring their quality or other-
+components, but there are four components in particular that are              wise interpreting them.
+relevant to the discussion here:
+                                                                           Early in CBRAIN’s development, visualizing data for the sec-
+• Users interact with CBRAIN through a web inter-                          ond and final steps was found to be problematic. It would often
+  face that can be accessed through any modern web                         require downloading the data to visualize them locally. The Java
+  browser.                                                                 Image Viewer (JIV) was used for a time to allow users to view
+• Data are connected to CBRAIN through Data Providers, which               images online. Among other problems, the requirement that users
+  are essentially storage devices that might be at any controlled,         install a Java plugin on their machine was an issue for the reasons
+  secure, network-accessible location.                                     outlined in Section 1. BrainBrowser was an ideal solution in this
+• CBRAIN is connected to several High Performance                          situation as it could be integrated directly into the web-based UI
+  Computing Centers (HPCs) at several locations around the                 of the platform without requiring a plugin. The Volume Viewer
+  world.                                                                   has now completely replaced JIV for visualizing MINC files in
+• Installed on the HPCs are data-processing tools that researchers         CBRAIN, and the Surface Viewer is now used to visualize surface
+  use to analyze or process their data.                                    files produced by the CIVET processing pipeline (Ad-Dab’bagh
+                                                                           et al., 2006).
+The current production deployment of CBRAIN consists of 11
+HPCs in Canada, Germany and Korea. CBRAIN provides over                    4.3. LORIS
+100TB of storage on its central servers, and several external Data         LORIS (Das et al., 2011) is a web-based database system pro-
+Providers for specific projects or institutions are also registered        viding infrastructure to automate the flow of clinical data for
+with the system. A typical workflow for a CBRAIN user might                complex multi-site neuroimaging studies. Initially developed
+include the following steps:                                               to manage data for the NIH MRI Study of Normal Brain
+
+
+
+Frontiers in Neuroinformatics                                  www.frontiersin.org                              January 2015 | Volume 8 | Article 89 | 8
+Sherif et al.                                                                                                                                 BrainBrowser
+
+
+
+
+Table 1 | Feature comparison between BrainBrowser, XTK and Papaya.
+
+                  View surfaces      View volumes      Web workers    Picking     Annotations        Plugin data format support            Load local files
+
+BrainBrowser                                                                                                                                
+XTK                                                                                                                
+Papaya                                                                                                                                           
+
+
+
+
+Development (Evans, 2006), LORIS has since been adapted                   BrainBrowser operates completely in the browser, which sets it
+and implemented in numerous decentralized large-scale studies             apart from back-end infrastructure solutions like ParaViewWeb
+internationally, such as 1000BRAINS19 (Caspers et al., 2014,              and TissueStack. A comparison of BrainBrowser to XTK and
+Germany),        IBIS20 (USA),        NeuroDevNet21 (Canada),             Papaya, the two other fully front-end solutions that were dis-
+         22                         23
+GUSTO (Singapore) and NIHPD (USA).                                        cussed, is given in Table 1.
+   As an example of the type of data LORIS handles, the NIH                   BrainBrowser’s modular construction, and the fact that its
+MRI Study of Normal Brain Development (NIHPD) used LORIS                  source code is freely available, make it easily extensible and modi-
+to house and distribute 3TB of native and processed data for              fiable to suit the needs of its users. New data-parsing Web Workers
+over 2000 MRI acquisitions. Medical doctors visualized this data          can easily be added to BrainBrowser to allow it to support new
+throughout the project to assess the quality of incoming scans. As        file formats. This, in fact, ties into one of the major goals for
+with CBRAIN, visualization using traditional tools was problem-           the future of BrainBrowser: to continue building our open-source
+atic for users of LORIS, and like CBRAIN, JIV was used for a time         development community24so it can directly develop the features it
+as a solution that was imperfect for the reasons mentioned above.         requires, including support for new file formats.
+Currently, MINC volume files are visualized in LORIS using the                Moving forward, we would like to explore using BrainBrowser
+Volume Viewer, and the Surface Viewer is used to visualize any            to visualize larger datasets (the BigBrain dataset, for example) that
+compatible data that are stored in the system.                            are not as granular as the MACACC dataset but are too large
+                                                                          to be loaded directly into the browser. This would likely entail
+5. DISCUSSION                                                             connecting a BrainBrowser-based application to a server that per-
+The advent of big data in neurological research, and the new              forms more back-end processing of the data, as was discussed
+methodological approaches it necessitates, have lead to the devel-        in Section 1. There is also an enormous space for collabora-
+opment of large-scale, distributed platforms to facilitate its explo-     tive data exploration that has yet to be investigated. Using new
+ration. Modern web technologies such as HTML5 and WebGL,                  technologies such as Web Sockets25 or WebRTC26, it is possible
+have made it possible to create web-based tools that integrate            to create real-time collaborative environments that will facilitate
+seamlessly into these new environments. Conversely, newly avail-          the exploration of shared data in ways that have been impossible
+able technologies have opened doors to novel ways of using                until now.
+research data that were not previously possible. Interactive figures
+in online articles and online data exploration are two examples of        5.1. DATA SHARING
+such novel usage that were presented here.                                All source code for BrainBrowser is freely available on
+    BrainBrowser presents itself as a lightweight, flexible means to      GitHub27 under the GNU Affero General Public License v328.
+easily exploit modern web technologies for a variety of uses. A           Demonstrations of BrainBrowser functionality are available on
+simple visualizer with full interactivity and touch controls can          the BrainBrowser website29.
+be embedded in a web page with just 5–10 lines of JavaScript
+code. On the other hand, the robustness of BrainBrowser can be            ACKNOWLEDGMENT
+exploited to create a full visualization user interface with controls     This work has been funded by CANARIE, Canada’s Advanced
+to load intensity data, switch color mappings, set intensity thresh-      Research and Innovation Network30, and McGill University. In
+olds, etc. As shown in the MACACC Viewer example, even more               addition to the authors, we would like to thank BrainBrowser’s
+complex interactions can be built on top of BrainBrowser, with            open source development community for their contributions31.
+data being loaded interactively to allow for dynamic exploration          We would also like to thank Samir Das and Penelope Kostopoulos
+of very large datasets.                                                   for their help in determining feature requirements for the Volume
+    Compared to the other web visualization solutions presented           Viewer.
+in Section 2, BrainBrowser differentiates itself on several fronts.
+                                                                          24 https://github.com/aces/brainbrowser/graphs/contributors
+                                                                          25 https://developer.mozilla.org/en/docs/WebSockets
+19 http://www.fz-juelich.de/inm/inm-1/EN/Forschung/1000_Gehirne_Studie/   26 https://developer.mozilla.org/en-US/docs/Web/Guide/API/WebRTC
+1000_Gehirne_Studie_node.html                                             27 https://github.com/aces/brainbrowser
+20 http://www.ibis-network.org                                            28 http://www.gnu.org/licenses/agpl-3.0.html
+21 http://www.neurodevnet.ca                                              29 https://brainbrowser.cbrain.mcgill.ca
+22 http://www.gusto.sg                                                    30 http://www.canarie.ca
+23 http://pediatricmri.nih.gov/nihpd/info/index.html                      31 https://github.com/aces/brainbrowser/graphs/contributors
+
+
+
+
+Frontiers in Neuroinformatics                                  www.frontiersin.org                                   January 2015 | Volume 8 | Article 89 | 9
+Sherif et al.                                                                                                                                                      BrainBrowser
+
+
+
+
+REFERENCES                                                                                   effect classification. Neuroimage 27, 210–221. doi: 10.1016/j.neuroimage.2005.
+Ad-Dab’bagh, Y., Lyttelton, O., Muehlboeck, J. S., Lepage, C., Einarson, D.,                 03.036
+   Mok, K., et al. (2006). “The CIVET image-processing environment: a fully               Lerch, J. P., Worsley, K., Shaw, W. P., Greenstein, D. K., Lenroot, R. K., Giedd,
+   automated comprehensive pipeline for anatomical neuroimaging research,” in                J., et al. (2006). Mapping anatomical correlations across cerebral cortex
+   Proceedings of the 12th Annual Meeting of the Organization for Human Brain                (MACACC) using cortical thickness from mri. Neuroimage 31, 993–1003. doi:
+   Mapping (Florence), S45.                                                                  10.1016/j.neuroimage.2006.01.042
+Amunts, K., Lepage, C., Borgeat, L., Mohlberg, H., Dickscheid, T., Rousseau, M.-É.,       Lin, M. K., Nicolini, O., Waxenegger, H., Galloway, G. J., Ullmann, J. F., and Janke,
+   et al. (2013). BigBrain: an ultrahigh-resolution 3d human brain model. Science            A. L. (2013). Interpretation of medical imaging data with a mobile applica-
+   340, 1472–1475. doi: 10.1126/science.1235381                                              tion: a mobile digital imaging processing environment. Front. Neurol. 4:85. doi:
+Blume, A., Chun, W., Kogan, D., Kokkevis, V., Weber, N., Petterson, R. W., et al.            10.3389/fneur.2013.00085
+   (2011). “Google body: 3d human anatomy in the browser,” in ACM SIGGRAPH                Margulies, D. S., Böttger, J., Watanabe, A., and Gorgolewski, K. J. (2013).
+   2011 Talks (Vancouver), 19.                                                               Visualizing the human connectome. Neuroimage 80, 445–461. doi:
+Caspers, S., Moebus, S., Lux, S., Pundt, N., Schütz, H., Mühleisen, T. W., et al.            10.1016/j.neuroimage.2013.04.111
+   (2014). Studying variability in human brain aging in a population-based                Mazziotta, J., Toga, A., Evans, A., Fox, P., Lancaster, J., Zilles, K., et al. (2001). A
+   German cohortrationale and design of 1000BRAINS. Front. Aging Neurosci.                   probabilistic atlas and reference system for the human brain: international con-
+   6:149. doi: 10.3389/fnagi.2014.00149                                                      sortium for brain mapping (ICBM). Philos. Trans. R. Soc. Lond. Ser. B Biol. Sci.
+Cocosco, C. A., and Evans, A. C. (2001). “Java internet viewer: a WWW tool for               356, 1293–1322. doi: 10.1098/rstb.2001.0915
+   remote 3d medical image data visualization and comparison,” in Medical Image           Sherif, T., Rioux, P., Rousseau, M.-E., Kassis, N., Beck, N., Adalat, R., et al. (2014).
+   Computing and Computer-Assisted Intervention (Utrecht), 1415–1416.                        CBRAIN: a web-based, distributed computing platform for collaborative neu-
+Cox, R. W., Ashburner, J., Breman, H., Fissell, K., Haselgrove, C., Holmes,                  roimaging research. Front. Neuroinform. 8:54. doi: 10.3389/fninf.2014.00054
+   C. J., et al. (2004). “A (sort of) new image data format standard: NiFTI-              Vincent, R. D., Janke, A., Sled, J. G., Baghdadi, L., Neelin, P., and Evans, A. C.
+   1,” in 10th Annual Meeting of the Organization for Human Brain Mapping                    (2004). “MINC 2.0: a modality independent format for multidimensional
+   (Budapest), 13–17.                                                                        medical images,” in 10th Annual Meeting of the Organization for Human Brain
+Das, S., Zijdenbos, A. P., Harlap, J., Vins, D., and Evans, A. C. (2011). LORIS: a web-      Mapping (Budapest).
+   based data management system for multi-center studies. Front. Neuroinform.
+   5:37. doi: 10.3389/fninf.2011.00037                                                    Conflict of Interest Statement: The authors declare that the research was con-
+Evans, A. C. (2006). The NIH MRI study of normal brain development. Neuroimage            ducted in the absence of any commercial or financial relationships that could be
+   30, 184–202. doi: 10.1016/j.neuroimage.2005.09.068                                     construed as a potential conflict of interest.
+Hähn, D., Rannou, N., Ahtam, B., Grant, E., and Pienaar, R. (2014). “Neuroimaging
+   in the browser using the X Toolkit,” in Frontiers in Neuroinformatics Conference       Received: 08 October 2014; accepted: 17 December 2014; published online: 13 January
+   Abstract: 5th INCF Congress of Neuroinformatics (Munich).                              2015.
+Jomier, J., Jourdain, S., Ayachit, U., and Marion, C. (2011). “Remote visualization       Citation: Sherif T, Kassis N, Rousseau M-É, Adalat R and Evans AC (2015)
+   of large datasets with MIDAS and ParaViewWeb,” in Proceedings of the 16th              BrainBrowser: distributed, web-based neurological data visualization. Front.
+   International Conference on 3D Web Technology (Paris), 147–150.                        Neuroinform. 8:89. doi: 10.3389/fninf.2014.00089
+Jourdain, S., Ayachit, U., and Geveci, B. (2011). Paraviewweb, a web frame-               This article was submitted to the journal Frontiers in Neuroinformatics.
+   work for 3d visualization and data processing. Int. J. Comput. Inf. Syst.              Copyright © 2015 Sherif, Kassis, Rousseau, Adalat and Evans. This is an open-
+   Ind. Manage. Appl. 3, 870–877. Available online at: http://www.mirlabs.org/            access article distributed under the terms of the Creative Commons Attribution License
+   ijcisim/regular_papers_2011/Paper98.pdf                                                (CC BY). The use, distribution or reproduction in other forums is permitted, provided
+Kim, J. S., Singh, V., Lee, J. K., Lerch, J., Ad-Dab’bagh, Y., MacDonald,                 the original author(s) or licensor are credited and that the original publication in this
+   D., et al. (2005). Automated 3-d extraction and evaluation of the inner                journal is cited, in accordance with accepted academic practice. No use, distribution or
+   and outer cortical surfaces using a Laplacian map and partial volume                   reproduction is permitted which does not comply with these terms.
+
+
+
+
+Frontiers in Neuroinformatics                                               www.frontiersin.org                                       January 2015 | Volume 8 | Article 89 | 10
+

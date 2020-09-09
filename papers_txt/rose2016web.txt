@@ -1,0 +1,124 @@
+                          Web-based molecular graphics for large complexes
+
+      Alexander S. Rose2,*, Anthony R. Bradley1,2, Yana Valasatava2, Jose M. Duarte1,2, Andreas Prlić1,2, Peter W. Rose1,2
+
+                               1RCSB     Protein Data Bank, 2San Diego Supercomputer Center, UC San Diego
+
+
+
+
+Figure 1: Multi-scale visualization of the ~2.5 M atoms HIV-1 capsid structure (PDB ID 3J3Q, [Zhao et al. 2013]) in the NGL Viewer after
+loading from a ~13 MB gzipped MMTF file. Shown are visualizations with an increasing level of detail which are generated on-the-fly from
+   the same file. The more detailed visualizations are only created for parts of the whole structure to reduce visual clutter and allow fast
+ rendering. Left: molecular surface rendering of the whole capsid. Middle: secondary structure cartoon with a background silhouette of a
+                            hexametric subunit. Right: atom and bond display of two helices shown as cylinders.
+
+Abstract
+                                                                                        Interactive visualization of molecular structures is a widely used
+The interactive visualization of very large macromolecular                              tool in biological research. Displaying molecular structures on the
+complexes on the web is becoming a challenging problem as                               web makes them accessible to all scientists, educators, and
+experimental techniques advance at an unprecedented rate and                            students, not just to experts with access to dedicated networking,
+deliver structures of increasing size. We have tackled this problem                     hardware, and software. However, more effective ways are needed
+by introducing the binary and compressed Macromolecular                                 for transmitting the structure files, parsing and finally rendering
+Transmission Format (MMTF) to reduce network transfer and                               them in a browser. Driven by advancements in X-ray
+parsing time, and by developing NGL, a highly memory-efficient                          crystallography and especially in Cryo-EM, larger and larger
+and scalable WebGL-based viewer. MMTF offers over 75%                                   structures are submitted to the Protein Data Bank (PDB) archive
+compression over the standard mmCIF format, is over an order of                         [Berman et al. 2000; Rose et al. 2015]. The PDB archive is the
+magnitude faster to parse, and contains additional information                          primary source for information about the 3D structures of
+(e.g., bond information). NGL renders molecular complexes with                          proteins, nucleic acids, and complex assemblies. To address the
+millions of atoms interactively on desktop computers and                                challenges of the growing scale of structures submitted to PDB
+smartphones alike, making it a tool of choice for web-based                             (~10,000 per year), we updated the NGL Viewer [Rose and
+molecular visualization in research and education.                                      Hildebrand 2015] to provide scalable molecular graphics on the
+                                                                                        web. The viewer makes extensive use of modern browser features,
+Keywords: Molecular Visualization, WebGL, Custom Encoding,                              including WebGL and Web Workers to allow fast 3D graphics and
+Compression                                                                             numerical calculations. Further, it parses files in the
+                                                                                        Macromolecular Transmission Format (MMTF), our new binary
+Concepts: Human-centered computing → Visualization →                                    and compressed format for molecular structures. MMTF is a
+Visualization application domains → Scientific visualization                            binary format that is much faster to parse than existing text-based
+                                                                                        file formats for macromolecular data. Through bespoke
+1 Introduction                                                                          compression methods, the entire PDB archive can be stored in
+                                                                                        MMTF in less than 7GB.
+   *e-mail:asrose@ucsd.edu.
+Permission to make digital or hard copies of part or all of this work for               2 Methods
+personal or classroom use is granted without fee provided that copies are
+not made or distributed for profit or commercial advantage and that copies
+bear this notice and the full citation on the first page. Copyrights for third-         MMTF is a compact and extensible file format. Compression is
+party components of this work must be honored. For all other uses, contact              enhanced through columnar encoding and through three core
+the Owner/Author. Copyright is held by the owner/author(s).                             strategies. (1) Dictionary encoding is used to encode residue, bond
+Web3D '16, July 22-24, 2016, Anaheim , CA, USA                                          and atom information. (2) Delta and (3) run-length encoding
+ACM 978-1-4503-4428-9/16/07.                                                            strategies are used to compress data arrays, such as atomic
+http://dx.doi.org/10.1145/2945292.2945324                                               coordinates and other atomic properties. Further, recursive
+
+
+
+                                                                                  185
+indexing is used, when applicable, to pack arrays of 32-bit                   entire PDB in less than 7 GB, allowing a single web-server to
+integers into 8/16-bit integer arrays. The encoded MMTF data are              serve all data from RAM. This low latency server, coupled with
+then serialized using MessagePack (http://msgpack.org/), a                    the reduced individual file size and the increased parsing speed of
+popular format for extensible and efficient binary serialization.             the binary format has led to a greater than 20x speedup over
+The MMTF specification is available at http://mmtf.rcsb.org.                  mmCIF in downloading of PDB entries from sites across the
+                                                                              USA, Europe, and Asia.
+To enable molecular graphics that scale to large macromolecules,
+efficient memory management is crucial, especially on devices                 We have developed a memory efficient representation for
+with limited resources. We created a parser for MMTF and a data               molecular data in the NGL Viewer as well as a reference
+model for NGL that allows memory reuse and avoids duplicating                 implementation for decoding and parsing MMTF files in
+data. The NGL data model uses a flat, columnar layout with a                  JavaScript. There have been two core achievements. Compared to
+single JavaScript TypedArray [Khronos 2013] for each property                 mmCIF files, parsing of MMTF files is about 20–50 times faster,
+(e.g., atom coordinates, Figure 2). Reusable proxy objects (e.g.,             depending on browser, operating system, and hardware used.
+for atoms) are then used for property access and traversal of the             Further, the developments in the NGL data model and the use of
+structure hierarchy (Figure 2). Moreover, bitsets were added to               MMTF significantly reduce the peak memory consumption. On a
+allow storing arbitrary selections of atoms with minimal memory               2.6 GHz Intel Core i5 machine using Google Chrome 50 the
+use.                                                                          13.5 MB gzipped MMTF file of the currently largest structure in
+                                                                              the PDB, the HIV-1 Capsid with about 2.5 million atoms
+                                                                              (Figure 1), can be parsed into the NGL data model within 600 ms
+                                                                              while consuming 370 MB of memory. This is down from 14 s and
+                                                                              1.5 GB when parsing the corresponding 48.7 MB gzipped mmCIF
+                                                                              file. In our tests with open-source web-based viewers, including
+                                                                              JSmol (jsmol.sf.net), 3Dmol (3dmol.csb.pitt.edu), PV Viewer
+                                                                              (biasmv.github.io/pv), Molmil (gjbekker.github.io/molmil), iCn3D
+                                                                              (github.com/ncbi/icn3d), and others, the NGL Viewer was the
+                                                                              only viewer able to render that structure.
+
+                                                                              Molecular visualization is crucial part of biological research.
+                                                                              Profound advances in experimental techniques provide ever more
+                                                                              data on ever larger biological systems. Using our viewer such
+                                                                              systems can be interactively viewed and manipulated using a web-
+                                                                              browser, even on mobile devices.
+
+Figure 2: Schema of the flat, columnar data model used in NGL                 Acknowledgements
+to store molecular structures. Each property array of a store is a
+single Typed Array, for instance, the ‘xCoord’ property array                 This project was supported by the NCI of the NIH under award
+contains the x coordinates for all atoms of the structure. Special            number U01 CA198942.
+‘index’ and ‘offset’ property arrays allow traversing the structure
+hierarchy. As there are only a few types of residues and atoms in a           References
+structure, common properties are stored in corresponding ‘type’
+objects. For concise and convenient access, ‘proxy’ objects are               BERMAN, H. M., WESTBROOK, J., FENG, Z., GILLILAND, G.,
+available to get data from the ‘store’ and ‘type’ objects.                      BHAT, T. N., WEISSIG, H., SHINDYALOV, I. N., AND BOURNE, P.
+                                                                                E. 2000. The protein data bank. In Nucleic Acids Research.
+For rendering, WebGL is efficiently used by preparing the data                  28:235–242.
+such that the number of slow calls to the WebGL API does not
+grow with the size of the macromolecules. Spheres and cylinders               K HRONOS . 2013. Typed Array Specification. http://
+can be rendered efficiently as ray-casted impostors. Long running               www.khronos.org/registry/typedarray/specs/latest/. [Online;
+calculations (e.g., generating molecular surfaces, parsing files in             accessed 22.04.2016].
+text formats) are performed on separate Web Worker threads to
+leverage available CPUs and to not block the user interface.                  ROSE, A. S., AND HILDEBRAND, P. W. 2015. NGL Viewer: a web
+                                                                                application for molecular visualization. In Nucleic Acids
+The Viewer supports common molecular representations,                           Research 43:W576–9.
+including spacefill, ball & stick, cartoon and surfaces. It can parse
+and render volumetric data showing electron densities and                     ROSE, P. W., PRLIC, A., BI, C., BLUHM, W. F., CHRISTIE, C. H.,
+electrostatic potentials. Multi-model files and trajectories from               DUTTA, S., GREEN, R. K., GOODSELL, D. S., WESTBROOK, J.
+molecular dynamics simulations can be loaded and animated.                      D., WOO, J., YOUNG, J., ZARDECKI, C., BERMAN, H. M.,
+When rendering instances of biological assemblies and                           BOURNE, P. E., BURLEY, S. K. 2015. The RCSB Protein Data
+crystallographic unit cells, transformations are performed on the               Bank: views of structural biology for basic and applied research
+GPU to minimize memory usage. The viewer source code is open                    and education. In Nucleic Acids Research. 43:D345–56.
+and available at https://github.com/arose/ngl.
+                                                                              ZHAO, G., PERILLA, J. R., YUFENYUY, E. L., MENG, X., CHEN, B.,
+3 Results & Conclusions                                                         NING, J., AHN, J., GRONENBORN, A. M., SCHULTEN, K., AIKEN,
+                                                                                C., AND ZHANG, P. 2013. Mature HIV-1 capsid structure by
+The MMTF format can store the macromolecular data of the                        cryo-electron microscopy and all-atom molecular dynamics.
+                                                                                Nature 497:643–6.
+
+
+
+                                                                        186
+

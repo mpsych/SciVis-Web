@@ -1,0 +1,1357 @@
+               A Survey of GPU-Based Large-
+                 Scale Volume Visualization
+                  The Harvard community has made this
+               article openly available. Please share how
+               this access benefits you. Your story matters
+
+Citation              Beyer, Johanna, Markus Hadwiger, and Hanspeter Pfister. 2014.
+                      A Survey of GPU-Based Large-Scale Volume Visualization. In the
+                      Proceedings of The Eurographics Conference on Visualization
+                      (Eurovis 2014), Swansea, Wales, June 9-13, 2014.
+
+Citable link          http://nrs.harvard.edu/urn-3:HUL.InstRepos:21150340
+
+Terms of Use          This article was downloaded from Harvard University’s DASH
+                      repository, and is made available under the terms and conditions
+                      applicable to Open Access Policy Articles, as set forth at http://
+                      nrs.harvard.edu/urn-3:HUL.InstRepos:dash.current.terms-of-
+                      use#OAP
+Eurographics Conference on Visualization (EuroVis) (2014)                                                       STAR – State of The Art Report
+R. Borgo, R. Maciejewski, and I. Viola (Editors)
+
+
+
+
+   A Survey of GPU-Based Large-Scale Volume Visualization
+                                          Johanna Beyer1 , Markus Hadwiger2 , Hanspeter Pfister1
+
+                                                             1 Harvard University, USA
+                                       2 King   Abdullah University of Science and Technology, Saudi Arabia
+
+
+
+        Abstract
+
+        This survey gives an overview of the current state of the art in GPU techniques for interactive large-scale volume
+        visualization. Modern techniques in this field have brought about a sea change in how interactive visualization
+        and analysis of giga-, tera-, and petabytes of volume data can be enabled on GPUs. In addition to combining the
+        parallel processing power of GPUs with out-of-core methods and data streaming, a major enabler for interactivity
+        is making both the computational and the visualization effort proportional to the amount and resolution of data that
+        is actually visible on screen, i.e., “output-sensitive” algorithms and system designs. This leads to recent output-
+        sensitive approaches that are “ray-guided,” “visualization-driven,” or “display-aware.” In this survey, we focus on
+        these characteristics and propose a new categorization of GPU-based large-scale volume visualization techniques
+        based on the notions of actual output-resolution visibility and the current working set of volume bricks—the
+        current subset of data that is minimally required to produce an output image of the desired display resolution. For
+        our purposes here, we view parallel (distributed) visualization using clusters as an orthogonal set of techniques
+        that we do not discuss in detail but that can be used in conjunction with what we discuss in this survey.
+        Categories and Subject Descriptors (according to ACM CCS): I.3.6 [Computer Graphics]: Methodology and
+        Techniques—I.3.3 [Computer Graphics]: Picture/Image Generation—Display algorithms
+
+
+
+
+1. Introduction                                                               This trend of acquiring and computing more and more data
+                                                                              at a rapidly increasing pace (“Big Data”) will continue in
+Visualizing volumetric data plays a crucial role in scien-
+                                                                              the future [BCH12]. This naturally poses significant chal-
+tific visualization and is an important tool in many domain
+                                                                              lenges to interactive visualization and analysis. For exam-
+sciences such as medicine, biology and the life sciences,
+                                                                              ple, many established algorithms and frameworks for vol-
+physics, and engineering. The developments in GPU tech-
+                                                                              ume visualization do not scale well beyond a few giga-
+nology over the last two decades, and the resulting vast par-
+                                                                              bytes, and this problem cannot easily be solved by simply
+allel processing power, have enabled compute-intensive op-
+                                                                              adding more computing power or disk space. These chal-
+erations such as ray-casting of large volumes at interactive
+                                                                              lenges require research on novel techniques for data visual-
+rates. However, in order to deal with the ever-increasing res-
+                                                                              ization, processing, storage, and I/O that scale to extreme-
+olution and size of today’s volume data, it is crucial to use
+                                                                              scale data [MWY∗ 09, AAM∗ 11, BCH12].
+highly scalable visualization algorithms, data structures, and
+architectures in order to circumvent the restrictions imposed
+                                                                                 Today’s GPUs are very powerful parallel processors that
+by the limited amount of on-board GPU memory.
+                                                                              enable performing compute-intensive operations such as
+   Recent advances in high-resolution image and volume ac-                    ray-casting at interactive rates. However, the memory sizes
+quisition, as well as computational advances in simulation,                   available to GPUs are not increasing at the same rate as
+have led to an explosion of the amount of data that must be                   the amount of raw data. In recent years, several GPU-based
+visualized and analyzed. For example, high-throughput elec-                   methods have been developed that employ out-of-core meth-
+tron microscopy can produce volumes of scanned brain tis-                     ods and data streaming to enable the interactive visualiza-
+sue at a rate above 10-40 megapixels per second [BLK∗ 11],                    tion of giga-, tera-, and petabytes of volume data. The cru-
+with a pixel resolution of 3-5 nm. Such an acquisition pro-                   cial property that enables these methods to scale to extreme-
+cess produces almost a terabyte of raw data per day. For                      scale data is their output-sensitivity, i.e., that they make both
+the next couple of years it is predicted that new multi-                      the computational and the visualization effort proportional
+beam electron microscopes will further increase the data ac-                  to the amount of data that is actually visible on screen (i.e.,
+quisition rate by two orders of magnitude [Hel13, ML13].                      the output), instead of being proportional to the full amount
+
+c The Eurographics Association 2014.
+                          J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+of input data. In graphics, the focus of most early work on          techniques that can be used in combination with modern ray-
+output-sensitive algorithms was visibility determination of          guided, visualization-driven, and display-aware techniques
+geometry (e.g., [SO92, GKM93, ZMHH97]).                              as discussed here. Therefore, for more details on parallel vi-
+                                                                     sualization we refer the reader to previous surveys in this
+   An early work in output-sensitive visualization on GPUs
+                                                                     area [Wit98,BSS00,ZSJ∗ 05]. Nonetheless, where parallel or
+was dealing with 3D line integral convolution (LIC) volumes
+                                                                     distributed rendering methods do directly relate to our course
+of flow fields [FW08]. In the context of large-scale volume
+                                                                     of discussion we have added them to our exposition.
+visualization, output-sensitive approaches are often referred
+to as being ray-guided (e.g., [CNLE09, Eng11, FSK13]) or                We focus on volume rendering of regular grids and mostly
+visualization-driven (e.g., [HBJP12, BHAA∗ 13]). These are           review methods for scalar data and a single time step. How-
+the two terms that we will use most in this survey.                  ever, the principles of the discussed scalable methods are
+                                                                     general enough that they also apply to multi-variate, multi-
+   We use the term visualization-driven in a more general            modal, or time series data. For a more in-depth discussion
+and inclusive way, i.e., these methods are not necessarily           of the visualization and visual analysis of multi-faceted sci-
+bound to ray-casting (which is implied by “ray-guided”),             entific data we refer the reader to a recent comprehensive
+and they can encompass all computation and processing of             survey [KH13]. Other related recent surveys can be found
+data in addition to rendering. In principle, the visual out-         on the topics of compression for GPU-based volume render-
+put can “drive” the entire visualization pipeline—including          ing [RGG∗ 13], and massive model visualization [KMS∗ 06].
+on-demand processing of data—all the way back to the
+raw data acquisition stage [HBJP12,BHAA∗ 13]. This would
+then yield a fully visualization-driven pipeline. However, to        1.2. Survey Structure
+a large extent these terms can be used interchangeably.              This survey gives an overview of the current state of the
+                                                                     art in large-scale GPU volume visualization. Starting from
+   Another set of output-sensitive techniques are display-
+                                                                     the standard visualization pipeline in Section 2, we discuss
+aware multi-resolution approaches (e.g., [JST∗ 10, JJY∗ 11,
+                                                                     required modifications and extensions to this pipeline to
+HSB∗ 12]). The main focus of these techniques is usually
+                                                                     achieve scalability with respect to data size (see Figure 1).
+output-sensitive computation (such as image processing)
+rather than visualization, although they are also guided by             We continue by examining general scalability issues and
+the actual display resolution and therefore the visual output.       how they relate to and are used in volume visualization
+                                                                     (Section 3). This includes scalable data structures as well
+   Ray-guided and visualization-driven visualization tech-           as data layout and compression for efficient data access on
+niques are clearly inspired by earlier approaches for oc-            disk (Section 3.1). Next, we discuss different approaches
+clusion culling (e.g., [ZMHH97, LMK03]) and level of de-             for partitioning data and/or work to achieve scalable per-
+tail (e.g., [LHJ99, WWH∗ 00]). However, they have a much             formance, from potentially in-core domain decomposition to
+stronger emphasis on leveraging actual output-resolution             out-of-core approaches (Section 3.2), before describing dif-
+visibility for data management, caching, and streaming—in            ferent ways to reduce the computational load, focusing on
+addition to the traditional goals of faster rendering and anti-      on-demand processing, streaming, and in-situ visualization
+aliasing. Very importantly, actual visibility is determined on-      approaches (Section 3.3).
+the-fly during visualization, directly on the GPU.
+                                                                        Section 4 discusses recent advances in large-scale volume
+                                                                     rendering in depth, starting with a review of traditional GPU
+1.1. Survey Scope                                                    volume rendering techniques and their limitations.
+This survey focuses on major scalability properties of vol-             We focus on the characteristics of recent ray-guided,
+ume visualization techniques, reviews earlier GPU vol-               visualization-driven, and display-aware techniques (Sec-
+ume renderers, and then discusses modern ray-guided and              tion 4.1). To reflect and emphasize these recent advances,
+visualization-driven approaches and how they relate to and           we propose a new categorization of GPU-based large-scale
+extend the standard visualization pipeline (see Figure 1).           volume visualization techniques (Table 3) based on the no-
+Large-scale GPU volume rendering can be seen as being                tion of the active working set—the current subset of data
+in the intersection of volume visualization and high perfor-         that is minimally required to produce an output image of the
+mance computing. General introductions to these two topics           desired display resolution.
+are given in books on real-time volume graphics [EHK∗ 06]              We discuss methods for determining the working set, i.e.,
+and high performance visualization [BCH12], respectively.            culling (Section 4.2), GPU data structures for storing the
+   We mostly focus on techniques for stand-alone worksta-            working set (Section 4.3), and the actual ray-casting meth-
+tions with standard graphics hardware. We see the other              ods for rendering the working set (Section 4.4).
+core topics of high performance visualization (i.e., paral-             Finally, we review the major challenges and current limi-
+lel rendering on CPU/GPU clusters, distributed visualization         tations and give an outlook on future trends and open prob-
+frameworks, and remote rendering) as an orthogonal set of            lems in large-scale GPU volume visualization (Section 5).
+
+                                                                                                        c The Eurographics Association 2014.
+                                 J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+
+      Data                                     Processing                          Visualization                        Image
+
+                                         Data (Pre-)
+                                                           Filtering          Mapping            Rendering
+                                         Processing
+
+       Acquisition &                        Data         On-Demand          Acceleration         Ray-Guided
+        Simulation                     Representation    Processing          Metadata            Rendering           Scalability
+                                                                                                         on-demand
+
+Figure 1: The visualization pipeline for large-scale visualization. Data are generated on the left (either through acquisi-
+tion/measurement or through computation/simulation) and then pass through a sequence of stages that culminate in the desired
+output image. The related high-level aspects with respect to scalability of interactive volume rendering are highlighted in the
+bottom row. A ray-guided or visualization-driven approach can drive earlier pipeline stages so that only what is required by
+(visible in) the output image is actually loaded or computed. In a fully visualization-driven pipeline, this approach can be
+carried through from rendering (determining visibility) on the right all the way back to data acquisition/simulation on the left.
+
+
+2. Fundamentals                                                             lists these main issues and the general methods that are used
+                                                                            in large-scale visualization to handle them.
+We first introduce a few basic concepts and give a conceptual
+overview of the visualization pipeline with respect to large-               Acceleration techniques vs. data size. A common source of
+scale volume visualization.                                                 confusion when discussing techniques for scalable volume
+                                                                            rendering is the real goal of a specific optimization tech-
+                                                                            nique. While many of the techniques discussed in this sur-
+2.1. Basic Concepts                                                         vey were originally proposed as performance optimizations,
+Large-scale visualization. In the context of this survey,                   they can also be adapted to handle large data sizes. A well-
+large-scale visualization deals with volume data that do not                known example of this are octrees. While octrees are often
+completely fit into memory. In our case, the most important                 used in geometry rendering to speed up view frustum culling
+memory type is GPU on-board memory, but scalability must                    (via hierarchical/recursive culling), an important goal of us-
+be achieved throughout the entire memory hierarchy. Most                    ing octrees in volume rendering is to enable adaptive level
+importantly, large-scale volume data cannot be handled di-                  of detail [WWH∗ 00], in addition to enabling empty space
+rectly by volume visualization techniques that assume that                  skipping. This “dual” purpose of many scalable data struc-
+the entire volume is resident in memory in one piece.                       tures and algorithms is an important issue to keep in mind.
+
+   Bethel et al. [BCH12] (Chapter 2) define large data based                Output-sensitive algorithms. The original focus of output-
+on three criteria: They are too big to be processed: (1) in                 sensitive algorithms [SO92] was making their running time
+their entirety, (2) all at one time, and (3) exceed the avail-              dependent on the size of the output instead of the size of
+able memory. Scalable visualization methods and architec-                   the input. While this scalability in terms of running time is
+tures tackle either one or a combination of these criteria.                 of course also important in our context, for the work that
+                                                                            we discuss here, it is even more important to consider the
+Scalability. In contrast to parallel/distributed visualization,             dependence on output “data size” vs. input data size, using
+where a major focus is on strong vs. weak scaling [CPA∗ 10],                the concept of the working set as described above.
+we define scalability in terms of output-sensitivity [SO92].
+                                                                            Ray-guided and visualization-driven architectures. In
+Our focus are algorithms, approaches, and architectures that
+                                                                            line with the concepts outlined above, these types of archi-
+scale to large data by making the computation and visual-
+                                                                            tectures focus most of all on data management (processing,
+ization effort proportional to both the visible data on screen
+                                                                            streaming, caching) rather than only on rendering. While
+and the actual screen resolution. If the required size of the
+                                                                            ray-casting intrinsically could be called “ray-guided,” this
+working set of data is independent of the original data size,
+                                                                            by itself is not very meaningful. The difference to stan-
+we say that an approach is scalable in this sense.
+                                                                            dard ray-casting first arises from how and which data are
+Scalability issues. Based on the notion of large data, the                  streamed into GPU memory, i.e., ray-guided streaming of
+main scalability issues for volume rendering deal with ques-                volume data [CNLE09]. Again considering the working set,
+tions on how to represent data, how to split up the work                    a ray-guided approach determines the working set of volume
+and/or data to make it more tractable, and how to reduce the                bricks via ray-casting. That is, the working set comprises the
+amount of work and/or data that has to be handled. Table 1                  bricks that are intersected during ray traversal. It is common
+
+c The Eurographics Association 2014.
+                            J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+   scalability issues   scalable methods             section           3. Basic Scalability Techniques
+         data           multi-res. data structures   Sec. 3.1.2
+    representation      data layout, compression     Sec. 3.1.3        This section introduces the main considerations and tech-
+      work/data         in-core/out-of-core          Sec. 3.2.2        niques for designing scalable volume visualization archi-
+     partitioning       parallel/distributed         Sec. 3.2.3        tectures in general terms. In real-world applications, these
+                        pre-processing               Sec. 3.3.1        strategies for handling and rendering large data often have
+      work/data         on-demand processing         Sec. 3.3.2        to be combined to achieve interactive performance and high-
+      reduction         streaming                    Sec. 3.3.3        quality images.
+                        in-situ visualization        Sec. 3.3.4
+                        query-based visualization    Sec. 3.3.5          For future ultra-scale visualization and exa-scale comput-
+                                                                       ing [ALN∗ 08,SBH∗ 08,MWY∗ 09,AAM∗ 11,Mor12] it is es-
+Table 1: Scalability considerations in large-scale volume              sential that each step of the visualization pipeline is fully
+visualization. Scalability issues, the corresponding methods           scalable.
+to tackle them, and where they are covered in this survey.
+
+                                                                       3.1. Data Representation and Storage
+to determine the desired level of detail, i.e., the (locally) re-
+                                                                       Efficient data representation is a key requirement for scal-
+quired volume resolution, during ray-casting as well.
+                                                                       able volume rendering. Scalable data structures should be
+   In this way, data streaming is guided by the actual vis-            compact in memory (and disk storage), while still being ef-
+ibility of data in the output image. This is in contrast to            ficient to use and modify. Table 2 lists common related data
+the approximate/conservative visibility obtained by all com-           structures and their scalability aspects. Additional GPU rep-
+mon occlusion culling approaches. As described in the intro-           resentations of these data structures, as they are used for ren-
+duction, visualization-driven architectures generalize these           dering, are discussed in Section 4.4.
+concepts further to ultimately drive the entire visualization
+pipeline by actual on-screen visibility [HBJP12,BHAA∗ 13].             3.1.1. Bricking
+                                                                       Bricking is an object space decomposition method that sub-
+2.2. Large-Scale Visualization Pipeline                                divides the volume into smaller, box-shaped sub-volumes,
+                                                                       or bricks. Commonly, all bricks have the same size in vox-
+A common abstraction used by visualization frameworks is
+                                                                       els (e.g., 323 or 2563 voxels per brick). Volumes that are not
+the visualization pipeline [Mor13]. In essence, the visualiza-
+                                                                       a multiple of the basic brick size are padded accordingly.
+tion pipeline is a data flow network where nodes or mod-
+                                                                       Bricking facilitates out-of-core approaches because individ-
+ules are connected in a directed graph that depicts the data
+                                                                       ual bricks can be loaded and rendered as required, without
+flow throughout the system (see Figure 1). After data ac-
+                                                                       having to load/stream the volume in its entirety.
+quisition or generation through computation/simulation, the
+first stage usually consists of some kind of data processing,             Bricked data usually require special handling of brick
+which can include many sub-tasks from data pre-processing              boundaries. Operations where neighboring voxels are re-
+(e.g., computing a multi-resolution representation) to filter-         quired (e.g., GPU texture filtering, gradients) usually return
+ing. The second half of the pipeline comprises the actual vi-          incorrect results at brick boundaries, because the neighbor-
+sualization, including visualization mapping and rendering.            ing voxels are not readily available. The correct voxels can
+                                                                       be fetched from the neighboring bricks [Lju06a], which is
+   For large-scale rendering, all the stages in this pipeline
+                                                                       costly. More commonly, so-called ghost voxels [ILC10] are
+have to be scalable (i.e., in our context: output-sensitive), or
+                                                                       employed, which are duplicated voxels at the brick bound-
+they will become the bottleneck for the entire application.
+                                                                       aries that enable straightforward, correct filtering. The use of
+The bottom part of Figure 1 shows the main techniques em-
+                                                                       ghost voxels is the standard approach in most bricked ray-
+ployed by state-of-the-art visualization-driven pipelines to
+                                                                       casters [BHWB07, FK10]. Ghost voxels are usually stored
+achieve this scalability: Multi-resolution and compact data
+                                                                       with each brick on disk, but they can also be computed on-
+representations, on-demand processing based on the visible
+                                                                       the-fly in a streaming fashion [ILC10].
+subset currently in view, acceleration data (e.g., for faster ray
+traversal or empty space skipping), and ray-guided rendering              The recent OpenGL extension for virtual texturing
+with dynamic ray traversal.                                            (GL_ARB_sparse_texture) includes hardware support
+                                                                       for texture filtering across brick boundaries and thus allevi-
+   Table 1 gives an overview of the most important scalabil-
+                                                                       ates the need for ghost voxels.
+ity aspects of large-scale visualization frameworks that we
+will use later. Actual scalability also depends on how dy-                Choosing the optimal brick size depends on several crite-
+namically and accurately the working set is determined, how            ria and has been studied in the literature [HBJP12, FSK13].
+volumes are represented, and how ray traversal is performed.           Small bricks support fine-grained culling, which results in
+We discuss individual visualization methods in Section 4.              smaller working sets. However, the ghost voxel overhead
+
+                                                                                                           c The Eurographics Association 2014.
+                                 J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+   Data Structure                        Acceleration                        Out-of-Core                             Multi-Resolution
+   mipmaps                               no [except level of detail]         clipmaps [TMJ98]                        yes
+   octrees / kd-trees                    hierarchical traversal/culling      working set (subtree)                   yes
+   uniform grids/bricking                (linear) culling of bricks          working set (bricks from grid)          no
+   hierarchical grids/bricking           (hierarchical) culling of bricks    working set (bricks from hierarchy)     yes
+Table 2: Scalable data structures for volume visualization. Our categorization is based on their support for acceleration
+(skipping, culling), out-of-core processing/rendering, and support for multi-resolution rendering (i.e., adaptive level of detail).
+
+
+
+grows for smaller bricks, and the total number of bricks in-                Mipmaps are supported by virtually all GPU texture units.
+creases as well. The latter makes a multi-pass rendering ap-                Clipmaps [TMJ98] are virtualized mipmaps of arbitrary size.
+proach where each brick is rendered individually infeasible.                They assume a moving window (like in terrain rendering)
+                                                                            that looks at a small sub-rectangle of the data and use a
+   Typically, traditional multi-pass out-of-core volume ren-
+                                                                            toroidal updating scheme for texels in the current view.
+derers use relatively large bricks (e.g., 1283 or 2563 ) to re-
+duce the number of required render passes. In contrast, mod-                Hierarchical grids with bricking. Another type of multi-
+ern single-pass ray-casters use smaller bricks (e.g., 323 ), or             resolution pyramids are hierarchical grids where each reso-
+a hybrid approach where small bricks are used for render-                   lution level of the data is bricked individually. These grids
+ing and larger bricks are used for storage on disk [HBJP12,                 have become a powerful alternative to octrees in recent ray-
+FSK13]. For 2D data acquisition modalities such as mi-                      guided volume visualization approaches [HBJP12, FSK13].
+croscopy, hybrid 2D/3D tiling/bricking strategies have also                 The basic approach can be viewed as bricking each level of a
+been employed successfully, for example via on-demand                       mipmap individually. However, more flexible systems do not
+computation of 3D bricks from pre-computed 2D mipmap                        use hardware mipmaps and therefore allow varying down-
+tiles during visualization [HBJP12, BHAA∗ 13].                              sampling ratios between resolution levels [HBJP12]—e.g.,
+                                                                            for anisotropic data—which is not possible with mipmaps.
+3.1.2. Multi-Resolution Hierarchies                                            Since there is no tree structure in such a grid type, no
+One of the main benefits of multi-resolution hierarchies for                tree traversal is necessary during rendering. Rather, the
+rendering large data is that they allow sampling the data from              entire grid hierarchy is viewed as a huge virtual address
+a resolution level that is adapted to the current screen reso-              space (a virtual texture), where any voxel corresponding
+lution or desired level of detail. This reduces the amount of               to data of any resolution can be accessed directly via ad-
+data to be accessed and also avoids aliasing artifacts due to               dress translation from virtual to physical addresses [vW09,
+undersampling.                                                              BHL∗ 11, OVS12]. On GPUs, this address translation can
+                                                                            be performed via GPU “page tables,” which is also possi-
+Trees (octrees, kd-trees). Octrees [WWH∗ 00, Kno06] and                     ble in a multi-level way for extremely large data [HBJP12]
+kd-trees [FCS∗ 10] are very common 3D multi-resolution                      (see Section 4.4.1). As in the case of bricking with uni-
+data structures for direct volume rendering. They allow                     form grids, interpolation between bricks has to be handled
+efficient traversal and directly support hierarchical empty                 carefully. Especially transitions between different resolu-
+space skipping. Traditional tree-based volume renderers em-                 tion levels can introduce visual artifacts, and several meth-
+ploy a multi-pass rendering approach where one brick (one                   ods have been introduced that deal with correct interpola-
+tree node) is rendered per rendering pass. Despite the hi-                  tion [Lju06a, Lju06b, BHMF08].
+erarchical nature of these data structures, many early ap-
+                                                                            Wavelet representations. Muraki [Mur93] first introduced
+proaches assume that the entire volume fits into mem-
+                                                                            wavelet transforms for volume rendering. Subsequent meth-
+ory [LHJ99, WWH∗ 00, BNS01]. Modern GPU approaches
+                                                                            ods such as Guthe et al. [GGSe∗ 02, GS04] compute a hier-
+support traversing octrees directly on the GPU [GMG08,
+                                                                            archical wavelet representation in a pre-process and decom-
+CNLE09, CN09, RTW13], which is usually accomplished
+                                                                            press the bricks required for rendering
+via standard traversal algorithms from the ray-tracing litera-
+ture [AW87, FS05, HSHH07, PGS∗ 07, HL09].                                   Other representations. Younesy et al. [YMC06] have pro-
+                                                                            posed improving the visual quality of multi-resolution vol-
+   In recent years, sparse voxel octrees (SVOs) have gained a
+                                                                            ume rendering by approximating the voxel data distribution
+lot of attention in the graphics and gaming industry [LK10a,
+                                                                            by its mean and variance at each level of detail. The recently
+LK10b]. Several methods for rendering large and complex
+                                                                            introduced sparse pdf maps represent the data distribu-
+voxelized 3D models use SVO data structures for efficient
+                                                                            tion more accurately, allowing for the accurate, anti-aliased
+rendering [GM05, R0̈9, HN12, Mus13].
+                                                                            evaluation of non-linear image operators on gigapixel im-
+Mipmaps are a standard multi-resolution pyramid repre-                      ages [HSB∗ 12]. The corresponding data structure is very
+sentation that is very common in texture mapping [Wil83].                   similar to standard mipmaps in terms of storage and access.
+
+c The Eurographics Association 2014.
+                          J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+3.1.3. Data Layout and Compression                                   3.2.2. Out-Of-Core Techniques
+Data layout. To efficiently access data on disk, data lay-           Unless when dealing with data that is small enough to fit into
+out and access are often optimized. In general, reading              memory (“in core”) in its entirety, one always has to parti-
+small bits of data at randomly scattered positions is a lot          tion the data and/or computation in a way that makes it pos-
+more inefficient than reading larger chunks in a continu-            sible to process subsets of the data independently. This en-
+ous layout. Therefore, locality-preserving data access pat-          ables out-of-core processing and can be applied at all stages
+terns such as space filling curves, e.g., Morton (z-) or-            of the visualization pipeline [SCC∗ 02, KMS∗ 06]. Different
+der [Mor66] are often used in time-critical visualization            levels of out-of-core processing exist, depending on where
+frameworks [SSJ∗ 11]. A nice feature of the Morton/z-order           the computation is performed and where the data is residing
+curve is that by adjusting the sampling stride along the curve,      (either on the GPU, CPU, hard-disk, or network storage).
+samples can be restricted to certain resolution levels. Pas-
+                                                                        Out-of-core methods include algorithms that focus
+cucci and Frank [PF02] describe a system for progressive
+                                                                     on accessing [PF02] and prefetching [CKS03] data,
+data access that streams in missing data points for higher
+                                                                     creating on-the-fly ghost data for bricked representa-
+resolutions. With the most recent solid state drives (SSDs),
+                                                                     tions [ILC10], and methods for computing multi-resolution
+however, trade-offs might be different in practice [FSK13].
+                                                                     hierarchies [HBJP12] or other processing tasks such as
+Data compression. Another major related field is data com-           segmentation [FK05], PDE solvers [SSJ∗ 11], image reg-
+pression, for disk storage as well as for the later stages of        istration and alignment [JST∗ 10], or level set computa-
+the visualization pipeline. We refer to the recent compre-           tion [LKHW04].
+hensive survey by Rodriguez et al. [RGG∗ 13] for an in-
+                                                                       Silva et al. [SCC∗ 02] give a comprehensive overview of
+depth discussion of the literature on volume compression
+                                                                     out-of-core methods for visualization and graphics.
+and compression-domain volume rendering.
+
+                                                                     3.2.3. Parallel and Distributed Rendering
+3.2. Work/Data Partitioning                                          High-performance visualization often depends on dis-
+A crucial technique for handling large data is to partition or       tributed approaches that split the rendering of a data set
+decompose data into smaller parts (e.g., sub-volumes). This          between several nodes of a cluster. The difference can be
+is essentially a divide and conquer strategy, i.e., breaking         defined such that parallel visualization approaches run on
+down the problem into several sub-problems until they be-            a single large parallel platform, whereas distributed ap-
+come easier to solve. Partitioning the data and/or work can          proaches run on a heterogeneous network of computers.
+alleviate memory constraints, complexity, and allow paral-           Molnar et al. [MCE∗ 94] propose a classification of paral-
+lelization of the computational task. In the context of visual-      lel renderers into sort-first, sort-middle, and sort-last. In the
+ization, this includes ideas like domain decomposition (i.e.,        context of large data volume rendering, sort-last approaches
+object-space and image-space decompositions), but also en-           are very popular. In this context, this term refers to brick-
+tails parallel and distributed visualization approaches.             ing the data and making each node responsible for rendering
+                                                                     one or several bricks before final image compositing. In con-
+                                                                     trast, sort-first approaches subdivide the viewport and assign
+3.2.1. Domain Decompositions                                         render nodes to individual image tiles. Neumann [Neu94]
+Object-space (data domain) decomposition is usu-                     examines the communication costs for different parallel vol-
+ally done by using bricking with or without a multi-                 ume rendering algorithms.
+resolution representation, as described in Sections 3.1.1               Conceptually, all or any parts of the visualization pipeline
+and 3.1.2, respectively. Object-space decompositions are             can be run as a distributed or parallel system. Recent de-
+view-independent and facilitate scalability with respect to          velopments in this field are promising trends towards exa-
+data size by storing and handling data subsets separately.           scale visualization. However, covering the plethora of dis-
+   Image-space (image domain) decomposition subdivides               tributed and parallel volume visualization approaches is out
+the output image plane (the viewport) and renders the result-        of scope of this survey. The interested reader is referred
+ing image tiles independently. A basic example of this ap-           to [Wit98, BSS00, ZSJ∗ 05] and [BCH12] (Chapter 3) for in-
+proach is ray-casting (which is an image-order approach),            depth surveys on this topic.
+where conceptually each pixel is processed independently.
+In practice, several rays (e.g., a rectangular image tile) are
+                                                                     3.3. Work/Data Reduction
+processed together in some sense. For example, rendering
+each image tile in a single rendering pass, or assigning each        Reducing the amount of data that has to be processed or ren-
+tile to a different rendering node. Another example is ren-          dered is a major strategy for dealing with large data. Tech-
+dering on a large display wall, where each individual screen         niques for data reduction cover a broad scope, ranging from
+is assigned to a different rendering node.                           multi-resolution data representations and sub-sampling to
+
+                                                                                                         c The Eurographics Association 2014.
+                                 J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+more advanced filtering and abstraction techniques. A dis-                  ization frameworks include the dataflow visualization sys-
+tinction has to be made between data reduction for storage                  tem presented by Vo et al. [VOS∗ 10], which is built on top
+(e.g., compression) that tries to reduce disk or in-memory                  of VTK and implements a push and pull model.
+size, and data reduction for rendering. The latter encom-
+passes visualization-driven and display-aware rendering ap-                 3.3.4. In-Situ Visualization
+proaches as well as more general methods such as on-
+demand processing and query-based visualization.                            Traditionally, visualization is performed after all data have
+                                                                            been generated—either by measurement or simulation—and
+                                                                            have been written to disk. In-situ visualization, on the other
+3.3.1. Pre-Processing
+                                                                            hand, runs simultaneously to the on-going simulation (e.g.,
+Running computationally expensive or time-consuming                         on the same supercomputer or cluster: in situ—in place),
+computations as a pre-process to compute acceleration meta-                 with the aim of reducing the amount of data that needs to
+data or pre-cache data can often dramatically reduce the                    be transferred and stored on disk [BCH12] (Chapter 9).
+computation costs during rendering. Typical examples in-
+                                                                               To avoid slowing down the primary simulation, in-transit
+clude pre-computing a multi-resolution hierarchy of the data
+                                                                            visualization accesses only “staging” nodes of a simulation
+that is used to reduce the amount of data needed for ren-
+                                                                            cluster. The goal of these nodes is to hide the latency of disk
+dering. On the other hand, processing data interactively dur-
+                                                                            storage from the main simulation by handling data buffering
+ing rendering can reduce the required disk space [BCH12]
+                                                                            and I/O [MOM∗ 11].
+(Chapter 9), and enables on-demand processing, which in
+turn can reduce the amount of data that needs processing.                      In-situ and in-transit visualization have been identi-
+                                                                            fied as being crucial for future extreme-scale comput-
+3.3.2. On-Demand Processing                                                 ing [MWY∗ 09, AAM∗ 11, KAL∗ 11, Mor12]. Furthermore,
+                                                                            when the visualization process is tightly coupled or inte-
+On-demand strategies determine at run time which parts                      grated into the simulation, these approaches can be lever-
+of the data need to be processed, thereby eliminating pre-                  aged for computational steering, where simulation pa-
+processing times and limiting the amount of data that needs                 rameters are changed based on the visualization [PJ95,
+to be handled. For example, ray-guided and visualization-                   TTRU∗ 06]. Yu et al. [YWG∗ 10] present a complete case
+driven volume rendering systems only request volume bricks                  study of in-situ visualization for a petascale combustion sim-
+to be loaded that are necessary for rendering the current                   ulation. Tikhonova et al. [TYC∗ 11] take a different approach
+view [CNLE09, HBJP12, FSK13]. Data that is not visible is                   by generating a compact intermediate representation of large
+never rendered, processed, or even loaded from disk.                        volume data that enables fast approximate rendering for pre-
+   Other examples for on-the-fly processing for volume vi-                  view and in-situ setups.
+sualization target interactive filtering and segmentation. For
+example, Jeong et al. [JBH∗ 09] have presented a system                     3.3.5. Query-based Visualization
+where they perform on-the-fly noise removal and edge en-
+                                                                            Query-driven visualization uses selection as the main means
+hancement during volume rendering only for the currently
+                                                                            to reducing the amount of data that needs to be pro-
+visible part of the volume. Additionally, they perform an
+                                                                            cessed [BCH12] (Chapter 7). Prominent techniques are dy-
+interactive active-ribbon segmentation on a dynamically se-
+                                                                            namic queries [AWS92], high-dimensional brushing and
+lected subset of the data.
+                                                                            linking [MW95], and interactive visual queries [DKR97].
+                                                                            Shneiderman [Shn94] gives an introduction to dynamic
+3.3.3. Streaming                                                            queries for visual analysis and information seeking.
+In streaming approaches, data are processed as they become                     The DEX framework [SSWB05] focuses on query-driven
+available (i.e., are streamed in). Streaming techniques are                 scientific visualization of large data sets using bitmap index-
+closely related to on-demand processing. However, where                     ing to quickly query data. Recently, approaches for query-
+the latter usually consists of a pull model (i.e., data is re-              based volume visualization have been introduced in the con-
+quested by a process), streaming can be a pull or a push                    text of neuroscience [BvG∗ 09, BAaK∗ 13], with the goal to
+model (i.e., new data is pushed to the next processing step).               analyze the connectivity between individual neurons in elec-
+   Streaming also facilitates circumventing the need for the                tron microscopy volumes. The ConnectomeExplorer frame-
+entire data set to be available before the visualization starts             work [BAaK∗ 13] implements visual queries on top of a
+and allows rendering of incomplete data [SCC∗ 02]. Had-                     large-scale, visualization-driven system.
+wiger et al. [HBJP12] have described a system for streaming
+extreme-scale electron microscopy data for interactive visu-
+                                                                            4. Scalable Volume Rendering Techniques
+alization. This system has later been extended to include on-
+the-fly registration and multi-volume visualization of seg-                 In this section we categorize and discuss the individual liter-
+mented data [BHAA∗ 13]. Further streaming-based visual-                     ature in GPU-based large-scale volume rendering. We start
+
+c The Eurographics Association 2014.
+                         J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+ working set                                                           basic culling                               ray-guided /
+                            full volume
+ determination                                                    (global, view frustum)                       visualization-driven
+                        linear (non-bricked)         single-resolution grid            octree                         octree
+                           volume storage            [HSSB05] [BHWB07]           [LHJ99] [WWH∗ 00]                  [GMG08]‡
+ volume data         [CN93] [CCF94] [WE98]                                        [GGSe∗ 02] [GS04]            [CNLE09] [Eng11]
+ representation        [RSEB∗ 00] [HBH03]               grid with octree         [PHKH04] [HFK05]                    [RTW13]
+                      [LMK03]† [RGW∗ 03]                    per brick                  kd-tree
+                         [KW03] [SSKE05]                     [RV06]                    [FK10]                  multi-resolution grid
+                          [BG05] [MHS08]                                                                      [HBJP12] [BAaK∗ 13]
+                       [KGB∗ 09]† [MRH10]                                      multi-resolution grid                 [FSK13]
+                                                                                [Lju06a] [BHMF08]
+                                                                                     [JBH∗ 09]
+                          texture slicing                   CPU octree traversal (multi-pass)                  GPU octree traversal
+                     [CN93] [CCF94] [WE98]                   [LHJ99] [WWH∗ 00] [GGSe∗ 02]                         (single-pass)
+                       [RSEB∗ 00] [HBH03]                  [GS04] [PHKH04] [HFK05] [RV06]                          [GMG08]‡
+ rendering                  [LMK03]†                        CPU kd-tree traversal (multi-pass)                  [CNLE09] [Eng11]
+ (ray traversal)                                                         [FK10]                                     [RTW13]
+                     non-bricked ray-casting
+                          (multi-pass)                             bricked/virtual texture                  multi-level virtual texture
+                       [RGW∗ 03] [KW03]                           ray-casting (single-pass)                 ray-casting (single-pass)
+                          (single-pass)                        [HSSB05] [Lju06a] [BHWB07]                    [HBJP12] [BAaK∗ 13]
+                   [SSKE05] [BG05] [MHS08]                          [BHMF08] [JBH∗ 09]                               [FSK13]
+                      [KGB∗ 09]† [MRH10]
+   scalability                 low                                        medium                                          high
+Table 3: Categorization of GPU-based volume visualization techniques based on the type of working set determination mech-
+anism and the resulting scalability in terms of data size, as well as according to the volume data representation employed,
+and the actual rendering technique (type of ray traversal; except in the case of texture slicing). † [LMK03, KGB∗ 09] perform
+culling for empty space skipping, but store the entire volume in linear (non-bricked) form. ‡ [GMG08] is not fully ray-guided,
+but utilizes interleaved occlusion queries with similar goals (see the text).
+
+
+
+with an overview of “traditional” GPU-based volume ren-             and “modern” ray-guided approaches (corresponding to
+dering techniques, before we go into details on “modern”            “high” scalability in Table 3).
+ray-guided and visualization-driven techniques.
+                                                                       A key feature of modern ray-guided and visualization-
+Categorization (Table 3). We categorize GPU-based vol-              driven volume renderers is that they make full use of re-
+ume rendering approaches with respect to their scalability          cent developments in GPU programmability. They usually
+properties by using the central notion of the working set—          include a read-back mechanism to update the current work-
+the subset of volume bricks that is required for rendering a        ing set, and traverse a multi-resolution hierarchy dynami-
+given view. Using the concept of working set, our catego-           cally on the GPU. This flexibility was not possible on earlier
+rization distinguishes different approaches according to:           GPUs and is crucial for determining an accurate working set.
+1. How the working set is determined.
+2. How the working set is stored (represented) on the GPU.
+3. How the working set is used (accessed) during rendering.         4.1. GPU-Based Volume Rendering
+
+We elaborate on these categories below in (1) Section 4.2,          GPUs have, over the last two decades, become very versa-
+(2) Section 4.3, and (3) Section 4.4.                               tile and powerful parallel processors, succeeding the fixed-
+                                                                    function pipelines of earlier graphics accelerators. Gen-
+  We also categorize the resulting scalability (low, medium,        eral purpose computing on GPUs (GPGPU)—now also
+high), where only “high” scalability means full output-             called GPU Compute—leverages GPUs for non-graphics re-
+sensitivity and thus independence of the input volume size.         lated and compute-intensive computations [OLG∗ 07], such
+   The properties of different volume rendering                     as simulations or general linear algebra problems. In-
+approaches—and the resulting scalability—vary greatly               creased programmability has been made possible by APIs
+between what we refer to as “traditional” approaches (cor-          like the OpenGL Shading Language (GLSL) [Ros06] and
+responding to “low” and “medium” scalability in Table 3),           CUDA [NVI13].
+
+                                                                                                       c The Eurographics Association 2014.
+                                 J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+                                                                            volume brick before doing parallel compositing for final im-
+                                                                            age generation. For volume rendering on small to medium
+                                                                            GPU clusters, Fogal et al. [FCS∗ 10] introduced a load-
+                                                                            balanced sort-last renderer integrated into VisIt [CBB∗ 05], a
+                                                                            parallel visualization and data analysis framework for large
+                                                                            data sets. Moloney et al. [MWMS07] proposed a sort-first
+                                                                            technique using eight GPUs, where the render costs per pixel
+                                                                            are used for dynamic load balancing between nodes. They
+                                                                            later extended their method to support early ray termination
+                                                                            and volume shadowing [MAWM11]. Equalizer [EPMS09] is
+                                                                            a GPU-friendly parallel rendering framework that supports
+                                                                            both sort-first and sort-last approaches.
+                                                                            Texture slicing today. In general, the advantage of texture
+                                                                            slicing-based volume renderers is that they have minimum
+                                                                            hardware requirements. 2D texture slicing, for example, can
+Figure 2: Rendering a multi-gigabyte CT data set (as used                   be implemented in WebGL [CSK∗ 11] and runs efficiently
+in [Eng11]) at different resolution levels using a ray-guided               on mobile devices without 3D texture support. However, a
+rendering approach. Data courtesy of Siemens Healthcare,                    disadvantage is that they often exhibit visual artifacts and
+Components and Vacuum Technology, Imaging Solutions.                        less flexibility when compared to ray-casting methods.
+Data was reconstructed by the Siemens OEM reconstruction
+                                                                            Ray-casting. Röttger et al. [RGW∗ 03] and Krüger and
+API CERA TXR (Theoretically Exact Reconstruction).
+                                                                            Westermann [KW03] were among the first to perform ray-
+                                                                            casting on GPUs, using a multi-pass approach. Ray-casting
+   However, GPU on-board memory sizes are much more
+                                                                            is embarrassingly parallel and can be implemented on the
+limited than those of CPUs. Therefore, large-scale volume
+                                                                            GPU in a fragment shader or compute kernel, where each
+rendering on GPUs requires careful algorithm design, mem-
+                                                                            fragment or thread casts one ray through the volume.
+ory management, and the use of out-of-core approaches.
+                                                                            Ray-casting easily admits a wide variety of performance
+                                                                            and quality enhancements such as empty space skipping
+4.1.1. Traditional GPU-Based Volume Rendering
+                                                                            and early ray termination. Hadwiger et al. [HSSB05] and
+Before discussing current state-of-the-art ray-guided volume                Stegmaier et al. [SSKE05] were among the first to perform
+renderers, we review traditional GPU volume rendering ap-                   GPU ray-casting using a single-pass approach, taking advan-
+proaches. We start with 2D and 3D texture slicing methods,                  tage of dynamic looping and branching in then-recent GPUs.
+before continuing with GPU ray-casting. This will give us                   Proxy geometries for efficient empty space skipping can be
+the necessary context for categorizing and differentiating be-              based on bricks [HSSB05, SHN∗ 06], spheres [LCD09], or
+tween the more traditional and the more modern approaches.                  occlusion frustums [MRH08].
+Texture slicing. The earliest GPU volume rendering ap-                         Müller et al. [MSE06] used GPU ray-casting in a sort-last
+proaches were based on texture mapping [Hec86] using 2D                     parallel rendering system. With the introduction of CUDA
+and 3D texture slicing [CN93, CCF94]. Westermann and                        as a higher-level GPU programming language, CUDA-based
+Ertl [WE98] extended this approach to support arbitrary clip-               ray-casters were introduced [MHS08, KGB∗ 09, MRH10].
+ping geometries and shaded iso-surface rendering. For cor-                  They make use of CUDA’s thread/block architecture, and
+rect tri-linear interpolation between slices, Rezk-Salama et                possibly shared memory model.
+al. [RSEB∗ 00] made use of multi-texturing. Hadwiger et
+                                                                            Large data. For rendering large data, several multi-
+al. [HBH03] described how to efficiently render segmented
+                                                                            resolution octree rendering methods have been proposed,
+volumes on GPUs and how to perform two-level volume
+                                                                            most of them based on texture-slicing [LHJ99, WWH∗ 00,
+rendering on GPUs, where each labeled object can be ren-
+                                                                            GGSe∗ 02, GS04, PHKH04]. Hong et al. [HFK05] used a
+dered with a different render mode and transfer function.
+                                                                            min-max octree structure for ray-casting the Visible Hu-
+This approach was later extended to ray-casting of multi-
+                                                                            man CT data set. To support volumes that are larger
+ple segmented volumes [BHWB07]. Engel et al. [ESE00]
+                                                                            than GPU memory, bricked single-pass ray-casting can
+were among the first to investigate remote visualization us-
+                                                                            be used [HSSB05, BHWB07, JBH∗ 09]. These techniques
+ing hardware-accelerated rendering.
+                                                                            access volume bricks stored in a large brick cache (or
+Texture slicing and parallel volume rendering. Texture                      brick pool) texture, which is similar to adaptive texture
+slicing has been used in many distributed and parallel                      maps [KE02]. However, the brick cache is usually managed
+volume rendering systems [MHE01, CMC∗ 06, MWMS07,                           dynamically to accommodate transfer function changes.
+EPMS09, FCS∗ 10]. Magallon et al. [MHE01] used sort-last                    Ljung et al. [Lju06a] used a multi-resolution bricking struc-
+rendering on a cluster, where each cluster node renders one                 ture and adaptive sampling in image- and object-space to
+
+c The Eurographics Association 2014.
+                          J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+                                                                     is strictly speaking not fully ray-guided, because culling of
+                                                                     octree nodes is performed on the CPU based on the occlu-
+                                                                     sion query information obtained from the GPU.
+                                                                        Crassin et al. [CN09] introduced the Gigavoxels system
+                                                                     for GPU-based octree volume rendering with ray-guided
+                                                                     streaming of volume data. Their system can also make use
+                                                                     of an N 3 tree, as an alternative to an octree (which would
+Figure 3: Per-sample LOD selection as in [HBJP12]. Left:             be an N 3 tree with N = 2). The tree is traversed at run time
+electron microscopy volume (90 GB). Middle and right: the            using the kd-restart algorithm [FS05] and active tree nodes
+LOD used for each sample is color-coded. Middle: discrete            stored in a node pool. Actual voxel data are fetched from
+LOD for each sample (tri-linear interpolation). Right: frac-         bricks stored in a brick pool. Each node stores a pointer to its
+tional LOD for each sample, with interpolation between data          child nodes in the node pool, and a pointer to the associated
+of neighboring LODs (“quad-linear” interpolation).                   texture brick in the brick pool (see Figure 4). The focus of
+                                                                     the Gigavoxels system is volume rendering for entertainment
+                                                                     applications and as such it does not support dynamic transfer
+render large data. Beyer et al. [BHMF08] proposed a tech-            function changes [CNSE10]. The more recent CERA-TVR
+nique for correct interpolation between bricks of two differ-        system [Eng11] targets scientific visualization applications
+ent resolution levels.                                               and supports fully dynamic updates according to the transfer
+   A lot of research has focused on remote, parallel, or dis-        function in real time. It also uses the kd-restart algorithm for
+tributed visualization for rendering large data, which we can-       octree traversal. Reichl et al. [RTW13] also employ a similar
+not all cover here. For example, Prohaska et al. [PHKH04]            ray-guided approach, but target large smooth particle hydro-
+used an octree approach to remotely render large remote              dynamics (SPH) simulations.
+micro-CT scans, while Wang et al. [WGL∗ 05] proposed a                  A different category of ray-guided volume renderers uses
+wavelet-based time space partitioning tree for volume ren-           hierarchical grids with bricking, which are accessed via
+dering of large time varying volumes but use a parallel CPU          multi-level page tables instead of a tree structure. Hadwiger
+ray-caster on a PC cluster for rendering.                            et al. [HBJP12] proposed such a multi-resolution virtual
+   A different approach to dealing with large data was pro-          memory scheme based on a multi-level page table hierarchy
+posed by Turlington et al. [THM01], who introduced slid-             (see Figure 5). This approach scales to petavoxel data and
+ing thin slab (STS) visualization to limit the amount of data        can also efficiently handle highly anisotropic data, which is
+needed for any current view. Knoll et al. [KTW∗ 11] op-              very common in high-resolution electron microscopy vol-
+timized CPU ray-casting, achieving interactive rates using           umes. They also compare their approach for volume traver-
+a bounding volume hierarchy (BVH) min/max acceleration               sal to standard octree traversal in terms of traversal complex-
+structure and SIMD optimizations.                                    ity and cache access behavior, and illustrate the advantages
+                                                                     of multi-level paging in terms of scaling to very large data.
+4.1.2. Ray-Guided Volume Rendering                                      Fogal et al. [FSK13] have performed an in-depth analysis
+Ray-guided and visualization-driven volume rendering ap-             of several aspects of ray-guided volume rendering.
+proaches incorporate a feedback loop between the ray-caster
+and the culling mechanism, where the ray-caster itself writes
+                                                                     4.2. Working Set Determination
+out accurate information on missing bricks and brick usage.
+Thus, this type of culling mechanism determines an accurate          Performing culling to determine the current working set
+working set directly on the GPU.                                     of bricks is crucial for ray-casting large data at interactive
+   This information about the working set is then used to            frame rates. Originally, culling was introduced for geome-
+load missing data, and to determine which bricks can be              try rendering, where view frustum and occlusion culling are
+evicted from the GPU cache because they are no longer                used to limit the number of primitives that have to be ren-
+needed. Additionally, rays automatically determine the (lo-          dered. Ideally, all occluded geometry should be culled before
+cally) required data resolution. This determination can be           rendering.
+performed either on a per-sample basis [HBJP12] (see Fig-
+ure 3), or on a per-brick basis [FSK13].                             4.2.1. View Frustum Culling
+   Gobbetti et al. [GMG08] were among the first to imple-            Removing primitives or volume bricks outside the current
+ment a volume ray-caster with stackless GPU octree traver-           view frustum is the most basic form of culling. The first step
+sal. They used occlusion queries to determine, load, and pos-        of GPU ray-casting consists of computing the ray start points
+sibly refine visible nodes. This approach already has similar        and end points (often via rasterization), which already pre-
+properties to later fully ray-guided approaches. However, it         vents sampling the volume in areas that are outside the view
+
+                                                                                                         c The Eurographics Association 2014.
+                                 J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+                                                                            quickly reject invisible primitives in a hierarchical man-
+                                                                            ner. Zhang et al. [ZMHH97] propose hierarchical occlusion
+                                                                            maps (HOMs), where a set of occluders is rendered into a
+                                                                            low-resolution occlusion map that is hierarchically down-
+                                                                            sampled and used to test primitives for occlusion before ren-
+                                                                            dering them.
+                                                                               For volume visualization, Li et al. [LMK03] introduce
+                                                                            occlusion clipping for texture-based volume rendering to
+                                                                            skip rendering of occluded parts of the volume. Gao et
+                                                                            al. [GHSK03] propose visibility culling in large-scale par-
+                                                                            allel volume rendering based on pre-computing a plenop-
+                                                                            tic opacity function per brick. Visibility culling based on
+                                                                            temporal occlusion coherence has also been used for time-
+                                                                            varying volume rendering [GSHK04]. The concept of oc-
+                                                                            clusion culling has also been used in a parallel setting for
+Figure 4: The Gigavoxels system uses an N 3 tree structure                  sort-last rendering [MM10], by computing and propagating
+with node and brick pools that store the set of active nodes                occlusion information across rendering nodes.
+and bricks, respectively.
+                                                                            4.2.4. Ray-Guided Culling
+frustum. However, in order to prevent volume bricks out-                    Ray-guided culling approaches are different in the sense that
+side the frustum from being downloaded to the GPU, the                      they start with an empty working set. Only bricks that are
+individual bricks have to be culled against the view frustum.               actually visited during the ray-casting traversal step are re-
+Naturally, if a brick lies completely outside the current view              quested and subsequently added to the working set of active
+frustum, it is not needed in GPU memory. Culling a view                     bricks. Therefore, this approach implicitly culls all occluded
+frustum against a bounding box, a bounding volume hier-                     bricks, as well as bricks outside the view frustum.
+archy, or a tree can be done very efficiently and has been
+studied extensively [AM00, AMHH08].                                            Gobbetti et al. [GMG08] use a mixture of traditional
+                                                                            culling and ray-guided culling. They first perform culling
+4.2.2. Global, Attribute-Based Culling                                      on the CPU (using the transfer-function, iso value, and view
+                                                                            frustum), but refine only those nodes of the octree that were
+Another way to cull bricks in volume rendering is based on                  marked as visible in the previous rendering pass. To deter-
+global properties like the current transfer function, iso value,            mine if a node is visible they use occlusion queries to check
+or enabled segmented objects. Culling against the transfer                  the bounding box of a node against the depth of the last vis-
+function is usually done based on min/max computations                      ited sample that was written out during ray-casting.
+for each brick [PSL∗ 98, HSSB05, SHN∗ 06]. The brick’s
+min/max values are compared against the transfer function to                   Crassin et al. [CN09] originally used multiple render tar-
+determine if the brick is invisible (i.e., only contains values             gets to report which bricks were visited by the ray-caster
+that are completely transparent in the transfer function). In-              over the course of several frames, exploiting spatial and tem-
+visible bricks are then culled. The downside of this approach               poral coherence. The same information was constructed in
+is that it needs to be updated whenever the transfer function               a more efficient way using CUDA in a later implementa-
+changes and usually needs pre-computed min/max values for                   tion [CNSE10].
+each brick that have to be available at runtime for all bricks.                Hadwiger et al. [HBJP12] divide the viewport into smaller
+A similar approach can be used for culling bricks against an                tiles and use a GPU hash table per image tile to report a
+iso-surface [PSL∗ 98, HSSB05], or against enabled/disabled                  limited number of cache misses. Over the course of several
+objects in segmented volume rendering [BHWB07].                             frames, this ensures that all missing bricks are reported.
+4.2.3. Occlusion/Visibility Culling                                            Fogal et al. [FSK13] use a similar approach built on lock-
+                                                                            free hash tables.
+Occlusion or visibility culling tries to cull primitives in-
+side the view frustum that are occluded by other primitives.
+While this is easier for opaque geometry, in (transparent)                  4.3. Working Set Storage and Access
+volume rendering this process is more involved and often
+                                                                            Efficient GPU data structures for storing the working set
+requires a multi-pass rendering approach.
+                                                                            should be fast to access during ray traversal, and should also
+   Greene et al. [GKM93] introduce hierarchical z-buffer                    support efficient dynamic updates of the working set. Recent
+visibility. They use two hierarchical data structures, an oc-               approaches usually store volume bricks (actual voxel data) in
+tree in object space and a z-pyramid in image space to                      a singe large 3D cache texture (or brick pool).
+
+c The Eurographics Association 2014.
+                            J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+    Multi-Resolution                resolution hierarchy                                         l=0       l=1          Multi-Resolution
+    Page Directory l=0                l=1              l=2
+                                                                                                                    l=2 Page Directory
+         single page
+         directory
+
+
+
+
+                                                                          page table hierarchy
+         entry
+                                                                                                       Page Table
+    Virtual
+    Page Tables                                                                                        Cache
+                                 virtualized
+         323 page
+         table entries
+                                                                                                        Brick Cache
+         single page
+         table entry                                                                                                       Virtual Volume
+    Virtual Voxel
+    Volumes                                                                                                                  Cache Miss
+         323 voxel                                                                                                           Hash Table
+         brick
+
+                  Virtual Memory Architecture                                                            Ray-Casting
+
+Figure 5: Multi-resolution, multi-level GPU page tables [HBJP12]. The virtual memory architecture comprises two orthogonal
+hierarchies: the resolution hierarchy, and the page table hierarchy. Ray-casting performs address translation based on the
+multi-resolution page directory (i.e., one page directory per volume resolution) and shared “mixed-resolution” cache textures.
+
+
+   If ray traversal needs to follow tree nodes (as in octree-          dates of small texture elements, whereas hierarchical page
+based renderers), the working set of tree nodes must also be           tables tend to perform fewer but larger updates.
+stored, e.g., in a node pool (e.g., [CNLE09, Eng11]).
+                                                                          To avoid cache thrashing [HP11], different brick replace-
+   If ray traversal is built on virtual to physical address trans-     ment strategies have been introduced. Most common is the
+lation (as in page table-based renderers), the working set of          LRU scheme which replaces the brick in the cache that was
+page table entries must be stored, e.g., in a page table cache         least recently used [GMG08, CN09, FSK13]. It is also com-
+(e.g., [BHL∗ 11, HBJP12]).                                             mon to use a hybrid LRU/MRU scheme, where the LRU
+                                                                       scheme is used unless the cache is too small for the cur-
+4.3.1. Texture Cache Management                                        rent working set. In the latter case, the scheme is switched to
+                                                                       MRU (most recently used) to reduce cache thrashing.
+Texture allocation. Early tree-based volume renderers often
+employed one texture per brick, rendering one after the other
+                                                                       4.3.2. Virtual Texturing and Address Translation
+in visibility order using one rendering pass per brick/tree
+node [LHJ99, WWH∗ 00, GGSe∗ 02, GS04]. However, multi-                 Page tables. Kraus and Ertl [KE02] were the first to intro-
+pass approaches are usually less performant than single-pass           duce adaptive texture maps for GPUs, where an image or
+approaches and are also limited in the number of passes they           volume can be stored in a bricked fashion with adaptive res-
+can efficiently perform. To circumvent rendering bottlenecks           olution and accessed via a look-up in a small index texture.
+due to many rendering passes, Hong et al. [HFK05] cluster              This index texture can be seen as a page table [HP11].
+bricks in layers (based on the manhattan distance) and render
+                                                                       Virtual texturing. Going further in this direction leads to
+all bricks of the same layer at the same time.
+                                                                       virtual texturing [OVS12], also called Megatextures in game
+   To support single-pass rendering, bricking approaches               engines [vW09], and partially resident textures [BSH12]. A
+and modern ray-guided renderers usually use a single large             single, very large virtual texture is used for all data instead
+3D cache texture (or brick pool) to store the working                  of allocating many small textures.
+set [BHWB07, CN09, HBJP12], and often assume that the
+                                                                          During rendering, virtual texture coordinates have to be
+working set will fit into GPU memory.
+                                                                       translated to physical texture coordinates. Recently, hard-
+   When the working set does not fit into GPU memory, ei-              ware implementations of this scheme have become available
+ther the level of detail and thus the number of bricks in the          with the OpenGL GL_ARB_sparse_texture extension.
+working set can be reduced [HBJP12], or the renderer can               Unfortunately, current hardware limitations still limit the
+switch to a multi-pass fall-back [Eng11, FSK13].                       size of these textures to 16k pixels/voxels and do not allow
+                                                                       for automatic page fault handling.
+Texture updates. Whenever the working set changes, the
+cache textures have to be updated accordingly. Hadwiger et                GPU-based page tables for virtual texturing are con-
+al. [HBJP12] compare texture update complexity between                 ceptually very similar to CPU virtual memory architec-
+octree-based and multi-level page table approaches. Octree-            tures [HP11]. For volume rendering, the virtual volume is
+based approaches usually have to do a large number of up-              decomposed into smaller bricks (i.e, pages), and a look-up
+
+                                                                                                                      c The Eurographics Association 2014.
+                                 J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+texture (i.e., page table) maps from virtual pages to physical              all based on multi-pass rendering. With the introduc-
+pages. The earliest uses of virtual texturing and page tables               tion of dynamic branching and looping on GPUs, single-
+in volume rendering [HSSB05] used a single page table tex-                  pass approaches have been introduced to volume ray-
+ture. However, the basic concept of virtualization can be ex-               casting [HSSB05, SSKE05].
+tended in a “recursive” fashion, which leads to a page table
+                                                                               Multi-pass approaches offer a higher flexibility, however,
+hierarchy. Virtual texturing architectures using such multi-
+                                                                            they also have a significant management overhead compared
+level page tables have been shown to scale to volume data of
+                                                                            to single-pass rendering (i.e., context switching, final com-
+extreme scale [BHL∗ 11, HBJP12].
+                                                                            positing) and usually result in lower performance. Further-
+   Hadwiger et al. [HBJP12] describe multi-level, multi-                    more, optimization techniques like early ray termination are
+resolution page tables as a (conceptually) orthogonal 2D                    not trivial in multi-pass rendering and create an additional
+structure (see Figure 5, left). One dimension corresponds to                overhead. Therefore, most state-of-the art ray-guided vol-
+the page table hierarchy, consisting of the page directory (the             ume renderers use single-pass rendering [CNLE09, Eng11,
+top-level page table) and several page tables below. The sec-               HBJP12]. A limitation of single-pass approaches, however,
+ond dimension corresponds to the different resolution lev-                  is the requirement for the entire working set to fit into the
+els of the data. Each resolution level conceptually has its                 cache. One way to circumvent this requirement is to use
+own page table hierarchy. However, the actual cache tex-                    single-pass rendering as long as the working sets fits into
+tures can be shared between all resolution levels. Multi-level              the cache, and to switch to multi-pass rendering when the
+page tables scale very well. For example, two levels have                   working set gets too large [Eng11, FSK13].
+been shown to support volumes of up to several hundred ter-
+                                                                            Multi-resolution rendering. There are several motivations
+abytes, and three levels should in principle be sufficient even
+                                                                            for multi-resolution rendering. Next to the obvious advan-
+for exascale data [HBJP12] (in terms of “addressability”).
+                                                                            tage of data reduction and rendering speed-ups, choosing a
+Octrees. To traverse an octree directly on the GPU, not only                resolution that matches the current screen resolution reduces
+the volume brick data, but also a (partial) tree needs to be                aliasing artifacts due to undersampling [Wil83].
+stored on the GPU. Gobbetti et al. [GMG08] use a spatial
+                                                                               A multi-resolution data structure requires level-of-detail
+index structure to store the current subtree with neighbor in-
+                                                                            (LOD) or scale selection [LB03] for rendering. Weiler et
+formation. Each octree node stores pointers to its eight chil-
+                                                                            al. [WWH∗ 00] us a focus point oracle based on the dis-
+dren and its six neighbors (via ropes [HBZ98]), and a pointer
+                                                                            tance from the center of a brick to a user-defined focus
+to the volume brick data. Crassin et al. [CN09,CNLE09] use
+                                                                            point to select a brick’s LOD. Other methods to select
+an N 3 tree, whose current subtree is stored in a node pool and
+                                                                            a level of detail include estimating the screen-space er-
+a brick pool, respectively. Each node stored in the node pool
+                                                                            ror [GS04], using a combined factor of data homogene-
+contains one pointer to its N 3 children, and one pointer to the
+                                                                            ity and importance [BNS01] or using the predicted visual
+corresponding volume brick in the brick pool (see Figure 4).
+                                                                            significance of a brick [Lju06b]. A common method esti-
+Using a single child pointer is possible because the children
+                                                                            mates the projected screen space size of the corresponding
+are stored together in the node pool.
+                                                                            voxel/brick [CNLE09]. Whereas LOD selection is often per-
+Hash tables. An alternative data structure to GPU page ta-                  formed on a per-brick basis, Hadwiger et al. [HBJP12] select
+bles are hash tables, which have not yet received a lot of at-              the LOD on a per-sample basis for finer LOD granularity
+tention for large-scale volume rendering. However, Hastings                 (see Figure 3).
+et al. [HMG05] use spatial hashing to optimize collision de-
+                                                                               The most common data refinement strategy (e.g., when
+tection in real-time simulations, and Nießner et al. [NZIS13]
+                                                                            quickly zooming-in on the data) consists of a “greedy” ap-
+use voxel hashing for real-time 3D reconstruction.
+                                                                            proach that iteratively loads the next higher-resolution of the
+                                                                            brick until the desired resolution is reached [CNLE09]. A
+                                                                            different approach, where the highest resolution is loaded di-
+4.4. Rendering (Ray Traversal)                                              rectly and intermediate resolutions are skipped was proposed
+In this section we will look into details of the actual ren-                in [HBJP12]. Most recently, Fogal et al. [FSK13] found that
+dering methods and how dynamic address translation is per-                  the “greedy” approach converges in the fewest number of
+formed on the GPU.                                                          frames in their ray-guided ray-caster.
+
+Single-pass vs. multi-pass. In single-pass approaches the
+                                                                            4.4.1. Virtual Texturing and Address Translation
+volume is traversed in front-to-back order in a single render-
+ing pass as compared to multi-pass approaches that require                  Address translation is performed during ray-casting, when
+multiple rendering passes. As mentioned before, the first                   stepping along a ray, to access the correct location of a sam-
+GPU volume rendering approaches [CN93, CCF94, WE98,                         ple along the ray in the texture cache. When using multi-
+RSEB∗ 00, HBH03], including the first octree-based ren-                     resolution data this implies that a GPU multi-resolution data
+derers [LHJ99, WWH∗ 00, GGSe∗ 02, GS04, HFK05], were                        structure has to be traversed dynamically on the GPU.
+
+c The Eurographics Association 2014.
+                          J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+Tree traversal. Traversal algorithms for efficiently navigat-
+ing and traversing trees, such as kd-trees or octrees have
+been well researched in the ray-tracing community. Ama-
+natides and Woo [AW87] were the first to introduce a fast
+regular grid traversal algorithm. Recently, stackless traver-
+sal methods such as kd-restart [FS05] have received a lot of
+attention [HSHH07, PGS∗ 07, HL09], as they are well-suited
+for GPU implementation.
+   The GPU octree traversal in Gobbetti et al. [GMG08] is
+based on previous work on rope trees [HBZ98, PGS∗ 07],
+whereas Gigavoxels [CNLE09, CNSE10] and similar sys-
+tems [Eng11, RTW13] base their octree traversal on the kd-
+restart algorithm [FS05].
+Page table look-ups. In virtual texturing approaches [vW09,
+OVS12, HBJP12], each texture sample requires address
+translation from a virtual texture coordinate to a correspond-       Figure 6: Ray-guided volume rendering [FSK13] of the
+ing physical texture coordinate during rendering. This trans-        Mandelbulb data set. Colors indicate the amount of empty
+lation is done via small look-up texture(s), the page table(s).      space skipping and sampling that needs to be performed
+   In multi-level page tables, additional levels of page ta-         (green: skipped empty brick, red: densely sampled brick,
+bles are added [BHL∗ 11]. The top level is usually called the        blue: densely sampled but quickly saturated). Image cour-
+page directory, in analogy to CPU virtual memory [HP11].             tesy of Tom Fogal.
+The right part of Figure 5 depicts address translation dur-
+ing ray-casting with a multi-resolution, multi-level page ta-
+                                                                     Empty space skipping. In addition to skipping missing
+ble. Hadwiger et al. [HBJP12] use this approach for render-
+                                                                     bricks, a common optimization strategy that is easily imple-
+ing extreme-scale electron microscopy data. Their approach
+                                                                     mented in ray-guided volume rendering is empty space skip-
+starts with computing a LOD for the current sample, which is
+                                                                     ping. This optimization relies on knowing which bricks are
+then used to look up the page directory corresponding to that
+                                                                     empty bricks (e.g., by a flag in the page table) and skipped
+resolution. Next, address translation traverses the page table
+                                                                     during ray-casting. Figure 6 shows a rendering with color-
+hierarchy from the page directory through the page table lev-
+                                                                     coded empty space skipping information.
+els below. Previous page directory and page table look-ups
+can be cached to exploit spatial coherence. Thus, the number
+of texture look-ups that is required in practice is very low.        5. Discussion and Conclusions
+Handling missing and empty bricks. In contrast to tradi-             In this survey we have discussed different large-scale GPU-
+tional ray-casting approaches, where the working set is com-         based volume rendering methods with an emphasis on ray-
+puted prior to rendering on the CPU, ray-guided volume ren-          guided approaches. Over recent years, sophisticated scalable
+ders only build up the current working set during ray traver-        GPU volume visualization methods have been developed,
+sal. This implies that ray-guided volume renderers have to           hand in hand with the increased versatility and programma-
+be able to deal with missing bricks in GPU memory, be-               bility of graphics hardware. GPUs nowadays support dy-
+cause bricks are only requested and downloaded once they             namic branching and looping, efficient read-back mecha-
+have been hit during ray-casting.                                    nisms to transfer data back from the GPU to the CPU, and
+                                                                     several high-level APIs like CUDA or OpenCL to make
+   Whenever the ray-caster detects a missing brick (i.e., ei-
+                                                                     GPU programming more efficient and enjoyable.
+ther a page table entry that is flagged as unmapped or a miss-
+ing octree node), a request for that missing brick is written           Our discussion of scalability in volume rendering was
+out. Crassin et al. [CN09] use multiple render targets to re-        based on the notion of working sets. We assume that the data
+port missing nodes and then stop ray traversal. More recent          will never fit into GPU memory in its entirety. Therefore, it
+approaches [CNSE10, HBJP12, FSK13] use OpenGL exten-                 is crucial to determine, store, and render the working set of
+sions such as GL_ARB_shader_image_load_store                         visible bricks in the current view efficiently and accurately.
+or CUDA, and often GPU hash tables, to report cache                  The review of “traditional” GPU volume rendering methods
+misses. Missing bricks can be either skipped, or substituted         showed that these approaches have several shortcomings that
+by a brick of lower resolution. After missing bricks are de-         severely limit their scalability. Traditionally, the working set
+tected and reported, the CPU takes care of loading the miss-         of active bricks is determined on the CPU and no read-back
+ing data, downloading it into GPU memory, and updating the           mechanism is used to refine this working set. Additionally,
+corresponding GPU data structures.                                   due to previously limited branching or looping functionality
+
+                                                                                                         c The Eurographics Association 2014.
+                                 J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+on GPUs, renderers often had to resort to multi-pass ren-                      roscience Data. IEEE Transactions on Visualization and Com-
+dering approaches. Modern ray-guided approaches exhibit                        puter Graphics (Proc. of IEEE SciVis ’13) 19, 12 (2013), 2868–
+better scalability, they support dynamic traversal of multi-                   2877. 7, 8
+resolution structures on the GPU, and they allow determin-                  [BCH12] B ETHEL E. W., C HILDS H., H ANSEN C.: High Per-
+                                                                              formance Visualization – Enabling Extreme-Scale Scientific In-
+ing the working set of active bricks based on actual visibility               sight. Chapman & Hall, CRC Computational Science. CRC
+by employing efficient read-back mechanisms from the GPU                      Press/Francis–Taylor Group, Nov. 2012. 1, 2, 3, 6, 7
+to the CPU. Therefore, ray-guided approaches are promising                  [BG05] B RUCKNER S., G RÖLLER M.: Volumeshop: An Interac-
+for the future, where data set sizes will continue to increase.               tive System for Direct Volume Illustration. In IEEE Visualization
+                                                                              ’05 (2005), pp. 671–678. 8
+   In this survey we have focused on GPU-based approaches
+                                                                            [BHAA∗ 13] B EYER J., H ADWIGER M., A L -AWAMI A., J EONG
+for single stand-alone workstations. However, there is a huge                 W.-K., K ASTHURI N., L ICHTMAN J., P FISTER H.: Exploring
+area of parallel and distributed visualization research that fo-              the Connectome - Petascale Volume Visualization of Microscopy
+cuses on clusters, in-situ setups and client/server systems.                  Data Streams. IEEE Computer Graphics and Applications 33, 4
+Additionally, we expect web-based visualization to become                     (2013), 50–61. 2, 4, 5, 7
+more and more important, which will make it necessary to                    [BHL∗ 11] B EYER J., H ADWIGER M., L ICHTMAN J., R EID
+research scalable algorithms for remote visualization and                     R. C., J EONG W.-K., P FISTER H.: Demand-Driven Volume
+                                                                              Rendering of Terascale EM Data. In SIGGRAPH ’11: Techni-
+mobile devices. Finally, as data sets get larger and scal-                    cal talk (2011). 5, 12, 13, 14
+able volume rendering methods more mature, it will be-
+                                                                            [BHMF08] B EYER J., H ADWIGER M., M ÖLLER T., F RITZ L.:
+come more and more important to have efficient workflows                      Smooth Mixed-Resolution GPU Volume Rendering. In IEEE
+and integrated solutions that encompass the whole data flow                   International Symposium on Volume and Point-Based Graphics
+through a system, from data acquisition and pre-processing                    (VG ’08) (2008), pp. 163–170. 5, 8, 10
+to interactive visualization and analysis.                                  [BHWB07] B EYER J., H ADWIGER M., W OLFSBERGER S.,
+                                                                              B ÜHLER K.: High-Quality Multimodal Volume Rendering for
+                                                                              Preoperative Planning of Neurosurgical Interventions. IEEE
+6. Acknowledgments                                                            Transactions on Visualization and Computer Graphics (Proc. of
+                                                                              IEEE Visualization ’07) (2007), 1696–1703. 4, 8, 9, 11, 12
+We would like to thank Fabio Marton, Timo Ropinski, and                     [BLK∗ 11] B OCK D., L EE W.-C., K ERLIN A., A NDERMANN
+Daniel Weiskopf for their valuable feedback, and Hendrik                      M., H OOD G., W ETZEL A., Y URGENSON S., S OUCY E., K IM
+Strobelt for his help. This work was partially supported by                   H. S., R EID R. C.: Network Anatomy and In Vivo Physiology
+NSF grant OIA 1125087.                                                        of Visual Cortical Neurons. Nature 471, 7337 (2011), 177–182.
+                                                                              1
+                                                                            [BNS01] B OADA I., NAVAZO I., S COPIGNO R.: Multiresolution
+References                                                                    Volume Visualization with a Texture-based Octree. The Visual
+                                                                              Computer 17, 3 (2001), 185–197. 5, 13
+[AAM∗ 11] A HERN S., A RIE S., M A K.-L., C HOUDHARY A.,
+  C RITCHLOW T., K LASKY S., PASCUCCI V., A HRENS J.,                       [BSH12] B ILODEAU B., S ELLERS G., H ILLESLAND K.: AMD
+  B ETHEL W. E., C HILDS H., H UANG J., J OY K., KOZIOL Q.,                   GPU Technical Publications: Partially Resident Textures (PRT)
+  L OFSTEAD G., M EREDITH J. S., M ORELAND K., O STROU -                      in the Graphics Core Next, 2012. 12
+  CHOV G., PAPKA M., V ISHWANATH V., W OLF M., W RIGHT                      [BSS00] BARTZ D., S CHNEIDER B.-O., S ILVA C.: Rendering
+  N., W U K.: Report from the DOE ASCR 2011 Workshop on                       and Visualization in Parallel Environments. SIGGRAPH ’00
+  Exascale Data Management, Analysis, and Visualization. Tech.                course notes (2000). 2, 6
+  rep., Department of Energy, 2011. 1, 4, 7                                 [BvG∗ 09] B RUCKNER S., Š OLTÉSZOVÁ V., G RÖLLER M. E.,
+[ALN∗ 08] A HRENS J., L O L.-T. L.- T., N OUANESENGSY B.,                     H LADUVKA J., B ÜHLER K., Y U J., D ICKSON B.: BrainGazer
+  PATCHETT J., M CPHERSON A.: Petascale Visualization: Ap-                    - Visual Queries for Neurobiology Research. IEEE Transactions
+  proaches and Initial Results. In Workshop on Ultrascale Visual-             on Visualization and Computer Graphics (Proc. of IEEE Visual-
+  ization, 2008. UltraVis ’08. (2008), pp. 24–28. 4                           ization ’09) 15, 6 (Nov. 2009), 1497–1504. 7
+[AM00] A SSARSSON U., M OLLER T.: Optimized View Frustum                    [CBB∗ 05] C HILDS H., B RUGGER E., B ONNELL K., M EREDITH
+  Culling Algorithms for Bounding Boxes. Journal of Graphics                  J., M ILLER M., W HITLOCK B., M AX N.: A Contract-Based
+  Tools 5, 1 (Jan. 2000), 9–22. 11                                            System For Large Data Visualization. In IEEE Visualization ’05
+                                                                              (2005), pp. 190–198. 9
+[AMHH08] A KENINE -M ÖLLER T., H AINES E., H OFFMAN N.:
+  Real-Time Rendering 3rd Edition. A. K. Peters; Ltd., 2008. 11             [CCF94] C ABRAL B., C AM N., F ORAN J.: Accelerated Volume
+                                                                              Rendering and Tomographic Reconstruction Using Texture Map-
+[AW87] A MANATIDES J., W OO A.: A Fast Voxel Traversal Al-                    ping Hardware. In IEEE Symposium on Volume Visualization
+  gorithm for Ray Tracing. In Eurographics ’87 (1987), pp. 3–10.              (1994), pp. 91–98. 8, 9, 13
+  5, 14
+                                                                            [CKS03] C ORREA W., K LOSOWSKI J. T., S ILVA C.: Visibility-
+[AWS92] A HLBERG C., W ILLIAMSON C., S HNEIDERMAN B.:                         Based Prefetching for Interactive Out-Of-Core Rendering. In
+  Dynamic Queries for Information Exploration: an Implementa-                 IEEE Symposium on Parallel and Large-Data Visualization and
+  tion and Evaluation. In SIGCHI Conference on Human Factors                  Graphics (2003), pp. 1–8. 6
+  in Computing Systems (1992), CHI ’92, pp. 619–626. 7
+                                                                            [CMC∗ 06] C ASTANIE L., M ION C., C AVIN X., L EVY B.,
+[BAaK∗ 13] B EYER J., A L - AWAMI A., K ASTHURI N., L ICHT-                   B RUNO L., C ASTANI L.: Distributed Shared Memory for Roam-
+  MAN J. W., P FISTER H., H ADWIGER M.: ConnectomeEx-                         ing Large Volumes. IEEE Transactions on Visualization and
+  plorer: Query-Guided Visual Analysis of Large Volumetric Neu-               Computer Graphics 12, 5 (2006), 1299–1306. 9
+
+c The Eurographics Association 2014.
+                            J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+[CN93] C ULLIP T., N EUMANN U.: Accelerating Volume Recon-             [FSK13] F OGAL T., S CHIEWE A., K RÜGER J.: An Analysis of
+  struction with 3D Texture Hardware. In Technical Report TR93-          Scalable GPU-Based Ray-Guided Volume Rendering. In IEEE
+  027, University of North Carolina at Chapel Hill (1993). 8, 9,         Symposium on Large Data Analysis and Visualization (LDAV
+  13                                                                     ’13) (2013), pp. 43–51. 2, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14
+[CN09] C RASSIN C., N EYRET F.: Beyond Triangles : Gigavox-            [FW08] FALK M., W EISKOPF D.: Output-Sensitive 3D Line
+  els Effects In Video Games. In SIGGRAPH ’09: Technical talk            Integral Convolution. IEEE Transactions on Visualization and
+  (2009). 5, 10, 11, 12, 13, 14                                          Computer Graphics 14, 4 (2008), 820–834. 2
+[CNLE09] C RASSIN C., N EYRET F., L EFEBVRE S., E ISEMANN              [GGSe∗ 02] G UTHE S., G ONSER J., S TRASS ER W., WAND M.,
+  E.: GigaVoxels : Ray-Guided Streaming for Efficient and De-            S TRAER W.: Interactive Rendering of Large Volume Data Sets.
+  tailed Voxel Rendering. In ACM SIGGRAPH Symposium on In-               In IEEE Visualization (2002), pp. 53–59. 5, 8, 9, 12, 13
+  teractive 3D Graphics and Games (2009), Lecture Notes in Com-
+                                                                       [GHSK03] G AO J., H UANG J., S HEN H.-W., KOHL J. A.: Vis-
+  puter Science, pp. 15–22. 2, 3, 5, 7, 8, 12, 13, 14
+                                                                         ibility Culling Using Plenoptic Opacity Functions for Large Vol-
+[CNSE10] C RASSIN C., N EYRET F., S AINZ M., E ISEMANN E.:               ume Visualization. In IEEE Visualization ’03 (2003), pp. 341–
+  Efficient Rendering of Highly Detailed Volumetric Scenes with          348. 11
+  GigaVoxels. In GPU Pro. A. K. Peters; Ltd, 2010, ch. X.3,
+                                                                       [GKM93] G REENE N., K ASS M., M ILLER G.: Hierarchical Z-
+  pp. 643–676. 10, 11, 14
+                                                                         Buffer Visibility. In SIGGRAPH ’93 (1993), pp. 231–238. 2,
+[CPA∗ 10] C HILDS H., P UGMIRE D., A HERN S., W HITLOCK                  11
+  B., H OWISON M., P RABHAT, W EBER G., B ETHEL E.: Ex-
+                                                                       [GM05] G OBBETTI E., M ARTON F.: Far Voxels: A Multiresolu-
+  treme Scaling of Production Visualization Software on Diverse
+                                                                         tion Framework for Interactive Rendering of Huge Complex 3D
+  Architectures. IEEE Computer Graphics and Applications 30, 3
+                                                                         Models on Commodity Graphics Platforms. ACM Transactions
+  (2010), 22–31. 3
+                                                                         on Graphics 24, 3 (2005), 878–885. 5
+[CSK∗ 11] C ONGOTE J., S EGURA A., K ABONGO L., M ORENO
+  A., P OSADA J., RUIZ O.: Interactive Visualization of Volumetric     [GMG08] G OBBETTI E., M ARTON F., G UITI I.: A Single-Pass
+  Data with WebGL in Real-Time. In 16th International Confer-            GPU Ray Casting Framework for Interactive Out-of-Core Ren-
+  ence on 3D Web Technology - Web3D ’11 (2011), pp. 137–146.             dering of Massive Volumetric Datasets. The Visual Computer 24,
+  9                                                                      7 (2008), 787–806. 5, 8, 10, 11, 12, 13, 14
+[DKR97] D ERTHICK M., KOLOJEJCHICK J., ROTH S. F.: An                  [GS04] G UTHE S., S TRASSER W.: Advanced Techniques for
+  Interactive Visual Query Environment for Exploring Data. In            High-Quality Multi-Resolution Volume Rendering. Computers
+  Tenth Annual ACM Symposium on User Interface Software and              & Graphics 28, 1 (2004), 51–58. 5, 8, 9, 12, 13
+  Technology (UIST ’97) (1997), pp. 189–198. 7                         [GSHK04] G AO J., S HEN H.-W., H UANG J., KOHL J. A.: Vis-
+[EHK∗ 06]    E NGEL K., H ADWIGER M., K NISS J. M., R EZK -              ibility Culling for Time-Varying Volume Rendering Using Tem-
+  SALAMA C., W EISKOPF D.: Real-time Volume Graphics. A.                 poral Occlusion Coherence. In IEEE Visualization ’04 (2004),
+  K. Peters, Ltd., Natick, MA, USA, 2006. 2                              pp. 147–154. 11
+[Eng11] E NGEL K.: CERA-TVR: A Framework for Interactive               [HBH03] H ADWIGER M., B ERGER C., H AUSER H.: High-
+  High-Quality Teravoxel Volume Visualization on Standard PCs.           Quality Two-Level Volume Rendering of Segmented Data Sets
+  In Large-Data Analysis and Visualization, (LDAV ’11 Posters)           on Consumer Graphics Hardware. In IEEE Visualization ’03
+  (2011). 2, 8, 9, 10, 12, 13, 14                                        (2003), pp. 301–308. 8, 9, 13
+[EPMS09] E ILEMANN S., PAJAROLA R., M AKHINYA M., S O -                [HBJP12] H ADWIGER M., B EYER J., J EONG W.-K., P FISTER
+  CIETY I. C.: Equalizer: A Scalable Parallel Rendering Frame-           H.: Interactive Volume Exploration of Petascale Microscopy
+  work. IEEE Transactions on Visualization and Computer Graph-           Data Streams Using a Visualization-Driven Virtual Memory Ap-
+  ics 15, 3 (2009), 436–452. 9                                           proach. IEEE Transactions on Visualization and Computer
+                                                                         Graphics (Proc. IEEE of SciVis ’12) 18, 12 (2012), 2285–2294.
+[ESE00] E NGEL K., S OMMER O., E RTL T.: A Framework                     2, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14
+  for Interactive Hardware Accelerated Remote 3D-Visualization.
+  In TCVG Symposium on Visualization (VisSym ’00) (2000),              [HBZ98] H AVRAN V., B ITTNER J., Z ÁRA J.: Ray Tracing With
+  pp. 167–177. 9                                                         Rope Trees. In 14th Spring Conference On Computer Graphics
+                                                                         (1998), pp. 130–139. 13, 14
+[FCS∗ 10] F OGAL T., C HILDS H., S HANKAR S., K RÜGER J.,
+  B ERGERON R. D., H ATCHER P.: Large Data Visualization on            [Hec86] H ECKBERT P.: Survey of Texture Mapping. IEEE Com-
+  Distributed Memory Multi-GPU Clusters. In High Performance             puter Graphics and Applications 6, 11 (1986), 56–67. 9
+  Graphics (2010), pp. 57–66. 5, 9                                     [Hel13] H ELMSTAEDTER M.:           Cellular-Resolution Connec-
+[FK05] F RANK S., K AUFMAN A.: Distributed Volume Render-                tomics: Challenges of Dense Neural Circuit Reconstruction. Na-
+  ing on a Visualization Cluster. In Ninth International Confer-         ture Methods 10, 6 (June 2013), 501–7. 1
+  ence on Computer Aided Design and Computer Graphics (2005),          [HFK05] H ONG W., F ENG Q., K AUFMAN A.: GPU-Based
+  pp. 5–10. 6                                                            Object-Order Ray-Casting for Large Datasets. In Eurograph-
+[FK10] F OGAL T., K RÜGER J.: Tuvok - An Architecture for                ics/IEEE VGTC Workshop on Volume Graphics ’05 (2005),
+  Large Scale Volume Rendering. In 15th Vision, Modeling and             pp. 177–240. 8, 9, 12, 13
+  Visualization Workshop ’10 (2010), pp. 139–146. 4, 8                 [HL09] H UGHES D. M., L IM I. S.: Kd-Jump: A Path-Preserving
+[FM12] F OUT N., M A K.-L.: An Adaptive Prediction-Based Ap-             Stackless Traversal for Faster Isosurface Raytracing on GPUs.
+  proach to Lossless Compression of Floating-Point Volume Data.          IEEE Transactions on Visualization and Computer Graphics 15,
+  IEEE Transactions on Visualization and Computer Graphics 18,           6 (2009), 1555–1562. 5, 14
+  12 (2012), 2295–2304.                                                [HMG05] H ASTINGS E. J., M ESIT J., G UHA R. K.: Optimiza-
+[FS05] F OLEY T., S UGERMAN J.: KD-Tree Acceleration Struc-              tion of Large-Scale , Real-Time Simulations by Spatial Hashing.
+  tures for a GPU Raytracer. In Graphics Hardware (2005), pp. 15–        In Summer Computer Simulation Conference (2005), pp. 9–17.
+  22. 5, 10, 14                                                          13
+
+                                                                                                            c The Eurographics Association 2014.
+                                 J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+[HN12] H EITZ E., N EYRET F.: Representing Appearance and                   [KTW∗ 11] K NOLL A., T HELEN S., WALD I., H ANSEN C. D.,
+  Pre-Filtering Subpixel Data in Sparse Voxel Octrees. In ACM                 H AGEN H., PAPKA M. E.: Full-Resolution Interactive CPU Vol-
+  SIGGRAPH / Eurographics conference on High-Performance                      ume Rendering with Coherent BVH Traversal. In IEEE Pacific
+  Graphics (EGGH-HPG ’12) (2012), pp. 125–134. 5                              Visualization Symposium ’11 (Mar. 2011), pp. 3–10. 10
+[HP11] H ENNESSEY J. L., PATTERSON D. A.: Computer Archi-                   [KW03] K RÜGER J., W ESTERMANN R.: Acceleration Tech-
+  tecture: A Quantitative Approach, fifth ed. Morgan Kaufmann,                niques for GPU-based Volume Rendering. In IEEE Visualization
+  2011. 12, 14                                                                ’03 (2003), pp. 287–292. 8, 9
+[HSB∗ 12] H ADWIGER M., S ICAT R., B EYER J., K RÜGER J.,                   [LB03] L INDEBERG T., B RETZNER L.: Real-Time Scale Selec-
+  M ÖLLER T.: Sparse PDF Maps for Non-Linear Multi-Resolution                 tion in Hybrid Multi-Scale Representations. Tech. rep., KTH
+  Image Operations. In ACM Transactions on Graphics (Proc. of                 (Royal Institute of Technology), 2003. 13
+  ACM SIGGRAPH Asia ’12) (2012), pp. 198:1–198:12. 2, 5                     [LCD09] L IU B., C LAPWORTHY G. J., D ONG F.: Accelerating
+[HSHH07]     H ORN D. R., S UGERMAN J., H OUSTON M., H AN -                   Volume Raycasting using Proxy Spheres. Computer Graphics
+  RAHAN P.: Interactive k-d Tree GPU Raytracing. In Symposium                 Forum (Proc. of EuroVis ’09) 28, 3 (June 2009), 839–846. 9
+  on Interactive 3D Graphics and Games - I3D ’07 (2007), p. 167.            [LHJ99] L AMAR E., H AMANN B., J OY K. I.: Multiresolution
+  5, 14                                                                       Techniques for Interactive Texture-Based Volume Visualization.
+[HSSB05] H ADWIGER M., S IGG C., S CHARSACH H., B ÜHLER                       In IEEE Visualization ’99 (1999), pp. 355–362. 2, 5, 8, 9, 12, 13
+  K.: Real-Time Ray-Casting and Advanced Shading of Discrete                [Lju06a] L JUNG P.: Adaptive Sampling in Single Pass, GPU-
+  Isosurfaces. Computer Graphics Forum (Proc. of Eurographics                  based Raycasting of Multiresolution Volumes. In Eurograph-
+  ’05) 24, 3 (2005), 303–312. 8, 9, 11, 13                                     ics/IEEE VGTC Workshop on Volume Graphics ’06 (2006),
+[ILC10] I SENBURG M., L INDSTROM P., C HILDS H.: Parallel                      pp. 39–46. 4, 5, 8, 9
+   and Streaming Generation of Ghost Data for Structured Grids.             [Lju06b] L JUNG P.: Efficient Methods for Direct Volume Ren-
+   IEEE Computer Graphics & Applications 30, 3 (2010), 32–44.                  dering of Large Data Sets. PhD thesis, Linköping University,
+   4, 6                                                                        Sweden, 2006. 5, 13
+[JBH∗ 09] J EONG W.-K. W.-K., B EYER J., H ADWIGER M.,                      [LK10a] L AINE S., K ARRAS T.: Efficient Sparse Voxel Octrees.
+   VASQUEZ A., P FISTER H., W HITAKER R. T., VAZQUEZ A.:                      In ACM SIGGRAPH Symposium on Interactive 3D Graphics and
+   Scalable and Interactive Segmentation and Visualization of Neu-            Games (I3D ’10) (2010), pp. 55–63. 5
+   ral Processes in EM Datasets. IEEE Transactions on Visualiza-
+   tion and Computer Graphics (Proc. of IEEE Visualization ’09)             [LK10b] L AINE S., K ARRAS T.: Efficient Sparse Voxel Octrees -
+   15, 6 (2009), 1505–1514. 7, 8, 9                                           Analysis , Extensions , and Implementation. Tech. rep., NVIDIA,
+                                                                              2010. 5
+[JJY∗ 11] J EONG W.-K., J OHNSON M. K., Y U I., K AUTZ J.,
+   P FISTER H., PARIS S.: Display-Aware Image Editing. In IEEE              [LKHW04] L EFOHN A. E., K NISS J. M., H ANSEN C. D.,
+   International Conference on Computational Photography (ICCP                W HITAKER R. T.: A Streaming Narrow-Band Algorithm: Inter-
+   ’11) (Apr. 2011), IEEE, pp. 1–8. 2                                         active Computation and Visualization of Level Sets. IEEE Trans-
+                                                                              actions on Visualization and Computer Graphics 10, 4 (2004),
+[JST∗ 10] J EONG W.-K., S CHNEIDER J., T URNEY S. G.,                         422–433. 6
+   FAULKNER -J ONES B. E., M EYER D., W ESTERMANN R., R EID
+   C., L ICHTMAN J., P FISTER H.: Interactive Histology of Large-           [LMK03] L I W., M UELLER K., K AUFMAN A.: Empty Space
+   Scale Biomedical Image Stacks. IEEE Transactions on Visual-                Skipping and Occlusion Clipping for Texture-based Volume Ren-
+   ization and Computer Graphics 16, 6 (2010), 1386–1395. 2, 6                dering. In IEEE Visualization ’03 (2003), pp. 317–324. 2, 8, 11
+[KAL∗ 11] K LASKY S., A BBASI H., L OGAN J., PARASHAR M.,                   [MAWM11] M OLONEY B., A MENT M., W EISKOPF D.,
+  S CHWAN K., S HOSHANI A., W OLF M., S EAN A., A LTIN -                      M ÖLLER T.: Sort-First Parallel Volume Rendering. IEEE Trans-
+  TAS I., B ETHEL W., L UIS C., C HANG C., C HEN J., C HILDS                  actions on Visualization and Computer Graphics 17, 8 (2011),
+  H., C UMMINGS J., D OCAN C., E ISENHAUER G., E THIER S.,                    1164–1177. 9
+  G ROUT R., L AKSHMINARASIMHAN S., L IN Z., L IU Q., M A                   [MCE∗ 94] M OLNAR S., C OX M., E LLSWORTH D., F UCHS H.,
+  X., M ORELAND K., PASCUCCI V., P ODHORSZKI N., S AMA -                      ANDN D. E LLSWORTH M. C.: A Sorting Classification of Par-
+  TOVA N., S CHROEDER W., T CHOUA R., T IAN Y., VATSAVAI                      allel Rendering. IEEE Computer Graphics & Applications 14, 4
+  R., W U J., Y U W., Z HENG F.: In Situ Data Processing for                  (1994), 23–32. 6
+  Extreme-Scale Computing. In SciDAC Conference (2011). 7                   [MHE01] M AGALLÓN M., H OPF M., E RTL T.: Parallel Volume
+[KE02] K RAUS M., E RTL T.: Adaptive Texture Maps. In Graph-                  Rendering Using PC Graphics Hardware. In Pacific Conference
+  ics Hardware (2002), pp. 7–15. 9, 12                                        on Computer Graphics and Applications (2001), pp. 384–389. 9
+[KGB∗ 09] K AINZ B., G RABNER M., B ORNIK A., H AUSWIES -                   [MHS08] M ARSALEK L., H AUBER A., S LUSALLEK P.: High-
+  NER S., M UEHL J., S CHMALSTIEG D.: Ray Casting of Multiple                 Speed Volume Ray Casting with CUDA. In IEEE Symposium on
+  Volumetric Datasets with Polyhedral Boundaries on Manycore                  Interactive Ray Tracing (Aug. 2008), p. 185. 8, 9
+  GPUs. ACM Transactions on Graphics 28, 5 (2009), 1–9. 8, 9                [ML13] M ORGAN J. L., L ICHTMAN J. W.: Why Not Connec-
+[KH13] K EHRER J., H AUSER H.: Visualization and Visual Anal-                 tomics? Nature Methods 10, 6 (June 2013), 494–500. 1
+  ysis of Multifaceted Scientific Data: A Survey. IEEE Transac-             [MM10] M ARCHESIN S. S., M A K.-L.: Cross-Node Occlusion
+  tions on Visualization and Computer Graphics 19, 3 (Mar. 2013),             in Sort-Last Volume Rendering. In Eurographics Symposium on
+  495–513. 2                                                                  Parallel Graphics and Visualization (2010), pp. 11–18. 11
+[KMS∗ 06] K ASIK D., M ANOCHA D., S TEPHENS A., B RUDER -                   [MOM∗ 11] M ORELAND K., O LDFIELD R., M ARION P., J OUR -
+  LIN B., S LUSALLEK P., G OBBETTI E., C ORREA W., Q UILEZ
+                                                                              DAIN S., P ODHORSZKI N., V ISHWANATH V., FABIAN N., D O -
+  I.: Real Time Interactive Massive Model Visualization. Euro-                CAN C., PARASHAR M., H ERELD M., PAPKA M. E., K LASKY
+  graphics ’06: Tutorials (2006). 2, 6                                        S.: Examples of In Transit Visualization. In Second International
+[Kno06] K NOLL A.: A Survey of Octree Volume Rendering                        Workshop on Petascale Data Analytics: Challenges and Oppor-
+  Methods. In First IRTG workshop (2006). 5                                   tunities (PDAC ’11) (2011), pp. 1–6. 7
+
+c The Eurographics Association 2014.
+                           J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+[Mor66] M ORTON G. M.: A Computer Oriented Geodetic Data              [PGS∗ 07] P OPOV S., G ÜNTHER J., S EIDEL H.-P. H.-P.,
+  Base and a New Technique in File Sequencing. Tech. rep., IBM          S LUSALLEK P., G ÜNTHER J.: Stackless Kd-Tree Traversal for
+  Ltd., 1966. 6                                                         High Performance GPU Ray Tracing. Eurographics 26, 3 (2007),
+                                                                        415–424. 5, 14
+[Mor12] M ORELAND K.: Oh, $#*@! Exascale! The Effect of
+  Emerging Architectures on Scientific Discovery. 2012 SC Com-        [PHKH04] P ROHASKA S., H UTANU A., K AHLER R., H EGE H.-
+  panion: High Performance Computing, Networking Storage and            C.: Interactive Exploration of Large Remote Micro-CT Scans. In
+  Analysis (2012), 224–231. 4, 7                                        IEEE Visualization (2004), pp. 345–352. 8, 9, 10
+[Mor13] M ORELAND K.: A Survey of Visualization Pipelines.            [PJ95] PARKER S. G., J OHNSON C. R.: SCIRun : A Scien-
+  IEEE Transactions on Visualization and Computer Graphics               tific Programming Environment for Computational Steering. In
+  (Proc. of IEEE SciVis ’13) 19, 3 (Mar. 2013), 367–78. 4                ACM/IEEE conference on Supercomputing ’95 (1995). 7
+[MRH08] M ENSMANN J., ROPINSKI T., H INRICHS K.: Accel-               [PSL∗ 98] PARKER S., S HIRLEY P., L IVNAT Y., H ANSEN C.,
+  erating Volume Raycasting using Occlusion Frustums. In Fifth           S LOAN P.: Interactive Ray Tracing for Isosurface Rendering.
+  EG/IEEE Conference on Point-Based Graphics (2008), pp. 147–           In IEEE Visualization ’98 (1998), pp. 233–238. 11
+  154. 9                                                              [R0̈9] RÖMISCH K.: Sparse Voxel Octree Ray Tracing on the
+[MRH10] M ENSMANN J., ROPINSKI T., H INRICHS K. H.: An                   GPU. PhD thesis, Aarhus University, 2009. 5
+  Advanced Volume Raycasting Technique using GPU Stream Pro-          [RGG∗ 13] RODRÍGUEZ M., G OBBETTI E., G UITAN J. A. I.,
+  cessing. In International Conference on Computer Graphics The-        M AKHINYA M., M ARTON F., PAJAROLA R., S UTER S.: A Sur-
+  ory and Applications (GRAPP ’10) (Angers, 2010), INSTICC              vey of Compressed GPU-Based Direct Volume Rendering. Eu-
+  Press, pp. 190–198. 8, 9                                              rographics State of The Art Report (STAR) (2013), 117–136. 2,
+                                                                        6
+[MSE06] M ÜLLER C., S TRENGERT M., E RTL T.: Optimized
+  Volume Raycasting for Graphics-Hardware-based Cluster Sys-          [RGW∗ 03] ROETTGER S., G UTHE S., W EISKOPF D., E RTL
+  tems. In Eurographics Symposium on Parallel Graphics and Vi-          T., S TRASSER W.: Smart Hardware-Accelerated Volume Ren-
+  sualization (2006), pp. 59–66. 9                                      dering. In Symposium on Visualization (VISSYM ’03) (2003),
+                                                                        pp. 231–238. 8, 9
+[Mur93] M URAKI S.: Volume Data and Wavelet Transforms.
+  IEEE Computer Graphics and Applications 13, 4 (1993), 50–56.        [Ros06] ROST R. J.: OpenGL Shading Language (2nd Edition).
+  5                                                                     Addison-Wesley Professional, 2006. 8
+[Mus13] M USETH K.: VDB: High-Resolution Sparse Volumes               [RSEB∗ 00] R EZK -S ALAMA C., E NGEL K., BAUER M.,
+  with Dynamic Topology. ACM Transactions on Graphics 32, 3             G REINER G., E RTL T.: Interactive Volume Rendering on Stan-
+  (2013), 27:1–27:22. 5                                                 dard PC Graphics Hardware Using Multi-Textures and Multi-
+                                                                        Stage Rasterization. In SIGGRAPH/Eurographics Workshop on
+[MW95] M ARTIN A. R., WARD M. O.: High Dimensional                      Graphics Hardware (2000), pp. 109–118. 8, 9, 13
+  Brushing for Interactive Exploration of Multivariate Data. In
+  IEEE Visualization ’95 (1995), pp. 271–278. 7                       [RTW13] R EICHL F., T REIB M., W ESTERMANN R.: Visualiza-
+                                                                        tion of Big SPH Simulations via Compressed Octree Grids. In
+[MWMS07] M OLONEY B., W EISKOPF D., M ÖLLER T.,                         IEEE Big Data (2013), pp. 71–78. 5, 8, 10, 14
+  S TRENGERT M.: Scalable Sort-First Parallel Direct Volume Ren-
+  dering with Dynamic Load Balancing. In Eurographics Sympo-          [RV06] RUIJTERS D., V ILANOVA A.: Optimizing GPU Volume
+  sium on Parallel Graphics and Visualization (2007), pp. 45–52.        Rendering. In Winter School of Computer Graphics (WSCG ’06)
+  9                                                                     (2006), pp. 9–16. 8
+                                                                      [SBH∗ 08] S AMATOVA N. F., B REIMYER P., H ENDRIX W.,
+[MWY∗ 09] M A K.-L., WANG C., Y U H., M ORELAND K.,
+                                                                        S CHMIDT M. C., R HYNE T.-M.: An Outlook Into Ultra-Scale
+  H UANG J., ROSS R.: Next-Generation Visualization Technolo-
+                                                                        Visualization of Large-Scale Biological Data. In Workshop on
+  gies: Enabling Discoveries at Extreme Scale. In SciDAC Review
+                                                                        Ultrascale Visualization, UltraVis 2008. (2008), pp. 29–39. 4
+  (2009), pp. 12–21. 1, 4, 7
+                                                                      [SCC∗ 02] S ILVA C., C HIANG Y.-J., C ORREA W., E L - SANA J.,
+[Neu94] N EUMANN U.: Communication Costs for Parallel
+                                                                        L INDSTROM P.: Out-of-Core Algorithms for Scientific Visu-
+  Volume-Rendering Algorithms. IEEE Computer Graphics & Ap-
+                                                                        alization and Computer Graphics. In IEEE Visualization ’02
+  plications 14, 4 (July 1994), 49–58. 6
+                                                                        Course Notes (2002). 6, 7
+[NVI13] NVIDIA C ORPORATION: CUDA C Programming                       [Shn94] S HNEIDERMAN B.: Dynamic Queries for Visual Infor-
+  Guide, 2013. http://www.nvidia.com/object/cuda_get.html. 8             mation Seeking. IEEE Software 11, 6 (1994), 70–77. 7
+[NZIS13]   N IESSNER M., Z OLLHÖFER M., I ZADI S., S TAM -            [SHN∗ 06] S CHARSACH H., H ADWIGER M., N EUBAUER A.,
+  MINGER  M.: Real-Time 3D Reconstruction at Scale Using Voxel          W OLFSBERGER S., B ÜHLER K.: Perspective Isosurface and
+  Hashing. ACM Transactions on Graphics 32, 6 (2013), 1–11. 13          Direct Volume Rendering for Virtual Endoscopy Applications.
+[OLG∗ 07] OWENS J. D., L UEBKE D., G OVINDARAJU N.,                     In Eurovis/IEEE-VGTC Symposium on Visualization (2006),
+  H ARRIS M., K RÜGER J., L EFOHN A. E., P URCELL T. J., K R            pp. 315–323. 9, 11
+  J.: A Survey of General-Purpose Computation on Graphics Hard-       [SO92] S HARIR M., OVERMARS M. H.: A Simple Output-
+  ware. Computer Graphics Forum 26, 1 (2007), 80–113. 8                 sensitive Algorithm for Hidden Surface Removal. ACM Trans.
+[OVS12] O BERT J., VAN WAVEREN J., S ELLERS G.: Virtual                 Graph. 11, 1 (1992), 1–11. 2, 3
+  Texturing in Software and Hardware. In SIGGRAPH ’12 Courses         [SSJ∗ 11] S UMMA B., S CORZELLI G., J IANG M., B REMER P.-
+  (2012). 5, 12, 14                                                      T., PASCUCCI V.: Interactive Editing of Massive Imagery Made
+[PF02] PASCUCCI V., F RANK R. J.: Hierarchical Indexing for             Simple. ACM Transactions on Graphics 30, 2 (Apr. 2011), 1–13.
+  Out-of-Core Access to Multi-Resolution Data. In Hierarchi-            6
+  cal and Geometrical Methods in Scientific Visualization. 2002,      [SSKE05] S TEGMAIER S., S TRENGERT M., K LEIN T., E RTL
+  pp. 225–241. 6                                                         T.: A Simple and Flexible Volume Rendering Framework
+
+                                                                                                          c The Eurographics Association 2014.
+                                 J. Beyer & M. Hadwiger & H. Pfister / GPU-Based Large-Scale Volume Visualization
+
+  for Graphics-Hardware-based Raycasting. Eurographics/IEEE                    Q.: Survey of Parallel and Distributed Volume Rendering: Revis-
+  VGTC Workshop on Volume Graphics ’05 (2005), 187–195. 8, 9,                  ited. In International Conference on Computational Science and
+  13                                                                           Its Applications (ICCSA ’05) (2005), vol. 3, pp. 435–444. 2, 6
+[SSWB05] S TOCKINGER K., S HALF J., W U K., B ETHEL E. W.:
+  Query-Driven Visualization of Large Data Sets. In IEEE Visual-
+  ization ’05 (2005), pp. 167–174. 7
+                                                                            Biography
+[THM01] T URLINGTON J. Z., H IGGINS W. E., M EMBER S.:                      Johanna Beyer is a postdoctoral fellow in the School of
+  New Techniques for Efficient Sliding Thin-Slab Volume Visu-               Engineering and Applied Sciences at Harvard University.
+  alization. IEEE Transactions on Medical Imaging 20, 8 (2001),             Before joining Harvard, she was a postdoctoral fellow at
+  823–835. 10
+                                                                            the Visual Computing Center at King Abdullah University
+[TMJ98] TANNER C. C., M IGDAL C. J., J ONES M. T.: The                      of Science and Technology. Her research interests include
+  Clipmap : A Virtual Mipmap. In SIGGRAPH ’98 (1998), ACM,
+                                                                            large-data visualization, parallel visualization, and GPU-
+  pp. 151–158. 5
+                                                                            based volume rendering for neuroscience and neurobiology.
+[TTRU∗ 06] T U T., TABORDA -R IOS R., U RBANIC J., Y U                      She received a PhD in computer science from the Vienna
+  H., B IELAK J., G HATTAS O., L OPEZ J. C., M A K.-L.,
+  O’H ALLARON D. R., R AMIREZ -G UZMAN L., S TONE N.: An-                   University of Technology in 2010.
+  alytics Challenge - Remote Runtime Steering of Integrated Teras-
+                                                                               Markus Hadwiger is an Assistant Professor in com-
+  cale Simulation and Visualization. In ACM/IEEE conference on
+  Supercomputing (SC ’06) (2006), ACM Press, p. 297. 7                      puter science at King Abdullah University of Science and
+                                                                            Technology and head of the High-Performance Visualization
+[TYC∗ 11] T IKHONOVA A., Y U H., C ORREA C. D., C HEN
+  J. H., M A K.-L.: A Preview and Exploratory Technique for                 group at the Visual Computing Center at KAUST. Before
+  Large-Scale Scientific Simulations. In Eurographics Conference            joining KAUST, he was a Senior Researcher at the VRVis
+  on Parallel Graphics and Visualization (EGPGV’11) (2011),                 Research Center in Vienna. His PhD is in computer science
+  pp. 111–120. 7                                                            from the Vienna University of Technology in 2004. He is
+[VOS∗ 10] VO H. T., O SMARI D. K., S UMMA B., C OMBA J. A .                 a co-author of the book Real-Time Volume Graphics. His
+  L. D., PASCUCCI V., S ILVA C. T.: Streaming-Enabled Parallel              research interests include petascale visual computing and
+  Dataflow Architecture for Multicore Systems. Computer Graph-              scientific visualization, volume rendering, large-scale image
+  ics Forum 29, 3 (2010), 1073–1082. 7
+                                                                            processing, and GPU algorithms and architecture.
+[vW09] VAN WAVEREN J. M. P.: id Tech 5 Challenges: From
+  Texture Virtualization to Massive Parallelization. Talk in Beyond            Hanspeter Pfister is An Wang Professor of Computer
+  Programmable Shading course, SIGGRAPH ’09, 2009. 5, 12, 14                Science and Director of the Institute for Applied Computa-
+[WE98] W ESTERMANN R., E RTL T.: Efficiently Using Graphics                 tional Science at the Harvard School of Engineering and Ap-
+  Hardware in Volume Rendering Applications. In SIGGRAPH ’98                plied Sciences. His research in visual computing lies at the
+  (1998), pp. 169–178. 8, 9, 13                                             intersection of visualization, computer graphics, and com-
+[WGL∗ 05] WANG C., G AO J., L I L., S HEN W.-W., S HEN H.-                  puter vision. It spans a wide range of topics, including bio-
+  W.: A Multiresolution Volume Rendering Framework for Large-               medical visualization, image and video analysis, 3D fabri-
+  Scale Time-Varying Data Visualization. In Eurographics/IEEE
+                                                                            cation, and data science. Dr. Pfister has a Ph.D. in Com-
+  VGTC Workshop on Volume Graphics ’05 (2005), pp. 11–223.
+  10                                                                        puter Science from the State University of New York at
+                                                                            Stony Brook and an M.S. in Electrical Engineering from
+[Wil83] W ILLIAMS L.: Pyramidal Parametrics. Computer
+  Graphics (Proc. of SIGGRAPH ’83) 17, 3 (1983), 1–11. 5, 13                ETH Zurich, Switzerland. Before joining Harvard he worked
+                                                                            for over a decade at Mitsubishi Electric Research Laborato-
+[Wit98] W ITTENBRINK C. M.: Survey of Parallel Volume Ren-
+  dering Algorithms. Tech. rep., Hewlett-Packard Laboratories,              ries where he was Associate Director and Senior Research
+  1998. 2, 6                                                                Scientist.
+[WWH∗ 00]     W EILER M., W ESTERMANN R., H ANSEN C., Z IM -
+  MERMAN     K., E RTL T.: Level-Of-Detail Volume Rendering
+  via 3D Textures. In IEEE Symposium on Volume Visualization
+  (2000), pp. 7–13. 2, 3, 5, 8, 9, 12, 13
+[YMC06] YOUNESY H., M ÖLLER T., C ARR H.: Improv-
+  ing the Quality of Multi-Resolution Volume Rendering. In
+  Eurovis/IEEE-VGTC Symposium on Visualization ’06 (2006),
+  pp. 251–258. 5
+[YWG∗ 10] Y U H., WANG C., G ROUT R. W., C HEN J. H., M A
+  K.-L.: In Situ Visualization for Large-Scale Combustion Simu-
+  lations. IEEE Computer Graphics & Applications 30, 3 (2010),
+  45–57. 7
+[ZMHH97] Z HANG H., M ANOCHA D., H UDSON T., H OFF
+  K. E.: Visibility Culling Using Hierarchical Occlusion Maps.
+  In ACM SIGGRAPH ’97 (1997), pp. 77–88. 2, 11
+[ZSJ∗ 05]    Z HANG J., S UN J., J IN Z., Z HANG Y., Z HAI W., Z HAI
+
+c The Eurographics Association 2014.
+

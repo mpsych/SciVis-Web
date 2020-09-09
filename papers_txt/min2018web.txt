@@ -1,0 +1,267 @@
+           A Web-based Medical Image Viewer for 2D and 3D
+                           visualization
+                Qiusha Min                                              Neng Liu                                       Yating Chen
+  School of Educational Information                    School of Educational Information                   School of Educational Information
+  Technology, Central China Normal                     Technology, Central China Normal                    Technology, Central China Normal
+             University                                           University                                          University
+       Wuhan, Hubei, China                                      Wuhan, Hubei                                    Wuhan, Hubei, China
+          86-2767867597                                        86-2767861972                                       86-2767861972
+   qiusham@mail.ccnu.edu.cn                                   946962074@qq.com                                  1064786402@qq.com
+
+
+ABSTRACT                                                                            without pre-installation or specialized hardware.
+With the development of Internet technology, telemedicine                           This paper presents a research work associated to the development
+technology has become one of the hottest research topics. In this                   and validation of a RIA for remote access medical images. This
+paper, a Web-based medical image viewer application is                              web-based medical image viewer is developed by Java and
+presented in order to facilitate timely and accurate diagnoses in a                 provide comprehensive interpretation functions, such as
+telemedicine system. The application can access the remote                          windowing, volume rendering and labeling. A series of
+medical image database and display image over the network. This                     experiments are conducted to evaluate this application in terms of
+application implements the basic functions of the two-dimensional                   its usability, functionality and performance.
+image processing. Besides, 3D functions, e.g, volume rendering
+and surface rendering of region of interest, fly through, can be                    2. RELATED WORK
+also implemented by the proposed viewer. Medical staff can                          The first web-based medical image viewer was developed by Java
+perform some basic operations via the mouse to make more                            [1]. It used as a teaching tool which enabled overlaying of labels
+effective diagnosis. Experimental results show that the basic                       and text on radiology images. The overlay function could be used
+image processing functions and advanced 3D functions can be                         to display an annotation near the specific findings to facilitate
+achieved by this application and it presents a high level of                        student studies. In addition, 16-bit DICOM images could be
+usability, functionality and performance.                                           windowed by Java applications without loss of any gray-scale
+                                                                                    details. Many researchers have used Java to develop their web-
+CCS Concepts                                                                        based medical image viewers [2-5] and applied this application in
+•Applied      computing➝Life         and                          medical           real situations.
+sciences➝Computational biology➝Imaging
+                                                                                    There are other approaches to develop such applications, such as
+Keywords                                                                            combination of Borland C++ Builder, PHP and MySQL [6-8], and
+Medical Image Viewer, Web-based Application, 3D Visualization                       Flash [9,10]. They can provide functions, e.g. Medical image
+                                                                                    archive, medical image compression, and 2D image processing.
+1. INTRODUCTION                                                                     Since the newest revision of the HTML standard, HTML5, is
+Recently digital modalities such as x-ray, MRI, and CT are widely                   developed recently, many medical imaging applications are
+used in hospitals. The transition from analog to digital format in                  created based on this technology. Monteiro, Costa and Oliveira
+medical imaging makes it possible to view medical images in                         used HTML5 to develop a sophisticated web-based medical image
+different locations and manipulate them in an easy way. Thus,                       viewer [11]. Their experimental results demonstrated that the
+these medical images can be accessed and viewed by a variety of                     basic interpretation functions, e.g. Measurement, annotation,
+medical professionals, enhancing patient care and improving                         windowing, image rotation and filtering, and zooming, were
+operational efficiency.                                                             successfully implemented by their application. Later, they
+                                                                                    improved the performance of HTML5-based medical image
+However, traditional visualization of medical images is                             viewer by reducing data access latency[12].
+implemented on a workstation equipped with specialized software
+and hardware. Thus, radiologists are limited to access medical                      Although current web-based medical image viewer can provide
+images in each given environment. Rich Internet Applications                        rich interpretation functions, most of them are lack of 3D features.
+(RIAs) give a solution to this problem. This type of applications                   A large number of studies have confirmed the feasibility and
+can be powerful and accessed via Internet. They run in browsers                     clinical benefit of 3D functions used in radio-logical interpretation
+                                                                                    [13, 14]. These studies indicated that an integration of 3D
+Permission to make digital or hard copies of all or part of this work for           visualization functions could significantly improve examiner
+personal or classroom use is granted without fee provided that copies are           performance in terms of sensitivity and efficiency. Therefore, this
+not made or distributed for profit or commercial advantage and that                 paper aims to develop a more functional web-based medical
+copies bear this notice and the full citation on the first page. Copyrights
+                                                                                    image viewer which include 2D and 3D features. Our previous
+for components of this work owned by others than ACM must be
+honored. Abstracting with credit is permitted. To copy otherwise, or                research has demonstrated that Java is a suitable technology for
+republish, to post on servers or to redistribute to lists, requires prior           developing this type of application[15] and hence the proposed
+specific permission and/or a fee. Request permissions from                          medical image viewer in this paper is developed by Java. The
+Permissions@acm.org.                                                                following sections present the design and implementation of this
+ICMSS 2018, January 13–15, 2018, Wuhan, China                                       medical image viewer.
+© 2018 Association for Computing Machinery.
+ACM ISBN 978-1-4503-5431-8/18/01…$15.00
+DOI: https://doi.org/10.1145/3180374.3181321
+                                                                              261
+3. METHOD
+3.1 System Architecture and Design
+The system consists of the client and the server, the operations of
+this application are presented in Fig 1. While a client sends a
+request to access webpage, an applet file is sent to the client with
+the page. Next, the client chooses the corresponding data option
+and clicks the “download” button to send the request of
+downloading the dataset from the server. A dataset is sent to the
+client. After the client downloaded the dataset and stored it in the
+local file system, the application processes the data and
+implements the functions of image display, image processing, 3D
+reconstruction and so on.
+                                                                                             c)                              d)
+
+
+
+
+                                                                                                  e)                          f)
+                   Figure 1. System architecture.
+
+3.2 Image Data Access
+There are three views of datasets which are provided by the
+application, e.g. axial, sagittal, and coronal view. The initial
+medical datasets are stored in axial orientation. In order to
+improve the efficiency of sagittal and coronal view, the proposed
+method converts the initial data into sagittal and coronal datasets
+in the process of downloading data. Thus, image data access
+includes not only the data storage, but also the data processing.
+Finally, the client got three datasets by changing the storage order
+of data, namely axial, sagittal, coronal dataset.
+                                                                                                              g)
+3.3 Image Processing Tools
+In the two-dimensional medical image processing, the tools                                  Figure 2. The tools for 2D Image.
+mainly include zooming, windowing, distance measurement,                     a) displaying the 50th slice in the dataset. b) Magnified image. c)
+labeling, sagittal and coronal view window. These functions have             Shrink the image. d) windowing. The image is a slice adjusted
+been achieved in the application, shown as Fig.2. The medical                window where the following parameters have been used: window
+staff can use these tools to make a diagnostic report and save the           center is 0HU, window width is 240HU. e) measured. Used to
+information in the image. This image can then be sent to remote              measure the distance between two points. f) marked, the medical
+hospitals.                                                                   staff marked in the image. g) three different views, namely axial,
+                                                                             sagittal, coronal, in the sagittal and coronal view, the red line
+                                                                             represents current slice of axial.
+
+                                                                             3.4 3D Visualization Tools
+                                                                             Three 3D features are provided in our application, e.g. volume
+                                                                             rendering, surface rendering and flythrough. The volume
+                                                                             rendering method directly projects voxels from dataset onto the
+                                                                             screen, which displays the details of the internal object. However,
+                                                                             in the volume rendering process, all the voxels are involved in
+                                                                             rendering the final image. A large amount of computation results
+                                                                             in poor real-time performance. In this application, volume
+                                                                             rendering adopts an accelerate the algorithm in the [16]. User
+              a)                               b)                            chooses a voxel in the current view, sets the size of the screen,
+                                                                             and adjusts an appropriate distance between the voxel and screen.
+                                                                             The application subsequently reconstructs the area mapped to the
+
+
+
+
+                                                                       262
+screen, shown as Fig.3 a). This method greatly reduces the                   4. EXPERIMENTAL RESULTS
+calculation and meets the requirement of real-time display.                  To evaluate this web-based viewer, two types of experiments are
+                                                                             conducted. The first experiment is used to determine if it is
+                                                                             sufficient to support radiologist’s interpretation. The second type
+                                                                             of experiments is intended to evaluate the performance of the
+                                                                             proposed application in a local area network (LAN).
+                                                                             Two radiologists are voluntary to participate in the first
+                                                                             experiment. The proposed web-based medical image viewer was
+                                                                             launched on their computer and based on the radiologist usage
+                                                                             feedback, we revised the application and improved its usability
+                                                                             and functionality. As a result, many of the tools commonly used
+                                                                             by radiologists during image interpretation are available in our
+                                                                             web-based viewer. Therefore, both radiologists in the experiment
+                                                                             stated that they were delighted with the application and willing to
+             a)                                   b)                         use it in the future.
+                                                                             Besides the qualitative evaluation resulting from the users’ trials,
+                                                                             some quantitative experiments were also conducted in order to
+                                                                             determine the application performance. The experiments were
+                                                                             carried out using a Lenovo computer equipped with Intel(R)
+                                                                             Core(TM) i5 CPU @2.30GHz, 8.0GB RAM, plus a Nvidia
+                                                                             Geforce GTX 950m graphics card and Windows 10 64-bit
+                                                                             operating system. Three datasets were used in the experiments.
+                                                                             These data were downloaded from The Cancer Imaging Archive
+                                                                             (TCIA) which provides a freely accessible and open archive of
+                                                                             cancerspecific medical images to the research community [18]. A
+                                                                             complete description of these three datasets is provided in Table I.
+                                                                             The colon was taken as an example of surface rendering.
+                                  c)
+                                                                                 Table 1. Description the dataset used in the experiment
+             Figure 3. Image of 3D reconstruction
+                                                                                                                      3D reconstruction
+a) A volume rendering of the local colon. b) A surface rendering             Datas                                                     The
+                                                                                       Type         Size        Vertex     Norma
+of the whole colon. c) A single frame of virtual fly through within           et                                                     number
+the colon.                                                                                                       file       l file
+                                                                                                                                     of faces
+The surface rendering method is based on the extraction of edges                                  512×512
+                                                                                                                59,545K        59,545     1,693,70
+or contours of 2D tomographic images, and then the triangular                22118      CT        ×610(312
+                                                                                                                   B            KB           0
+patches are constructed from the obtained data, it facilitates the                                ,320KB)
+real-time interaction. The Marching Cubes algorithm [17] is                                       512×512
+                                                                                                                57,747K        57,747     1,642,58
+implemented once in the application, the vertices data and the               08629      CT        ×628(321
+                                                                                                                   B            KB           0
+normal data are stored on the server. The client generates a 3D                                   ,536KB)
+model according to download vertices data and normal data,                                        512×512
+                                                                                                                60,236K        60,236     1,713,37
+shown as Fig.3 b). The user can rotate and zoom the model with               08779      CT        ×500(256
+                                                                                                                   B            KB           2
+mouse.                                                                                            ,000KB)
+
+Flythrough is a virtual endoscope technology, mainly used to
+display the internal surface of the organ, it can be move on the             All the functions in our application were tested and the results are
+inner surface of reconstructed organ to help the medical staff to            shown in Table 2. It is clear that the response time for 2D image
+observe the internal organ. Fig.3 c) shows a single frame of virtual         processing functions is much less than 1 second. In terms of
+fly through within the colon.                                                volume rendering and flythrough, they can achieve real time
+                                                                             performances on an ordinary computer. The time for downloading
+                                                                             and surface rendering is around 14 seconds.
+                                          Table 2. The proposed application performance in LAN
+                                                                 2D                                                       3D
+                         Downl
+             Dataset                                             Windo        Measu      Save        Volume         Surface
+                         oad           Navigation      Zooming                                                                          flythrough
+                                                                 wing         rement     labels      rendering      rendering
+             #1          18.03s          0.013s         0.002s    0.012s      0.002s      0.002s       0.665s        13.826s             15.63fps
+             #2          18.54s          0.013s         0.002s    0.013s      0.002s      0.002s       0.656s        13.372s             16.22fps
+             #3          15.25s          0.015s         0.004s    0.012s      0.002s      0.002s       1.327s        14.177s             14.78fps
+
+
+
+
+                                                                       263
+5. CONCLUSION                                                               [9] Arguiñarena, E.J.C., Macchi, J.E., and Escobar, P.P. 2010.
+The proposed viewer is a comprehensive web-based medical                        Dcm-ar: a fast flash-based Web-PACS viewer for displaying
+imaging application that lets radiologists access images in a                   large DICOM images. In 2010 Annual International
+remote place. Using this application, the radiologists are able to              Conference of the IEEE Engineering in Medicine and
+make efficient interpretations and diagnosis in a remote place. The             Biology (Buenos Aires, Argentina, Aug 31,2010), IEEE,
+main advantage of our approach is that it provides 3D features                  New York, NY, 3463-3466.
+which allow for more accurate and efficient diagnosis. It is clear              DOI=https://doi.org/10.1109/IEMBS.2010.5627827
+from the results presented in this paper that the radiologists              [10] Min, Q., Wang, Z., and Wu, M. 2016. An evaluation of
+satisfied with the proposed web-based viewer and it demonstrated                 adobe flash for remote access medical imaging applications.
+a high level of usability, functionality and performance.                        In 2016 9th International Congress on Image and Signal
+                                                                                 Processing(Datong, China, Oct 15-17, 2016), BioMedical
+6. ACKNOWLEDGMENTS                                                               Engineering and Informatics (CISP-BMEI), IEEE, New York,
+This work was supported by the MOE (Ministry of Education in                     NY, 645-650,
+China) Project of Humanities and Social Sciences (Project                        DOI=https://doi.ieeeresearchgate.org/10.1109/CISP-
+No.17YJC880081), and the self-determined research funds of                       BMEI.2016.7852789
+CCNU from the colleges' basic research and operation of MOE
+                                                                            [11] Monteiro, E.J.M., Costa, C., and Oliveira, J.L.2013. A
+(No. CCNU17KYZHSY24).
+                                                                                 DICOM viewer based on web technology. In 2013 IEEE
+7. REFERENCES                                                                    15th International Conference on e-Health Networking
+[1] Eng, J. 1997. Improving the interactivity and functionality of               (Lisbon, Portugal, Oct 9-12,2013), IEEE, New York, NY,
+    Web- based radiology teaching files with the Java                            167-171.
+    programming language. Radiographics.17,6 (Nov.1997),                         DOI=https://doi.org/10.1109/HealthCom.2013.6720660
+    1567-1574.                                                              [12] Monteiro, E., Costa, C., and Oliveira, J.L.2016. Caching and
+    DOI=https://doi.org/10.1148/radiographics.17.6.9397464                       Prefetching Images in a Web-Based DICOM Viewer. In
+[2] Abrardo, A., and Casini, A. L.1998. Embedded Java in a                       2016 IEEE 29th International Symposium on Computer-
+    web-based teleradiology system. IEEE Internet Computing.                     Based Medical Systems (Dublin, Ireland, Jun 20-24, 2016),
+    2,3 (May.1998), 60-68.                                                       IEEE, New York, NY,241-246.
+    DOI=http://doi.acm.org/10.1109/4236.683801                                   DOI=http://doi.ieeecomputersociety.org/10.1109/CBMS.201
+                                                                                 6.68
+[3] Slomka, P. J., Elliott, E., and Driedger,A. A. 2000. Java-
+    based remote viewing and processing of nuclear medicine                 [13] Rodt, T., Ratiu, P., and Becker, H.2002. 3D visualisation of
+    images: toward "the imaging department without walls".                       the middle ear and adjacent structures using reconstructed
+    Journal of Nuclear Medicine.41,1 (Jan.2000),111-118.                         multi-slice CT datasets, correlating 3D images and virtual
+    PMID=http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=                      endoscopy to the 2D cross-sectional images. Neuroradiology
+    Retrieve&db=pubmed&dopt=Abstract&list_uids=10647613                          44,9(Aug,2002), 783-790.
+                                                                                 DOI=https://doi.org/10.1007/s00234-002-0784-0
+[4] Lee, S. K., Peng,C. H., and Wen, C.H. 1999. Consulting with
+    radiologists outside the hospital by using Java.                        [14] Pickhardt P.J., Lee, A.D., and Taylor A.J. 2007. Primary 2D
+    Radiographics. 19,4 (Jul.1999), 1069-1075.                                   versus primary 3D polyp detection at screening CT
+    DOI=https://doi.org/10.1148/radiographics.19.4.g99jl151069                   colonography. American Journal of Roentgenology 189,6
+                                                                                 (Dec,2007), 1451-1456.
+[5] Knoll, P., Höll, K., and Mirzaei, S.2000. Distributed nuclear                DOI=https://doi.org/10.2214/AJR.07.2291
+    medicine applications using World Wide Web and Java
+    technology. European Radiology.10,9 (Aug.2000), 1483-                   [15] Min, Q., and Sadleir, R.J.T.2016.Distributed medical
+    1486. DOI=https://doi.org/10.1007/s003300000432                              imaging applications using Java technology. In 2015 Asia-
+                                                                                 Pacific Signal and Information Processing Association
+[6] Suapang, P., Dejhan, K., and Yimmun, S. 2010. A web-based                    Annual Summit and Conference (Hong Kong, China, Dec 16-
+    DICOM-format image archive, medical image compression                        19,2015),IEEE, New York, NY, 619-622.
+    and DICOM viewer system for teleradiology application. In                    DOI=https://doi.org/10.1109/APSIPA.2015.7415343
+    Proceedings of SICE Annual Conference 2010 (Taipei,
+    Taiwan, Aug 18-21, 2010 ). IEEE, New York,NY,3005-3011.                 [16] Min, Q., and Sadleir, R.J.T.2010. A Real-time Software-
+                                                                                 based Volume Rendering Technique for Virtual Endoscopy.
+[7] Suapang, P., Yimmun, S., and Puditkanawat, A. 2011. Web-                     In 2010 China-Ireland International Conference on
+    based Medical Image Archiving and Communication System                       Information and Communications Technologies
+    for Teleimaging. In 2011 11th International Conference on                    (Wuhan,China, 2010),68-71.
+    Control, Automation and Systems (Gyeonggi-do, South
+    Korea, Oct 26-29,2011). IEEE, New York,NY,172-177.                      [17] Lorensen, W.E., and Cline, H.E.1987. Marching cubes: A
+                                                                                 high resolution 3D surface construction algorithm. ACM
+[8] Suapang, P., Puttanakit, V., and Yimman, S.2013.                             SIGGRAPH Computer Graphics. 21,4(Jul.1987),163-169.
+    Mammography Archiving and Web Viewer. In The SICE                            DOI=http://doi.acm.org/10.1145/37402.37422
+    Annual Conference 2013(Nagoya, Japan, Sept 14-17,2013 ),
+    IEEE, New York,NY, 2656-2660.
+
+
+
+
+                                                                      264
+

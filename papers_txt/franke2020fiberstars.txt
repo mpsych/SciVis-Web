@@ -1,0 +1,739 @@
+                                               FiberStars: Visual Comparison of Diffusion Tractography Data
+                                                                 between Multiple Subjects
+                                                                   Loraine Franke, Daniel Karl I. Weidele, Fan Zhang, Suheyla Cetin-Karayumak,
+                                                                        Steve Pieper, Lauren J. O’Donnell, Yogesh Rathi, and Daniel Haehn
+arXiv:2005.08090v1 [cs.HC] 16 May 2020
+
+
+
+
+                                                Fig. 1. Comparison of fiber clusters across subjects in split screen mode of FiberStars. We show Human Connectome Project
+                                                tractography data from six different subjects. The bottom two-dimensional mappings allow for a faster comparison. A demo of FiberStars
+                                                with a small data sample can be found at https://lorifranke.github.io/ABCD/.
+
+                                                Abstract— Tractography from high-dimensional diffusion magnetic resonance imaging (dMRI) data allows brain’s structural connectivity
+                                                analysis. Recent dMRI studies aim to compare connectivity patterns across thousands of subjects to understand subtle abnormalities
+                                                in brain’s white matter connectivity across disease populations. Besides connectivity differences, researchers are also interested
+                                                in investigating distributions of biologically sensitive dMRI derived metrics across subject groups. Existing software products focus
+                                                solely on the anatomy or are not intuitive and restrict the comparison of multiple subjects. In this paper, we present the design and
+                                                implementation of FiberStars, a visual analysis tool for tractography data that allows the interactive and scalable visualization of brain
+                                                fiber clusters in 2D and 3D. With FiberStars, researchers can analyze and compare multiple subjects in large collections of brain fibers.
+                                                To evaluate the usability of our software, we performed a quantitative user study. We asked non-experts to find patterns in a large
+                                                tractography dataset with either FiberStars or AFQ-Browser, an existing dMRI exploration tool. Our results show that participants using
+                                                FiberStars can navigate extensive collections of tractography faster and more accurately. We discuss our findings and provide an
+                                                analysis of the requirements for comparative visualizations of tractography data. All our research, software, and results are available
+                                                openly.
+                                                Index Terms—Neuroscience, 3D Visualization, Brain Fibers, Diffusion MRI, High-Dimensional Data
+
+
+
+
+                                         1   I NTRODUCTION
+                                         In recent years, studying the brain and its neural connectivity has be-          diffusion magnetic resonance imaging (dMRI) is currently the only tech-
+                                         come an emerging discipline among various research fields. Especially,           nique that enables tracing the structural anatomy of white matter tracts
+                                                                                                                          in the human brain. DMRI is sensitive to molecular water diffusion and
+                                                                                                                          can characterize subtle changes in the brain microstructure and mea-
+                                          • Loraine Franke and Daniel Haehn are with the University of Massachusetts      sure structural connectivity abnormalities in the brain’s white matter
+                                            Boston. E-mails: {franke,haehn}@mpsych.org.                                   tracts [4]. Research concerning dMRI can analyze the white matter
+                                          • Daniel Karl I. Weidele is with IBM Research and the University of Konstanz.   tracts and structural connectivity with a process called tractography [5].
+                                            E-mail: daniel.karl@ibm.com.                                                  Tractography is used to construct maps and diagrams of the brain’s
+                                          • Fan Zhang, Suheyla Cetin Karayumak, Lauren O’Donnell, and Yogesh Rathi        connectivity with high-resolution images to improve comprehension of
+                                            are with Harvard Medical School. E-mails:                                     the structure of the brain [16, 31, 37]. DMRI tractography has gained in
+                                            {fzhang,skarayumak,odonnell,yogesh}@bwh.harvard.edu.                          popularity in clinical practice and research on brain diseases such as
+                                          • Steve Pieper is with Isomics, Inc. E-mail: pieper@isomics.com.                autism, multiple sclerosis, stroke, dementia, and schizophrenia [2, 47].
+                                          Manuscript received xx xxx. 202x; accepted xx xxx. 202x. Date of Publication    Moreover, dMRI tractography is a powerful tool to track and detect
+                                         xx xxx. 202x; date of current version xx xxx. 202x. For information on           disruptions in structural connectivity regarding brain disease and dis-
+                                         obtaining reprints of this article, please send e-mail to: reprints@ieee.org.    orders [20, 21]. For example, when comparing the brain connectivity
+                                         Digital Object Identifier: xx.xxxx/TVCG.202x.xxxxxxx                             between healthy and disease populations, it is critical to get deeper
+insights to understand the potential pathology. Tractography data needs       and methods. The remaining need for exploring fiber bundles was ap-
+interpretation to be useful, and therefore visualizations are required to     proached by [12–14, 29, 55]. But all these visualizations cannot analyze
+understand the underlying tissue microstructure of fiber tracts. High-        multiple datapoints across different subjects.
+dimensional fiber tracking datasets consisting of tens of gigabytes in           To allow comparative visualizations of DTI data, researchers devel-
+size with millions of fibers, and the spatial 3D characteristics yield        oped software that allows cohort and ensemble visualizations. One
+fundamental challenges for data exploration and visualization.                example is DiffRadar by Mei et al. [35]. The authors present a com-
+    Tractography data can include millions of 3D polylines with each          bined 2D dimensionality reduction with 3D fiber visualization using
+line representing the path of a single white matter tract. These lines        multidimensional scaling (MDS). However, to allow MDS, all fibers
+can form a fiber bundle or also called a cluster. The data is highly          need to have the same number of vertices, and the data requires re-
+variable across fiber cluster and subjects. The main goal of this paper       sampling. Unfortunately, DiffRadar is not available for download, and
+is to visualize fiber data in an efficient way that allows comparisons        efforts to contact the authors were not successful. This only allows us
+between different clusters or bundles and subjects. For this, we choose       to briefly study the visualization technique.
+to pair existing 3D visualizations with a 2D approach to reduce the              A more available application was created by Yeatman et al. [53]. The
+complexity of the data. Our tool FiberStars aims to assist researchers        authors propose the web-based visualization tool AFQ-Browser (Auto-
+among various disciplines, including neuroscientists, neurosurgeons,          mated Fiber Quantification). This tool enables quantitative analysis of
+and psychologists. We design FiberStars to provide analysis tools for         white matter fiber tracts and comparisons across different subjects. For
+brain connectivity research that are easy to use for novices and experts      example, the authors show that this tool can compare healthy subjects
+alike. Our goal is that users do not necessarily require a detailed un-       with subject groups suffering from Multiple sclerosis or Amyotrophic
+derstanding of complex relationships and patterns in the data. With           lateral sclerosis. In initial experiments of using AFQ-Browser on our
+FiberStars, users can generate and validate new hypothesis when com-          data, we realized several shortcomings that hinder fast and efficient
+paring tractography of multiple subjects. To allow this, we use several       comparisons across subjects. We designed FiberStars to overcome these
+levels of abstraction. We visualize large multi-subject datasets in a         limitations and carefully compare our software to the AFQ-Browser in
+projection view that shows the overall distribution. We then introduce a      this paper. In Section 5, we evaluate the limitations of each application
+compact 2D representation to create fingerprints for different subjects       in more detail.
+and fiber clusters. Finally, we support the combined visualization of
+3D anatomy with our 2D representations across multiple subjects and           3     S CIENTIFIC BACKGROUND
+multiple regions of interest. We build off existing visualization research,   DMRI by Basser et al. [4] allows exploring information from in vivo
+that has demonstrated additional effectiveness of two-dimensional rep-        fibrous structures such as the white matter or muscles and is widely
+resentations in medical imaging, such as for connectomics [1] or other        used across hospitals, universities, and research centers. In collabora-
+fields such as cerebral arteries [41]. FiberStars is a web-based soft-        tion with neuroscience researchers, we studied how we can efficiently
+ware and provides rich, multidimensional visualizations paired with           visualize dMRI data of single and multiple subjects.
+3D anatomical renderings across devices without the need for any
+installation.                                                                 3.1    dMRI Data, Tractography and Scalars.
+   Contributions. We present the design, implementation, and eval-            Tractography data represents the trajectories of fibers (or streamlines)
+uation of FiberStars. Our application facilitates the analysis of high-       in the white matter. These paths are different series of vertices (x, y, z)
+dimensional diffusion MRI data with different levels of abstraction.          in 3D. Besides this positional data, researchers often attach per-vertex
+We focus specifically on ensemble visualization to allow the direct           scalars or per-fiber properties to include additional information. Such
+comparison of regions of interest and across multiple subjects. Such          added information can reflect acquisition parameters, diffusion proper-
+comparisons are important as tractography datasets are getting larger         ties, or quantities obtained during processing or analysis. While vertices
+and include multiple timestamps. FiberStars maximizes usability, and          are always represented as float values, scalars, and properties can be
+our quantitative user study shows that novices without any tractogra-         of arbitrary data type and dimension. Storing tractography requires a
+phy experience can generate meaningful insights. We also evaluate             certain amount of flexibility since every dataset is different.
+FiberStars with tractography experts and show that our software allows           We tested our tool on two different dMRI datasets. The first dataset
+faster and more precise analysis compared to alternative state-of-the-art     are dMRI scans from subjects suffering from attention deficit hyper-
+tools.                                                                        activity disorder (ADHD) [44, 52, 54]. High-resolution MR images
+                                                                              were obtained on a Siemens 3T scanner at Boston Children’s Hospi-
+2   R ELATED W ORK                                                            tal, Boston, USA, with approval of the local ethics board. Multi-shell
+                                                                              diffusion-weighted imaging (DWI) data were acquired using a simulta-
+Among various scientific disciplines, the development of interactive          neous multi-slice acquisition factor of 2 at a spatial resolution of 222
+three-dimensional renderings plays an increasingly important role in          mm3 with 70 gradient directions spread over the three b-value shells
+data and information visualization. In recent years, the field of neu-        of 1000/2000/3000 s/mm2 . Whole-brain tractography was conducted
+ronal connectivity visualization of brain imaging data has emerged.           using the unscented Kalman filter tractography (UKF) method, as im-
+Current tools and libraries such as XTK [23] and Fiberweb [30] con-           plemented in the ukftractography1 package [33, 43, 45]. During fiber
+tribute to this task and allow web-based 3D renderings. However, such         tracking, the following scalars were recorded, including the normal-
+visualizations can be complex and hard to understand.                         ized signal estimation error, signal means, return-to-origin probability
+   Many works present approaches to visually explore the complex              (RTOP), return-to-plane probability (RTPP), and the return-to-axis
+topology of biological datasets [15, 27, 28, 42]. To further decrease         probability (RTAP). Those scalar measures are used to quantify various
+the cognitive load for visualization consumers, researchers suggest           features of the three-dimensional diffusion process of water molecules
+visualizing high-dimensional data with a reduced representation for           in the brain. RTOP, RTAP, and RTPP are scalar indices assuming paral-
+data exploration and analysis [7]. Neurolines [1] also provides dimen-        lel cylinders modeling the brain’s white matter tissue. Their values are
+sionality reduction. Researchers here visualize 3D brain tissue data          therefore related to the mean tissue sizes when the axes of these parallel
+as a 2D subway map. This multi-scale approach allows scientists to            cylinders correspond to the orientation of the underlying axon bun-
+study connectivity with much greater ease than working in 3D. Further,        dle [40]. RTOP is the probability for molecules for zero-displacement
+Mohammed et al. [36] visualize similar datasets with different levels of      between the application of two diffusion sensitizing gradients and is
+detail. Other similar approaches target the cerebral artery network [41].     an indicator for restricted diffusion [2, 40]. RTOP belongs to a whole
+Another example is Jianu et al. [27], where abstract 2D paths represent       family of zero displacement probability measures, including RTAP
+brain fibers while preserving anatomical information. Further litera-         and RTPP as well. In the analysis of these scalars derived with dMRI,
+ture aims to automatically cluster fibers providing similarity measures
+among fibers or whole fiber bundles based on using different algorithms           1 https://github.com/pnlbwh/ukftractography
+they appear as specific biomarkers for indicating cellularity, size of cell
+bodies and processes, or presence of restricting barriers like myelin,
+which surrounds nerve cell axons [3]. In general, these scalars can
+reveal additional complementary information to dMRI.
+   Our second dataset is from the Human Connectome Project
+(HCP) [49]. The HCP dMRI data was acquired with a high quality
+image acquisition protocol using a customized Connectome Siemens
+Skyra scanner. The acquisition parameters used for the dMRI data
+were TE = 89.5 ms, TR = 5520 ms, phase partial Fourier = 6/8, and
+voxel size = 1.25 x 1.25 x 1.25 mm3 . A total of 288 images were
+acquired for each subject, including 18 baseline images with a low
+diffusion weighting b = 5 s/mm2 and 270 diffusion weighted images
+evenly distributed at three shells of b = 1000/2000/3000 s/mm2 . Whole-
+brain tractography was also conducted using the UKF method, as in
+the ADHD data. During fiber tracking, the following scalars were
+recorded, including diffusion measures of the fractional anisotropy
+(FA), mean diffusivity (MD), and the hemisphere location. Changes in
+these diffusion scalars are considered to reflect alternations of the un-
+derlying tissue microstructures. Quantifying changes can be helpful for       Fig. 2. Projection view shows distribution of multiple clusters and
+monitoring disease and abnormalities, for example, inflammation, cell         subjects. When hovering over a point in the projection view, the user
+death, changes in myelination, edema, gliosis, increase in connectivity       can get more detailed information on the projected cluster (1). The
+                                                                              Projection View allows the user to select interesting clusters by clicking
+of crossing fibers, or increases in extracellular or intracellular water
+                                                                              and dragging over a group of multiple points in the projection view. This
+and many more [6, 39]. Besides scalars, each fiber bundle contains
+                                                                              also highlights the same cluster in other subjects (2).
+cell data with properties such as embedding coordinate, cluster number,
+embedding color, total fiber similarity, and measured fiber similarity.
+Especially the total fiber similarity and measured fiber similarity in
+a fiber tract are of special interest in terms of crossing fiber bundle       working with DTI data. Our collaborators regularly work with large-
+comparisons. In general, interpretations of changes in those scalar mea-      scale tractography data sets that can be terabytes in size. W targeted
+surements is a complex task due to their non-specificity. We designed         visualization tool requires scalable, interactive elements that allow
+our visualization tool so that it supports any type and any number of         working with such large amounts of high-dimensional data. We de-
+scalars attached to the fiber data.                                           signed five visual components to support tractography exploration on
+   Both datasets include fiber data the right and the left hemispheres of     different levels.
+the brain. The data is available in .VTP-file formats, which are XML
+                                                                                 Universal Toolbar. The users can navigate through different
+type files. Each file includes data for one fiber bundle. The ADHD
+                                                                              views by selecting and deselecting several options in the navigation
+dataset includes 67 subjects, each containing 800 clusters. The HCP
+                                                                              toolbar on the left. In the first place, it is possible to select the desired
+dataset includes 100 subjects and additional metadata (such as patient
+                                                                              subjects and clusters. When selected one or multiple subjects, the
+demographics) stored in CSV-files.
+                                                                              fiber tracts are projected in the 2-dimensional projection view, and the
+3.2 Domain Goals and Tasks                                                    navigation toolbar opens additional alternatives to select. The user can
+                                                                              select the scalar of interest and has different options on how to color
+In regular meetings with our collaborating scientists, we discussed           the points in the projection view (see Section Projection View). The
+goals and visualization designs. Through semi-structured interviews,          user can easily switch between multi-cluster view and split-screen view
+we explored which type of visualizations are helpful for domain specific      by enabling the 3D slider button. Furthermore, the navigation toolbar
+tasks. As most of the recent works show limitations in terms of multi-        offers different ways to color the 3D fiber tracts with dropdown menus.
+subject-multi-cluster comparisons, we decided to develop FiberStars.
+Domain experts are interested in multi-level visualizations from fiber            Projection View. The projection view (Fig. 2) of FiberStars
+clusters to wholebrain analysis for multiple subjects. Most existing          serves as an entry point for users without in-depth a priori knowledge
+work focuses on single-fiber visualization which is useful for surgical       about clusters. In the Universal Toolbar users can sample subjects
+planning and individual diagnosis. However, our collaborators explic-         s ∈ S from the data collection. As we currently only support manual
+itly need group comparisons to study longitudinal scans from healthy          sampling of subjects, automated or guided approaches are subject to
+subjects and those who suffer from diseases. The original purpose of          future work. Only after drawing a subject from the collection, its
+FiberStars was to use the software for the Adolescent Brain Cognitive         associated clusters Cs are loaded lazily into FiberStars: C = C1 ∪C2 ∪
+Development (ABCD) study. ABCD is the largest long-term study of              ... ∪ C|S| . Then, for every cluster c ∈ C, we seek layout coordinates
+brain development and child health in the United States [26]. With a          xc ∈ Rd in the Euclidean plane (d = 2). In particular, we would like
+targeted visualization tool, we can associate levels of brain develop-        to preserve distances δ (ci , c j ) ≈ ||xci − xc j || with ci , c j ∈ C and δ :
+ment between subjects and co-founding factors such as water quality,          C ×C → R a distance function operating in the high-dimensional space
+pollution, social and lifestyle behaviors, physical activity, and others.     of cluster scalars. In our application we find this problem formulation,
+                                                                              known as Multidimensional Scaling (MDS) [48], to be favorable over
+4 M ETHODOLOGY
+                                                                              alternative dimensionality reduction techniques [32, 34]. Firstly, a
+This sections describes the final design choices of FiberStars and is         less distorting approach allows for more intuitive reasoning, especially
+the result of an iterative process with regular feedback from domain          when expanding the exploration process from smaller to larger numbers
+experts. FiberStars includes five visual key-elements to offer controlled     of scalars. For example, consider a domain expert primarily interested
+navigation in the exploration process of dMRI data collections: (1)           in the relationship between the following scalars: Fractional Anisotropy
+universal toolbar, (2) projection view, (3) abstract representation, (4)      (FA) and Estimated Uncertainty (EU). In this case, the MDS solution
+3D visualization and (5) comparison matrix.                                   reduces to a simple, reasonable scatter plot-like layout to begin with.
+                                                                              Adding or replacing scalars then allows forming an intuition on the
+4.1 Visual Elements                                                           impact of the different variables. To provide further guidance in the
+To tackle the challenge of creating a customized visualization soft-          resulting layout consider adding artificial data points, which can be
+ware for the exploration process, we conceptualized FiberStars in close       obtained by fully maximizing a single scalar while fixing all others to
+collaboration between neuroscientists and visualization researchers           the minimum [51]. Secondly, we find that an analytical solution to
+the dimensionality reduction problem tends to be more user-friendly in
+that it is robust and requires no fine-tuning of artefactual parameters.
+In FiberStars, our method of choice is PivotMDS [9], as it satisfies the
+above requirements and can efficiently scale to very large data sets.
+    Mei et al. [35] use a related technique, Landmark MDS [17], to
+compute projections for fibers within a cluster. However, Brandes and
+Pich [10] show PivotMDS is superior to Landmark MDS in general
+graph layouts, a closely related problem. For better readability of
+individual data points in the already colorful space we further waive a
+density map overlay as suggested in [35].
+    Via the Universal Toolbar, the user can further map cluster scalar
+or subject attribute values to points in the projection. Moreover, the
+projection view hosts two action listeners (Fig. 2). 1 Upon hovering a
+cluster point, a detailed pop-up summarizes statistics about the cluster,
+its corresponding subject and also displays the abstract cluster represen-
+tation in the form of a radar chart that is further described in the next
+part of this section. 2 Via rectangular brushing, the user can choose
+clusters of interest, which will then be added to the alternative views
+across the application. Since we always display all selected clusters for     Fig. 3. Multi-Cluster view of five different subjects and three differ-
+                                                                              ent cluster. The multi-cluster view allows to compare 2D radial plots
+all selected users in the following views of the application, we high-
+                                                                              visualizing multiple clusters of multiple subjects. This is usefull for outlier
+light all these clusters in the projection, even if they are outside of the
+                                                                              detection of mapped scalars and properties.
+drawn selection window. This feature, we find, has a useful side-effect:
+corresponding clusters in other subjects can be more quickly identified.
+Thus, the distribution of these grouped clusters can be assessed directly
+within a potentially crowded point cloud.
+
+   Abstract Representation. We choose consistent coloring of
+reappearing elements and information throughout FiberStars. For ex-
+ample, the same subject and the same cluster are always highlighted in
+the same color to avoid getting lost in the wealth of information. We im-
+plement color consistency in all views of the application. Furthermore,
+we leverage Pop-up elements that help the user to keep the orientation
+across different views. In the projection view, we provide a Pop-Up
+when hovering over a single cluster point, as seen in 1 in Figure 2,
+leading to more details of the cluster and the region of interest.
+
+   3D Split-Screen Visualization. The split-screen view is shown
+in Figure 1. Here we integrate a typical 3D scientific view with ad-
+ditional information from the 2-dimensional radial plots. The Split-
+Screen view also allows comparing fibers from multiple subjects side-
+                                                                              Fig. 4. Early design prototypes of FiberStars. Left: our first imple-
+by-side. Camera interaction can be synced across all 3D views. Addi-          mentation focused on two subjects at a time and combined 2D and 3D
+tionally, users can choose between 120 available color maps and color         elements. Right: we experimented with different 2D radial charts and
+the fibers by selecting a scalar to map.                                      color schemes to represent fiber bundles of multiple subjects. We group
+                                                                              data by scalar type and normalize the values to allow comparison.
+   Comparison Matrix. The Multi-Cluster view enables a compar-
+ison between multiple subjects and multiple fiber clusters. In this view,
+the user selects any number of subjects and clusters of interest in the
+navigation toolbar. For each cluster, one 2D radial plot is shown with        statistical plots, and other features. Being a web-based software, Fiber-
+normalized scalars on each axis. When comparing multiple radial plots,        Stars runs hosted on a web server and does not require any client-side
+outliers of scalars or properties are immediately visible. Other dis-         installation.
+played information includes subject demographics and overall statistics          For the first prototype, we averaged all scalars for all fibers. Then,
+such as mean fiber length, total fiber similarity, etc. When filtered by      we mapped these values to 2D with radial plots. However, scaling was
+certain clusters and subjects, the user can switch back any time to the       important. For example, in the ADHD dataset the scalar Normalized
+3D split-screen view.                                                         Signal Estimation Error has values between 0 and around 0.05, whereas
+                                                                              the Estimated uncertainty has a range from negative to 22,000. We now
+   A typical use case of the final FiberStars application can be seen in      perform Min-Max Feature scaling to normalize the ranges.
+Figure 1. The three-dimensional fiber clusters in the background can             Including the library, React.js improved the overall usability and
+be interactively explored. Multiple subjects are shown side by side next      facilitated the integration of additional components and features. With
+to each other, allowing comparisons between the 3D illustration and           elements from the framework Material-UI, we were able to implement
+the 2D data summaries. Figure 4 shows first prototypes of our iterative       a modern user interface. This leads to the final design of FiberStars that
+design process.                                                               seamlessly integrates different linked and interactive views that allow
+                                                                              multi-dimensional data exploration.
+                                                                                 We support multiple tractography data formats. Our expert collabora-
+4.2   Implementation Details
+                                                                              tors use VTK PolyData to store fiber clusters with a VTP file extension.
+FiberStars builds interactive 2D and 3D visualizations with the               These VTP files offer a fully flexible data model and can store vertices,
+JavaScript library. We use VTK.js for 3D renderings, a JavaScript             per-vertex scalars, and per-fiber properties as well as metadata with-
+implementation of the VTK software toolkit [46] which uses WebGL.             out restrictions. VTK.js includes functionality to load fiber clusters
+For 2D visualizations, we included D3.js [8]. FiberStars is a Node.js ap-     from VTP files in JavaScript. Each cluster is then represented as VTK
+plication using React.js [19] for the frontend. Adopting Node.js allows       polydata. VTK poly data describes a surface mesh structure that holds
+for flexible extensions in the future, such as additional visualizations,     additional data arrays in points, cells, or in the dataset itself. After
+Table 1. Comparison of visualization tools with features that are offered
+in Fiber Models (DiffRadar) [35], AFQ-Bowser [53], and FiberStars (FS).
+FS and AFQ have most features in common.
+
+
+ Feature                                  Fiber Models    AFQ       FS (ours)
+
+ Showing subject metadata                      7           3           3
+ Single fiber exploration                      3            7          7
+ Select desired scalar or metric               7           3           3
+ Compare between fiber bundles                 7         in parts      3
+ of individual subjects
+ Interaction and dynamics in 3D model          7            7          3
+ Visualization of large amounts of data     unknown      in parts      3
+
+
+
+
+loading these arrays, we calculate the means of all assigned scalars
+and properties per fiber and cluster. However, Tractography clusters
+stored as VTP files can be in the order of hundreds of Megabytes, and
+a whole-brain tractography can be as large as multiple Gigabytes.               Fig. 5. User interface of AFQ-Browser. A user can select different
+                                                                                clusters in the list view on the left. The anatomy view with possible 3D
+   Compressed Tractography Data. Recently, we developed the                     interactions shows selected fiber bundles in the brain. The bundle details
+Trako Compression Scheme [22], and we now integrated this scheme                view on the right allows to compare 2D representations of individual
+into FiberStars. Trako allows compressing VTP files while achieving             fibers. Additionally, a metadata display provides more details about each
+data reductions of over 28x. While Trako uses lossy compression, our            fiber cluster.
+experiments show no loss of statistical significance when replicating
+analysis from previously published tractography experiments. Trako
+builds off a glTF container, a data structure that stores vertices opti-            The other conventional tool, Fiber Models (DiffRadar) by Mei et
+mized for GPU rendering. Paired with state-of-the-art 3D geometry               al. [35], presents similar visualization paradigms. The author’s main
+compression algorithms, Trako allows fast data transfer and realtime            goals were to show the differences between DTI fiber datasets and
+visualization with nearly no preprocessing. As part of this paper, we           providing an intra-cluster comparison. The software includes 2D and
+present Trako file readers for the VTK.js, Three.js [11], and XTK [23]          3D views. Similarly to AFQ-Browser, the user interface shown in
+visualization frameworks. For FiberStars, we convert Trako files to             Figure 6 consists of four panels as well. The panels are a) a list of
+VTK poly data structures.                                                       the fiber models, b) a 2-dimensional view, c) a heatmap view showing
+                                                                                regions of differences, and d) selected fibers of interest from the views
+5     C OMPARATIVE E VALUATION S TUDY                                           in b) and c), highlighted in a 3D fiber model. The authors use a two-
+We evaluated the effectiveness and usability of FiberStars within a quan-       phase projection technique to map 3D fibers onto a 2-dimensional
+titative user study. With a between-subjects study design, we recruited         Euclidean space, which they tested on two datasets. Multidimensional
+non-experts (novices) and domain experts to compare our software                scaling (MDS) is used to select fibers from 3D to 2D. Their approach
+to the existing state-of-the-art tool AFQ-Browser [53]. Specifically,           is to implement a density estimation on their projection of the fibers.
+through carefully curated study tasks, we performed an A/B compar-              All fibers were reparameterized so that they have the same number of
+ison to measure the performance and efficiency of both applications.            vertices and orientation by using the LAMP technique. This approach
+During the design of FiberStars, we focused on overall usability and            has already been shown in [15, 42]. The authors implement Landmark
+intuitiveness. The results of our study confirm our design decisions.           MDS (LMS) by randomly selecting some subset of fibers that are used
+In addition to the user study, we also discuss qualitatively the differ-        as landmarks and then compute in a 2D plane the squared distance of
+ences between Fiber Models (DiffRadar) [51], existing software that,            fiber to the landmark fibers. The authors want to reduce computational
+unfortunately, is not publicly available.                                       complexity by using this approach. Then a scatterplot is used to position
+                                                                                similar fibers in a cluster next to each other. On the scatterplot, they
+5.1    Evaluation of Comparable Approaches                                      apply a Kernel density estimation to produce a continuous 2D density
+We are not the first to create a tool to link two- and three-dimensional        map of the scatterplot. Furthermore, the authors used radial plots to
+views on high-dimensional brain fiber data. However, most of the                show more insights into statistical variations of single selected fibers.
+major work in this field requires previous knowledge of the patterns in         Despite reaching out to the authors, we were not able to include this
+the data; high customization for specific data of the lab or publication        software in our quantitative user study.
+requires increased computational performance of the machine or needs
+to be downloaded as local program. Further, related approaches mainly           5.2   Hypotheses
+focus on exploring DTI data only on fiber level or on subject level. Con-       We propose three hypotheses to validate the design of FiberStars:
+sidering the most recent previous approaches presented in related work,
+we concluded that Yeatman et al. [53] and Mei et al. [35] are closest            H1: FiberStars provides higher usability than AFQ-Browser.
+to our interactive visualization tool. Table 1 includes the comparison              Both user groups had to evaluate the usability of each tool and
+of these two tools with FiberStars and its most critical features for the           how they perceived working with it. We developed FiberStars
+exploration of dMRI data.                                                           with minimal and slick user experience in mind. We, therefore,
+   Yeatman et al.’s AFQ-Browser has a user interface that consists of               predict that especially participants using FiberStars report higher
+four different panels: a) bundles b) anatomy c) bundle details and d)               usability than the ones working with AFQ-Browser.
+subject metadata (Figure 5). The authors focus their application design
+on incorporating reproducibility, transparency, data sharing, as well            H2: Analyzing DTI data is more accurate in FiberStars. The
+as exploratory data analysis. While using their code, we noticed that               users in our study are presented with the same datasets in both
+transforming our dMRI files in the AFQ Browser, which requires a                    tools. FiberStars is optimized towards analyzing and comparing
+MatLab or JSON file format as input, we were only able to use fibers                tractography data of multiple subjects. With matching amounts
+with 100 data points. As this is not possible and fibers always have a              of training, we predict that novices and domain experts will more
+varying number of points, we needed to interpolate the points.                      accurately explore scalars and properties of fiber clusters with
+                                                                               Tasks and procedures. We composed a list of tasks to evaluate
+                                                                             FiberStars and AFQ-Browser in a controlled experiment. The assign-
+                                                                             ments reflect typical use-cases for analyzing tractography data of single
+                                                                             and multiple subjects. We made sure that all tasks were possible with
+                                                                             both tools and structured the tasks with increasing difficulty.
+                                                                              T1: Interpreting a single cluster of a single subject.
+                                                                                  a) (For a given cluster) Which value is higher FA1 or FA2?
+                                                                                  b) (For a given cluster) Where along the fiber bundle is FA1 the
+                                                                                  highest?
+                                                                                  c) (For a given cluster) Is the standard deviation of FA1 rather
+                                                                                  large or small compared to that of Estimated Uncertainty?
+                                                                              T2: Comparing multiple clusters of a single subject.
+Fig. 6. User interface of Fiber Models (DiffRadar) [35]. The user
+                                                                                  a) (For a given subject) Which are the two clusters with the
+interface shows four different panels to get insights into a fiber cluster
+                                                                                  highest estimated uncertainty?
+and single fibers. Left: Overview of each fiber cluster. The center view
+shows more details into one fiber cluster. Right top: shows regions where
+                                                                                  b) (For two given clusters and a given subject) Which cluster has
+differences occur in a fiber bundle. Right bottom shows the model in 3D           a higher number of fibers in the bundle?
+and highlights single selected fibers.                                        T3: Interaction between the same cluster in multiple subjects.
+                                                                                  a) (For given subjects and a cluster) In which subject is FA1
+                                                                                  maximal?
+      FiberStars than with AFQ-Browser. We measure accuracy in                    b) (For given subjects and a cluster) For which pair of subjects is
+      terms of correct answers for the tasks.                                     the difference in FA2 minimal?
+                                                                              T4: Comparing multiple clusters of multiple subjects.
+ H3: Within a given timeframe, the users are faster in solving
+                                                                                  a) In which female subject cluster is FA2 maximal?
+    tasks with FiberStars than with the alternative tool. We mea-
+                                                                                  b) In which cluster is FA1 minimal?
+    sure the time it takes participants to complete pre-defined tasks.
+                                                                                  c) (For each two given clusters of two subjects) Does subject A
+    These tasks were defined in connection with diffusion imaging
+                                                                                  or B have a lower FA1?
+    researchers and replicate day-to-day use-cases of domain experts.
+    Since we designed the FiberStars application with constant feed-          T5: General usability of components/features.
+    back and input by domain experts, we predict that participants                a) In a view of your choice, color the data by subjects!
+    using our software perform more efficiently.                                  b) Can you find a U-shaped cluster in the 3D visualization?
+
+5.3   Participants
+                                                                                Due to coronavirus, we had to conduct the study online. We arranged
+First, we tested FiberStars and AFQ-Browser with participants that           video conferences with the participants and asked the participant to
+have no prior knowledge of DTI data or tractography. These novices           share their screens while working on the tasks. Each session lasted
+were recruited through flyers and mailing lists to evaluate the usability    about 50-60 minutes. We assigned participants randomly to one of the
+of both tools for inexperienced users. We estimated that we need             two tools. Each study session started with the participants to sign a
+to recruit 11 participants per tool based on calculation sample size         consent form, followed by an introduction. We explained diffusion
+theory [18, 25]. From the initial 22 participants, we had to exclude 2       MRI and demonstrated underlying visualization components with the
+subjects (AFQ and FiberStars) due to technical issues. One subject had       fundamental interaction possibilities available in each tool. After this
+no microphone/speaker and was not able to hear the experimenter, and         10-15 minute introduction, the users had 2 minutes to explore the tool
+the other participant disappeared after 15 minutes during the online         and its main features. The users were allowed to ask questions during
+study meeting. Twenty participants completed the full study (N = 20),        this training period. Then, we provided the participants with an online
+from which 13 were females and 7 males. The participant’s ages               document describing the tasks to complete. Each task description was
+ranged from 18 to 39 years and consisted of students and workers with        1 page or less and consisted of several sub-tasks. The users wrote down
+a variety of backgrounds. All participants reported not having any           short answers in the document after they thought each was done. Users
+visual impairments. The participants received monetary compensation          notified the experimenter when they finished a task immediately. The
+for their time.                                                              users were not told if their answers were correct or wrong. The first task
+   Additionally, we asked 6 domain experts to participate in our user        of each session (in addition to T1-5) served as an example to provide
+study, testing one of the two tools. Qualifying domain experts are           hands-on familiarity with the assigned tool. Following this training,
+researchers who perform complex data analyses with dMRI or DTI               the users performed the task while we measured their task-completion
+data who have not used either AFQ-Browser or FiberStars before. We           times. Based on estimations and informal pre-study observations, we
+also excluded all researchers that helped during the design of FiberStars.   budgeted a fixed timeframe of 5 minutes for each task. When a user was
+All user study activity was approved by our internal research advisory       not able to solve a sub-task in this timeframe, we assigned a penalty of
+board.                                                                       150 seconds. After participants completed all tasks or hit the maximum
+                                                                             time, they were asked to complete a post-study questionnaire accessing
+5.4   Experimental Design                                                    their demographic data. We also requested judgments of usability and
+   Dataset. For fair evaluation and comparativeness, we used the             qualitative feedback. Additionally, we used a standard NASA-TLX
+same data in both tools. The data came from the Human Connectome             survey to assess the workload with 6 questions [24].
+Project (HCP) and consisted of DTI scans from 100 different subjects,           Expert study design. We also performed an expert study. We
+each with 800 different fiber clusters totaling around 800 gigabytes         recruited 6 domain experts to evaluate the performance of both AFQ-
+in size. It was not possible to load these massive amounts of data in        Browser and FiberStars. We randomly assigned half of the experts
+AFQ-Browser. For practical purposes, we decided to randomly pick a           to the AFQ-Browser and the other half to FiberStars. First, experts
+sample of 5 of the 100 subjects and use every 50th of the 800 clusters       performed the same training task as the novices. After, we asked the
+(total 16 clusters). We added the corresponding metadata to both tools,      participants to solve Task 1-4 with a twenty-minute overall time limit.
+including information such as subject ID, age, gender, weight, and           For the expert study, we did not include Task 5 and instead asked for
+height.                                                                      more extensive and detailed qualitative post-experiment feedback.
+6     R ESULTS
+                                                                                           Table 3. Mean time (in seconds) that novices required to complete
+The results of our user study show an advantage of FiberStars in terms of
+                                                                                           individual tasks in the two different tools. Improvement reflects speedup
+accuracy and significant improvements of processing time for exploring
+                                                                                           of FiberStars over AFQ-Browser (in %) .
+the data.
+                                                                                               Task          AFQ-Browser        FiberStars       Improvement
+6.1        Quantitative Analysis                                                               T1 (a)              69.6 s            21.2 s           69.54 %
+We conducted a quantitative statistical analysis by analyzing the an-                          T1 (b)              31.8 s            46.7 s          -46.85 %
+swers of the N = 20 novices and N = 6 domain experts.                                          T1 (c)              55.2 s            40.6 s           26.45 %
+   Accuracy and Performance. Regarding accuracy in exploring                                   T2 (a)               61.3 s            30.8 s           49.75 %
+the given DTI data, we examine the correctness of results by verifying                         T2 (b)               60.3 s            28.1 s           53.40 %
+the user responses for each task. For a correct answer in a sub-task, we                       T3 (a)               42.0 s            26.3 s           62.62 %
+assigned 1 point, and for a false answer, we assigned 0 points. Overall,                       T3 (b)               58.6 s            34.7 s           40.78 %
+the 10 participants using AFQ-Browser answered, on average, 69.17%
+of the tasks correctly (SD = 31.75%). The 10 non-expert participants                           T4 (a)               93.9 s            81.5 s           13.20 %
+using FiberStars were able to answer 87.5% correctly (SD = 10.55%).                            T4 (b)               60.3 s            43.8 s           27.36 %
+                                                                                               T4 (c)               58.0 s            21.0 s           63.79 %
+           Table 2. Error rates among novice participants per tasks.                           T5 (a)               91.1 s            20.5 s           77.50 %
+    Task    1a   1b    1c    2a    2b    3a    3b    4a    4b    4c    5a    5b    Mean        T5 (b)              115.8 s           101.7 s           12.18 %
+    AFQ      0    0    0.8   0.9   0.1    0    0.2   0.2   0.1   0.3   0.5   0.6   0.308
+    FS       0   0.2   0.3   0.2   0.1   0.1   0.1   0.3   0.1    0     0    0.1   0.125
+                                                                                               Mean                66.49 s           41.40 s           37.73 %
+
+
+   Comparing the correct answers in both tools, the AFQ users were
+able to answer question 1b and 3a more often correctly than FiberStars
+users. In all other sub-tasks, the users either performed equal or more                    Table 4. Mean time (in seconds) experts required to complete individ-
+accurately with FiberStars, as depicted by the error rates in Table 2.                     ual tasks in the two different tools. Improvement reflects speedup of
+                                                                                           FiberStars over AFQ-Browser (in %) .
+For testing the significance in mean differences between FiberStars and
+the alternative tool, we used a one-sided statistical t-test with the null                     Task          AFQ-Browser        FiberStars       Improvement
+hypothesis, assuming that the two independent group means for AFQ                              T1 (a)              40.0 s             5.3 s           86.67 %
+and FiberStars are equal. From these values, we received a p-value of                          T1 (b)              24.0 s            12.7 s           47.22 %
+p > 0.05, which is statistically significant. With respect to H2, we can                       T1 (c)              22.7 s            24.7 s           -8.82 %
+therefore conclude that novices performed significantly better on our
+tasks with FiberStars.                                                                         T2 (a)               35.7 s            31.3 s           12.15 %
+                                                                                               T2 (b)               28.3 s             8.3 s           70.59 %
+   Efficiency. To test hypothesis H3, we compared the times the
+users needed to solve the tasks. The average times are listed in Table 3.                      T3 (a)               18.7 s             9.0 s           51.79 %
+The mean time per sub-task for the 10 participants using the AFQ-                              T3 (b)               25.0 s            18.0 s           28.00 %
+Browser was 66.49 seconds (SD = 23.29), and for FiberStars 41.40                               T4 (a)               44.0 s            40.0 s            9.09 %
+seconds (SD = 25.41). On average, FiberStars yields an improvement                             T4 (b)               35.7 s            26.0 s           27.10 %
+in speed of more than 37%. The task that took the least on average with                        T4 (c)               27.0 s            26.7 s            1.23 %
+the AFQ-Browser was Task 1b, while with FiberStars, users required
+                                                                                               Mean                 30.1 s            20.2 s           32.89 %
+the least time for Task 5a with 20.5 seconds. Figure 7 shows the distri-
+butions.. Summarizing all sub-tasks from Task 1 targeting the single
+subject and single cluster problems, users required 108.5 seconds to
+fulfill this task with FiberStars, and 156.6 seconds with the alternative
+tool. For all sub-tasks in Task 2 concerning multiple clusters of one
+subject, the users took 121.6 seconds to solve it with AFQ, and 58.9
+seconds with FiberStars. Task 3 focused on one cluster across multiple
+                                                                                                   175     Tool
+subjects where users required 100.6 seconds with AFQ, and 61 seconds                                         AFQ
+with FiberStars. Task 4 aimed to compare multiple subjects with mul-                               150       FS
+tiple clusters, where AFQ users needed 212.2 seconds and FiberStars
+users 146.3 seconds. Task 5 included general usability where users                                 125
+with AFQ took 206.9 seconds and FiberStars 122.2 seconds. Overall,
+                                                                                                   100
+                                                                                            Time
+
+
+
+
+the users performed slowest in both tools when comparing multiple
+clusters across multiple subjects.                                                                  75
+   We state the null hypothesis that group means are equal without
+variation from both groups. The alternative hypothesis states the dif-                              50
+ference between the group means. The resulting p-value is statistically
+                                                                                                    25
+significant with p < 0.02. We can reject the null hypothesis in favor
+of our initial hypothesis H3 and conclude that there are significant                                 0
+differences among both user groups. In general, novice users were able                                   1a 1b 1c 2a 2b 3a 3b 4a 4b 4c 5a 5b Mean
+to perform faster with our software.                                                                                          Task
+   Usability. We analyzed all answers from the novices (N = 20).
+The Likert Scale questionnaire helps to validate our findings and clarify                  Fig. 7. Distribution of times per task for novices. Times the users
+our hypotheses as well as giving feedback that complements our us-                         needed to solve the tasks for AFQ-Browser in grey (AFQ) and FiberStars
+                                                                                           in red (FS), across single sub-tasks. The right boxplots shows the
+ability results. The NASA-TLX questionnaire to access the workload
+                                                                                           average time over all tasks. Participants using FiberStars were faster in
+in terms of mental demand, frustration, effort, etc. did not yield any
+                                                                                           all cases. This difference is statistically significant.
+interesting results. By using participants’ subjective responses in the
+questionnaire, we can evaluate the perceived performance of both tools.
+Table 5. Mean values of subjective responses of novices showing
+the statements rated on a 7-point Likert-Scale (1 = totally disagree, 7 =                                                                                   Component
+                                                                                              16                                                                       M
+totally agree). The asterisk * signs the statistically significant result.
+                                                                                              14                                                                       S
+   Statement                               AFQ-Browser       FiberStars
+                                                                                                                                                                       P
+                                                                                              12
+                                                                                              10
+
+
+
+
+                                                                                      Count
+   The usability was very good.                5.8 ±1.14      6.2 ±0.79
+   I liked working with this tool.             6.0 ±1.15      6.4 ±0.70                        8
+   I found it easy to compare                  5.2 ±1.81      5.8 ±1.14                        6
+   the data among subjects.
+                                                                                               4
+   I found it easy to navigate through         5.5 ±1.18      5.7 ±0.82
+   the different fiber clusters.                                                               2
+   The 2D plots or diagrams                    4.6 ±1.58      5.7 ±0.95                        0
+                                                                                                       1           2           3                 4                 5
+   were understandable.*
+                                                                                                                             Task
+   The visualization of the                    6.3 ±0.82      6.8 ±0.42
+   3D fiber clusters were very pleasing.
+   Additional information beside               5.1 ±1.66      6.4 ±0.97      Fig. 8. Components used in FiberStars per task. For all 5 tasks, we
+   the 2D plots were very helpful.*                                          denoted which components FiberStars users were likely to use. For
+                                                                             tasks involving multiple clusters and multiple subjects, the users mostly
+                                                                             used the Projection View (P, shown in dark grey). The split-screen (S)
+                                                                             with the 3-dimensional information was likely used for tasks comparing
+ The participant’s responses were recorded on a 7 point Likert scale with    the same fiber bundle over multiple subjects. The Comparison Matrix
+ 1 = totally disagree, and 7 = totally agree. We accessed the perceived      (M) showing all radial plots were used throughout all tasks 1-4.
+ usability of the users by using a post-experimental questionnaire and
+ could find that FiberStars scored with a modest advantage compared
+ to AFQ-Browser. The questions are stated in Table 5. There was no
+ statistical significance for the answered questions between both groups
+ for AFQ and FiberStars. Users rated FiberStars on the Likert scale                                                                                             Tool
+                                                                                      70
+ from 1 to 7 on average with usability of 6.2 (SD = 0.79) and AFQ with                                                                                            AFQ
+ 5.8 (SD = 1.14). We could find a significant difference for the question             60                                                                          FS
+’Additional information beside the 2D plots was very helpful.’ with                   50
+ p = 0.05. Additional information in FiberStars was rated on average
+                                                                               Time
+
+
+
+
+ higher with 6.4 (SD = 0.97) than with AFQ with 5.1 (SD = 1.66). Re-                  40
+ garding H1, novices overall liked working with both tools but preferred
+ the 2D visualizations of FiberStars.                                                 30
+     While conducting the user study, we additionally recorded which                  20
+ FiberStars component was used to solve the given task. For Task 1,
+ 43.3% of the participants used the Comparison Matrix, whereas 56.6%                  10
+ preferred using the Split-screen view. In Task 2, roughly 75% preferred               0
+ the split-screen view, while the other 25% used the Matrix Comparison                         1a     1b     1c   2a    2b        3a        3b      4a      4b         4c
+ View. For Task 3, only 3 users wanted to use the Matrix comparison                                                         Task
+ View, one person was able to solve this task with the Projection View,
+ and the remaining users used the split-screen. Task 4, which focused        Fig. 9. Distribution of time needed per sub-task for experts. Time
+ on comparing multiple fiber clusters within multiple subjects, was          the experts took to solve single sub-tasks grouped by tool where AFQ-
+ dominantly solved with the Projection View (53.33%), followed by the        Browser shown in grey (AFQ) and FiberStars in red (FS). This difference
+ split-screen view 26.67% and with the Matrix Comparison View by             is statistically significant.
+ 20%. Task 5 was solved by 45% with the Projection View and 55%
+ with the split-screen view. Distributions of the used components are
+ illustrated in Figure 8. In general, the use of the component depends
+ on the given task. Tasks involving the comparison of different scalar       expert groups as well. The experts using the AFQ-Browser were able
+ values among a single subject or a single cluster were likely to be         to answer, on average, 73.33% (SD = 30.63%) of the tasks correctly,
+ solved with either the split-screen view or the Matrix Comparison. For      whereas the experts using FiberStars gave 96.67% (SD = 0.11) correct
+ all tasks, the users found the answers in the radar charts. Especially in   answers. We could find statistical significance between both group
+ tasks where users had to find values among a group with many clusters       means in terms of correct answers for domain experts. With a p-value
+ or subjects, the users used the Projection View. Grouping values from       of p < 0.05, we can confirm our alternative hypothesis that there are
+ lowest to highest was the most popular ordering choice there.               significant differences among both groups in terms of correctness. The
+                                                                             p-value was significant for the novices as well as for experts. We can
+   Expert performance. We evaluated the performance of 3 ex-                 reject the null hypothesis in favor of our alternative hypothesis H2. For
+perts per tool. The experts testing AFQ-Browser needed, on average,          novices and experts, we could not find a statistical significance in the
+30.1 seconds per sub-task SD = 8.27, while experts using FiberStars          difference of the means between the groups using AFQ. However, we
+required an average of 20.2 seconds to solve a sub-task SD = 11.35.          found that with FiberStars, experts were significantly better in terms of
+The difference in mean time for both groups, AFQ and FiberStars,             accuracy than novices.
+is statistically significant at p < 0.05 (H3). The distribution of how
+experts performed in terms of timing is shown in Figure 9. We used a
+                                                                                         Table 6. Error rates among expert participants per tasks.
+one-sided student t-test to test for the statistical significance between
+novices and experts for timing. Experts performed significantly faster        Task            1a     1b     1c    2a   2b    3a        3b     4a          4b       4c       Mean
+than novices in both tools. Furthermore, we could not find significant        AFQ              0    0.33   0.33    1    0     0         0    0.33        0.33     0.33      0.267
+differences between both expert groups in terms of subjectively per-          FS               0      0     0      0    0    0          0      0         0.33      0        0.033
+ceived usability (H1). AFQ and FiberStars experts perceived usability
+as good and liked both tools. We measured the accuracy of the two
+6.2 Qualitative Results and Feedback                                          along with the fiber bundle, which is easier to depict in AFQ’s line plot.
+We collected useful qualitative feedback from the experts on the applica-     This special feature of the AFQ-Browser allows users to find single
+tions overall, as well as individual components. With most expert users       high scalar values along a fiber tract. Users in FiberStars might need
+having had prior exposure to slicerDMRI [38] or TrackVis [50], they           to change the scalar coloring in the 3D view to do so. With the color
+were able to make themselves familiar quickly with both, AFQ-Browser          maps, the user can select the coloring in the 3-dimensional fiber tract
+and FiberStars.                                                               depicting the gradients of scalars along with the cluster.
+   In the AFQ-Browser, users particularly appreciated the brushing               Primarily, we could think of including a higher number of subjects
+technique, which highlights clusters directly in the brain model. They        and clusters in each tool to make tasks more complicated. In the expert
+further found the plots to be a good summary of the data, despite having      study, we included 3 experts per tool. We might critically evaluate
+difficulties in differentiating subjects as they can be highlighted at the    if a higher number of domain experts might be more representative.
+same time. Experts missed a way to study exact values and would have          We also regret that we did not have access to the application Fiber
+liked to see more detailed statistics such as mean and standard deviation     Models (DiffRadar) [35]. We believe that relevant findings could be
+for scalars. When comparing multiple clusters at once, participants           derived by comparing our tool against this application. Moreover, the
+requested an option to sort the 2D plots by scalar metrics.                   feedback from experts in the user study gave new insight into possible
+   Expert users of FiberStars also missed a sorting feature in the Com-       future work in including features for higher usability and improved
+parison Matrix. However, they still found it valuable to compare larger       data exploration.
+numbers of clusters and subjects in the given level of detail. According      8 C ONCLUSIONS AND F UTURE W ORK
+to our users, the radar charts even reflected all of the essential informa-
+tion on DTI data. Experts would have liked to be able to configure the        We have presented FiberStars, a new open-source web-based visu-
+scalars shown in the radar chart. In the 3D Visualization, a legend de-       alization software to view very large diffusion MRI datasets. Our
+scribing the color map would have been useful. The Universal Toolbar          software supports the exploration of multiple fiber clusters across mul-
+proved to be compelling in that it granted easy access to the data at all     tiple subjects, an important feature when analyzing high-dimensional
+times. One expert expressed interest in FiberStars’ compatibility with        and longitudinal neuroscience datasets. In the future we would like
+certain file formats. Summing up, multiple pros and cons in both tools        to investigate how we can automate certain analysis tasks and create
+underline our result from the previous section and confirm that there is      intelligent tractography exploration techniques. Our quantitative user
+no significant difference in perceived usability.                             study confirms that FiberStars is easy-to-use, and lets even novices effi-
+                                                                              ciently explore tractography data. As the result of our iterative design
+7 D ISCUSSION                                                                 process, we formulate the requirements for a successful web-based and
+The qualitative feedback and quantitative analysis indicate novices and       scalable visualization software. These insights and the open nature of
+experts appreciated usability of both, FiberStars and AFQ-Browser.            our research will hopefully spur the adoption of web-based scientific vi-
+All groups were able to quickly adapt to the user-interface design and        sualizations and encourage more research in comparative visualizations
+understand the functionalities of each tool. We showed that both user         for the neurosciences.
+groups were significantly faster completing the tasks in FiberStars as        ACKNOWLEDGMENTS
+compared to the AFQ-Browser. As predicted, experts were able to solve
+the user study tasks better than novices. However, the accuracy when          We would like to thank the participants of the user study and the authors
+using AFQ did not significantly improve for experts. In FiberStars,           of AFQ-Browser for helping with the installation and setup.
+however, a significant difference in novice versus expert mean suggests       R EFERENCES
+that FiberStars allows experts to harvest their full potential. This is
+an essential finding, providing experts with a tool for accelerating the       [1] A. K. Al-Awami, J. Beyer, H. Strobelt, N. Kasthuri, J. W. Lichtman, H. Pfis-
+process of analyzing large scale data sets.                                        ter, and M. Hadwiger. Neurolines: a subway map metaphor for visualizing
+                                                                                   nanoscale neuronal connectivity. IEEE Transactions on Visualization and
+    Based on the findings in the questionnaire, FiberStars’ 2D plots
+                                                                                   Computer Graphics, 20(12):2369–2378, 2014.
+were found to be significantly more helpful than 2D plots in the AFQ.
+                                                                               [2] Y. Assaf and O. Pasternak. Diffusion tensor imaging (dti)-based white
+Showing the metadata directly next to advanced visualizations like 3D              matter mapping in brain research: a review. Journal of molecular neuro-
+view or radar charts is useful, but users still want to see a traditional          science, 34(1):51–61, 2008.
+tabular view as given in AFQ.                                                  [3] A. V. Avram, J. E. Sarlls, A. S. Barnett, E. Özarslan, C. Thomas, M. O.
+    A possible explanation for why novices and domain experts achieved             Irfanoglu, E. Hutchinson, C. Pierpaoli, and P. J. Basser. Clinical feasibility
+higher accuracy in FiberStars could be that FiberStars provides more               of using mean apparent propagator (map) mri to characterize brain tissue
+insights into individual subjects, but also allows to compare multiple             microstructure. NeuroImage, 127:422–434, 2016.
+subjects at once. Especially in Task 4c), it was more difficult for non-       [4] P. J. Basser, J. Mattiello, and D. LeBihan. Estimation of the effective self-
+experts to use the AFQ-Browser to compare values across two subjects               diffusion tensor from the nmr spin echo. Journal of Magnetic Resonance,
+and two clusters. This is reconfirmed by experts feeling challenged                Series B, 103(3):247–254, 1994.
+when analyzing multiple line plots while extracting and comparing              [5] P. J. Basser, S. Pajevic, C. Pierpaoli, J. Duda, and A. Aldroubi. In vivo
+data for several individual subjects. Moreover, participants face dif-             fiber tractography using dt-mri data. Magnetic resonance in medicine,
+ficulties distinguishing subjects in the plots, as coloring by subject is          44(4):625–632, 2000.
+not easily accessible in AFQ. In the qualitative feedback, two of three        [6] P. J. Basser and C. Pierpaoli. Microstructural and physiological features
+experts independently suggested adding an option to reset the color-               of tissues elucidated by quantitative-diffusion-tensor mri. Journal of
+ing of the subjects. Participants using FiberStars preferred to consult            magnetic resonance, 213(2):560–570, 2011.
+the Projection View over the Comparison Matrix to compare multiple             [7] M. Borkin, K. Gajos, A. Peters, D. Mitsouras, S. Melchionna, F. Rybicki,
+subjects and multiple clusters simultaneously to find overall trends or            C. Feldman, and H. Pfister. Evaluation of artery visualizations for heart
+                                                                                   disease diagnosis. IEEE transactions on visualization and computer
+correlations in the data. We assume that the projection view can have
+                                                                                   graphics, 17(12):2479–2488, 2011.
+a significant impact in contributing to our initial goal in comparing
+                                                                               [8] M. Bostock, V. Ogievetsky, and J. Heer. D3 data-driven documents. IEEE
+multiple subjects to facilitate the process for researchers, neuroscien-           transactions on visualization and computer graphics, 17(12):2301–2309,
+tists, and doctors. In summary, with FiberStars, novices and experts               2011.
+can analyze tractography data with higher accuracy and efficiency than         [9] U. Brandes and C. Pich. Eigensolver methods for progressive multidi-
+with previous tools.                                                               mensional scaling of large data. In International Symposium on Graph
+                                                                                   Drawing, pp. 42–53. Springer, 2006.
+7.1 Limitations                                                               [10] U. Brandes and C. Pich. An experimental study on distance-based graph
+From Task 1b, we noticed that users of AFQ-Browser had a lower error               drawing. In International Symposium on Graph Drawing, pp. 218–229.
+rate and were faster. This task aimed to find the magnitude of values              Springer, 2008.
+[11] R. Cabello et al. Three.js. URL: https://github. com/mrdoob/three.js, 2010.            ally exploring differences of dti fiber models. In International Conference
+[12] F. Cauteruccio, C. Stamile, G. Terracina, D. Ursino, and D. Sappey-                    on Technologies for E-Learning and Digital Entertainment, pp. 333–344.
+     Mariniery. An automated string-based approach to white matter fiber-                   Springer, 2016.
+     bundles clustering. In 2015 International Joint Conference on Neural            [36]   H. Mohammed, A. K. Al-Awami, J. Beyer, C. Cali, P. Magistretti, H. Pfis-
+     Networks (IJCNN), pp. 1–8. IEEE, 2015.                                                 ter, and M. Hadwiger. Abstractocyte: a visual tool for exploring nanoscale
+[13] P. Chen, X. Fan, R. Liu, X. Tang, and H. Cheng. Fiber segmentation using               astroglial cells. IEEE transactions on visualization and computer graphics,
+     a density-peaks clustering algorithm. In 2015 IEEE 12th International                  24(1):853–861, 2017.
+     Symposium on Biomedical Imaging (ISBI), pp. 633–637. IEEE, 2015.                [37]   S. Mori and P. C. Van Zijl. Fiber tracking: principles and strategies–a
+[14] W. Chen, S. Zhang, S. Correia, and D. S. Ebert. Abstractive representation             technical review. NMR in Biomedicine: An International Journal Devoted
+     and exploration of hierarchically clustered diffusion tensor fiber tracts. In          to the Development and Application of Magnetic Resonance In Vivo, 15(7-
+     Computer Graphics Forum, vol. 27, pp. 1071–1078. Wiley Online Library,                 8):468–480, 2002.
+     2008.                                                                           [38]   I. Norton, W. I. Essayed, F. Zhang, S. Pujol, A. Yarmarkovich, A. J. Golby,
+[15] W. Chen, S. Zhang, A. MacKay-Brandt, S. Correia, H. Qu, J. A. Crow, D. F.              G. Kindlmann, D. Wassermann, R. S. J. Estepar, Y. Rathi, et al. Slicerdmri:
+     Tate, Z. Yan, Q. Peng, et al. A novel interface for interactive exploration            open source diffusion mri software for brain cancer research. Cancer
+     of dti fibers. IEEE Transactions on Visualization and Computer Graphics,               research, 77(21):e101–e103, 2017.
+     15(6):1433–1440, 2009.                                                          [39]   L. J. O’Donnell and O. Pasternak. Does diffusion mri tell us anything about
+[16] T. E. Conturo, N. F. Lori, T. S. Cull, E. Akbudak, A. Z. Snyder, J. S.                 the white matter? an overview of methods and pitfalls. Schizophrenia
+     Shimony, R. C. McKinstry, H. Burton, and M. E. Raichle. Tracking                       research, 161(1):133–141, 2015.
+     neuronal fiber pathways in the living human brain. Proceedings of the           [40]   E. Özarslan, C. G. Koay, T. M. Shepherd, M. E. Komlosh, M. O. İrfanoğlu,
+     National Academy of Sciences, 96(18):10422–10427, 1999.                                C. Pierpaoli, and P. J. Basser. Mean apparent propagator (map) mri: a novel
+[17] V. De Silva and J. B. Tenenbaum. Sparse multidimensional scaling using                 diffusion imaging method for mapping tissue microstructure. NeuroImage,
+     landmark points. Technical report, Technical report, Stanford University,              78:16–32, 2013.
+     2004.                                                                           [41]   A. Pandey, H. Shukla, G. S. Young, L. Qin, A. A. Zamani, L. Hsu,
+[18] L. Faulkner. Beyond the five-user assumption: Benefits of increased                    R. Huang, C. Dunne, and M. A. Borkin. Cerebrovis: Designing an
+     sample sizes in usability testing. Behavior Research Methods, Instruments,             abstract yet spatially contextualized cerebral artery network visualization.
+     & Computers, 35(3):379–383, 2003.                                                      IEEE transactions on visualization and computer graphics, 26(1):938–948,
+[19] A. Fedosejev. React. js essentials. Packt Publishing Ltd, 2015.                        2019.
+[20] A. Fornito, A. Zalesky, and M. Breakspear. The connectomics of brain            [42]   J. Poco, D. M. Eler, F. V. Paulovich, and R. Minghim. Employing 2d
+     disorders. Nature Reviews Neuroscience, 16(3):159, 2015.                               projections for fast visual exploration of large fiber tracking data. In
+[21] P. Gori, O. Colliot, L. Marrakchi-Kacem, Y. Worbe, F. D. V. Fallani,                   Computer Graphics Forum, vol. 31, pp. 1075–1084. Wiley Online Library,
+     M. Chavez, C. Poupon, A. Hartmann, N. Ayache, and S. Durrleman.                        2012.
+     Parsimonious approximation of streamline trajectories in white matter           [43]   Y. Rathi, O. Michailovich, F. Laun, K. Setsompop, P. E. Grant, and C.-F.
+     fiber bundles. IEEE transactions on medical imaging, 35(12):2609–2619,                 Westin. Multi-shell diffusion signal recovery from sparse measurements.
+     2016.                                                                                  Medical image analysis, 18(7):1143–1156, 2014.
+[22] D. Haehn, L. Franke, F. Zhang, S. C. Karayumak, S. Pieper, L. O’Donnell,        [44]   Y. Rathi, O. Michailovich, K. Setsompop, S. Bouix, M. E. Shenton, and
+     and Y. Rathi. Trako: Efficient transmission of tractography data for                   C.-F. Westin. Sparse multi-shell diffusion imaging. In International Con-
+     visualization, 2020.                                                                   ference on Medical Image Computing and Computer-Assisted Intervention,
+[23] D. Haehn, N. Rannou, B. Ahtam, E. Grant, and R. Pienaar. Neuroimaging                  pp. 58–65. Springer, 2011.
+     in the browser using the x toolkit. Frontiers in Neuroinformatics, 101,         [45]   C. P. Reddy and Y. Rathi. Joint multi-fiber noddi parameter estimation
+     2014.                                                                                  and tractography using the unscented information filter. Frontiers in
+[24] S. G. Hart and L. E. Staveland. Development of nasa-tlx (task load index):             neuroscience, 10:166, 2016.
+     Results of empirical and theoretical research. In Advances in psychology,       [46]   W. J. Schroeder, B. Lorensen, and K. Martin. The visualization toolkit: an
+     vol. 52, pp. 139–183. Elsevier, 1988.                                                  object-oriented approach to 3D graphics. Kitware, 2004.
+[25] W. Hwang and G. Salvendy. Number of people required for usability               [47]   M. E. Thomason and P. M. Thompson. Diffusion imaging, white matter,
+     evaluation: the 10±2 rule. Communications of the ACM, 53(5):130–133,                   and psychopathology. Annual review of clinical psychology, 7, 2011.
+     2010.                                                                           [48]   W. S. Torgerson. Multidimensional scaling: I. theory and method. Psy-
+[26] T. L. Jernigan, S. A. Brown, and G. J. Dowling. The adolescent brain                   chometrika, 17(4):401–419, 1952.
+     cognitive development study. Journal of research on adolescence: the            [49]   D. C. Van Essen, S. M. Smith, D. M. Barch, T. E. Behrens, E. Yacoub,
+     official journal of the Society for Research on Adolescence, 28(1):154–156,            K. Ugurbil, W.-M. H. Consortium, et al. The wu-minn human connectome
+     2018.                                                                                  project: an overview. Neuroimage, 80:62–79, 2013.
+[27] R. Jianu, C. Demiralp, and D. Laidlaw. Exploring 3d dti fiber tracts            [50]   R. Wang and V. J. Wedeen. Trackvis. org. Martinos Center for Biomedical
+     with linked 2d representations. IEEE transactions on visualization and                 Imaging, Massachusetts General Hospital, 2007.
+     computer graphics, 15(6):1449–1456, 2009.                                       [51]   D. Weidele, M. van Garderen, M. Golitko, G. M. Feinman, and U. Brandes.
+[28] R. Jianu, C. Demiralp, and D. H. Laidlaw. Exploring brain connectivity                 On graphical representations of similarity in geo-temporal frequency data.
+     with two-dimensional neural maps. IEEE transactions on visualization                   Journal of Archaeological Science, 72:105–116, 2016.
+     and computer graphics, 18(6):978–987, 2011.                                     [52]   W. Wu, G. McAnulty, H. M. Hamoda, K. Sarill, S. Karmacharya,
+[29] T. Kamali and D. Stashuk. Automated segmentation of white matter                       B. Gagoski, L. Ning, P. E. Grant, M. E. Shenton, D. P. Waber, et al.
+     fiber bundles using diffusion tensor imaging data and a new density based              Detecting microstructural white matter abnormalities of frontal pathways
+     clustering algorithm. Artificial intelligence in medicine, 73:14–22, 2016.             in children with adhd using advanced diffusion models. Brain imaging
+[30] L.-P. Ledoux, F. C. Morency, M. Cousineau, J.-C. Houde, K. Whittingstall,              and behavior, pp. 1–17, 2019.
+     and M. Descoteaux. Fiberweb: diffusion visualization and processing in          [53]   J. D. Yeatman, A. Richie-Halford, J. K. Smith, A. Keshavan, and
+     the browser. Frontiers in neuroinformatics, 11:54, 2017.                               A. Rokem. A browser-based tool for visualization and analysis of diffusion
+[31] J. W. Lichtman and W. Denk. The big and the small: challenges of imaging               mri data. Nature communications, 9(1):1–10, 2018.
+     the brains circuits. Science, 334(6056):618–623, 2011.                          [54]   F. Zhang, W. Wu, L. Ning, G. McAnulty, D. Waber, B. Gagoski, K. Sarill,
+[32] L. v. d. Maaten and G. Hinton. Visualizing data using t-sne. Journal of                H. M. Hamoda, Y. Song, W. Cai, et al. Suprathreshold fiber cluster
+     machine learning research, 9(Nov):2579–2605, 2008.                                     statistics: Leveraging white matter geometry to enhance tractography
+[33] J. G. Malcolm, M. E. Shenton, and Y. Rathi. Filtered multitensor trac-                 statistical analysis. NeuroImage, 171:341–354, 2018.
+     tography. IEEE Transactions on Medical Imaging, 29(9):1664–1675,                [55]   F. Zhang, Y. Wu, I. Norton, L. Rigolo, Y. Rathi, N. Makris, and L. J.
+     2010.                                                                                  O’Donnell. An anatomically curated fiber clustering white matter atlas for
+[34] L. McInnes, J. Healy, and J. Melville. Umap: Uniform manifold ap-                      consistent white matter tract parcellation across the lifespan. NeuroImage,
+     proximation and projection for dimension reduction. arXiv preprint                     179:429–447, 2018.
+     arXiv:1802.03426, 2018.
+[35] H. Mei, H. Chen, F. Guo, F. Zhang, W. Chen, Z. Song, and G. Wang. Visu-
+

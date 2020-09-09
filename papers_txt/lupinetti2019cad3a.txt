@@ -1,0 +1,466 @@
+See discussions, stats, and author profiles for this publication at: https://www.researchgate.net/publication/337858503
+
+
+
+CAD3A: A Web-Based Application to Visualize and Semantically Enhance CAD
+Assembly Models
+
+Conference Paper · November 2019
+DOI: 10.1109/SITIS.2019.00080
+
+
+
+
+CITATIONS                                                                                                 READS
+0                                                                                                         63
+
+
+4 authors:
+
+             Katia Lupinetti                                                                                         Daniela Cabiddu
+             Italian National Research Council                                                                       Italian National Research Council
+             18 PUBLICATIONS 62 CITATIONS                                                                            12 PUBLICATIONS 17 CITATIONS
+
+                SEE PROFILE                                                                                               SEE PROFILE
+
+
+
+             Franca Giannini                                                                                         Marina Monti
+             Italian National Research Council                                                                       Italian National Research Council
+             176 PUBLICATIONS 1,469 CITATIONS                                                                        60 PUBLICATIONS 360 CITATIONS
+
+                SEE PROFILE                                                                                               SEE PROFILE
+
+
+
+
+Some of the authors of this publication are also working on these related projects:
+
+
+                           AIM@SHAPE - Advanced and Innovative Models And Tools for the development of Semantic-based systems for Handling, Acquiring, and Processing knowledge Embedded in
+                           multidimensional digital objects View project
+
+
+                           Artificial Intelligence for Aesthetic and Engineering Design View project
+
+
+
+
+ All content following this page was uploaded by Katia Lupinetti on 10 December 2019.
+
+ The user has requested enhancement of the downloaded file.
+  CAD3A: a web-based application to visualize and
+    semantically enhance CAD assembly models
+                            Katia Lupinetti, Daniela Cabiddu, Franca Giannini, Marina Monti
+                        Istituto di Matematica Applicata e Tecnologie Informatiche “Enrico Magenes”
+                                           CNR - Italian National Research Council
+                                                         Genoa, Italy
+                                                name.surname@ge.imati.cnr.it
+
+
+   Abstract—Nowadays, there is a significant interest in new         more planes. In case of more planes, the section view should
+media types such as 3D models. Thanks to the computer graphics       be defined by the intersection of the selected planes.
+advances, 3D content can be rendered in real-time on desktop
+                                                                        Additionally, the data to be visualized can be within the
+and mobile devices improving the user experience. In addition,
+3D contents may be endowed with heterogeneous metadata to            models or also encoded implicitly. As an example, some as-
+improve the user understanding. This paper aims at improving         semblies could have parts with oversimplified shapes because
+the fruition of 3D models of industrial products. This type of       they are supplied from external vendors. In this case, the
+content is designed as CAD (Computer-Aided Design) models,           functionality of such a simplified part can be deduced by
+whose representation is not suitable for visualization over the
+                                                                     accessing to other information encoded in external systems,
+web. We present an online processor of 3D models able to
+extract semantic content. The extracted data are represented         such as in Product Data Management (PDM) or Product
+in a meaningful and structured manner, such that the user            Lifecycle Management (PLM) systems, or by the designer
+can first visualize them on demand through any device, and           analyzing the context of use of the part in the assembly.
+then export the results for further analysis or to be processed         This paper presents CAD3A (CAD Assembly Analisys
+by other external applications if necessary. The exploitation of
+Web technologies makes the framework easy to use both from           Application), a web-based application specifically designed to
+desktop and mobile devices, no matter their specific hardware        cope with assembly models. CAD3A allows the visualization
+and software equipment.                                              of standard CAD models as well as the computation and the
+   Index Terms—3D web, X3D, CAD data visualization, Web              visualization of their salient characteristics implicitly embed-
+application, Online service                                          ded. In particular, it allows (i) detecting the degree of freedom
+                                                                     (DOF) of each pair of parts sharing a surface contact and
+                      I. I NTRODUCTION
+                                                                     (ii) computing a functional classification of the parts. Through
+   During the last few years, dealing with 3D contents on the        CAD3A, we provide the following contributions:
+Web has become more feasible thanks to the hardware and
+                                                                       •   The visualization of CAD assembly models from any
+software advancements. Contextually, as argued by Mounton
+                                                                           kind of devices having a web browser and an internet
+et al. [1], Web applications have major benefits comparing
+                                                                           connection. Indeed, CAD3A works without browser plu-
+to desktop applications since they are available for all major
+                                                                           gins and it is available also on mobile devices.
+platforms and their use does not require the installation of any
+                                                                       •   The remote computation of both the DOF and part
+software or libraries (other than the Web browser). Anyhow,
+                                                                           classification to ease the inspection of CAD models when
+despite the increasing interest in visualizing and processing
+3D content on the Web, “current browsers are not designed to
+manage the data-intensive and interaction-packed throughput
+required by Web3D applications” [2].
+   The design of industrial products is strongly affected by this
+technology limitation, mainly because 3D assembly models
+may easily reach huge sizes, being possibly made of up
+to several hundred of parts, and are often endowed with
+additional heterogeneous data to be visualized together with
+the geometry. One of the main issues is the ability of visualize
+individual hidden components [3], which may be arbitrarily
+complex, and may occlude one the others. An example of this
+configuration is illustrated in Fig. 1. To allow the inspection of
+the internal parts, several solutions have been proposed, such
+as playing with transparency values of some components up
+to hiding them or using section views (as the one depicted in        Fig. 1: Sectioned view of a 3D assembly model with occluded
+Fig. 1). A section view can be defined by selecting one, or          components.
+     designers cannot access to their CAD desktop application.      to examine geometric forms and dimensions during the design
+  •  The possibility to export the CAD model converted in a         process requires collaborative area to communicate among
+     Web-format (encoded as X3D) as well as the results of the      the multiple actors involved in the design and development.
+     DOF and part classification computations in a standard         As an example of a multimedia application in the product
+     exchange format (encoded as JSON).                             design context, a Web-based revision control system has been
+   The next sections of this paper are organized as follows.        proposed by Nyamsuren et al. [10]. In this work a revision
+Section II provides an overview on the existing applications        control operation has been defined and developed based on
+to deal with 3D models on the Web. Section III illustrates          WebGL technology that calculates and represents differences
+the general framework, while Section IV focuses on the              between CAD models.
+description of the developed services. Section V presents the          The type of 3D content influences the management both as
+developed CAD3A application. Finally, Section VI ends the           the visualization and the interaction of the information associ-
+paper providing conclusions and future steps.                       ated with 3D data. Two of the most significant characteristics
+                                                                    to consider when reviewing assembly design are the inspection
+                    II. R ELATED WORKS                              of the mating conditions between two parts (i.e. how two parts
+   Through the years 3D content became a consolidated type of       are connected together) and the functionality of the designed
+multimedia material, while Web-based technologies have been         components. These two aspects are trending topics in research
+exploited to allow visualizing and processing 3D contents. As       and they have been faced in automation context. For instance,
+a side effect, dealing with 3D content though Web applications      Park and Oh [11] developed an automatic method to extract
+has opened a relevant number of issues, mainly related to the       kinematic information from assembly models and Yiu and
+visualization. Here, solutions dealing with 3D content on the       Regli [12] present a classifier for CAD models integrating
+Web are reviewed in Section II-A. For completeness, Section         machine learning techniques.
+II-B reports some works related to the processing of CAD               Most of the solutions developed to analyze CAD models
+content.                                                            are designed to be integrated as an application in a local
+                                                                    workstation and not available as Web applications.
+A. 3D content online processors
+   MeshLabJS [4] provides a Web-based graphical interface                                 III. F RAMEWORK
+that allows to interactively edit 3D models represented as trian-      CAD3A has been designed as a Web application providing
+gle meshes by exploiting a modern Web browser that is able to       different functionalities as separated services that can be
+run C++ code compiled into a javascript at a pretty acceptable      performed regardless the platform and the language adopted
+speed. Similarly, HexaLab [5] is a WebGL application for real       the experts in their development. The distribution of CAD3A
+time visualization, exploration and assessment of hexahedral        as a Software as a Service (SaaS) represents a benefit for the
+meshes. In addition to [4] and [5], other Web applications have     companies that decide to exploit such system. Indeed, it has
+been proposed to deal with 3D content coming from specific          an high impact on quality and management of the developed
+fields, such as cultural heritage [6], [7], and biochemistry and    product [13] due to the fact new functionalities can be easily
+biology for the molecular visualization [8].                        added even using different programming languages, databases,
+   The aforementioned Web applications focus on specific 3D         hardware and software environment, depending on what fits
+content representations (either triangle or hexahedral meshes)      best [14]. In addition, the devices adopted by the final users do
+which are typically used in many application fields, but are        not require high computing performances since they are used
+not suitable to represent CAD models coming from industrial         as browsers simply and the computing capacity is demanding
+design and production.                                              at the server-side.
+   Other than Web applications providing a graphical interface,        The scheme of the provided services is illustrated in Fig. 2.
+it is worth mentioning that some online services have been          A user can upload on a Web page a CAD assembly model in
+published to enable the possibility to remotely process 3D          STEP format (AP203 or AP214) through different possible
+contents [9]. As an example, Campen and colleagues published        devices (laptop, phone, tablet or desktop). The model is
+an online service called WebBSP [9] which is able to remotely       then processed by the X3D generation service to obtain
+run a few specific geometric operations. The user is required       a standard graphics object format, more precisely an X3D
+to upload an input mesh from a standard Web browser and             representation (described in an XML file format) is generated
+select a single geometric algorithm from a set of available         and displayed in a 3D view where the various 3D components
+operations. The algorithm is actually run on the server and a       of the assembly model can be selected, rotated or zoomed.
+link to download its output is returned, and the Web interface      The 3D visualization shows the relative position of the single
+does not allow visualizing the 3D model.                            parts in the entire assembly model. In addition to the model
+                                                                    visualization, the system performs several analyses on the 3D
+B. CAD processors                                                   model extracting several features and conveying their semantic
+  More recently with the improvement of Web technologies,           meaning to the user through a user interface.
+multimedia data modeling and visualization is gaining a rele-          The extract interfaces service uses the methodology de-
+vant interest also in the product development where the need        scribed in [15] to identify and expose the relationships between
+                                                                     Listing 1: Snippet of the structure of a generated X3D file.
+                                                                    <?xml version="1.0" encoding="UTF-8"?>
+                                                                    <scene>
+                                                                      <shape>
+                                                                        <indexedFaceSet coordIndex="...." >
+                                                                          <coordinate point="...." />
+                                                                        </indexedFaceSet>
+                                                                        <appearance>
+                                                                          <material DEF="part_name"
+                                                                                     diffuseColor="1.00 0.10 0.10"
+                                                                                     transparency="0.4"/>
+                                                                        </appearance>
+                                                                      </shape>
+                                                                      <shape> ... </shape>
+                                                                      <shape> ... </shape>
+                                                                    </scene>
+
+
+
+
+Fig. 2: Software as a service (SaaS) scheme. The centering
+icon represents the Web application and the other ones de-
+scribe the adopted file format to transfer information.
+
+                                                                    Fig. 3: Possible interfaces between parts of an assembly model.
+the constituent parts of the assembly model computing the
+degree of freedom (DOF) allowed between two parts sharing
+a set of surfaces in contact. The classify parts service provides      This service provides an X3D file in XML format. Given
+a functional classification of the parts according to their shape   a CAD assembly model in STEP format, the service iterates
+adopting the learning process described in [16]. Both the ser-      over the parts of the assembly and performs a triangulation of
+vices transfer the results of their analysis back to the Web page   each of them. Each shape is labelled with the corresponding
+by using JSON files. Finally, the user has the possibility of       name in the STEP file allowing an 1-to-1 map between the
+exporting in the JSON data-interchange format the information       STEP and the X3D for further interactions.
+computed by the different services and reloading the data to           List 1 shows an example of a generated X3D file. A set
+further analysis. Additional details on the single services are     of “shape” nodes is used to represent single assembly parts.
+reported in section IV.                                             Such a representation includes both geometry information
+                                                                    (i.e. the “indexedFaceSet” node) and some visualization set-
+         IV. S ERVICES AND FEATURE EXTRACTION                       tings (i.e. the “apperance” node). The “indexedFaceSet” node
+                                                                    defines both geometric and topological information by the
+A. X3D generation                                                   “coordinate” node and the “coordIndex” attribute respectively.
+   Managing 3D data over the Internet is not an easy task [2]       Visualization settings are instead encoded by the “material”
+and moreover the current Web viewers do not handle CAD              node inside the “apperance” node.
+data. Considering this lack, the goal of the proposed service
+                                                                    B. Interface
+is to provide a Web converter from STEP (AP203 or AP214) to
+X3D file format, such that CAD assemblies can be examined              In assembly models, the interfaces describe the relationships
+and manipulated into a Web page easily accessible by both           between the parts of a model once that parts are arranged
+desktop browsers and mobile devices. Among the different            in the 3D space. These relationships may be grouped into
+formats through which 3D content on the Web can be rendered         interferences, contacts and clearances as shown in Fig. 3.
+and accessed (e.g. VRML, X3D, XML3D, O3D), the X3D                     The interferences represent an unrealistic and unrealizable
+format has been chosen since it is standard-based and it is         configurations that can be generated by some mistakes or
+suitable for DOM integration [17], this means that the front-       designed on purpose to convey a certain meaning [18], [19],
+end elements can be manipulated through the Web interface           such as the intersections among screw and nut threads, or when
+(the DOM) and the modifications can be synchronized to the          considering flexible parts, as springs, seals and insulating parts,
+backend (the X3D).                                                  or when designing parts assembled by shrink-fitting. Thus,
+                                                                   big limitation, also considering that to access this information
+                                                                   the user is forced to rely on the PDM coupling the CAD model.
+                                                                      To provide an independent access to the information on part
+                                                                   classification that eases the assembly inspection, this service
+                                                                   aims at identifying automatically the functionalities of the
+                                                                   parts by considering different shape characteristics. Anyhow,
+                                                                   the part shapes sometimes are oversimplified making parts
+                                                                   with different functions very similar in their shape. These
+                                                                   situations frequently occur when standardized components are
+                                                                   acquired from suppliers making arduous recognizing compo-
+                                                                   nent types automatically. For this reason, besides canonical
+                                                                   categories (including bearing, gear, c-clip, nut, shaft, screw
+                                                                   and bolt, spacer, key, linkage arm and part of bearing), when
+                                                                   the level of details is not sufficient this service classifies
+                                                                   parts in geometric-oriented classes (i.e. cylinder-like, cube-
+                Fig. 4: Lower kinematic pairs.                     like, sphere-like and torus-like).
+                                                                      The classification is based on a learning process applied
+                                                                   on a collection of descriptors of the parts as defined by
+some of these configurations can be interpreted as imprecise       Rucco et al. [16]. According to the analysis of Jayanti et
+positioning, while others are deliberate artifacts reflecting      al. [22], 3D spherical harmonics, shape distribution (with D2
+some conventional meanings.                                        measure), inner distance, size values (i.e. surface area and
+   The contacts between two parts contribute in the definition     volume), and proportions among the minimum result the most
+of a fundamental concept to analyze mechanisms, i.e. the           suitable descriptors to discriminate the classes above cited.
+the mobility. The mobility of an object is defined by the          In the proposed framework, the 3D spherical harmonics, the
+connections between parts, called joints, that are made up         D2 shape distribution and the inner distance are computed
+of the contacts of each rigid geometric part [11] and can be       respectively by the procedure defined in [23] (with its default
+classified by the number of allowed degrees of freedom [20].       parameters), [24] and [25] on a mesh representation of the
+The joints that have surface area contact between two parts        part; while the surface area, volume and proportions among
+can be classified according to the types of surfaces involved      the minimum bounding box dimensions are obtained using the
+in the contact, as depicted in Fig. 4. Finally, the clearances     API provided by the CAD kernel of SolidWorks® .
+occur when a distance between two or more surfaces of two
+parts conveying a functional meaning.                                               V. D EVELOPED PROTOTYPE
+   Despite engineers spend a lot of time designing and en-            CAD3A is designed and implemented as a Web Application
+riching CAD models, most of CAD systems generate files in          consisting of a set of assembly processing services and an
+standard format (e.g. STEP) not incorporating the interface        easy-to-use Web-based graphical user interface. It has been
+information. For this reason, this service aims at extracting      deployed on an Windows Apache server endowed with a
+joints risen by contacts and volumetric interfaces. In addition,   PHP interpreter, accessible via HTTP at the following address:
+the extracted data are visualized to the user in a proper 3D       http:// cad3a.ge.imati.cnr.it/ webapp. Some technical details are
+view. Details on the data visualization are described in Section   described in the following sections.
+V.
+   The DOF is computed by identifying the set of allowed           A. Assembly processing services
+translations and rotations between the parts in contact as            1) Input upload and conversion: The service has been
+described in [21]. Here, both sets are expressed by normal-        implemented as a pair of two pieces of code. The former is
+ized vectors characterizing either a translation direction or a    a python script exploiting SolidWorks® API to convert the
+rotation axis according to the global reference frame.             input STEP assembly file into a set of STL files, each of
+                                                                   them representing a single part of the assembly. The latter is
+C. Part classification                                             written in C# and takes the generated STLs files as an input;
+   The part classification service aims at labeling the con-       it exploits Meshlabserver [26] to convert each STL file into
+stituent parts of an assembly model according to their shape       a X3D file, and finally merges them into a single X3D file
+under a functional point of view. Despite the use of rules and     encoding the whole model, while keeping the single parts
+standards, the functionality of a component is not encoded in      separated.
+the standard CAD format directly but rather specified in some
+metadata or description in the PDM systems [16]. In such a            2) Interface computation: The service is a C# software.
+way, the classification of the components in a CAD model           It takes the uploaded STEP file as an input, and generates
+strongly depends on the information assigned by designers          a JSON file where the relationships among the assembly
+manually and not on the actual multimedia content. This is a       parts are encoded. List 2 shows an example of the structure
+                                          Fig. 5: CAD3A running in Chrome browser.
+
+
+                                                                       The “3D model area visualization” is implemented as a
+Listing 2: JSON example returned by the “Extract interfaces”
+                                                                    X3DOM scene [17]. It exploits the WebGL support integrated
+service.
+                                                                    by default in modern browsers to embed the 3D content into
+{
+     "Source":"FLANGE_HUB-1-1"
+                                                                    a browser context by the definition of an XML namespace
+     "Target":"BOLT_1-1-1"                                          that enables a < x3d > tag to be used in a standard HTML
+     "ContactType":0                                                [27]. In the 3D view, the imported assembly can be rotated,
+     "DOF":                                                         translated and zoomed. The original view can be reset by the
+         "Translation":[(1.0, 0.0, 0.0)]                            user pressing the “Reset view” button. As default, the compo-
+         "TranslationNotAllowed":[]
+         "Rotation":[(1.0, 0.0, 0.0)]
+                                                                    nents are visualized in transparency mode to allow a partial
+}                                                                   visualization also of the internal ones. An opaque visualization
+                                                                    can be enabled by setting the “Opaque visualization mode”.
+                                                                    In both the modes, it is possible (i) to hide/show a single part
+                                                                    unchecking/checking the corresponding part flag and (ii) to
+adopted to describe the joint, where the involved parts are         change the color of each part by clicking on the color button
+identified as “Source” and “Target” and the “DOF” tag lists         next to the name part and choosing the desired color in the
+the set of allowed and not allowed translations and the allowed     pop-up window.
+rotations.
+                                                                       Pressing the “Extract interfaces” button, the service to detect
+   3) Part classification: The service is a C# software. It takes
+                                                                    the relationships among the assembly parts is called and the
+the whole set of the STL files generated by the aforementioned
+                                                                    pairs of parts sharing a contact or a volumetric intersection
+service V-A1 and returns a JSON file where, for each assembly
+                                                                    are listed in the “Assembly data” box. Clicking on one record,
+part, its functional classification is encoded.
+                                                                    to easy the interpretation of the performed analysis, only the
+B. Graphical user interface                                         parts involved in the interface are rendered (one in green and
+   The graphical user interface is a dynamic HTML page              the other in red) and additional elements are displayed to
+exploiting Javascript to be responsive with respect to user         communicate the relative degree of freedom. Fig. 6 proposes
+interaction. As illustrated in Fig. 5, the content of the Web       examples of the DOF visualization in CAD3A, Since the
+page is divided in three main parts: i) a side menu on the          maximum DOF of a rigid body in space is defined by three
+left; ii) a 3D viewer in the middle of the page (called “3D         translations and three rotations, distinct shapes and colors
+model area visualization”); and iii) an information box on the      are associated with a specific transformation; specifically blue
+right side showing the result of processing services (called        arrows and yellow circles are used to represent translations and
+“Assembly data”).                                                   rotations respectively. Since translations and rotations need
+   The left side menu allows to load an input STEP file (AP203      to communicate an axis, both of them could be represented
+or AP214), runs the desired processing services, and exports        with arrows, but in this manner the user needs to interpret the
+the results as a zip file. Each button of the menu is connected     visualization, for instance discerning the elements with the
+to a specialized PHP script, which is responsible to run the        same shape (arrows) trough different colors. Thus, the choice
+server side operations described in Section V-A and to return       of using two separated elements is lead by the purpose of
+their output information to the Web page so that it can be          improving the information perception at first glance.
+properly displayed.                                                   Fig. 6a represents a cylindrical joint whose DOF is a
+             (a)                                                (b)                                                  (c)
+
+                                       Fig. 6: Examples of DOF representations in CAD3A.
+
+
+                                                                      has the possibility to choose which data exporting (the X3D
+                                                                      file, the contacts and/or the classification data) and a folder in
+                                                                      a ZIP format is downloaded.
+                                                                                            VI. C ONCLUSIONS
+                                                                         In this paper, a Web application to visualize and analyze
+                                                                      3D CAD models has been introduced. The analysis allows
+                                                                      the identification of the DOF existing between two parts
+                                                                      in contact and the classification of the parts according to
+                                                                      the functional point of view. These data are visualized in
+                                                                      the proposed Web application, such that the user can access
+     Fig. 7: Example of part classification visualization.            meaningful information also when he/she is not at a suitable
+                                                                      working-station. The main benefit of such an application is the
+                                                                      possibility of reviewing 3D content on the Web just having a
+translation and a rotation both along the cylinder axis, then
+                                                                      browser and an internet connection.
+the arrow identifies the translation direction while the rotation
+                                                                         There are several possible short-term refinements. First,
+axis is distinguished by the normal to the plane underlying the
+                                                                      the developed services could be available as Web-services
+circle line. Fig. 6b represents a planar joint. In this case, the
+                                                                      such that any developers can visualize the information with
+allowed translations are all the ones belonging to the mating
+                                                                      the proposed user interface or exploit them in their own
+plane and represented as blue arrow. In addition, since there is
+                                                                      application. Second, other (standard) input formats (e.g. IGES)
+not an unique combination of vectors describing the directions
+                                                                      could be imported and processed by the proposed services.
+orthogonal to a certain normal, a transparent blue plan has
+                                                                      Finally, some optimizations on the classification computation
+been added to describe that every combinations of the depicted
+                                                                      are planned as the parallel processing of the required shape
+arrows are possible. Finally, Fig. 6c illustrates a prismatic joint
+                                                                      descriptors.
+where only a translation is allowed and it is represented by
+                                                                         Long-term works involve the connection of this application
+the blue arrow.
+                                                                      with CAD models application to allow the identification of
+   The last service can be invoked pressing the “Classify parts”
+                                                                      similar models. Indeed, once the data have been extracted,
+button in the side menu. After the parts are classified, the
+                                                                      it is possible to structure them defining a model descriptor
+result is displayed in an additional tab in the “Assembly data”
+                                                                      to be used in the similarity evaluation. To this aim, besides
+box. As mentioned in Section IV, the functional classification
+                                                                      the proposed data, there is useful information characterizing
+recognizes the following classes: bearing, gear, c-clip, nut,
+                                                                      assembly models that is worth to be extracted and visu-
+shaft, screw and bolt, spacer, key, linkage arm, part of bearing,
+                                                                      alized, for instance the pattern of repeated parts. Indeed,
+cylinder-like, cube-like, sphere-like and torus-like. Each class
+                                                                      their presence can affect the manufacturing process, including
+is colored in a different way (see Fig. 7), and the user can
+                                                                      assembly operations. Therefore, patterns can also be used in
+set the desired nuance clicking on the button next to the
+                                                                      the similarity assessment between assemblies. Finally, new
+classification name. To allow a functional visualization, it is
+                                                                      inputs, such as images, could be considered and integrated
+also possible to hide/show a class unchecking/checking the
+                                                                      with the assembly characterization to allow the retrieval from
+corresponding flag among the element in the “Part classifica-
+                                                                      pictures taken by a smartphone.
+tion” list.
+   The computed data can be exported and re-imported for
+further analysis by using the “Result” import functionality.
+Clicking the “Export results” button in the side menu, the user
+                         R EFERENCES                                  [14]   L. Chen, “Microservices: Architecting for continuous
+ [1]   C. Mouton, K. Sons, and I. Grimstead, “Collaborative                  delivery and devops,” in 2018 IEEE International Con-
+       visualization: Current systems and future trends,” in                 ference on Software Architecture (ICSA), IEEE, 2018,
+       Proceedings of the 16th International Conference on                   pp. 39–397.
+       3D Web Technology, ACM, 2011, pp. 101–110.                     [15]   K. Lupinetti, F. Giannini, M. Monti, and J.-P. Pernot,
+ [2]   M. Potenziani, M. Callieri, M. Dellepiane, R. Scopigno,               “Automatic extraction of assembly component relation-
+       et al., “Publishing and consuming 3D content on the                   ships for assembly model retrieval,” Procedia CIRP,
+       web: A survey,” Foundations and Trends® in Computer                   vol. 50, pp. 472–477, 2016.
+       Graphics and Vision, vol. 10, no. 4, pp. 244–333, 2018.        [16]   M. Rucco, F. Giannini, K. Lupinetti, and M. Monti,
+ [3]   P. Ivson, D. Nascimento, W. Celes, and S. D. Barbosa,                 “A methodology for part classification with supervised
+       “CasCADe: A novel 4D visualization system for virtual                 machine learning,” AI EDAM, vol. 33, no. 1, pp. 100–
+       construction planning,” IEEE transactions on visualiza-               113, 2019.
+       tion and computer graphics, vol. 24, no. 1, pp. 687–697,       [17]   J. Behr, P. Eschler, Y. Jung, and M. Zöllner, “X3DOM: a
+       2017.                                                                 DOM-based HTML5/X3D integration model,” in Pro-
+ [4]   P. Cignoni, M. Idini, S. Gabriele, S. Giammori, G. M.                 ceedings of the 14th International Conference on 3D
+       Delogu, D. Busato, A. Maggiordomo, A. Nicoletti, M.                   Web Technology, ACM, 2009, pp. 127–135.
+       Loddo, and G. Marini. (2015). MeshLabJS, [Online].             [18]   A. Shahwan, G. Foucault, J.-C. Léon, and L. Fine,
+       Available: https : / / www . meshlabjs . net/ (visited on             “Towards automated identification of functional desig-
+       09/18/2019).                                                          nations of components based on geometric analysis of
+ [5]   M. Bracci, M. Tarini, N. Pietroni, M. Livesu, and P.                  a DMU,” in GTMG2011-12èmes Journées du Groupe
+       Cignoni, “Hexalab. net: An online viewer for hexahedral               de Travail en Modélisation Géométrique, 2011.
+       meshes,” Computer-Aided Design, vol. 110, pp. 24–36,           [19]   A. Shahwan, G. Foucault, J.-C. Lfffdfffdon, and L.
+       2019.                                                                 Fine, “Deriving Functional Properties of Components
+ [6]   F. Galeazzi, M. Callieri, M. Dellepiane, M. Charno,                   from the Analysis of Digital Mock-ups,” Engineering
+       J. Richards, and R. Scopigno, “Web-based visualization                Computations, p. 16, 2014. [Online]. Available: https:
+       for 3D data in archaeology: The ADS 3D viewer,”                       //hal.inria.fr/hal-00922958.
+       Journal of Archaeological Science: Reports, vol. 9,            [20]   R. L. Norton, Design of Machinery, no. 3. McGraw-Hill
+       pp. 1–11, 2016.                                                       Higher Education, 2003.
+ [7]   M. Potenziani, M. Callieri, M. Dellepiane, M. Corsini,         [21]   K. Lupinetti, F. Giannini, M. Monti, and J.-P. Per-
+       F. Ponchio, and R. Scopigno, “3DHOP: 3D heritage                      not, “Content-based multi-criteria similarity assessment
+       online presenter,” Computers & Graphics, vol. 52,                     of CAD assembly models,” Computers in Industry,
+       pp. 129–141, 2015.                                                    vol. 112, p. 103 111, 2019, ISSN: 0166-3615.
+ [8]   A. S. Rose and P. W. Hildebrand, “Ngl viewer: A web            [22]   S. Jayanti, Y. Kalyanaraman, N. Iyer, and K. Ra-
+       application for molecular visualization,” Nucleic acids               mani, “Developing an engineering shape benchmark for
+       research, vol. 43, no. W1, W576–W579, 2015.                           CAD models,” Computer-Aided Design, vol. 38, no. 9,
+ [9]   M. Campen. (2010). WebBSP 0.3 beta, [Online]. Avail-                  pp. 939–953, 2006, ISSN: 0010-4485.
+       able: http : / / www. graphics . rwth - aachen . de / webbsp   [23]   M. Kazhdan. (2019). Rotation invariant shape descrip-
+       (visited on 09/19/2019).                                              tors, [Online]. Available: http://htmlpreview.github.io/
+[10]   P. Nyamsuren, S.-H. Lee, and S. Kim, “A web-based                     ?https://github.com/mkazhdan/ShapeSPH/blob/master/
+       revision control framework for 3D CAD model data,”                    descriptors.html (visited on 06/20/2019).
+       International Journal of Precision Engineering and             [24]   M. Kazhdan, T. Funkhouser, and S. Rusinkiewicz,
+       Manufacturing, vol. 14, no. 10, pp. 1797–1803, 2013.                  “Rotation invariant spherical harmonic representation
+[11]   S. C. Park and J. W. Oh, “Kinetic model extraction                    of 3D shape descriptors,” in Symposium on geometry
+       from a geometric model,” Computer-Aided Design and                    processing, vol. 6, 2003, pp. 156–164.
+       Applications, vol. 12, no. 3, pp. 338–343, 2015.               [25]   Y.-S. Liu, Y. Fang, and K. Ramani, “Idss: Deformation
+[12]   C. Yiu Ip and W. C. Regli, “Content-based classification              invariant signatures for molecular shape comparison,”
+       of CAD models with supervised learning,” Computer-                    BMC bioinformatics, vol. 10, no. 1, p. 157, 2009.
+       aided Design and Applications, vol. 2, no. 5, pp. 609–         [26]   P. Cignoni, M. Callieri, M. Corsini, M. Dellepiane,
+       617, 2005.                                                            F. Ganovelli, and G. Ranzuglia, “MeshLab: an Open-
+[13]   N. Dragoni, S. Giallorenzo, A. L. Lafuente, M. Maz-                   Source Mesh Processing Tool,” in Eurographics Italian
+       zara, F. Montesi, R. Mustafin, and L. Safina, “Microser-              Chapter Conference, V. Scarano, R. D. Chiara, and U.
+       vices: Yesterday, today, and tomorrow,” in Present and                Erra, Eds., The Eurographics Association, 2008, ISBN:
+       ulterior software engineering, Springer, 2017, pp. 195–               978-3-905673-68-5. DOI: 10.2312/LocalChapterEvents/
+       216.                                                                  ItalChap/ItalianChapConf2008/129-136.
+[27]          A. Evans, M. Romeo, A. Bahrehmand, J. Agenjo, and
+              J. Blat, “3D graphics on the web: A survey,” Computers
+              & Graphics, vol. 41, pp. 43–61, 2014.
+
+
+
+
+View publication stats
+

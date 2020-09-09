@@ -1,0 +1,911 @@
+SPECIAL FOCUS y Computational chemistry & computer-aided drug discovery – Part I
+
+Research Article
+                                                                                                         Future
+ For reprint orders, please contact reprints@future-science.com                                          Medicinal
+                                                                                                         Chemistry
+3D-Lab: a collaborative web-based
+platform for molecular modeling
+
+
+
+
+Aim: The use of 3D information has shown impact in numerous applications in drug                     Christoph Grebner1,
+design. However, it is often under-utilized and traditionally limited to specialists. We             Magnus Norrby1,
+want to change that, and present an approach making 3D information and molecular                     Jonatan Enström1,
+modeling accessible and easy-to-use ‘for the people’. Methodology/results: A user-                   Ingemar Nilsson1,
+                                                                                                     Anders Hogner1,
+friendly and collaborative web-based platform (3D-Lab) for 3D modeling, including a
+                                                                                                     Jonas Henriksson2,
+blazingly fast virtual screening capability, was developed. 3D-Lab provides an interface
+                                                                                                     Johan Westin2,
+to automatic molecular modeling, like conformer generation, ligand alignments,                       Farzad Faramarzi2,
+molecular dockings and simple quantum chemistry protocols. 3D-Lab is designed                        Philip Werner2
+to be modular, and to facilitate sharing of 3D-information to promote interactions                   & Jonas Boström*,1
+between drug designers. Recent enhancements to our open-source virtual reality                       1
+                                                                                                      Medicinal Chemistry Department,
+tool Molecular Rift are described. Conclusion: The integrated drug-design platform                   CVMD iMED, AstraZeneca, S-431
+                                                                                                     83 Mölndal, Sweden
+allows drug designers to instantaneously access 3D information and readily apply                     2
+                                                                                                       Research Discovery Informatics,
+advanced and automated 3D molecular modeling tasks, with the aim to improve                          AstraZeneca, Mölndal, S-431 83
+decision-making in drug design projects.                                                             Mölndal, Sweden
+                                                                                                     *Author for correspondence:
+First draft submitted: 12 April 2016; Accepted for publication: 7 July 2016;                         Tel.: +46 31 706 5251
+                                                                                                     Fax: +46 31 776 3710
+Published online: 31 August 2016
+                                                                                                     jonas.bostrom@astrazeneca.com
+
+Keywords: 3D visualization • drug design • high-performance computing • molecular
+modeling • open source • usability • virtual reality • virtual screening
+
+
+All molecules ranging from structurally sim-      however, still complex. First, raw data from
+ple drugs like aspirin to complex systems like    experiments (e.g., x-ray or NMR) have to be
+proteins are 3D objects. Knowledge about          processed. For example, preparing a protein
+their 3D structure is important in most stages    for structure-based design studies [2] includes
+of drug discovery as it, for example, provides    the following steps: splitting a flat (PDB) file
+detailed information about ligand–protein         into components; preparing amino acids by
+interactions and conformational preferences,      adding hydrogen and missing side-chains;
+among other things.                               assigning tautomeric forms and protonation
+   Around 150 years ago, Le Bel and van’t         states. In a similar fashion, ligand structures
+Hoff proved the concept of molecules as 3D        also need attention (e.g., assigning bond-
+objects [1] and thus changed the way of how       orders, protonation states and optimizing
+scientists think about small and large mole-      distorted bond lengths/angles). Beyond that,
+cules. Since then, experimental and theoreti-     there is the challenge of adequately treating
+cal methods have been developed and used to       water in computational drug design [3] . This
+generate 3D information, which include x-ray      processing of 3D raw data has largely been
+crystallography, NMR spectroscopy, homol-         automated. But parts still require manual
+ogy modeling, molecular docking and con-          intervention best suited for specialists. Sec-
+formational sampling. The course of using         ond, 3D modeling is more complex than
+                                                                                                                          part of
+3D information to shape design ideas is,          1D/2D methods. That is, when going from
+
+
+10.4155/fmc-2016-0081 © AstraZeneca              Future Med. Chem. (2016) 8(14), 1739–1752           ISSN 1756-8919                      1739
+Research Article   Grebner, Norrby, Enström et al.
+
+
+
+              2D to 3D, molecules are no longer represented by                In-house method development and the acquisition
+              formulas or flat structures but defined as 3D objects.       of commercial solutions both have their pros and cons.
+              Therefore, low-energy conformations need to be cre-          A commercial solution provides access to advanced
+              ated. As most molecules relevant to drug design include      libraries with different features and functions, sup-
+              several rotational bonds [4] , enumerating and searching     ported by professionals (e.g., software developers and
+              all relevant (low-energy) conformations quickly leads        trained application scientists). However, licenses can
+              to the so-called combinatorial explosion. Correctly          be costly, and requests for customized implementations
+              orienting the generated conformations in 3D space is         toward specific needs may linger, slowing down inno-
+              another complicating factor.                                 vation. Furthermore, it is often forgotten that com-
+                 Structure and ligand-based methods typically              mercial solutions require maintenance, development
+              require sophisticated methods to rank-order datas-           and integration into corporate infrastructures. The
+              ets. For example, shape-based virtual screening and          latter represents a hurdle as infrastructures are usually
+              docking protocols need to be properly prepared and           complex (e.g., network, databases, data formats, file
+              validated [5] . It goes without saying that these kinds      structures, and so on), and are never identical between
+              of protocols have to be created by trained computa-          different companies. Therefore, a commercial solution
+              tional chemists to avoid common pitfalls [6] . However,      cannot currently be expected to simply be installed and
+              once an established protocol (e.g., docking or shape-        immediately up and running, but requires a substan-
+              matching against a putative bioactive conformation)          tial amount of work to be seamlessly integrated. With
+              has been established it can be advantageous to share         the recent and exciting progress of digitalization and
+              it with others through, say, a web interface. It should      cloud technology the situation is, however, likely to
+              be noted that we use the term protocol and work-flow         change in the future.
+              interchangeably for the process of preparing input, per-        An advantage of developing a tool internally is
+              forming calculations and making the results available,       that it can be directly tailored toward the needs of its
+              say, in a webpage. Making modeling work-flows auto-          intended user base, and designed specifically to fit the
+              mated and available through well-designed tools opens        infrastructure at hand. Short communication ways and
+              up for a more efficient usage and a larger audience;         fewer decision bodies facilitate fast development cycles
+              basically, any scientist (specialist and nonspecialist)      and an improved tool designed for companies’ specific
+              can apply advanced computational drug design meth-           requirements may be achieved. Of course, internal
+              ods in that way. In this context it is important to stress   development may also make use of commercially avail-
+              that automated protocols are not intended to be used         able software development kits. Here, new web-based
+              in isolation. Rather the contrary, the protocols should      3D visualizer software development kits can be seen
+              provide an interface between drug discovery scien-           as a representative example for building rich, dynamic
+              tists to facilitate collaborative work and allow faster      and attractive web-based tools. In general, modeling
+              and better decision-making. As a bonus, automation           in a browser has been difficult. But browser technol-
+              should free up time for the specialist to tackle other       ogy has recently taken off, and is now more perfor-
+              and possibly more creative tasks.                            mant. In contrast to stand-alone solutions, a web-based
+                 The scope of medicinal chemistry has changed over         tool offers the advantage to be accessible from every-
+              the years [7] , and modeling is being democratized. For      where, and developing a web-based tool increases the
+              example, job descriptions for chemists and computa-          portability due to standardization toward HTML/
+              tional chemists are overlapping more and more, and           CSS (HyperText Markup Language/Cascading Style
+              chemists are frequently performing modeling work.            Sheets).
+              As a consequence the nonspecialists (chemists) need             The main focus was on developing a powerful, user-
+              access to user-friendly tools to help drive design. There    friendly and collaborative web-based tool that facili-
+              are emerging commercial solutions (e.g., Biovia [8] ,        tates the use of 3D information and various modeling
+              EnginFrame [9] , LiveDesign [10] , Optibrium [11]) as well   protocols from one central place. We call it 3D-Lab. In
+              as proprietary tools (FOCUS) [12] aiming to close that       the current paper, we will concentrate on highlighting
+              gap. At AstraZeneca there have been previous efforts,        key features and concepts of 3D-Lab and present our
+              although leaving room for improvements, mainly due           implementation of the game-changing and blazingly
+              to technological reasons. Thus it was decided to develop     fast, Google-like 3D virtual screening capability, based
+              a simple and powerful environment, with a strong             on the FastROCS technology [13] . Following our vision
+              focus on usability to better exploit 3D information in       to bring 3D molecular modeling to nonspecialists (‘the
+              drug design. None of the commercially available tools        people’), we will conclude with recent developments
+              were judged to be adequate for our needs and limited         on our virtual reality molecular viewer Molecular
+              software budget, resulting in in-house development.          Rift [14] .
+
+
+1740          Future Med. Chem. (2016) 8(14)                                                                    future science group
+                                            3D-Lab: a collaborative web-based platform for molecular modeling          Research Article
+
+
+3D-Lab integration & implementation                           idea is that as soon as the specialist has developed a vali-
+3D-Lab was developed as a web-based interface to make         dated protocol, it should be made available in 3D-Lab
+it easily available for every scientist within AstraZeneca    via the admin mode. Hence, new protocols can expedi-
+from everywhere. Thus, one benefit of 3D-Lab is that          ently be created there as well as existing protocols may
+it brings 3D molecular modeling to all people involved        be modified (and deleted). To the date of this publica-
+in drug hunting projects, and allows for (near) real-time     tion, 3D-Lab provides established and tested models for
+modeling. The tool is intended to serve as an interface       several 3D protocols for molecular dockings (Glide [16] ,
+between, say, the expert computational chemists and the       Gold [17] and Fred [18]), shape-based molecular align-
+medicinal chemists facilitating interactions and speed-       ment (ROCS [19]), custom models for quantum mechan-
+ing up decision-making. For example, calculations can         ics (QM) optimization and calculating hydrogen bond
+be performed and discussed interactively during a drug        donor and acceptor strengths [20] , using Gaussian [21] as
+design meeting, as compared with the traditional way of       well as various conformation generation protocols using
+scheduling new meetings and by that doing postponing          OMEGA [22] . Each method comes with predefined set-
+design decisions and progress.                                tings, such as environment variables and required librar-
+   We consider the key parameters for a successful            ies loaded, and those are subsequently reused when a user
+integration and acceptance to be: high usability by an        is creating a new protocol. When making and publish-
+intuitive web interface; a fully modular implementation       ing a new model, the user has the option to select where
+to allow integration of any type of modeling tool from        it will end up under ‘Playground’, ‘DMPK’, ‘Safety’ or
+any third-party software vendor; a collaborative design       under specific ‘Projects’. Upon creation, the model is
+for instantaneous sharing and integration of data; and        immediately made available to all users from the input
+a state-of-the-art molecular visualization system. The        mode. Figure 2 shows an overview of the admin page.
+primary focus of 3D-Lab is to allow for easy and intui-          In the input mode, all available protocols are displayed
+tive real-time modeling, but it can also be used for longer   in a pull-down menu, under the ‘Playground’, ‘DMPK’,
+batch jobs using high-performance computing (HPC).            ‘Safety’, ‘Projects’ and ‘Conformational Models’ subcat-
+Thus, 3D-Lab is fully integrated in the HPC facilities of     egories. The user may select a protocol and provide input
+AstraZeneca allowing direct submission of calculations        structures by using AstraZeneca identifiers or SMILES
+to large computer clusters, including scheduling for high     strings in the ‘input’ text field. There is also the option
+throughput of a large number of jobs. By integrating the      of using a 2D molecular sketcher or to upload SDF files.
+AstraZeneca data environment, direct access to stored         Furthermore, the number of output conformations can
+molecule information (experimental or predicted) is also      be specified as well as if other information such as cal-
+available. Furthermore, the chosen design of 3D-Lab           culated properties (e.g., molecular weight, clogP, various
+will allow integration of cloud computing resources           counts, etc.) should be included in the optional output
+without interfering with the user experience. This makes      spreadsheet. In this context it should be mentioned that
+3D-Lab flexible and fit for upcoming changes in HPC           each user has a personalized ‘My settings’ page. This
+environments.                                                 page provides easy access to customized settings, such
+   3D-Lab is built using python code and is augmented         as choosing to automatically pre-treat ligand structures
+by functions of commercial libraries from OpenEye [15] ,      by assigning protonation states and enumerating stereo-
+in particular the JavaScript 3D web viewer (see the           isomers. It also allows the user to specify which (if any)
+‘JavaScript 3D web visualizer’ section). With respect to      standard 2D calculated properties that will be included
+development (e.g., the web-interface and web-services),       in the output.
+a small and dedicated team of skilled on-site program-           To further extend the use of 3D-Lab, a web-service
+mers (from the IT department) and experienced mod-            was implemented to interface with the data analyt-
+elers (from research) were allowed to act autonomously        ics platform D360 [23] , using AstraZeneca identifiers.
+to deliver 3D-Lab. In this manner, new relevant features      This allows to directly submitting jobs from D360 into
+could easily be added while rapid testing and instant         3D-Lab. The ability to easily access, for example, low
+feedback was ensured. This allowed achieving fast devel-      energy conformations of any compound, may be seen as
+opment cycles as well as quickly resolving technical          a significant improvement and helps our vision of shift-
+issues, often without the end-users noticing a problem.       ing medicinal chemists to think of molecules more as
+The creative working environment and close cooperation        3D objects than 2D. A general work-flow of 3D-Lab is
+between scientist and developers proved to be useful.         shown in Figure 3.
+                                                                 The calculated results can be visualized in the out-
+3D-Lab’s three main modes                                     put mode; see Figure 4. Visual inspection and fur-
+The tool is divided into three main modes: admin              ther analysis may be performed directly in the output
+mode; input mode; and output mode (see Figure 1). The         mode, or the generated structure files can be exported
+
+
+    future science group                                                                           www.future-science.com          1741
+1742
+                                                                                                                                                                                                      3D - LAB     Create new 3D model     My Jobs   My Settings   User Guid
+                                                                                        3D C-lab – Create/update model
+                                                                                                                                                                                                           Input        Output
+
+                                                                                                                                                                                                         A Input AZ ids or SMILES    Upload file
+
+                                                         Create new model                                           My Models                                             Model details
+                                                                                                                                                                                                                                                                               Research Article
+
+
+
+
+                                                  Model name:                                                                                                     Name: 2PFG_NADP
+                                                                                                                                                                                                         C1CC(CCC1CN)C(=O)O TXA
+                                                                                                                2PFG_NADP
+                                                  Use “a-z,A-Z,0–9 and_” No spaces.                                                                               Id: 176                                c1c(onc1O)C2CCNCC2 4-PIOL
+
+                                                  4cik                                                                                                            Protocol: GLIDE
+                                                                                                                                                                  Folder: Playground    edit
+                                                  Model description:                                                                                              Created by: kkqt498
+                                                  A new model to dock ligands into pdb 4cik                                                                       Description:
+
+
+
+
+                                                  Model classification
+
+
+
+
+                                                  3D - LAB        Create new 3D model      My Jobs    My Settings     User Guide     Support Mail   FAQ   Release notes     PharmDev       fastROCS
+
+
+
+
+Future Med. Chem. (2016) 8(14)
+                                                          Input         Output
+                                                                                                                                                                                                                                                                               Grebner, Norrby, Enström et al.
+
+
+
+
+                                                          http://3dlab.rd.astrazeneca.net/dashboard        Share          Download
+
+
+                                                           Molecules 2
+
+
+                                                                                                         100%
+
+
+                                                         – 4-PIOL (All conformations)
+                                                              Conformation #1
+                                                         – TXA (All conformations)
+                                                              Conformation #1
+
+
+
+                                                           Reference/protein and pharmaphocores 1
+
+
+                                                    Reference: 4cikLigandchg                             100%
+
+
+                                                    Protein: 4cikProtein                                 100%
+
+
+
+
+                                                           Annotations
+
+
+
+
+                                                           Options
+
+
+                                                     Colour Molecules
+
+
+                                                     Draw edges
+
+
+                                                     Fullscreen
+
+
+                                                     Distance
+
+
+
+
+                                                           Model Info
+
+
+
+                                                    toggle clab results
+
+
+
+
+future science group
+                                 Figure 1. An overview of the three modes of 3D-Lab.
+                                                          3D-Lab: a collaborative web-based platform for molecular modeling                  Research Article
+
+
+
+                                                     3D C-lab - Create/update model
+
+
+
+          Create new model                                  My Models                            Model details
+     Model name:                                                                             Name: 2PFG_NADP
+                                                           2PFG_NADP
+     Use “a-Z,A-Z,0-9 and _” No spaces.                                                      Id: 176
+                                                                                             Protocol: GLIDE
+     A new model
+                                                                                             Folder: Playground    edit
+     Model description:                                                                      Created by: kkqt498
+     Description of the new model                                                            Description:
+
+
+
+
+     Model classification
+
+       Playground                                                                            close save delete
+       Projects
+       Conformational Models
+       Safety
+       DMPK
+
+
+
+     Project name(if it exists):
+
+
+
+
+     Select protocol
+
+       ROCS
+
+
+
+
+     Select a template file to upload
+      Note: A ligand 3D file format is required.
+
+
+                                         Browse...
+
+     Select a pharmaphocore file to upload
+                                         Browse...
+
+     Select a protein file to upload
+                                         Browse...
+
+     Create model in C-lab
+
+      Submit
+
+
+
+Figure 2. An overview of the admin page. On the left hand side, new models can be created (label 1, 4–8);
+specifically template files (label 7) are used to define the query molecules, docking grid, the PDB receptor file, and
+so on, and are uploaded when creating a protocol. The middle panel (label 2) gives an overview of the created
+models by the current user; the right panel (label 3) gives more details about a selected model.
+
+
+and analyzed elsewhere. Each job is assigned a specific                   The JavaScript 3D web visualizer
+job ID and the results are available via a jobs manager                   The 3D visualizer is developed using HTML5 and
+(Figure 4 : label 2 – ‘My Jobs’) and stored in an Oracle                  JavaScript and employs high-level chemistry compo-
+database for 6 months, unless otherwise specified. The                    nents for visualization and data preparation [15] . Pre-
+collaborative aspect is strengthened by allowing sharing                  viously, 3D viewers for molecular structures in web-
+of results with colleagues via hyperlinks (using job ids,                 browsers were developed as Java applets (e.g., Jmol [24] ,
+see Figure 4 : labels 7 & 8). A job can easily be shared                  AstexViewer [25] and iView [26]). Java apps typically
+by the email functionality. It is important to note that                  require specific versions of Oracle’s Java runtime on
+hyperlinks points toward an interactive 3D webpage,                       each user’s computer, which often has been a source
+and not a static screenshot or the like. In addition, each                of problems. One reason is that users in big organi-
+result’s page includes a free-text field providing the pos-               zations (as AstraZeneca) frequently have different
+sibility to add comments. These annotations are stored                    versions of Java runtime, possibly because different
+in the database and are included in the shared emails                     programs require different Java versions. It does not
+(Figure 4) .                                                              help that many scientists lack admin rights on their
+
+
+    future science group                                                                                                  www.future-science.com         1743
+Research Article   Grebner, Norrby, Enström et al.
+
+
+
+
+                                                                                     Return data
+                                                                   GUI                               Calculations
+                      Python web server
+                                                               (user input)                          (OEWebTK)
+
+
+                                                                                                             Return data
+
+                                                                                                     Visualization
+                                                                                     Return data
+                                                                                                   (OE3DViewerJS)
+                                                                3D-lab
+                                                            business layer
+                       Services
+                     (interfaces)
+                                                                              Return data
+
+
+
+                                                      Model specific “protocol”...
+
+                                                                                                                       Data
+                                                                                                                      storage
+                                                                              Return data
+
+
+
+                                                       Sequence of commands
+                                                            (workflows)
+
+
+
+
+                                    Corina            Szybki                     B                  A
+
+
+
+                                    Rocs             Omega2                      C                  N
+
+
+
+              Figure 3. The general work-flow of 3D-Lab. The central GUI communicates with 3D-Lab business layer via a python
+              web-server. From here, all calculations and data management are performed and the results are sent back to the
+              GUI for visualization.
+              GUI: Graphical user interface.
+              PCs preventing them from installing/upgrading to                hardware. As a bonus, publication quality pictures can
+              the ‘correct’ version. In addition, Java plug-ins have          easily be obtained (by a simple press of a button), a
+              been a source of many security problems [27] . Thus, we         trivial thing previously causing many chemists grief.
+              looked for other solutions. Recent browser technology              There are a few other menus available at the top of
+              improvements pointed us toward JavaScript. JavaScript           the 3D-Lab homepage. In addition to the previously
+              is becoming more and more popular, and ‘is taking               mentioned ‘My Jobs’ – which keeps track of the user’s
+              over the world’ according to Stack Overflow’s annual            calculations, ‘My Settings’ – to personalize settings
+              developer survey [28] . In contrast to Java applets, JavaS-     such as if input molecules should be standardized,
+              cript is embedded into the HTML code. It is executed            there is a ‘FAQ’ and a ‘User Guide’ including four
+              and interpreted during runtime, and it is supported in          brief ‘how-to’ movies explaining the general work-flow
+              all current browsers natively. The OpenEye 3D com-              and the three main modes. Finally, there is a link to
+              ponents are based on JavaScript and offer a large num-          FastROCS – our virtual screening capability.
+              ber of features (using JSON objects [29]) together with
+              ways of implementing the functions into web services.           Virtual screening capability – FastROCS
+              Figure 4 (label 13) shows an example of the JavaScript          While 3D-Lab is designed to make use of established
+              3D viewer. Most features available in traditional visu-         protocols for design ideas, there is also an interface to
+              alizers are available, including the ability for nonspe-        a graphics processing unit (GPU) server for virtual
+              cialists to view 3D structures in stereo without specific       screens available from the main homepage. This vir-
+
+
+1744          Future Med. Chem. (2016) 8(14)                                                                        future science group
+                            3D - LAB        Create new 3D model    My Jobs    My Settings   User Guide    Support Mail        FAQ       Release notes    PharmDev    fastROCS
+
+
+
+
+                                  Input         Output
+
+
+                                  http://3dlab.rd.astrazeneca.net/dashboard         Share      Download
+
+
+
+
+future science group
+                                   Molecules 1
+
+                                                                                 100%
+
+
+                                  AZ10168612 (All conformations)
+                                         Conformation #1
+
+
+                                   Annotations
+
+
+
+                                   Options
+
+
+                              Colour Molecules
+
+
+                              Draw edges
+
+                              Fullscreen
+                                                                                                                         Hide clab results
+                              Distance
+                                                                                                                         Show       3          entries                                                                    Search:
+
+                                   Model Info
+                                                                                                                                          Mol.
+                              Name                                                                                            Nr.         Name             ACDlogP         CLOGP       HBA       HBD    HeavyAtomCount    MW         PSA     Caco2_Efflux
+                               One standard conformation
+                                                                                                                          1             AZ10168612        2.033          1.785     5         3         28                392.5      104.2   24.59
+
+                              Protocol
+
+                               Conformational-Standard
+                                                                                                                     Showing 1 to 1 of 1 entries                                                                                      Previous   1   Next
+
+                              Description
+
+
+
+
+                         Figure 4. A screenshot of the output mode of 3D-Lab. The upper bar (label 1–5) gives access to different menu items. Label 6–8 gives different options for viewing
+                         input, output and sharing the results. Furthermore, the GUI provides the possibility to add annotations (label 9), change viewing options (label 10); see the details of the
+                         selected protocol (label 11) and get access to the 3D-visualization (label 13). The spreadsheet including associated (‘C-Lab’) data can be toggled on and off.
+                                                                                                                                                                                                                                                            3D-Lab: a collaborative web-based platform for molecular modeling
+
+
+
+
+www.future-science.com
+1745
+                                                                                                                                                                                                                                                            Research Article
+Research Article   Grebner, Norrby, Enström et al.
+
+
+
+              tual screening capability can, for example, be used                                 that, popularity is nice but we of course expect to
+              to identify new lead molecules, but also to serve as                                share impact in the near future. Key to its frequent
+              an idea generator. All drug designers at AstraZeneca                                use and positive feedback is the simple and familiar
+              can readily perform virtual screens over multimillion-                              ‘Google-like’ interface (Figure 5), in combination with
+              conformer databases to find compounds with similar                                  the blazingly fast searches. The dramatic speed-up
+              shape, almost in real-time – just like googling, but                                was achieved by implementing FastROCS, which uses
+              searching 3D molecular objects and not text. Some-                                  GPU technology for the shape-based molecular align-
+              what to our surprise, it is frequently used to identify                             ments [19] . In comparison, FastROCS can search one
+              ‘nearest neighbors’ where traditionally fingerprint                                 million conformations per second, as compared with
+              methods were used. Thus, apart from being a very effi-                              1000 conformers per second for the original CPU
+              cient and simple way of identifying new shape-similar                               version of ROCS [19] , corresponding to a 1000-fold
+              compounds it facilitates the culture change of looking                              increase in performance.
+              at chemical structures in 3D instead of 2D. Over the                                   The FastROCS server is implemented as a web-ser-
+              last year, a staggering number of 600+ virtual screens                              vice, using Flask [30] which is a micro web framework
+              have been run, indicating its popularity. Having said                               for python. The user starts a virtual screen by provid-
+
+
+
+                                          http://fastrocs.seml.astrazeneca.net/                       FastROCS
+
+                           File   Edit   View   Favorites Tools Help
+
+
+
+
+                                                                     Drop a query file here (A 3D file format is
+                                                                                      required)
+
+
+
+
+                                                                                             or
+                                                                                  Enter AZ ID and press RUN
+
+                                                                                           RUN
+
+
+                                                                                          Options
+
+                                                                 Select database          Sigma-Aldrich
+
+                                                                   Number of hits         150
+
+
+                                                                             Rank by      Tanimoto Combo
+
+
+                                                  Tanimoto cut off (max 2.0)              1.2
+
+                                                                                         Output query
+
+
+
+
+                                                                                  Contact: Jonas Boström
+                                                                                         How to video
+
+
+
+
+              Figure 5. The AstraZeneca ‘Google-like’ web-based version of FastROCS.
+
+
+
+1746          Future Med. Chem. (2016) 8(14)                                                                                         future science group
+                                           3D-Lab: a collaborative web-based platform for molecular modeling         Research Article
+
+
+ing a query molecule. The query molecule can either be       launches the production version of Oculus Rift [36] . In
+loaded by drag-and-drop a molecule file into the search      addition, there are simple but elegant solutions like the
+field (typically sdf or mol2, including 3D coordinates)      Samsung Gear VR [37] and the Google Cardboard [38] ,
+or by supplying an AstraZeneca identifier. If the lat-       making it possible to use smartphones for producing
+ter is performed, the web-service goes away and loads        a virtual reality experience. The predicted revival of
+the matching input conformation from a precalculated         virtual reality can be attributed to its improved perfor-
+conformational database including all compounds in           mance, increased comfort and accessibility combined
+the corporate screening collection. The user can then        with a reasonable price tag.
+choose which database to be searched. Currently four            Recently, we developed the ‘next-generation’ virtual
+databases are loaded: the AstraZeneca corporate col-         reality molecular viewer ‘Molecular Rift’ [14] using the
+lection; a set of commercially available compounds           Oculus Rift [36] . It offers a new and exciting way of
+from Sigma-Aldrich and ligands determined by x-ray           experiencing small and large molecules, for example
+crystallography; protein data bank (PDB) [31] ; and          ligand-protein complexes, in a virtual reality. By imple-
+Cambridge structural database (CSD) [32] . The data-         menting a powerful cheminformatics (open-source)
+bases are generated using common OMEGA proto-                tool-kit [39] and by making the executable and source
+cols [33] , and are automatically updated on a weekly        code available at GitHub free of charge, it received a
+basis. Moreover, the user has the option to select the       good amount of attention in social media. With an
+number of hits to be reported, which ROCS-specific           Altmetric score of 43, it is currently in the top 5% of
+shape-similarity method (Shape-Only or Tanimoto-             all research outputs scored by Altmetric [40] .
+Combo scoring), and which Tanimoto cut-off value                That first version of Molecular Rift [14] was con-
+should be used (Figure 5) . Finally, there is an option to   trolled with arm and hand motions in combination
+include the query molecule in the results. The results       with finger tracking algorithms using the gaming sen-
+are reported back in three different ways: a tailored        sor Microsoft Kinect v2 [41] . The Kinect is designed
+pdf document that highlights similarities; an OEB            to track whole bodies, and the resolution for finger
+file containing the aligned hits for download; and a         tracking was not optimal. Some gestures were consid-
+link to a web page including the aligned hits. Building      ered intricate to learn by users, and the program did
+on the initial success, upgrades are planned. Among          not always correctly interpret them. In an attempt to
+other things, the plans include moving away from the         improve the experience with Molecular Rift, we looked
+flask server to Django and a RESTful back-end server         into alternatives to enhance the interaction method.
+integration.                                                 The Leap Motion sensor [42] , which was recently
+                                                             released, offers higher resolution and accuracy for rec-
+Molecular Rift – virtual reality for drug                    ognition of fingers and hands and represents a step-
+designers                                                    change in gesture control. It was implemented and
+While the above-mentioned 3D-Lab and FastROCS                tested for its usability with respect to increased control.
+are designed to make use of well-established protocols       After just a few tests, it was clear that replacing the
+in daily drug design, the future work environment            Kinect with a Leap Motion sensor would improve the
+and the way of working with 3D data will undoubt-            user experience of Molecular Rift significantly.
+edly change. We anticipate that virtual and augmented           The Leap Motion controller is mounted on the Ocu-
+reality is the future for interacting with 3D informa-       lus Rift device (Figure 6A). As a consequence, controlling
+tion. A virtual reality for molecular modeling provides      the viewer becomes independent of the user’s orientation
+a very different perspective, as compared with tradi-        and position in the room. This is an advantage compared
+tional molecular visualizers. The immersive experience       with the Kinect, where the user had to face the sensor for
+and the feeling of presence change everything. Thus,         optimal interaction. Moreover, it was decided to reduce
+by exposing the drug designer to a virtual reality a         the number of gestures to steer molecules. This was
+deeper understanding may be achieved, and new ideas          achieved by implementing a small hand controller with
+could spark which might not have been imagined in a          four buttons (Figure 6B). Each button activates a specific
+different (and traditional) setting.                         movement. A few simple and natural interactions can
+   Virtual reality was trending in the 1990s, but failed     then be performed with the (right) hand, without having
+to realize expectations. In the year of 2016, virtual        to learn any special gestures. The four main actions are:
+reality is set to take off as this year sees commercial      ‘translation’, ‘rotation’, ‘move camera’ and ‘reset view’.
+launches of numerous new virtual reality approaches,         For example, by pressing the ‘rotation’ button (using the
+most using head-mounted devices. For example, Sony           left hand), the right hand can rotate the molecule. Upon
+launches its PlayStation VR [34] , HTC its Vive [35]         releasing a button, all interactions stop, thus avoiding
+and the Facebook-owned virtual reality firm Oculus           undesired movements of the molecular objects. User tests
+
+
+    future science group                                                                         www.future-science.com          1747
+Research Article   Grebner, Norrby, Enström et al.
+
+
+
+                                                                             has been an integral part of drug design since decades.
+                                                                             The usage, however, is scattered and often restricted to
+                                           Reset view Translate              specialist computational chemists. A proper and straight-
+                                                                             forward integration of 3D information and molecular
+                                                               Rotate        modeling in the daily life of a drug designer is expected
+                                                                             to strengthen the in silico capabilities and allow for faster
+                                                   Move camera
+                                                                             and better decision-making in design cycles. As a con-
+                                                                             sequence, this could reduce the costs of drug discovery,
+              Figure 6. (A) The Leap Motion controller mounted on
+              the Oculus Rift device; (B) the remote virtual reality
+                                                                             in particular lead discovery, but also lead optimization.
+              controller.                                                       Now and then conservative mindsets are encountered
+                                                                             with questions like “Should medicinal chemists really be
+              showed that the interaction experience was increased by        docking compounds? That’s for the experts!” We think
+              magnitudes and nearly no initial training was required         otherwise. By exposing well-established 3D information
+              to steer and control the program. As a bonus, by limiting      to everyone a general understanding may be achieved as
+              the gestures to the right hand, the left hand was freed up     well as pushing for a cultural shift with respect to the
+              and could be used to activate the in-game menu. That is,       extended use of 3D molecular modeling. That is, mol-
+              when the left hand appears into the user’s field of view, an   ecules are 3D objects, but are very often treated as 2D
+              interactive virtual reality in-game menu is activated (see     objects. It is important to emphasize that we advocate
+              Figure 7A). The in-game menu displays the most com-            the use of 3D-Lab in a collaborative sense. The ideal
+              mon interactions, and pressing the buttons in the virtual      work-flow would be that: a specialist develops a model;
+              reality toggles each option. Furthermore, the in-game          the specialist carefully validates it; the model is shared
+              menu allows toggling on and off multiple ligands in the        on the web-based platform; the nonspecialist uses it in
+              input file to visualize, for example, different conforma-      an explorative fashion; and the specialist and nonspecial-
+              tions or ligand poses (Figure 7B). The two-state button        ist meet and discuss the calculated results and how to
+              ‘DemoToggleButton’ and the slider control ‘DemoSlider’         best exploit the information in design decisions.
+              from the Leap Motion core assets Unity widgets [43] were          We have stretched the limit far by allowing nonspecial-
+              used for this purpose.                                         ists to run QM methods. QM methods often provide a
+                 In addition to optimizing the interaction method,           higher accuracy than empiric methods, but also demand
+              the virtual reality experience was also improved.              special care since they require a deep understanding of
+              By using the Leap Motion infrared camera, an aug-              the settings as well as the fact that QM methods are
+              mented reality was achieved. That is, the surroundings         computationally expensive. This may not always appar-
+              (e.g., room, table) are visualized when the Oculus Rift        ent for novice users. Therefore, only a few specific and
+              is directed toward them (Figure 8) . This feature allows       well-established QM protocols, which have previously
+              seeing other people, even when using the goggles, and          been proven to work efficiently [20] , were implemented.
+              is one step toward a more collaborative virtual reality.       It should be noted that specialists also benefit from hav-
+              The new improved version of Molecular Rift (version            ing access to simplified protocols for such advanced cal-
+              2) is available free of charge from GitHub: [44] . The         culations, freeing up time for other tasks.
+              interested reader is referred to the original publication         Future development of 3D-Lab will include a more
+              for further details on the implementation [14] .               flexible admin page, the ability to use a 3D builder and
+                                                                             extend the possibility of annotating the 3D results by,
+              Discussion                                                     for example, bookmarking in sessions. Like all tools
+              By allowing a small group of scientists and program-           (bespoke or commercial) used in discovery, develop-
+              mers with clear goals to act autonomously, develop-            ment never stops. There is always room for enhance-
+              ment cycles were kept short – 3D-Lab was developed             ments, and we anticipate entering a second phase
+              within 1.5 years. The tool is currently gaining traction       including modifications and integration with other
+              globally within the AstraZeneca organization. Since            tools. For example, both academia and the pharmaceu-
+              the initial launch of 3D-Lab, 60+ users have submitted         tical industries invest significant sums in generating 3D
+              over 2500 different jobs. The developed platform was           data (e.g., ligand–protein x-ray structures), where the
+              designed to be web-based, since browsers are every-            data may be further explored and displayed to broader
+              where nowadays and in our experience web-based tools           audience. Thus, a natural step would be to allow users
+              are often perceived as more intuitive than stand-alone         to access PDB-like experimental data through 3D-Lab,
+              programs (doing the same thing).                               while of course carefully monitoring user-experience.
+                 Why is it advantageous for nonspecialists to apply             Ligand shape-based approaches, which model physi-
+              advanced 3D methods? Well, 3D molecular modeling               cal aspects of molecular recognition, have shown to
+
+
+1748          Future Med. Chem. (2016) 8(14)                                                                        future science group
+                                            3D-Lab: a collaborative web-based platform for molecular modeling        Research Article
+
+
+be successful in identifying bioactive compounds in           GPUs. These provide a much higher computing den-
+virtual screening in numerous cases. The FastROCS             sity for a lower overall electricity consumption. Most
+Google-like webpage allowing virtual screens of large         of the HPCs on the Green500 list (the top 500 high-
+databases to identify similar compounds for drug dis-         performance energy efficient supercomputers) are
+covery projects using GPU technology has been trans-          built up with GPUs or coprocessors [46] . Thus our Fas-
+formative. We are building on the momentum. In the            tROCS tool may be termed as green (computational)
+future, we envision increasing speed, scale and usability.    chemistry [47] , as the calculations are much faster thus
+For example, it is a well-known fact that slow Internet       significantly reducing electricity consumption.
+searches drive users away. A slow search is considered           Finally, the development of a virtual reality for
+dissatisfying and gives the impression that the website       drug designers continues to excite us, but we are often
+being broken. This might not sound all that serious           encountered with the question of how useful it will be.
+but user engagement statistics shows that speed really        It remains to be seen if this cool virtual reality envi-
+matters, and the effects are more dramatic than people        ronment is more useful than using traditional molec-
+often imagine. For example, Google have shown that            ular visualizers. Whether Molecular Rift will be the
+just a 0.5-s increase in displaying search results caused     ‘new iPhone’ of molecular visualizers or be reduced
+a 20% drop in traffic [45] . Thus, in Google’s vision to      to some kind of exhibition, something to show-off
+make Internet searches faster speed is now included as        for ‘important’ visitors remains to be seen [48] . None-
+a factor in their ranking algorithm. Of course, in drug       theless, traditional visualizers just show molecules
+discovery quality should always triumph speed. But            in front of you; with Molecular Rift a drug designer
+with the recent advances in digitalization, together with     can enter a protein–ligand complex. We remove the
+significant speed-ups becoming mainstream, the rea-           digital screen and let the user step into, say, a protein–
+sons to wait for results over a coffee-break to over-night,   ligand complex and to look around. Metaphorically
+as compared with real-time searches, becomes fewer.           speaking, the improvement may be compared with
+Google have realized that if a search is fast, users are      the one we have seen with regular telephone calls. In
+more likely to search again. This is something we are         the past, we called someone on a telephone using an
+trying to achieve here as well. That is, we aim to encour-    analog system. Nowadays we often use digital systems
+age specialists and nonspecialists to try a calculation,      (e.g., WiFi technology) and apps like FaceTime or
+get instant feedback and to build on those results.           Skype to see and talk to the person we are talking to.
+   As an aside, the FastROCS algorithm requires and           In essence, it is the same thing, but a new and signifi-
+allows shifting large parts of the computations to            cantly improved experience.
+
+
+
+
+Figure 7. (A) The interactive in-game menu is activated when the left hand appears in the user’s field of view. The
+options are toggled by pressing the virtual reality buttons; (B) multiple ligand structures may be toggled on and
+off.
+
+
+
+    future science group                                                                         www.future-science.com          1749
+Research Article   Grebner, Norrby, Enström et al.
+
+
+
+                                                                          ing increasingly relies on graphical analysis of data.
+                                                                          Users will not accept expert systems that are difficult
+                                                                          to use, and will require intuitive easy-to-use tools.
+                                                                             In the near future we will witness full blown aug-
+                                                                          mented virtual reality solutions for all 3D informa-
+                                                                          tion as well as serving as a virtual meeting room for
+                                                                          scientists. Future development for our Molecular Rift
+                                                                          includes implementing voice control, and importantly,
+                                                                          being able to build and modify the 3D-structures
+                                                                          within the virtual reality. With respect to virtual
+                                                                          reality and molecular design we predict that Google
+                                                                          Cardboard-like apps will show impact [38] . Mobile apps
+                                                                          enables virtual reality experiences without having to
+                                                                          invest into extensive systems. The traction here is that,
+                                                                          unlike headsets like Oculus Rift and HTC Vive, the
+                                                                          technology does not need a high-end PC to run appli-
+                                                                          cations. Furthermore, apps in a smartphone are mobile
+                                                                          in the true sense that no wires, etc., are required. Fur-
+                                                                          ther benefits of Google Cardboard-like devices are that
+                                                                          the hardware may be cheap, if not ‘free’ (most people
+              Figure 8. An augmented reality is created using             already have a smartphone). In this context, we note
+              the Leap Motion infrared camera such that the               that the Samsung Gear VR [37] and the coming Google
+              surroundings (e.g., room, table) are visualized when        Daydream [49] will be placed somewhere between the
+              the Oculus Rift is directed toward them.                    simple Google Cardboard and sophisticated Oculus
+              Future perspective                                          Rift and HTC Vive technology.
+              Computer visualization and simulations are playing             Computer systems will capitalize on the consumer
+              an increasing role in drug design. Future technologi-       market, driving faster developments and a wide adop-
+              cal developments will speed up data generation (results)    tion allowing the scientist to execute, share and commu-
+              and enhance analysis (comprehension). We envision           nicate complex simulations and visualizations instantly
+              seeing high-quality molecular modeling performed in         on the fly with anyone anywhere. In the future, big
+              real-time within 5 years. Needless to say, decision-mak-    pharmaceutical companies will have moved their
+
+               Executive summary
+               • We have developed a collaborative web-app called 3D-Lab. It provides an integrated drug design platform
+                 allowing speedier decision-making and more efficient use of 3D information in drug design teams. By
+                 integrating the tool into the AstraZeneca high-performance computing and data environment, high-
+                 throughput and access to experimental and predicted molecule data are available. 3D-Lab was developed
+                 internally by a small and dedicated team within a short time-frame and is now used on a daily basis in live
+                 drug design projects. The platform-independent development basically allows using the tool from any
+                 Internet-enabled device. The easy way of sharing results facilitates collaborations and aims to motivate
+                 discussions of 3D-data within a design team. In essence, 3D-Lab makes 3D information available and usable by
+                 whoever and wherever required to impact drug design. The new tool allows easy access to large amount of 3D
+                 data (experimental and theoretical) which was previously not trivial to achieve, both for nonspecialists as well
+                 as specialist. It is our hope that this possibility will increase the use of 3D information to shape the ideas for
+                 future drug-design projects.
+               • The FastROCS capability, with a Google-like look and feel, allows to perform large-scale ligand-based virtual
+                 screen on large multiconformational databases (such as the AstraZeneca compound collection) in a couple
+                 of seconds. The new game-changing GPU technology has opened up for science previously not doable, and
+                 represents a paradigm shift in 3D shape screening.
+               • We have improved our virtual reality molecular viewer Molecular Rift for analyzing small and large molecules
+                 by implementing the Leap Motion sensor, thereby improving the interaction method. Furthermore, the option
+                 to experience an augmented reality has been implemented as well as the in-game menu has been enhanced
+                 significantly. Although Molecular Rift may, to date, be seen as a specialized tool in development (but available
+                 to everyone from GitHub), we are confident that this way of interacting with molecules will impact the way
+                 how future design will be performed.
+
+
+
+
+1750          Future Med. Chem. (2016) 8(14)                                                                   future science group
+                                                   3D-Lab: a collaborative web-based platform for molecular modeling                    Research Article
+
+
+infrastructure into the cloud, although among the last                interest in or financial conflict with the subject matter or
+e­nterprises to do so.                                                materials discussed in the manuscript. This includes employ-
+                                                                      ment, consultancies, honoraria, stock ownership or options,
+Acknowledgements                                                      expert testimony, grants or patents received or pending, or
+The authors thank T Wester (AstraZeneca) for helping pro-             royalties.
+vide a creative work environment and J Batista and B Cole                No writing assistance was utilized in the production of this
+(both OpenEye Scientific Software) for providing technical            manuscript.
+assistance during implementation of FastROCS.
+                                                                      Open Access
+Financial & competing interests disclosure                            This work is licensed under the Attribution-NonCommercial-
+The authors have no relevant affiliations or financial in-            NoDerivatives 4.0 Unported License. To view a copy of this li-
+volvement with any organization or entity with a financial            cense, visit http://creativecommons.org/licenses/by-nc-nd/4.0/
+
+
+References                                                            15   OEChem.
+Papers of special note have been highlighted as:                           www.eyesopen.com/oechem-tk
+• of interest                                                         16   Friesner RA, Banks JL, Murphy RB et al. Glide: a new
+1    Riddell FG, Robinson MJT. van’t Hoff JH and Le Bel JA                 approach for rapid, accurate docking and scoring. 1. Method
+     – their historical context. Tetrahedron 30, 2001–2007 (1974).         and assessment of docking accuracy. J. Med. Chem. 47,
+                                                                           1739–1749 (2004).
+2    Anderson AC. The process of structure-based drug design.
+     Chem. Biol. 10, 787–797 (2003).                                  17   Jones G, Willett P, Glen RC. Molecular recognition of
+                                                                           receptor sites using a genetic algorithm with a description of
+3    Ladbury JE. Just add water! The effect of water on the
+                                                                           desolvation. J. Mol. Biol. 245, 43–53 (1995).
+     specificity of protein–ligand binding sites and its potential
+     application to drug design. Chem. Biol. 3, 973–980 (1996).       18   McGann M. FRED pose prediction and virtual screening
+                                                                           accuracy. J. Chem. Inf. Model. 51, 578–596 (2011).
+4    Boström J, Grant JA. Exploiting ligand conformations in
+     drug design. In: Molecular Drug Properties – Measurement and     19   ROCS.
+     Prediction. Mannhold R (Ed.). Wiley-VCH Verlag GmbH &                 www.eyesopen.com/rocs
+     Co. KGaA Berlin, Hiedelberg, Germany, 183–205 (2008).            20   Kenny PW. Prediction of hydrogen bond basicity from
+5    McGaughey GB, Sheridan RP, Bayly CI et al. Comparison of              computed molecular electrostatic properties: implications
+     topological, shape, and docking methods in virtual screening.         for comparative molecular field analysis J. Chem. Soc. Perkin
+     J. Chem. Inf. Model. 47, 1504–1519 (2007).                            Trans. 21, 199–202 (1994)
+6    Hawkins PC, Warren GL, Skillman AG et al. How to do an           •    A general quantum chemistry approach to predict hydrogen
+     evaluation: pitfalls and traps. J. Comput. Aided Mol. Des. 22,        bond strengths.
+     179–190 (2008).                                                  21   Gaussian 09, Revision E. 01, Frisch MJ, Trucks GW,
+7    Brown DG, Boström J. Analysis of past and present synthetic           Schlegel HB et al. Gaussian, Inc., Wallingford, CT, USA
+     methodologies on medicinal chemistry: where have all the new          (2009).
+     reactions gone? J. Med. Chem. 59(10), 4443–4458 (2016).          22   OMEGA.
+8    Biovia. Virtual biosphere and materials.                              www.eyesopen.com/omega
+     www.3ds.com/products-services/biovia                             23   Certara D360.
+9    EnginFrame.                                                           www.certara.com/software/scientific-informatics/d360
+     www.nice-software.com/products/enginframe                        24   Jmol.
+10   Live Design. Collaborative drug design.                               www.jmol.org
+     www.schrodinger.com/livedesign                                   25   Hartshorn MJ. AstexViewer: a visualisation aid for structure-
+11   Optibrium.                                                            based drug design. J. Comput. Aided Mol. Des. 16, 871–81
+     www.optibrium.com                                                     (2001).
+12   Stiefl N, Gedeck P, Chin D et al. FOCUS – development            26   Li H, Leung KS, Nakane T, Wong MH. iview: an interactive
+     of a global communication and modeling platform for                   WebGL visualizer for protein–ligand complex. BMC
+     applied and computational medicinal chemists. J. Chem. Inf.           Bioinf. 15, 56–61 (2014).
+     Model. 55, 896–908 (2015).                                       27   JavaScript isn’t Java.
+13   FastROCS.                                                             www.howtogeek.com
+     www.eyesopen.com/fastrocs                                        28   Developer Survey.
+14   Norrby M, Grebner C, Boström J et al. Molecular rift: virtual         http://stackoverflow.com/research/developer-survey-2016
+     reality for drug designers. J. Chem. Inf. Model. 55, 2475–2484   29   JSON.
+     (2015).                                                               http://beta-docs.eyesopen.com/toolkits/cpp/oechemtk/json
+•    An open-source virtual reality molecular viewer using            30   Flask.
+     Oculus Rift.                                                          http://flask.pocoo.org
+
+
+
+
+     future science group                                                                                       www.future-science.com              1751
+Research Article   Grebner, Norrby, Enström et al.
+
+
+
+              31   Berman HM, Westbrook J, Feng Z et al. The protein data           40   Altmetric Score for ‘Molecular Rift: Virtual Reality for Drug
+                   bank. Nucleic Acids Res. 28, 235–242 (2000).                          Designers’.
+              32   Allen F. The Cambridge Structural Database: a quarter of a            www.altmetric.com/details/4713779
+                   million crystal structures and rising. Acta Crystallogr. Sect.   41   Microsoft Kinect v2.
+                   B 58, 380–388 (2002).                                                 www.microsoft.com/en-us/kinectforwindows
+              33   Boström J, Greenwood JR, Gottfries J. Assessing the              42   LeapMotion.
+                   performance of OMEGA with respect to retrieving bioactive             www.leapmotion.com
+                   conformations. J. Mol. Graphics Model. 21, 449–462               43   Leap Motion Unity Widgets.
+                   (2003).                                                               https://developer.leapmotion.com
+              34   Sony Playstation VR.                                             44   GitHub: J Bostrom.
+                   www.playstation.com/en-au/explore/playstation-vr                      https://github.com/JBostrom/MolecularRiftv2
+              35   HTC Vive.                                                        45   Google Now Counts Site Speed As A Ranking Factor.
+                   www.htcvive.com/uk                                                    http://searchengineland.com
+              36   Oculus Rift SDK.                                                 46   The Green500 List – November 2015.
+                   https://developer.oculus.com/                                         www.green500.org/lists/green201511
+              37   Samsung Gear VR.                                                 47   Anastas PT, Warner JC. Green Chemistry: Theory and
+                   www.samsung.com/global/galaxy/wearables/gear-vr                       Practice. Oxford, University Press, NY, USA (1998).
+              38   Google Cardboard.                                                48   This Is Not a Molecular Visualizer.
+                   https://vr.google.com/cardboard                                       http://blogs.idrugdesign.com/#post8
+              39   OpenBabel.                                                       49   Google Daydream.
+                   http://openbabel.org/wiki                                             https://vr.google.com/daydream/
+
+
+
+
+1752          Future Med. Chem. (2016) 8(14)                                                                                   future science group
+

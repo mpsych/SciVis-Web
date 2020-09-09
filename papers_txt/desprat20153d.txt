@@ -1,0 +1,141 @@
+                                 A 3D collaborative editor using WebGL and WebRTC
+                                 Caroline Desprat∗                               Jean-Pierre Jessel†                         Hervé Luga‡
+                               University of Toulouse                          University of Toulouse                   University of Toulouse
+
+
+Abstract                                                                                                 • allow small and asynchronous message system,
+                                                                                                         • overcome the difficulties related to real-time collaboration
+In 3D collaborative environments, users needs interactivity and
+                                                                                                           across the network with shared access to 3D models.
+real-time updates. With web-based applications, such requirement
+implies that conventional client-server -alone- is no longer enough.
+To overcome this unmet need, we propose a hybrid client server                                       2     Hybrid model
+peer-to-peer (P2P) communication model based on pluginless web
+standards enabling users to design collaboratively 3D scenes. The                                    To set up our collaborative design environment, we developed a full
+client part includes a WebGL editor to visualize and edit 3D scenes                                  web based communication architecture with a 3D modeling plat-
+while the server side provides data and ensure persistence. Using                                    form. The users are working together on the same scene where
+the WebRTC protocol, a P2P mesh is generated to transmit directly                                    they can add, remove and update 3D object models. In such virtual
+the updates through a scenes working group. The feasibility of our                                   workspace, the contributions of each users are directly transmit-
+approach is demonstrated with a web-based prototype submitted to                                     ted to others, observing the progression in real-time. The network
+a qualitative evaluation highlighting the usage of WebRTC for di-                                    model is mixing conventional client-server architecture, mostly
+rect 3D data transmission with low latency and high throughput,                                      used for persistence, and a full mesh peer to peer network for the
+and WebGL for 3D rendering.                                                                          real-time data transmission between clients. The system overview
+                                                                                                     in Figure 2 illustrates the communication architecture topology be-
+CR Categories: I.3.2 [Computer Graphics]: Distributed/network                                        tween the peer clients and server (plus signaling).
+graphics— [I.3.4]: Computer Graphics—Graphics editors H.5.3
+[Group and Organization Interfaces]: Web-based interaction—;                                         2.1    Web-based 3D Editor
+
+Keywords: collaboration application, WebGL, WebRTC, P2P                                              WebGL is a pluginless solution for powerful accelerated 3D ren-
+                                                                                                     dering in a web browser client. It is used in our editor to process
+                                                                                                     imported, server retrieved, updated 3D models for client visualiza-
+1     Introduction                                                                                   tion, interaction, and edition. The 3D editor displayed in Figure 1
+                                                                                                     integrates the 3D editing interface (tools, viewport, viewport info)
+This research is led by the need to work collaboratively and to                                      and the list of the collaborators present on the scene.
+share 3D scenes across the network. 3D scenes or models are very
+likely to be constructed and reviewed by more than one person,
+particularly in the context of 3D scientific visualization [Marion
+and Jomier 2012], CAD (Computer Aided Design) [Houston et al.
+2013] or BIM (Building Information Modeling) [Chen and Hou
+2014] solutions. The new usages and the increasing mobility of
+workers are pointing to web-based collaborative solutions [Mouton
+et al. 2011]. In small designing teams, most of the design process
+is conducted through direct communication channels. Even if we
+need data persistence of what is done in this type of processes, why
+to pass through a proxy when the team members are so close? As
+a mimic in computing, there is peer-to-peer communication. Since
+the network speed can be a limiting factor in collaborative design,
+one of the main criteria for our system is to spread and display
+only relevant information between the users without overloading
+the server. The contributions of this work are:
+    • consider the solutions for pluginless visualization of 3D
+      scenes on the web,
+    • use efficiently the local client resources for visualization and
+      communication,
+    ∗ e-mail:desprat@irit.fr
+    † e-mail:jessel@irit.fr
+    ‡ e-mail:luga@irit.fr                                                                                               Figure 1: Editor presentation
+
+
+Permission to make digital or hard copies of all or part of this work for personal or                2.2    RESTful server architecture
+classroom use is granted without fee provided that copies are not made or distributed for
+profit or commercial advantage and that copies bear this notice and the full citation on the
+first page. Copyrights for components of this work owned by others than ACM must be                  The client-server part is based on a REST (Representational State
+honored. For all other uses, contact the Owner/Author.                                               Transfer) architecture that benefits distributed hypermedia systems
+Copyright is held by the owner/author(s).
+Web3D '15, June 18 - 21, 2015, HERAKLION, Greece                                                     such as ours. The client queries are sent to the database (DB)
+ACM 978-1-4503-3647-5/15/06.
+http://dx.doi.org/10.1145/2775292.2778297
+
+
+                                                                                               157
+through the NodeJS server. MongoDB is a NoSQL DB providing                     ongoing collaboration operations done by other users such as ob-
+dynamic schema (for large 3D data sets) and a rich query language              ject prehension ownership. A few issues with the viewport and the
+API for data manipulation facilitating the enrichment of the (3D)              object manipulation were met on reception of new imported models
+objects on-the-fly. We mainly use it to maintain a world state per-            related to the size of the message to process. The user had to reload
+sistence and provide robustness to the system.                                 the scene to refresh the viewport. At its return, the user appreci-
+                                                                               ated the application’s robustness with the retrieval of the scene data
+2.3   WebRTC P2P communication                                                 and connections. Variating the number of users from one experi-
+                                                                               ment to another has not altered the user experience (both rendering
+                                                                               and networking). Latencies due to transformation operations were
+WebRTC (Web Real-Time Protocol) allows DataChannel protocol
+                                                                               low enough for them to qualify the quality of the collaboration as
+for P2P channels to exchange any raw data between web browsers
+                                                                               real-time more than interactive.
+in real-time [Grigorik 2013]. WebRTC uses signaling mechanism
+(via WebSocket server) to send control messages, get the network
+configuration and the media capabilities of the clients. The flow of           4   Conclusion
+users (arrivals and departures) and their relationships are managed
+by the server to build the full mesh topology network (every client is         The web-based 3D collaborative editor technology and design has
+connected to others). The P2P message layer uses the star topology:            the potential to offer 3D content creation to everyone with a web
+a broadcaster send a message operation on WebRTC connection to                 access. Our web application is based on a hybrid client-server (We-
+its direct neighbors.                                                          bGL and NodeJS) and P2P (WebRTC) architecture. The client is
+                                                                               in charge of 3D visualization, user interactions handling and up-
+                                                                               dates management on the scene. For data persistence, clients are
+Workflow      When arriving on the scene, each P2P client is as-               connected to a NoSQL DB to store modifications through the web
+signed a ID sent to the server DB to get into collaborative network.           server. It manages user presence on the scene and automatically
+Then, the client retrieves the entire scene document from the DB               creates the P2P full mesh topology network between them. The P2P
+to build its own scene graph (but identical to others’ peers). Each            connection (established by signaling) hosted by the client relies on
+client is responsible for broadcasting its own messages (to peers and          the WebRTC DataChannel protocol that broadcasts messages di-
+to DB) according to the granularity of the data transmission defined           rectly between browsers according to the P2P star topology. Mes-
+as follows (actions/message content): on import/meshes and ma-                 sages follows a granularity policy to limit the amount of sent data.
+terials; on delete/object ID; on transformation/object ID and trans-
+formation matrix. At message reception, the peer client updates its            The qualitative evaluations of the experiments were conclusive
+viewport rendering.                                                            overall, even if some points are to be improved (model im-
+                                                                               port, richer interface, collaborative feedbacks). To handle larger
+                                                                               scenes, we consider using adaptive rendering and enriching our
+                                                                               P2P data streaming relying on seed peers with a better abstrac-
+                                                                               tion [Koskela et al. 2014]. Therefore, future works will be sup-
+                                                                               plemented with a quantitative evaluation, to compare our hybrid
+                                                                               architecture to others, using server logs, FPS in client and We-
+                                                                               bRTC tools (Chrome: chrome://webrt-internal; Firefox:
+                                                                               about:webrtc) which provide statistics on the exchanged data.
+
+                                                                               References
+                                                                               C HEN , H.-M., AND H OU , C.-C. 2014. Asynchronous online col-
+                                                                                  laboration in BIM generation using hybrid client-server and P2P
+                                                                                  network. Automation in Construction 45, 72–85.
+                                                                               G RIGORIK , I. 2013. High Performance Browser Networking:
+                                                                                  What every web developer should know about networking and
+                                                                                  web performance. ” O’Reilly Media, Inc.”.
+                                                                               H OUSTON , B., L ARSEN , W., L ARSEN , B., C ARON , J., N IKFE -
+                                                                                  TRAT, N., L EUNG , C., S ILVER , J., K AMAL -A L -D EEN , H.,
+                                                                                  C ALLAGHAN , P., C HEN , R., ET AL . 2013. Clara. io: full-
+                                                                                  featured 3d content creation for the web and cloud era. In ACM
+                                                                                  SIGGRAPH 2013 Studio Talks, ACM, 8.
+                                                                               KOSKELA , T., VATJUS - ANTTILA , J., AND DAHL , T. 2014. Com-
+                    Figure 2: System overview
+                                                                                 munication architecture for a p2p-enhanced virtual environment
+                                                                                 client in a web browser. 1–5.
+3     Evaluation                                                               M ARION , C., AND J OMIER , J. 2012. Real-time collaborative sci-
+                                                                                 entific webgl visualization with websocket. In Proceedings of
+We proposed three experiments that last about 5/10 minutes each.                 the 17th international conference on 3D web technology, ACM,
+The goal was to assemble collaboratively multiple parts of a scene               47–50.
+(like a car with wheels, body, seats...) to match a given picture.             M OUTON , C., S ONS , K., AND G RIMSTEAD , I. 2011. Collabo-
+Users were satisfied of the collaborative and visual results of the              rative visualization: current systems and future trends. In Pro-
+experiments because they were able to reach the experiments’ goal                ceedings of the 16th International Conference on 3D Web Tech-
+without frustration. They pointed out a lack of visual feedback on               nology, ACM, 101–110.
+
+
+
+                                                                         158
+

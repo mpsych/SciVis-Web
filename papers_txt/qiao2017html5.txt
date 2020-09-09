@@ -1,0 +1,870 @@
+Hindawi
+International Journal of Telemedicine and Applications
+Volume 2017, Article ID 4074137, 13 pages
+https://doi.org/10.1155/2017/4074137
+
+
+
+
+Research Article
+An HTML5-Based Pure Website Solution for Rapidly Viewing
+and Processing Large-Scale 3D Medical Volume Reconstruction
+on Mobile Internet
+
+           Liang Qiao,1,2 Xin Chen,3 Ye Zhang,1 Jingna Zhang,1 Yi Wu,4 Ying Li,4 Xuemei Mo,4
+           Wei Chen,5 Bing Xie,5 and Mingguo Qiu1
+           1
+             Department of Medical Image, College of Biomedical Engineering, Third Military Medical University, Chongqing, China
+           2
+             Department of Computer Science, College of Biomedical Engineering, Third Military Medical University, Chongqing, China
+           3
+             College of Software and Computer, Chongqing Institute of Engineering, Chongqing, China
+           4
+             Department of Digital Medicine, College of Biomedical Engineering, Third Military Medical University, Chongqing, China
+           5
+             Department of Radiology, Southwest Hospital, Third Military Medical University, Chongqing, China
+
+           Correspondence should be addressed to Mingguo Qiu; bobqiao@163.com
+
+           Received 10 January 2017; Revised 24 March 2017; Accepted 13 April 2017; Published 30 May 2017
+
+           Academic Editor: Manolis Tsiknakis
+
+           Copyright © 2017 Liang Qiao et al. This is an open access article distributed under the Creative Commons Attribution License,
+           which permits unrestricted use, distribution, and reproduction in any medium, provided the original work is properly cited.
+
+           This study aimed to propose a pure web-based solution to serve users to access large-scale 3D medical volume anywhere with
+           good user experience and complete details. A novel solution of the Master-Slave interaction mode was proposed, which absorbed
+           advantages of remote volume rendering and surface rendering. On server side, we designed a message-responding mechanism to
+           listen to interactive requests from clients (Slave model) and to guide Master volume rendering. On client side, we used HTML5 to
+           normalize user-interactive behaviors on Slave model and enhance the accuracy of behavior request and user-friendly experience.
+           The results showed that more than four independent tasks (each with a data size of 249.4 MB) could be simultaneously carried
+           out with a 100-KBps client bandwidth (extreme test); the first loading time was <12 s, and the response time of each behavior
+           request for final high quality image remained at approximately 1 s, while the peak value of bandwidth was <50-KBps. Meanwhile,
+           the FPS value for each client was ≥40. This solution could serve the users by rapidly accessing the application via one URL hyperlink
+           without special software and hardware requirement in a diversified network environment and could be easily integrated into other
+           telemedical systems seamlessly.
+
+
+1. Introduction                                                           traditional workstations that promoted the further develop-
+                                                                          ment of medical imaging technology on mobile Internet [4–
+The 3D visualized reconstruction, which is built from sec-                9]. Presently, the 3D visualized reconstruction techniques in
+tional medical images (SMIs), such as CT, has an advantage of             medicine have fallen into the following two main categories:
+directly displaying the focus of a disease and is widely used in          surface rendering and volume rendering [10], both with their
+many fields, including diagnoses, case discussion, education,             own characteristics to adapt to the Internet application.
+and patient consultation [1, 2]. In the era of mobile Internet                Surface rendering in medicine extracts the interested
+(WIFI or 3G as fundamental carrier), with increasingly                    surface contour of the anatomical representation from SMIs
+large amounts of SMI data of high quality, people desire to               into a 3D geometrical model, which is usually stored as a
+rapidly view and process this 3D visualized reconstruction                VRML, VTK, or X3D file [1, 11, 12]. Some Web3D technolo-
+of high quality in a diversified network environment via                  gies, such as WebGL, could directly support these models
+different client devices without installing special software [3].         via most of the major web browsers [13] with a very good
+In particular, many studies have reported that there were                 native user experience and that is a popular way to utilize
+no significant differences of diagnostic accuracy regarding               Internet applications for medical 3D visualization. However,
+more and more diseases between mobile devices and the                     because the information integrity depends on presetting the
+2                                                                       International Journal of Telemedicine and Applications
+
+interested area, the client user cannot arbitrarily view the       methods do not adapt to the mobile Internet application char-
+internal anatomy structure or analyze the complex orga-            acteristics of lightweight [21] very well, which ask for lower
+nization relationship. Therefore, surface rendering technol-       resources of network and computing, and avoid unnecessary
+ogy has been mainly used for special disease with specific         installation.
+requirements [11, 12, 14], and it could not adapt to the               In this study, we plan to combine the advantage of surface
+custom behavior of the client user in mobile Internet very         rendering technology based on WebGL with the advantage
+well.                                                              of remote volume rendering to design a solution for viewing
+    Volume rendering describes a wide range of techniques to       and processing 3D medical volume reconstruction in a pure
+generate images from 3D scalar data [15]. It is very convenient    webpage environment. Finally, a visualization interaction
+to view the internal anatomy structure and describe the            platform would be built. This platform could be used any-
+complex organizational relationship through user adjustment        where, in a diversified network environment and diversified
+of the parameters of color and opacity on each voxel [16].         client devices, with a good user experience similar to the
+However, volume rendering requires a complete computation          native application.
+of the original volumetric data for each user’s behavior event,
+the cost of computation being much higher than that for sur-
+face rendering. Thus, volume rendering technology is often
+                                                                   2. Computational Methods and Theory
+deployed on a dedicated image workstation and in a private         The core concept includes the Slave model and Master
+network environment, where the scope of application is lim-        volume. The Slave model is a contour model rendered by
+ited. Some low-level graphics APIs, such as OpenGL ES 2.0,         surface rendering technology, running on WebGL as a 3D
+have been integrated into WebGL for Internet application,          interactive interface on the client side. The Master volume
+which could be theoretically enabled to support GPU-based          is a volumetric data rendering from original SMIs on the
+direct volume ray-casting implementations, or support some         server side. The final required image of high quality is a
+slice-based sampling techniques to get close to the imaging        projection drawing from the Master volume according to the
+result of ray-casting-based implementations. Nevertheless,         behavior instructions from the Slave model. This solution
+the imaging quality and efficiency is very limited, not just       could be named the Master-Slave dual-channel interaction
+because of performance of common GPU, but also because             mode and is expected to enhance the user experience similar
+of the limited performance of web pages [7–9]. Further-            to the native application in a pure web page, to reduce the
+more, there is still high requirement to network for original      pressure of the server load and network load, and to meet
+volumetric data transmission. Currently, there is a remote         the requirement of lightweight volumetric data sharing in a
+volume rendering scheme to solve the limit. This scheme            mobile Internet application.
+deploys the volume rendering job on the server side to a real-
+time response to behavior instructions from the client and
+                                                                   2.1. Design of the Master-Slave Dual-Channel Interaction
+transmits the 2D projection image from volume rendering
+                                                                   Mode. The architecture of this solution constitutes the fol-
+to the client display, where the client is only an interface for
+                                                                   lowing two parts: the server side and client side. The server
+sending instructions and displaying results [9, 17–20]. For
+                                                                   side renders the Master volume to generate the final required
+example, the user slides the mouse from point A to point B to
+                                                                   image of high quality, while the client side provides the Slave
+express an operation of 3D rotation on the client side, and the
+                                                                   model’s interactive navigation.
+server just calculates the final viewing angle from A to B and
+sends the final result to the user. Because there is no original       The detailed procedures are as follows (schematic dia-
+data downloading and no rendering cost on the client side,         gram is shown in Figure 1):
+the network load and computing pressure of the client could            On the server side, in zone A, groups of SMIs could
+be significantly reduced. However, this interaction model of       be uploaded to the server through the network interface of
+“the client sends one operation request, the server replies one    PACS or removable storage medium. Thereafter, the relevant
+result at a time” may cause a bad user experience. Specifically,   Slave models could be automatically pregenerated by rough
+it may lose the value of Frames Per Second (FPS), one of the       contour extraction. The listener in zone B accepts the
+most important parameters of the 3D interactive experience.        user’s web behavior request (instructions) in real-time and
+Therefore, all of [9, 17–20] discretized the trajectory of one     guides zone C to load and render the relevant SMIs in
+single operation request from the client into several request      memory, which is defined as the Master volume, generating
+points to request continuous responses from the server. For        a 2D projection image from the rendered result for client
+example, if the path between mouse points A and B were             downloading.
+converted into several separated remote volume rendering               On the client side, while the user wants to view and
+requests from the client, the sever would respond to each          process a group of SMIs, the client could download the
+request and send continuous 2D projection images to the            corresponding Slave model from the server and reconstruct it
+client. Thus, the value of FPS could be increased; however,        locally in zone D; meanwhile, request the server to load and
+it may lead to a huge pressure on the server load (response        render relevant SMIs in memory. Thereafter, in zone D, the
+to a large amount of requests) and network load (continuous        user could view and process the local Slave model arbitrarily
+data stream). Additionally, [9, 17–19] ask the client to install   and submit the final behavior request (instructions) to the
+customized software or plug-ins, which may lead to a lack of       server to acquire the required projection image from the
+compatibility. Therefore, existing remote volume rendering         Master volume in zone B C E.
+International Journal of Telemedicine and Applications                                                                                                             3
+
+
+    Service                                                                                                             Client
+
+           N Master volume                                                         2D image                                                          Slave model
+
+
+
+                                                              Projection                           ⑤
+                                                                                                                                    Interactive
+                                                                                                                                     behaviors
+                                                                                                                                                             ④
+                                                                   M
+              Volume rendering
+
+   Loading                  ③                  Behavior
+  in memory                                     request
+
+       1
+
+              2
+
+                  3
+
+
+
+                            85
+                                                                                    ②
+                                     86
+
+
+
+
+                      ···
+                                                                                                                                             The screen effect
+                                                                                                       Internet
+                                 1
+                                      2
+                                           3
+
+                                                85
+                                                         86
+                                                                                     Listener:
+                                          ···
+                                                                                   Request Mgmt
+                                                     1
+                                                         2
+                                                              3
+                                                                   85
+                                                                        86
+
+
+   ①                                                         ···
+
+
+                                                                             ···
+   Sectional medical images (SMIs) & Slave model                                                                                 Any device & OS & browser
+
+                        Figure 1: Architecture of the pure web-based solution via the Master-Slave dual-channel interaction mode.
+
+
+    Here, the client could be a pure web browser running on                                       2.3. Generation and Interaction of the Slave Model. The Slave
+diversified devices, supporting the WebGL technique. That                                         model was pregenerated on the server side and was designed
+means there is no installation for the client.                                                    to be a navigational tool to interact with the Web page. While
+                                                                                                  clients want to view and process the Master volume, the Slave
+2.2. Rendering of the Master Volume. We adopted the ray-                                          model could be downloaded to the client and reconstructed
+casting algorithm [22] to reconstruct the Master volume of                                        on the client side.
+SMIs. The algorithm is a direct volume rendering method that
+has been widely used for radiodiagnosis but requires a high                                       2.3.1. Generation and Slimming of the Slave Model. To interact
+computing performance of the device. First, we transformed                                        with mobile Internet, the data size of the model should be
+the SMIs into volume voxels in 3D space (Figure 2(a)) and                                         as small as possible (much slimmer), while the clarity of
+then simulated rays to cast each voxel with a customized                                          the contour is acceptable. However, using the traditional
+color and opacity [23] into 2D space (Figure 2(b)). This                                          compression-decompression algorithm may ask the client to
+method could be used to describe a complex organization                                           install additional software. Hence, the steps in the generation
+relationship. Furthermore, it could display internal anatomy                                      of a smaller Slave model can be designed as follows (Figure 3).
+structure via removing (clipping) part of the voxels that                                         Here, we used a group of SMIs of the head and neck CT as
+simulate a user’s behavior of dissection (Figure 2(c)).                                           an example, and the resolution of voxels is 512 × 512 × 495,
+     Here, we directly used the VTK (Visualization Toolkit)                                       249 MB (testing data (1) in Section 4).
+library [24] to realize the ray-casting algorithm. For cus-                                       Step 1 (resampling the original SMIs for first slimming). Load
+tomized color and opacity, several frequently used schemes                                        the corresponding SMIs into memory; shrink each sectional
+could be deployed on the server side in advance; a dropdown                                       image to a standard size of 32 ∗ 32 via the resampling of the
+list was designed on the user interface to correspond to each                                     2D space (Figures 3(a) and 3(b)).
+scheme for remote volume rendering [25, 26]. For clipping,
+VTK provides a class of vtkPlane to build a virtual Clipping                                      Step 2 (building the 3D geometrical contour model). A
+plane to guide the voxel removal [27]. It means the clipping                                      marching cubes algorithm [28], one of the most common
+job only needs the specific location of the virtual Clipping                                      methods of surface rendering, was used to extract the
+plane in the 3D coordinate system. The specific location could                                    interested surface contour of the anatomical representation
+be described by the following two parameters in the computer                                      from resampling SMIs into a 3D geometrical contour model.
+graphics method: normal vector from the origin point to the                                       Here, according to the feature of the CT grayscale [29], we
+plane and the coordinate position of a point on the Clipping                                      set a particular contour value at −800 or 200 that could
+plane, both from the client submission.                                                           separate the skin or skeleton of the body from the resampling
+4                                                                                                        International Journal of Telemedicine and Applications
+
+
+
+
+                (a) Voxels in volume data                                             (b) Pseudo color & opacity for each voxel                              (c) Clipping
+
+                                               Figure 2: Schematic diagram of the direct volume rendering method.
+
+                            Size X                                           Size X
+ Size Y                                 X      Size Y                                   X
+
+Y                                             Y
+
+                                                                                             (c1) Contour value: −800   (d1) Polygons: 50%   Polygons: 10%
+                                                                                                  Size: 6.74 MB             Size: 3.33 MB    Size: 913 MB
+                  ..   ..            Shrink each slice             ..   ..
+                   .    .                                           .    .
+    Size Z                                        Size Z
+                                                                                                                                                                        Step 4.
+       Z                                             Z
+                                                                                                                                                                        Saved as
+             (a) Original SMIs                             (b) Resampling & strech           (c2) Contour value: 200    (d2) Polygons: 50%   Polygons: 10%              .vtk file
+     (e.g., 512 × 512 × 495, 249 MB)                         (e.g., 32 × 32 × 495)                Size: 5.26 MB             Size: 3.11 MB    Size: 1.04 MB
+
+        Step 1. Resampling the original SMIs for first compression                               Step 2. Building           Step 3. Reduce the triangles
+                                                                                                3D contour model
+                                       Figure 3: Schematic diagram of the generation and compression of the Slave model.
+
+
+SMIs, respectively, to acquire a skin model or skeleton model                                     to guide remote volume rendering, including the viewing
+(Figures 3(c1) and 3(c2)). In this case, the data size of the skin                                angle request and clipping request.
+model and skeleton model could be reduced to 6.74 MB and
+5.26 MB, respectively.                                                                            For the Viewing Angle Request. The interaction of viewing
+                                                                                                  angle includes rotation, flipping, zooming, and panning [30].
+Step 3 (reducing the total number of polygons for second                                          We defined the interactive 3D scene including only one Slave
+slimming). The 3D geometrical contour model from Step 2                                           model and one camera and customized an interactive mode
+is constitutive of polygons, and we could reduce the total                                        of the camera in VR technology to meet our requirement.
+number of polygons to further reduce the data size. In this                                       Figure 4(a) shows the principle of the interaction of the
+case, the number was reduced to 50% and 10%, and the                                              viewing angle between the camera and Slave model. We
+data sizes were reduced to approximately 3 MB and 1 MB,                                           limited the lens of the camera to always be taken on point
+respectively (Figures 3(d1) and 3(d2)).                                                           𝑃1 (0, 0, 0), which was the origin of the world coordinate
+                                                                                                  system. The interactive behaviors of the viewing angle were
+Step 4 (saved as .vtk model file). The slimmed model would                                        carried out by only changing the camera position except
+be saved in a file of the .vtk format, which is a storage format                                  panning. For panning, it was carried out by changing the
+of the geometrical model supported by WebGL, and then                                             Slave model position; see examples in Figure 4(b).
+stored in the same directory with original SMIs.                                                      According to the definition, while sending request
+     The result of Figures 3(d1) and 3(d2) preliminarily showed                                   instructions to the server for remote volume rendering, the
+that the Slave model whose data size is approximately 1 MB                                        instructions only include three quantization parameters from
+still could be fit for interactive navigation (more experiments                                   the client to accurately describe the interactive behavior of
+detailed in Section 4.1). Moreover, an additional mutual                                          the viewing angle request to the Slave model. The three quan-
+interface of the client was designed as a remote parameter                                        tization parameters include the following: attribute view up
+setting of the contour value and the total number of polygons,                                    direction, attribute position of camera, and attribute position
+to permit users to customize the Slave model as desired.                                          of the center point of the Slave model.
+                                                                                                      Here, attribute view up direction of camera indicates the
+2.3.2. Design and Quantization of the Interactive Behaviors in                                    direction of the top of the camera. For example, (0, −1, 0),
+the Slave Model. For a friendly interactive experience on the                                     a value of the View Up direction, indicates the camera is
+client side, a simple style of interactive behaviors of the client                                perpendicular to the XZ plane in the world coordinate
+and corresponding quantitative methods should be designed                                         system, and the top of the camera is in the opposite direction
+International Journal of Telemedicine and Applications                                                                                                     5
+
+
+
+
+                                                                   (i) Original camera view
+                                                                                               (ii) Rotate around axis CaA-P1 (Y-axis)
+
+
+
+
+                                                           (iii) Zoom via shortening         (iv) Flip from CaA to CaB    (v) Panning via moving
+                                                                 the distance from CaA to P1                                  the center point of Slave
+                                                                                                                               model from P1 to P2
+   (a) Principle of interaction between camera and Slave                      (b) Example of interactions of viewing angle request
+   model
+
+     Figure 4: Principle of the interaction of the viewing angle between the camera and Slave model and the corresponding example.
+
+
+
+along the 𝑍-axis (see the relationship between camera CaA                        Therefore, formula (1) was deduced to calculate the
+and Slave model in Figure 4(a), and corresponding example                     normal vector from the angles of rotation.
+(i) original camera view in Figure 4(b)).
+     In fact, WebGL has provided some interaction methods                                     𝑛𝑜𝑟𝑚𝑎𝑙 V𝑒𝑐𝑡𝑜𝑟 = {sin (𝜃𝑦 ) , − sin (𝜃𝑥 )
+of the moving camera to view 3D objects via mouse- and                                                                                                    (1)
+gesture-based interactive behaviors, which were packaged                                         ⋅ cos (𝜃𝑦 ) , cos (𝜃𝑥 ) ⋅ cos (𝜃𝑦 )} .
+into a library of TrackballControls.js for a web page script.                     Here 𝜃𝑥 , 𝜃𝑦 are the final rotation angles that rotate the
+We could directly utilize the js library to acquire the three                 Clipping plane clockwise around the 𝑋-axis and 𝑌-axis,
+quantization parameters. However, we need to rewrite the                      respectively.
+js library to restrict and customize the interactive mode
+                                                                                  For example, in Figure 5(b), a user rotated the Clipping
+of the camera that we have defined, to ensure the consis-
+                                                                              plane 30 degrees clockwise around the 𝑌-axis, and −15
+tency of the interactive rule between the Master and Slave
+                                                                              degrees clockwise around the 𝑋-axis, and then panned the
+side.
+                                                                              Clipping plane 95 pixels in the positive direction along the
+For the Clipping Request. For arbitrarily clipping and viewing                𝑍-axis. While submitting for remote volume rendering, 𝜃𝑥 =
+the internal anatomy structure of the Master volume, a green                  −15, 𝜃𝑦 = 30, the normal vector was {0.5, 0.2241, 0.8365}
+rectangle object, named the Clipping plane, was added in the                  according to formula (1). Meanwhile, according to the char-
+above defined interactive 3D scene, to allow users to mimic                   acteristic of monolithic translation, the one point 𝑃 on the
+the clipping behavior in the Slave model; see Figures 5(a) and                Clipping plane was moved to position (0, 0, 95). That would
+5(b). Here, a virtual control panel was designed separately to                be the two quantization parameters of request instructions for
+support the interactive behaviors of users using the Clipping                 clipping.
+plane (Figure 5(c)).
+     During the initialization phase, the Clipping plane covers               2.4. Remote Interaction between the Server and Client. The
+the 𝑋𝑌 plane in the world coordinate system (Figure 5(a)).                    interactive behaviors of the Slave model include viewing angle
+Its specific location could be accurately described by the                    request and clipping request. Moreover, color/opacity request is
+following two quantization parameters in the computer                         operated by the dropdown list of the preset schemes (detailed
+graphics method: normal vector from the origin point to                       in Section 2.2). All of these requests would be submitted to
+the Clipping plane, and the coordinate position of a point                    the server in the form of quantization parameters, which are
+on the Clipping plane. Here, its default normal vector was                    named as request instructions.
+{0, 0, 1}; one point 𝑃 on the plane was on the position                           However, in addition to responding to the client’s instruc-
+(0, 0, 0).                                                                    tions, the server has to find an efficient way to manage
+     For intuitive operation of the user experience, the interac-             and allocate system resources, to enhance the robustness of
+tive behaviors regarding the Clipping plane include rotation                  the high frequency of interaction among multiple users, for
+and panning, and both can be operated by a virtual control                    example, to reduce the probability of deadlock, cumulative
+panel. However, for the accurate description of the request                   delay, and task-pipeline crossing.
+instructions for remote volume rendering, the two quantiza-                       In our system, we used relational database schema to
+tion parameters should be used.                                               manage the request instructions from the client and to
+6                                                                                       International Journal of Telemedicine and Applications
+
+
+
+
+    Interactive Y
+       effect                          X
+
+
+                             Z                          P
+                                                                    X                             X                              X
+                                              Y                           Y                                 Y
+                                                                                        P
+                         P                                                                                              P
+                                       X
+    Clipping Y                                              Z                                                           Z
+                                                                                         Z
+     plane
+                                           (i) Rotated 30 degrees       (ii) Further, rotated −15 degrees   (ii) Further, panning 95
+                             Z                 around the Y-axis             around the X-axis                   along the Z-axis
+     (a) Initial state of Clipping plane                        (b) Instances of interaction of Clipping plane                         (c) Control panel
+                                                                                                                                       of Clipping plane
+
+                         Figure 5: Design of the interaction of clipping to the Slave model and corresponding example.
+
+
+
+allocate the system resources for guiding 3D rendering. The                      and guides the Rendering Server to an orderly response.
+core tables and their data storage structure are designed in                     The latter renders the SMIs and generates a 2D projec-
+Table 1.                                                                         tion image for the client downloading via HTTP. At the
+    According to Table 1, if a user chooses a group of SMIs                      same time, the client side was designed by the standard
+from a list, derived from the base table, the server would                       of HTML5 [32]. We used <img>, an HTML image tag,
+query the pipeline table whether the SMIs is serving the                         to display the 2D projection image in the form of pseudo
+client. If No, the SMIs would be loaded in memory, and                           3D, and used AJAX + js technology to realize flicker-free
+a task-pipeline between the user and SMIs would be built.                        page updates and client RIA (rich Internet application)
+Thereafter, the state of the pipeline table would be changed to                  over diversified web browsers without installation. More-
+“Yes.” While being Yes, the client would be permitted to make                    over, HTML5 includes the WebGL standard, and the Slave
+the next interactive request. After that, for each request from                  model could run on any HTML5-supporting web browsers
+the client, the server must query the state of the behavior table                without any web plug-ins or special software tools. Thus,
+whether the pipeline is “pending” or “processing.” If No, the                    the whole platform system could run under mature network
+server would accept the request with a record of a “pending”                     technologies.
+state. Additionally, the listener on the server would real-time
+arrange these pending requests to the server rendering in                        3.2. System Front-End. System front-end is an HTML5-based
+queue. While a request is being rendered, the corresponding                      pure website that provides entrance to SMI access and 3D
+state of behavior table would be changed as “processing” to                      presentation. The users require a username and password to
+prevent malignant submission. While the job is finished, the                     enter the system, or any experts could be invited to enter a
+state would be changed to “finished,” and a 2D projection                        specific task-pipeline with one URL hyperlink from a help
+image would be generated and saved in the specified HTTP                         seeker. In brief, using an HTML5-supporting web browser,
+sharing path.                                                                    including the major versions of Firefox, chrome, Opera,
+    The client adopted AJAX (Asynchronous JavaScript and                         safari, IE 10+, the 3D volume can be viewed and processed
+XML) [31] to dynamically query the state of behavior table                       as in Figure 6 and the Supplementary Materials available
+from the server at a fixed frequency of 300 ms. While render-                    online at https://doi.org/10.1155/2017/4074137 (1. Demon-
+ing was finished, the client would download and update the                       stration of the operation procedure on laptop via website
+2D projection image via the HTML + js web page technique.                        .mp4).
+                                                                                      Here, the interactive behaviors of the user include the
+3. System Description                                                            viewing angle, clipping, and color/opacity transformation. The
+                                                                                 first two items were operated on the Slave model, which was
+3.1. System Architecture. While Figure 1 depicts the Master-                     reconstructed on the client side. While the user wants to
+Slave dual-channel interaction mode, it also presents the                        observe the final required image of high quality, the user
+overall architecture of the final platform. Here, we adopted                     just presses the submit button to submit the current behavior
+the browser/server architecture, for which the communi-                          request instruction to the server and waits for the final 2D
+cation with each other was via the HTTP protocol. The                            projection image to be updated.
+server side consists of the Listener & Request Management                             Figure 6(a) presents the initial state of the Slave model
+Server (in zone B) and Rendering Server (in zone C). The                         (right) and 2D projection image (left). In Figure 6(b), mouse
+former accepts and manages the requests from the client                          or hand gesture is used to operate the Slave model to
+                  Table 1: Relational data storage structure of request behaviors from client and resource allocation on the server.
+Table            Field                                                                                                         Note
+                                                             PRIMARY KEY, the unique identifier of a
+                 DICOMs_ID                                                                                                     To record the basic information of SMIs
+                                                             group of SMIs
+Base table                                                                                                                     on the server side
+                                                             The storage path of SMIs on the server
+                 Storage path
+                                                             side
+                                                             PRIMARY KEY, the unique identifier of a
+                 pipeline_ID                                 pipeline for viewing a group of SMIs
+                                                             between the client and server
+                                                             FOREIGN KEY of base table, to declare
+                 DICOMs_ID                                                                                                     Based on base table, to record the
+                                                             which group of SMIs the client is viewing
+                                                                                                                               connected relationship between the SMIs
+                                                                                                                                                                         International Journal of Telemedicine and Applications
+
+
+
+
+Pipeline table   Client                                      Client user
+                                                                                                                               rendering in memory on the server and
+                 IP address                                  IP address of the committer
+                                                                                                                               remote user on the client
+                                                             Whether the SMIs finished rendering in
+                                                             memory on the server? Yes, allow the
+                 State
+                                                             client to next operation. No, prompt for
+                                                             waiting
+                                                             PRIMARY KEY, the unique identifier of
+                 behavior_ID                                 each behavior request event from the
+                                                             client
+                                                             FOREIGN KEY of pipeline table, to
+                 pipeline_ID                                 declare which pipeline on viewing and
+                                                             processing                                                        Based on pipeline table, to record
+Behavior table                                               Including viewing angle, clipping, or                             operation requests from the client user
+                 Behavior type
+                                                             color/opacity transformation                                      and their process state
+                                                             From the client, to transfer the
+                                                             parameters in terms of the corresponding
+                 Behavior-instruction
+                                                             behavior type, recorded in the form of
+                                                             quantization parameters
+                 State                                       Pending, processing, or finished
+                                                                                                                                                                         7
+8                                                                         International Journal of Telemedicine and Applications
+
+
+
+
+                                   (a) Initial state                          (b) Viewing angle interaction
+
+
+
+
+                               (c) Clipping interaction                 (d) Zooming and color/opacity interaction
+
+                                         Figure 6: Screenshot and operational demonstration.
+
+
+transform the viewing angle from Figure 6(a) to Figure 6(b)         (1) head and neck CT with 495 slices, 512 ∗ 512, 249.4 MB,
+(red solid box), and then the submit button is pressed to send      (2) trunk CT with 609 slices, 512 ∗ 512, 306.5 MB, and (3)
+the behavior request instruction to the server to require an        thorax and mandible CT with 500 slices, 512 ∗ 512, 251.6 MB.
+updated projection image from the Master volume (yellow             Server. An IBM X3650M4 workstation (CPU: 4 × E5-2603,
+solid box). In Figure 6(c), using virtual control panel (red        RAM: 16 GB, OS: Windows Server 2008) was connected
+dashed box) to operate Clipping plane, after submitting, the        to the Internet via 10 Mbps. The 2D projection image was
+new projection image was then updated (left). In Figure 6(d),       set as the resolution of 512 ∗ 512 with high quality JPEG
+the mouse wheel or hand gesture is used to zoom the Slave           compression (level-8).
+model, and then the color/opacity theme is submitted via the
+dropdown list (bottom right corner) to guide remote volume          Client. 4 Internet devices were located at the 3G or WIFI
+rendering.                                                          mobile Internet with the server. In Figure 7(a), there is a
+                                                                    Founder E520 personal computer running on winXP with
+                                                                    Firefox 46 web browser via 3G usb card. In Figure 7(b), there
+4. Mode of Availability of the System                               is an Acer E15 laptop running on win7 with chrome 43 web
+In this paper, we designed a Master-Slave dual-channel inter-       browser at WIFI. In Figure 7(c), there is a HuaWei Honor
+action mode to improve a problem of remote visualization            6 smart phone running on EMUI 3.0, which is developed
+interaction of the volume reconstruction of SMIs, which             from Android 4.4.2 with the Opera 37 web browser at 3G
+usually have a huge data size and calculation cost. Finally,        net. In Figure 7(d), there is an iPad mini running on IOS6
+a visualization interaction platform has been built. Particu-       with safari at WIFI. All of them could be representative in
+larly, there is no special software and hardware requirement        the mobile Internet. Additionally, each was limited to a 100-
+for the clients, and no special network environment is              KBps wireless bandwidth by 360 security firewall for extreme
+needed.                                                             test [33].
+     To measure whether the effectiveness and performance to
+adapt to the mobile Internet application has characteristics        4.1. Interactive Experience, Imaging Quality, and Compatibil-
+of lightweight, three radiologists with more than 3 years of        ity. To ensure the consistency of the context, the testing data
+experience were invited to test the interactive experience,         (1) were considered as the main object of reference. Here, the
+imaging quality, and compatibility over diversified Internet        demonstration and effect of the testing data (1) are shown in
+devices. Moreover, four junior students majoring in Biomed-         Figure 6.
+ical Engineering were invited to test and quantize the network           Figure 6 shows that this Slave model of the testing data
+load and response time.                                             (1), which was compressed to 1.04 MB, could be fit to the
+                                                                    demands of interactive navigation to accurately guide remote
+Testing Data. 3 groups of SMIs from the radiology department        volume rendering, and shows that the projection image could
+of Southwest Hospital of Chongqing include the following:           be displayed to keep the original quality.
+International Journal of Telemedicine and Applications                                                                             9
+
+
+
+
+                                  (a) Personal computer                          (b) Laptop computer
+
+
+
+
+                                     (c) Smartphone                                    (d) iPad
+
+                Figure 7: The system is accessed via four different devices and web browsers under extreme bandwidth.
+
+
+    For further validation, three radiologists were invited to      4.2. Response Time and Network Load between the Client
+test the platform with the similar behaviors in Figure 6. This      and Server. The response time can be defined as the time
+job was repeated to operate three groups of different testing       interval between the user sending a behavior request to
+data through different web browsers and Internet devices            the system and web browser loading the response results
+that were all aforementioned. Additionally, a five-point            completely. The network load can be defined as the amount
+scale was designed to respond to the radiologists’ requests         of data transmission of each interactive behavior. Four junior
+(Table 2).                                                          students majoring in Biomedical Engineering were invited
+    Table 2 presents a very positive evaluation from the statis-    to simultaneously test the platform for one hour. During the
+tical result of the imaging quality and interactive experience,     test, all of the students, respectively, viewed and processed the
+and all three radiologists expressed that is an interesting         testing data (1) through the platform and performed similar
+way, whether as a gesture-based or mouse-based interaction.         behaviors to those detailed in Figure 6. This test was repeated
+No installations were required from the client, and good            by each student with different web browsers and Internet
+compatibility was obtained (same result is shown in Table 3).       devices, all of which were aforementioned. Here, we trained
+However, one radiologist thought the default Slave model            the students to record the real-time network traffic by the 360
+of the testing data (1), with a skeleton model of 1.04 MB           security firewall and the time interval by the script log. The
+                                                                    results are showed in Table 3.
+(Figure 3(d2)), was a little rough. He suggested to use the
+                                                                         In Table 3, for each device, the amount of data trans-
+skeleton model of 5.26 MB or skin model of 913 KB (Figures
+                                                                    mission and response time of the first loading are much
+3(c1) and 3(c2)) instead of the 1.04 model, both of which are
+                                                                    higher than the behavior request and idle status because the
+the alternatives from the mutual interface for the client, as       first loading asks the client to download the necessary Slave
+detailed in Section 2.3.1. Additionally, all three radiologists     model. The response time of the first loading is <12 s at 100-
+claimed that the response time for final high quality image is      KBps client bandwidth, which is similar to the total time
+always about 1 second that is consistent with the test result       spent on Slave model downloading. In fact, the response time
+in Section 4.2. However, they did accept the performance,           of first loading also includes the cost time of SMI loading
+because they could directly operate the Slave model smoothly        and rendering on the server side, but the server monitor
+without any delay on client side; thus a short wait for final       presents the cost time as <7 s because SMI loading and Slave
+high quality image had little influence. Moreover, one of the       model downloading are simultaneous, and this cost could be
+radiologists specifically expressed the native application of       neglected.
+3D rendering on desktop PC also needs 1 or 2 seconds’ delay              After the first loading, the network load of the behavior
+for final image; this performance of the solution running on        request for final image is spent on request instructions sub-
+smart phone is similar to the native application on PC and is       mission, final projection image downloading, and the server
+very good.                                                          processing status querying at a fixed frequency of 300 ms,
+10                                                                               International Journal of Telemedicine and Applications
+
+                  Table 2: Statistic results of the five-point scale concerning the interactive experience and imaging quality.
+
+                                                   Subject                                       Votes from five-point scale
+Focus
+                                                                                     Very                                               Very
+                                                                                                Agree     Uncertainty     Disagree
+                                                                                     agree                                            disagree
+                          The operation of viewing and processing is             △     3
+                          accurate                                               󳵳     3
+Interactive experience:
+Mouse-based △                                                                    △     2           1
+                          Simple and easy to use without training
+Gesture-based 󳵳                                                                  󳵳     3
+                          A good user experience similar to native               △     2           1
+                          application                                            󳵳     2           1
+                          Slave model could meet demands of navigation                 2           1
+Imaging quality           2D image from Master volume could provide high
+                          quality reconstruction result via utilizing the              3
+                          display capability of Internet terminals
+Others                    Latency time for final high quality images                   3
+
+
+          Table 3: Average response time and amount of data transmission from the different behaviors and devices at 100-KBps.
+
+                                 First loading (average                 Behavior request for final            Idle status of
+                                         value)                            image (average value)               bandwidth           Frames Per
+Devices
+                            Amount of           Response time         Amount of         Response time          occupation         Second (FPS)
+                          data trans (KB)         (seconds)         data trans (KB)        (seconds)             (KBps)
+PC (3G net)                   1085.44                11.23               47.10                 1.12                0.23              48–60
+Laptop (WIFI)                 1064.96                10.51               46.08                 0.89                0.31              48–60
+iPad mini (WIFI)              1079.41                10.93               44.03                 0.95                0.35              50–60
+Smartphone (3G net)           1075.02                10.72               39.94                 1.02                0.28              30–40
+
+
+where the projection image downloading is the main part.                   using HTML5 and related web technologies running on
+The results present a complete amount of data transmission of              major web browsers may be a choice to adapt to cross-
+each behavior request is close to 50 KB, but the corresponding             platform deployment and the characteristics of lightweight
+response time for final image is approximately 1 s in 100 KBps.            [21].
+That is because, besides the network load, the rest of time                    Therefore, this article described research on a method
+is spent on server processing and time interval of querying                for the Master-Slave dual-channel interaction mode, which
+(300 ms). The short delay could be acceptable for practical                is based on the HTML5 standard (also a wider web com-
+applications, as detailed in Section 4.1.                                  patibility standard of WebGL), to permit users viewing and
+    While in the idle status, including the user’s interactive             processing million-megabyte-class SMIs via different client
+behavior (operation) on the Slave model, the bandwidth                     devices (without hardware or operating system constraints),
+occupation is almost negligible. Moreover, there are no sig-               over a pure web page (without installing special software) and
+nificant differences among diversified devices and networks                in a diversified network environment.
+at 100-KBps client bandwidth.                                                  Compared with the traditional PACS mode of “image
+    Additionally, the FPS of Slave model rendering on the                  compression, transmission, local reconstruction,” because
+client side is measured via stats.min.js, which is a library               our method does not transfer original SMIs to the client,
+packaged from WebGL. When the client rendering is com-                     it neither needs to wait for a long time to download nor
+pleted, FPS could remain at the upper limit.                               requests special demands of the software environment on
+                                                                           the client device. Moreover, compared with the state of
+5. Discussion and Comparison                                               the art of local volume rendering based on WebGL and
+                                                                           HTML5 technology [7–9], our methods have no special
+Due to the nonprivate network environment and diversified                  demands of client hardware for computation that may reduce
+purposes, application software on one device must compete                  battery consumption [9] and enhance the compatibility of
+for limited resources of the network and computing. Thus                   the client devices; our methods may be more fit for mobile
+lightweight, which requires lower resources of the network                 Internet application. Additionally, the client does not access
+and computing and avoids unnecessary installation, could be                the original SMIs, which could be much safer.
+an important characteristic of mobile Internet application.                    Compared with popular solutions based on absolute
+Additionally, to avoid compatibility problems caused by dif-               surface rendering technology [11, 12, 14], our method has
+ferent operating systems and client hardware characteristics,              locally used this technique to only support light Slave model
+International Journal of Telemedicine and Applications                                                                            11
+
+for interactive navigation; therefore, the demands of the          the device GPU (Graphics Processing Unit). Undoubtedly,
+network bandwidth and device rendering capability are              almost all GPUs of Internet devices in the market could meet
+almost negligible in our method. Moreover, the final required      the demands of our light Slave model rendering. Moreover,
+image of high quality is a projection drawing from volume          the peak value of the bandwidth under the behavior request
+rendering technology, indicating that our method could be          for final image was less than 50 KBps and less than 1 KBps
+convenient for users to view the internal anatomy structure        at idle (including the operation of Slave model); thus, both
+and complex organization relationship; however, surface            were far below those tests of methods of [17–19]. Thus,
+rendering technology could not support these characteristics       our method could be more suitable for a complex mobile
+of volume.                                                         Internet environment. Moreover, the complex compression
+    Compared with solutions based on absolute remote vol-          transmission methods of [17–19] were built on customized
+ume rendering methods, our method adopted the Master-              software of plug-ins for the client, which is hard to apply
+Slave dual-channel interaction mode to strengthen the user         to pure web pages and falls short of wide compatibility. By
+experience, which is an entirely different approach from the       contrast, that is our method’s advantage.
+mode of “continuous request, continuous response” of studies            For the server load, because the Master volume in our
+of [9]. Although studies of [17–19] proposed several methods       method only responds to the final behavior request (instruc-
+to improve the mode to reduce the network load, including          tions) instead of the continuous request of the studies of
+video-compressed transmission [17], tile-based transmission        [9, 17–19], the test showed that server CPU utilization was less
+[18], and variable resolution transmission [19], the pressure      than 20% at idle (including the operation of Slave model), and
+of server load and real-time data stream increased. We used        less than 30% for responding to behavior request; thus, it was
+the same SMI data (testing data (1)), the same quality of          far below of those tests of methods of [17–19] with nearly a full
+final required image, and the same server configuration            load during all the operation time under the same conditions
+and volume rendering algorithm in Section 4 to test the            of SMI data, quality of final required image, server config-
+methods in [17–19]. For quantitative test, we formulated an        uration, and volume rendering algorithm. Theoretically, our
+interactive trajectory with fixed 30 request points, theoreti-     platform can respond to more independent tasks (pipelines)
+cally, assuming 30 rendering requests triggered per 1 second;      at the same time. Table 2 shows that while the server was
+there should be 30 fps render effects. On this basis, [17]         running four independent tasks simultaneously, the response
+adopted 512 ∗ 512 mpeg-4 compression for transmission,             time of our method remained at approximately 1 s in the 100-
+[18] adopted 8 ∗ 8 blocks to segment each 512 ∗ 512 frame          KBps client bandwidth, much better than [17–19], which was
+and transfer the blocks which are different from previous          with more than 16 seconds’ delay of end frame in the single
+frame in the process of interaction, and [19] adopted 64 ∗         task status. In fact because user viewing and processing of
+64 resolution transmission in the process of interaction, but      the 3D medical volume occurred via interaction on the Slave
+512 ∗ 512 for end frame. The test was repeated for 5 times         model, the delay experience was much fewer than that in [17–
+under the condition of one single client monopolizing the          19], as detailed in Section 4.1. That indicates our method could
+bandwidth and server under ideal WIFI environment. The             have some more advantages, including much less network
+results showed that the total amount of data transmission          load and server load, to serve much more independent tasks
+for each interaction test of [17–19] was 298.0 KB, 603.6 KB,       and users.
+and 371.3 KB, respectively, the average response time of first          In addition, [17–19] did not propose an effective inter-
+frame was 1.10 seconds, 0.59 seconds, and 0.52 seconds, and        active method to clip the 3D volume, what our method has
+the average cumulative response time of end frame (30th            accomplished.
+frame which is the final required image) was 21.31 seconds,
+17.61 seconds, and 16.01 seconds. The response time contains       6. Conclusion
+the factors of server continuous rendering response, server
+continuous frame-encoding, and so forth (more than 70%             This paper proposed a Master-Slave dual-channel interaction
+server CPU utilization during interaction), but the network        mode, which absorbed the advantages of the surface ren-
+factors could be tentatively neglected under the ideal single-     dering of WebGL and remote volume rendering, to build
+user WIFI environment. Assuming that we can improve                a visualization interaction platform to rapidly view and
+the server’s processing ability to completely eliminate the        process 3D medical volume reconstruction in a pure webpage
+server response delay (perfect 30 fps interaction effect), the     environment. This platform could be used in a diversified
+theoretical value of the bandwidth could be 298.0 KBps,            network environment (100-KBps bandwidth for extreme)
+603.6 KBps, and 371.3 KBps, respectively. In summary, the          and diversified client devices (no special hardware and oper-
+FPS value, one of the most important parameters of the 3D          ating system constraints), without any special installation but
+interactive experience, of the studies of [17–19] was correlated   with a good user experience similar to native application.
+reciprocally with the number of simultaneous tasks on the          These features could serve authorized users to conveniently
+server side (server task-pipelines), server processing ability,    access SMIs and present 3D visualization anywhere and
+and network bandwidth, and an obvious delay of interaction         could be a technological basis of online communication
+was clearly presented. By contrast, all of the Internet devices    among doctors and patients [34]. Or, at least, it could help
+chosen to test our method could provide an FPS value at            clinicians to arbitrarily acquire 3D image according to their
+30–60, and the FPS value was not correlated with server tasks,     clinical needs instead of the static pictures that radiologists
+server processing ability, and network bandwidth, but with         drafted. For example, clinicians could conveniently observe
+12                                                                                International Journal of Telemedicine and Applications
+
+the complicated relationship of skull base bone and blood                    [6] P. T. Johnson, S. L. Zimmerman, D. Heath et al., “The iPad as
+vessel via this platform (Figure 6(d)); in the past, this piece                  a mobile device for CT display and interpretation: diagnostic
+of information was provided by a few static images generated                     accuracy for identification of pulmonary embolism,” Emergency
+from radiologist’s understanding.                                                Radiology, vol. 19, no. 4, pp. 323–327, 2012.
+    Additionally, this solution is designed to be followed as                [7] J. M. Noguera and J. R. Jiménez, “Visualization of very large 3D
+an HTML5 standard interface, indicating any authorized user                      volumes on mobile devices and WebGL,” in Proceedings of the
+could rapidly access the application via one URL hyperlink,                      20th International Conference in Central Europe on Computer
+and the platform could be easily integrated into other                           Graphics, Visualization and Computer Vision, WSCG 2012, pp.
+                                                                                 105–112, June 2012.
+telemedical systems seamlessly as a third-party application,
+for example the Supplementary Materials (2. Demonstration                    [8] J. Congote, A. Segura, L. Kabongo et al., “Interactive visu-
+                                                                                 alization of volumetric data with WebGL in real-time,” in
+of the operation procedure on laptop linked by email.mp4,
+                                                                                 Proceedings of the 16th International Conference on 3D Web
+and 3. Demonstration of the operation procedure on iPad                          Technology, (Web3D ’11), pp. 137–145, June 2011.
+via website.mp4). These features may play an assistant role
+                                                                             [9] A. Schiewe, M. Anstoots, and J. Krüger, “State of the art in
+to improve work patterns and extend the range of application                     mobile volume rendering on iOS devices,” in Proceedings of the
+of traditional medical image systems. For example, it can be                     Eurographics Conference on Visualization (EuroVis ’15), 2015.
+applied to regional health, telemedicine, and medical imaging              [10] A. Evans, M. Romeo, A. Bahrehmand et al., “3D graphics on the
+education at a low cost because there is no special cost of                      web: a survey,” Computers & Graphics, vol. 41, no. 1, pp. 43–61,
+deploy and upgrade of software, network, and hardware on                         2014.
+the client side. And more importantly, a teacher can vividly                [11] M. Callieri, R. M. Andrei, M. D. Benedetto et al., “Visualization
+show the students the image characteristics of the disease                       methods for molecular studies on the web platform,” in Proceed-
+anywhere; a clinician can intuitively introduce disease to the                   ings of the 15th international conference on web 3D technology
+patients anywhere and ask experts’ help anywhere. That may                       (Web3D ’10), pp. 117–126, July 2010.
+promote the development of mobile medical technology to a                  [12] J. Jiménez, A. M. López, J. Cruz et al., “A Web platform for
+certain degree.                                                                  the interactive visualization and analysis of the 3D fractal
+                                                                                 dimension of MRI data,” Journal of Biomedical Informatics, vol.
+Conflicts of Interest                                                            51, pp. 176–190, 2014.
+                                                                            [13] WebGL, https://www.khronos.org/webgl/.
+There are no conflicts of interest declared.                               [14] C. R. Butson, G. Tamm, S. Jain, T. Fogal, and J. Krüger,
+                                                                                 “Evaluation of interactive visualization on mobile computing
+                                                                                 platforms for selection of deep brain stimulation parameters,”
+Acknowledgments                                                                  IEEE Transactions on Visualization and Computer Graphics, vol.
+This work was supported by the National Natural Science                          19, no. 1, pp. 108–117, 2013.
+Foundation of China (no. 81171866), the National Key Basic                  [15] M. Levoy, “Display of surfaces from volume data,” IEEE Com-
+Research Program of China (no. 2014CB541602), and the                            puter Graphics and Applications, vol. 8, no. 3, pp. 29–37, 1988.
+Social Livelihood Science and Technology Innovation Special                [16] E. Kotter, T. Baumann, D. Jäger, and M. Langer, “Technologies
+Project of CSTC (no. cstc2015shmszx120002).                                      for image distribution in hospitals,” European Radiology, vol. 16,
+                                                                                 no. 6, pp. 1270–1279, 2006.
+                                                                           [17] S. Park, W. Kim, and I. Ihm, “Mobile collaborative medical dis-
+References                                                                       play system,” Computer Methods and Programs in Biomedicine,
+                                                                                 vol. 89, no. 3, pp. 248–260, 2008.
+[1] Q. Zhang, M. Alexander, and L. Ryner, “Synchronized 2D/3D
+    optical mapping for interactive exploration and real-time visu-        [18] J. R. Mitchell, P. Sharma, J. Modi et al., “A smartphone client-
+    alization of multi-function neurological images,” Computerized               server teleradiology system for primary diagnosis of acute
+    Medical Imaging and Graphics, vol. 37, no. 7-8, pp. 552–567, 2013.           stroke,” Journal of Medical Internet Research, vol. 13, no. 2, p. e31,
+                                                                                 2011.
+[2] S. Zimeras and L. G. Gortzis, “Interactive tele-radiological seg-
+    mentation systems for treatment and diagnosis,” International          [19] T. Hachaj, “Real time exploration and management of large
+    Journal of Telemedicine and Applications, vol. 2012, Article ID              medical volumetric datasets on small mobile devices—eval-
+    713739, p. 15, 2012.                                                         uation of remote volume rendering approach,” International
+[3] S. E. Mahmoudi, A. Akhondi-Asl, R. Rahmani et al., “Web-                     Journal of Information Management, vol. 34, no. 3, pp. 336–343,
+    based interactive 2D/3D medical image processing and                         2014.
+    visualization software,” Computer Methods and Programs in              [20] P. Quax, J. Liesenborgs, A. Barzan et al., “Remote rendering
+    Biomedicine, vol. 98, no. 2, pp. 172–182, 2010.                              solutions using web technologies,” Multimedia Tools and Appli-
+[4] L. Faggioni, E. Neri, I. Bargellini et al., “IPad-based primary              cations, vol. 75, no. 8, pp. 4383–4410, 2016.
+    2D reading of CT angiography examinations of patients with             [21] D. Preuveneers, Y. Berbers, and W. Joosen, “The future of
+    suspected acute gastrointestinal bleeding: preliminary experi-               mobile E-health application development: exploring HTML5
+    ence 1L,” British Journal of Radiology, vol. 88, no. 1047, Article           for context-aware diabetes monitoring,” Procedia Computer
+    ID 20140477, 2015.                                                           Science, vol. 21, pp. 351–359, 2013.
+[5] J. B. Park, H. J. Choi, J. H. Lee, and B. S. Kang, “An assessment of   [22] J. M. Noguera, J. J. Jiménez, and M. C. Osuna-Pérez, “Devel-
+    the iPad 2 as a CT teleradiology tool using brain CT with sub-               opment and evaluation of a 3D mobile application for learning
+    tle intracranial hemorrhage under conventional illumination,”                manual therapy in the physiotherapy laboratory,” Computers
+    Journal of Digital Imaging, vol. 26, no. 4, pp. 683–690, 2013.               and Education, vol. 69, pp. 96–108, 2013.
+International Journal of Telemedicine and Applications                  13
+
+[23] Y. S. Kang, “Volume rendering overview,” in GPU Programming
+      and Cg Language Primer, chapter 14, pp. 154-155, 1st edition,
+      2009.
+[24] Visualization Toolkit (VTK), http://www.vtk.org/.
+[25] vtkPiecewiseFunction Class Reference of VTK, http://www.vtk
+      .org/doc/nightly/html/classvtkPiecewiseFunction.html.
+[26] vtkColorTransferFunction Class Reference of VTK, http://
+      www.vtk.org/doc/nightly/html/annotated.html.
+[27] vtkPlane Class Reference of VTK, http://www.vtk.org/doc/
+      nightly/html/classvtkPlane.html.
+[28] L. Ma, D.-X. Zhao, and Z.-Z. Yang, “A software tool for
+      visualization of molecular face (VMF) by improving marching
+      cubes algorithm,” Computational and Theoretical Chemistry,
+      vol. 1028, pp. 34–45, 2014.
+[29] G. F. Wang, J. Liu, and W. Liu, “DIB display and window trans-
+      formation technology for DICOM medical images,” Chinese
+      Journal of Medical Device, vol. 18, no. 8, pp. 1–5, 2005.
+[30] L. Qiao, X. Chen, L. X. Yang et al., “Development of medi-
+      cal image three-dimensional-visualization platform based on
+      home network and pure web conditions,” Beijing Biomedical
+      Engineering, vol. 34, no. 3, pp. 229-233,286, 2015.
+ [31] M. Ying and J. Miller, “Refactoring legacy AJAX applications to
+      improve the efficiency of the data exchange component,” Journal
+      of Systems and Software, vol. 86, no. 1, pp. 72–88, 2013.
+[32] HTML5, http://www.w3.org/TR/2012/CR-html5-20121217/.
+[33] QIHU 360 SOFTWARE CO. LIMITED, 360 Internet Security,
+      http://www.360safe.com/Internet-security.html.
+[34] L. Qiao, Y. Li, X. Chen et al., “Medical high-resolution image
+      sharing and electronic whiteboard system: a pure-web-based
+      system for accessing and discussing lossless original images in
+      telemedicine,” Computer Methods and Programs in Biomedicine,
+      vol. 121, no. 2, pp. 77–91, 2015.
+                                                                                                                         International Journal of
+
+
+                                                                                                                         Rotating
+                                                                                                                         Machinery
+
+
+
+
+                                                                                                                                                                                                                        International Journal of
+                                                 The Scientific
+(QJLQHHULQJ                                                                                                                                                                                                             Distributed
+             Journal of
+                                                                                                                                                                         Journal of
+
+Hindawi Publishing Corporation
+                                                 World Journal
+                                                 Hindawi Publishing Corporation                                          Hindawi Publishing Corporation
+                                                                                                                                                                         Sensors
+                                                                                                                                                                         Hindawi Publishing Corporation
+                                                                                                                                                                                                                        Sensor Networks
+                                                                                                                                                                                                                        Hindawi Publishing Corporation
+http://www.hindawi.com             Volume 201   http://www.hindawi.com                                    Volume 2014   http://www.hindawi.com           Volume 2014    http://www.hindawi.com           Volume 2014   http://www.hindawi.com            Volume 2014
+
+
+
+
+                                                                                                                                                                                                                        Journal of
+
+                                                                                                                                                                                                                        Control Science
+                                                                                                                                                                                                                        and Engineering
+
+
+
+
+Advances in
+Civil Engineering
+Hindawi Publishing Corporation                                                                                                                                                                                          Hindawi Publishing Corporation
+http://www.hindawi.com             Volume 2014                                                                                                                                                                          http://www.hindawi.com           Volume 2014
+
+
+
+
+                                                                                                            Submit your manuscripts at
+                                                                                                             https://www.hindawi.com
+
+                                                                                                                                                                                                                        Journal of
+Journal of                                                                                                                                                                                                              Electrical and Computer
+Robotics
+Hindawi Publishing Corporation
+                                                                                                                                                                                                                        Engineering
+                                                                                                                                                                                                                        Hindawi Publishing Corporation
+http://www.hindawi.com             Volume 2014                                                                                                                                                                          http://www.hindawi.com            Volume 2014
+
+
+
+
+                                                                           VLSI Design
+Advances in
+OptoElectronics
+                                                                                                                                                                                                                        ,QWHUQDWLRQDO-RXUQDORI
+
+                                                                                                                         International Journal of
+                                                                                                                                                                         Modelling &
+                                                                                                                                                                         Simulation
+                                                                                                                                                                                                                        $HURVSDFH
+Hindawi Publishing Corporation   Volume 2014
+                                                                                                                         Navigation and
+                                                                                                                         Observation
+                                                                                                                         Hindawi Publishing Corporation
+                                                                                                                         http://www.hindawi.com            Volume 2014
+                                                                                                                                                                         in Engineering
+                                                                                                                                                                         Hindawi Publishing Corporation
+                                                                                                                                                                         http://www.hindawi.com           Volume 2014
+                                                                                                                                                                                                                        (QJLQHHULQJ
+                                                                                                                                                                                                                        +LQGDZL3XEOLVKLQJ&RUSRUDWLRQ
+                                                                                                                                                                                                                        KWWSZZZKLQGDZLFRP           9ROXPH
+                                                                          Hindawi Publishing Corporation
+http://www.hindawi.com
+                                                                          http://www.hindawi.com           Volume 201-
+
+
+
+
+                                                 International Journal of
+International Journal of                         Antennas and                                                            Active and Passive                                                                             Advances in
+Chemical Engineering                             Propagation                                                             Electronic Components                           Shock and Vibration                            Acoustics and Vibration
+Hindawi Publishing Corporation                   Hindawi Publishing Corporation                                          Hindawi Publishing Corporation                  Hindawi Publishing Corporation                 Hindawi Publishing Corporation
+http://www.hindawi.com             Volume 2014   http://www.hindawi.com                                    Volume 2014   http://www.hindawi.com            Volume 2014   http://www.hindawi.com           Volume 2014   http://www.hindawi.com           Volume 2014
+

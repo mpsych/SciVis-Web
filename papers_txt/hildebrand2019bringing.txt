@@ -1,0 +1,669 @@
+Opinion
+Bringing Molecular Dynamics Simulation Data
+into View
+Peter W. Hildebrand,1,2,3,* Alexander S. Rose,4,@ and Johanna K.S. Tiemann1,@
+
+Molecular dynamics (MD) simulations monitor time-resolved motions of macromolecules. While                          Highlights
+visualization of MD trajectories allows an instant and intuitive understanding of dynamics and                      MD simulations have become
+function, so far mainly static representations are provided in the published literature. Recent ad-                 routinely used over the past years
+vances in browser technology may allow for the sharing of trajectories through interactive visu-                    to investigate dynamic motions of
+alization on the web. We believe that providing intuitive and interactive visualization, along with                 macromolecules at the atomic
+related protocols and analysis data, promotes understanding, reliability, and reusability of MD                     level.
+simulations. Existing barriers for sharing MD simulations are discussed and emerging solutions
+                                                                                                                    Interactive visualization of MD tra-
+are highlighted. We predict that interactive visualization of MD trajectories will quickly be adop-
+                                                                                                                    jectories may provide an instant,
+ted by researchers, research consortiums, journals, and funding agencies to gather and                              transparent, and intuitive under-
+distribute results from MD simulations via the web.                                                                 standing of complex dynamics.
+
+Dynamics Leads to Understanding Macromolecule Function                                                              Sharing of MD trajectories may
+                                                                                                                    generate transparency and trust,
+Molecular dynamics (MD, see Glossary) simulations are a well-established technique to investigate
+                                                                                                                    allowing collaboration, knowledge
+time-resolved motions of biological macromolecules at atomic resolution [1,2]. Traditionally, macro-
+                                                                                                                    exchange, and data reuse.
+molecules such as enzymes, channels, transporters, or receptors have been perceived as being rigid
+entities mainly because structures obtained by X-ray crystallography are fixed in crystal lattices and              Recent      technological       de-
+are therefore resolved as single, static snapshots. However, when compiled together, these snap-                    velopments now allow visual
+shots often reveal that macromolecules exist in different substates and states, hinting that there is               sharing of MD trajectories over the
+dynamic fluctuations between substates and states [3]. Prominent examples are the G protein-                        web using tools such as the MDsrv
+                                                                                                                    and HTMoL.
+coupled receptors (GPCRs), which exist in multiple inactive and active states with different signaling
+properties [4,5]. Complete understanding of the structural background of GPCR signaling and phar-                   GPCRmd presents the first central-
+macological applications requires an in-depth knowledge of receptor and G protein dynamics [6–8].                   ized special-purpose MD deposi-
+                                                                                                                    tion platform featuring powerful
+To overcome these limitations, MD has been developed over several decades, becoming a cutting-                      trajectory visualization.
+edge technology in the life sciences. Formally, the award of the Nobel Prize in Chemistry in 2013 to
+Martin Karplus, Michael Levitt, and Ariel Warshel for the development of multiscale models for com-
+plex chemical systems (https://www.nobelprize.org/prizes/chemistry/2013/press-release/) has af-
+firmed the relevance and importance of MD [9]. Methodological advances, continued software opti-
+mization, and hardware developments have broadened the applicability of MD simulations with
+respect to feasible system size, runtime, and overall quality [10]. These developments are also re-
+flected by the rising number of standardized and intuitive usable tools for automated setup and anal-
+ysis, facilitating usage and enhancing reproducibility/replicability of MD simulations [11,12].
+
+To bring MD into view for a broader audience, we believe the results of MD simulations now have to be
+                                                                                                                   1Institute for Medical Physics and
+presented in a comprehensive and feasible way. So far, even accessing, viewing, and sharing of MD trajec-
+                                                                                                                   Biophysics, Leipzig University, 04107
+tories has been hindered by large file sizes for macromolecular structures and the need for specialized soft-      Leipzig, Germany
+ware, limiting the audience to which this technology has been available. However, recent developments in           2Institute for Medical Physics and
+
+web-based technology have allowed for efficient visualization of even large macromolecules such as                 Biophysics, Charité - Universitätsmedizin,
+macromolecular machines and virus capsids in web browsers [13,14]. We believe these advances are open-             10117 Berlin, Germany
+                                                                                                                   3Berlin Insitute of Health (BIH), 10178
+ing up new possibilities for sharing the visualization of MD trajectories on the web and will foster interactive
+                                                                                                                   Berlin, Germany
+collaborations, accessibility, and transparency (Box 1, Figure 1, Key Figure).
+                                                                                                                   4RCSB Protein Data Bank, San Diego
+
+                                                                                                                   Supercomputer Center, University of
+                                                                                                                   California San Diego, CA, USA
+Visualization Is Timely and Necessary
+                                                                                                                   @Twitter:  @arose (A.S. Rose), @j0kaso
+Visualization facilitates and guides data analysis, and the complementary strengths of human and ma-               (J.K.S. Tiemann).
+chine analysis are potentiated when led by interactive visualization [15]. Advanced visual interfaces              *Correspondence:
+that fuse analysis and visualization can combine human flexibility, creativity, and background                     peter.hildebrand@medizin.uni-leipzig.de
+
+
+
+
+902   Trends in Biochemical Sciences, November 2019, Vol. 44, No. 11 https://doi.org/10.1016/j.tibs.2019.06.004
+      ª 2019 Elsevier Ltd. This is an open access article under the CC BY-NC-ND license (http://creativecommons.org/licenses/by-nc-nd/4.0/).
+ Box 1. FAIR Principles                                                                                              Glossary
+ To deal with the growing amounts of large scientific datasets, discovery and innovation increasingly rely on        Application Programming Inter-
+ automation and computational support. In 2016, The FAIR Guiding Principles for Scientific Data Management           face (API): set of protocols/rou-
+ and Stewardship were established to endorse the reliability of data [52]. A special emphasis was, and is, put on    tines/software packages to facili-
+                                                                                                                     tate development of programs.
+ enhancing automated searchability and reusability of data. Reusability applies not only to deposition of (raw)
+                                                                                                                     Docker images: program that runs
+ data, but also of algorithms, tools, and workflows for data generation and analysis. According to Wilkinson
+                                                                                                                     software packages through con-
+ et al. [52], using FAIR principles is beneficial for:                                                               tainers within an operating system
+ C researchers willing to share, credit, and reuse data;                                                             similar to virtual machines. Docker
+                                                                                                                     images can contain complete
+ C software/tool developers and data scientists providing processing, integrating, and analysis workflows to
+                                                                                                                     program environments/servers
+   enhance discoveries;
+                                                                                                                     and can be shared.
+ C professional data publishers selling their capabilities; and                                                      DOI/idem: digital object identi-
+                                                                                                                     fier, unique and permanent URL/
+ C funding agencies in minimizing their rising concerns in long-term data handling.                                  sequence/phrase linked to data.
+                                                                                                                     Often used to find and access the
+ To ensure that data are findable, a unique and persistent idem has to be assigned, connected to descriptive         assigned data.
+ keywords and registered in a searchable resource. Accessibility is obtained when (meta)data can be retrieved        Findable, Accessible, Interoper-
+                                                                                                                     able, Reusable (FAIR): see Box 1.
+ by their identifiers using an open, free, and universally implementable protocol. This protocol allows for an
+                                                                                                                     Graphics processing unit (GPU):
+ authentication and authorization procedure and keeps metadata accessible even when the data are no longer
+                                                                                                                     single-chip processor often
+ available. To be interoperable, (meta)data have to use a specific, general, and consistent language for knowl-      embedded on a video card,
+ edge representation including linked references. By ensuring an accurate and rich description with relevant at-     motherboard, or mobile phone to
+ tributes and community standards including usage license and detailed provenance, (meta)data become                 efficiently perform graphical
+ reusable.                                                                                                           rendering.
+                                                                                                                     Graphical user interface (GUI):
+                                                                                                                     allowing the user to interact
+                                                                                                                     through graphical icons, menus,
+knowledge with storage and processing capacities of computers to gain insights into complex prob-                    or other types of objects in
+lems [16]. Taking into consideration that scientists trust results presented by visual analytics more                contrast to texts with electronic
+                                                                                                                     devices.
+than other nonvisual media [17], we feel it is time to enable a comprehensive and detailed view on
+                                                                                                                     Hosted services: provided over
+MD trajectories.                                                                                                     the Internet where a computer is
+                                                                                                                     configured to handle applica-
+Visual analysis has always guided pattern recognition along with other types of MD analysis [18]. For                tions, IT infrastructure compo-
+analysis and visualization, tools installed on local machines such as Visual Molecular Dynamics (VMD)                nents, and functions, covering of-
+                                                                                                                     ferings, including web hosting,
+[19] or Chimera [20] are used by experts to manipulate the perspective, zoom in on a certain structural              infrastructure services, off-site
+detail, or change the display mode of a trajectory. When MD data (Box 2) are prepared for publica-                   backup, and virtual desktops
+tion, they are commonly translated into tables and static figures showing running averages of trajec-                customized to the needs of the
+tories with related statistics to describe the dynamic properties of a specific biophysical system. Fig-             user.
+                                                                                                                     Interoperability: allows data or
+ures visualize a predefined setting of those systems focusing the view of the reader to selected
+                                                                                                                     tools to work with resources other
+aspects like the binding pocket of a receptor while hiding other features or regions due to their static             than those they have been origi-
+property. Videos provide a more dynamic but still limited glance on the simulations as they are also                 nally generated or implemented,
+predefined without allowing manipulation of the perspective.                                                         respectively, with minimal effort.
+                                                                                                                     Molecular dynamics (MD): (com-
+                                                                                                                     puter) simulations to study the
+The full potential of MD simulations, however, is only exploited through interactive visualization of                movement of atoms and mole-
+trajectory files; interactive visualization may strengthen and deepen the understanding of a character-              cules by solving Newton’s equa-
+istic finding described in a publication [18]. For example, by zooming in on a certain structural and                tions of motion.
+dynamic feature of a trajectory that was not within the scope of the original analysis, novel ideas                  Replicability/reproducibility:
+                                                                                                                     refer to the generation of the
+and hypothesis can be generated and new lines of analysis may be triggered. This approach will
+                                                                                                                     same/original study results by (i)
+thus add new aspects to a published analysis, detect or explain unresolved issues, and complement                    using exactly the same protocol
+or update previous findings. In our opinion, interactive visualization of trajectories will, therefore, ul-          such as the same input, original
+timately strengthen the perception of MD simulations as a reliable technique to monitor the dynamic                  source code, techniques, soft-
+motion of macromolecules.                                                                                            ware, settings; or (ii) following/
+                                                                                                                     reimplementing the (often less-
+                                                                                                                     detailed/automated) protocol or
+                                                                                                                     algorithmic/workflow description
+Visualizing MD Trajectories on the Web                                                                               as given in the published study
+The web has been developed into the primary resource to gather and distribute information in nearly                  (e.g., often different tools, soft-
+all areas of life [21,22]. When information is stored and presented in a sustainable way, the web pro-               ware, clusters are used). The as-
+                                                                                                                     sociation/paring of the terms
+motes discussion, education, and reputation [23]. To maximize its potential in science, data
+
+
+
+
+                                                                                    Trends in Biochemical Sciences, November 2019, Vol. 44, No. 11    903
+management should follow the Findable, Accessible, Interoperable, and Reusable (FAIR) principles               reproducibility/replicability with
+to maximize its potential (Boxes 1 and 2). For example, the worldwide Protein Data Bank (wwPDB)                their definition (i) or (ii) depends
+consortium [24] is a prominent data resource that has obtained a central role in structural biology            on the reference, author, or field
+                                                                                                               as a consistent and universally
+and life science by following the FAIR principles. As such, all wwPDB members offer web-based mo-
+                                                                                                               accepted terminology is still
+lecular graphics to present the curated and deposited 3D structural coordinates in an intuitive and            missing and its controversy is key
+comprehensive way. The Research Collaboratory for Structural Bioinformatics Protein Data Bank                  to ongoing discussions [72,73].
+(RCSB PDB) [25,26], for instance, uses the NGL viewer for a powerful web visualization [13,14] (Box            Trajectory: time evolution of an
+                                                                                                               object moving under the action of
+3). By providing analysis and visualization in an instant and easy-to-use fashion, the wwPDB has the
+                                                                                                               given forces.
+ability to reach out to a wider audience. Further, with predefined settings, the NGL viewer can high-          Visual analytics: scientific field
+light prominent structural features such as a ligand-binding pocket of a receptor. Optionally, users           focusing on analytical reasoning
+can visualize experimental structural data such as density maps, orientations, and contacts within             supported by interactive visual
+the assembly, or they can view B factors, thus facilitating critical reviewing of the structures even          interfaces.
+                                                                                                               Web Workers API: allows
+before downloading them. Embedded visualization, online analytics, and application of cross-refer-
+                                                                                                               browsers to run heavy calculations
+enced tools have consequently changed the habits of wwPDB users from just downloading structures               without blocking the user
+towards instant online visualization and analysis [27].                                                        interface.
+                                                                                                               Web Graphics Library (WebGL):
+                                                                                                               JavaScript API for interactive
+Advances in browser technologies have only recently opened up possibilities for web molecular
+                                                                                                               graphical rendering within a web
+graphics and rendering techniques to allow interactive visualization of macromolecules as discussed            browser without the use of plug-
+above [28]. As a result of a series of these technical developments (Box 3), even web-based visualiza-         ins.
+tion of MD trajectories has become feasible. The MegaMol framework for particle-based visualization            Worldwide Protein Data Bank
+was the first to show the capability of web visualization of MD simulations; its client-server approach        (wwPDB): archive of macromo-
+                                                                                                               lecular structures determined by
+for viewing MD trajectories mainly focuses on visualization research and prototyping [29,30]. The
+                                                                                                               experimental techniques such as
+JSmol viewer (https://sourceforge.net/projects/jsmol/) can visualize some trajectory files (e.g., .xyz         NMR, cryo-electron microscopy
+files) and can interpret structure files with multiple models (e.g., in .pdb files) as dynamic trajectories.   or X-ray crystallography.
+Similar to MegaMol, JSmol is, however, only capable of reading very few trajectory file formats and
+demands expert knowledge for usage.
+
+More recently, the MDsrv was the first user-friendly tool to stream and visualize MD trajectories inter-
+actively within web browsers without requiring expert knowledge and specialized software [31]. To
+interact with many different (currently 22) trajectory formats, the MDsrv utilizes MDTraj [32] and the
+MDAnalysis [33] software packages. By integrating the NGL viewer for web-visualization like RSCB
+PDB [13], the MDsrv can display even huge trajectory files in various representations. The MDsrv en-
+ables efficient handling of requests for any trajectory frame by not reading the whole file into memory
+but by transferring only the information requested for visualization [29]. MD trajectory frames
+rendered into a suitable representation editable by the user, for example, a cartoon representation
+for the secondary structure and a licorice representation to highlight specific residues or a ligand, can
+then be shared and accessed via any modern web browser.
+
+About this time, HTMoL, another web-based MD visualization tool, was presented which also facili-
+tates streaming and visualization of MD trajectories on the web [34]. Unique to HTMoL is its imple-
+mentation of a fast visualization by direct calling of the graphics processing unit (GPU) that enables
+rendering and parsing of trajectories from the three most commonly used trajectory formats – Gro-
+macs [35], Charmm [36], and Amber [37]. This is performed by utilizing the Node.js runtime engine to
+transfer MD trajectory binary data through a WebSocket connection (Box 3). An Apache HTTP server
+is then applied to share and access trajectories via any modern web browser.
+
+In comparison to MDsrv, HTMoL has a higher frame rate for small to medium-sized systems, most
+likely due to its direct GPU usage. This means a smoother and faster loading of the trajectory frames
+of those sized systems prior to their visualization. HTMoL is currently limited to only three file types
+and to a reduced set of structural representations [34], while MDsrv can currently utilize 22 trajectory
+file types and more than 20 structural representations [13,31–33]. HTMoL and MDsrv are alike in that
+they both require the users to set up their own servers, either within a private network or the public
+cloud. We believe that for wider adoption of these tools, hosted services that can access data from
+scientific data sharing resources (Box 2) and do not require individual researchers to set up servers
+would be highly beneficial. Moreover, web-based MD visualization tools are still far behind the
+
+
+
+904   Trends in Biochemical Sciences, November 2019, Vol. 44, No. 11
+Key Figure
+Visualization and Sharing of Molecular Dynamics (MD) Simulations on the Web
+
+
+
+
+                                                                                                                                Trends in Biochemical Sciences
+
+
+
+Figure 1. MD trajectories have so far been translated into text, plots, figures, and videos for presentation and publication. Interactive visualization of MD
+trajectories on the World Wide Web by MDsrv and HTMol, for example, opens up new possibilities for sharing. Sharing of MD simulations with colleagues
+through interactive visualization promotes discussions and triggers new lines of investigations ultimately strengthening interdisciplinary research projects.
+Moreover, interactive visualization may support the reviewing process of journals and funding agencies, ultimately contributing to a better understanding of
+published MD simulation data and analyses. Interactive visualization may also broaden the outreach of MD simulations in society when used in teaching and
+education. Adapted, with permission, from [76].
+
+
+
+
+                                                                                     Trends in Biochemical Sciences, November 2019, Vol. 44, No. 11      905
+ Box 2. MD Data and Scientific Data Sharing Resources
+ Files from MD simulations can be divided into input files, used for production, and output files. Depending on
+ the software used such as GROMACS [35], NAMD [53], AMBER [37], DESMOND [54], or ESPResSo [55], many
+ different input and output file formats are required and generated which are often incompatible. Input files are
+ typically composed of starting structures, core force-field parameters, additional ligands, or other nonstandard
+ atomic parameters and finally operated by detailed, ideally automated, and shareable protocols. For repro-
+ ducibility/replicability, additional information about used software versions and computer/cluster systems
+ has to be provided in addition to metadata, like configuration files and workflow scripts. However, so far,
+ executable and easily reproducible protocols and metadata to generate and analyze MD studies are only rarely
+ made available. The output of MD simulations consists of raw unprocessed trajectories including coordinates
+ and velocities, energy, and log files. MD simulations belong to data-intensive sciences (also called e-sciences)
+ like proteomics, genomics, oceanography, astrophysics, engineering, web sciences, and more. Sharing of raw
+ or processed MD trajectory files is, accordingly, hampered by large file sizes. Nevertheless, scientific data
+ sharing resources offer the possibility to deposit data even as huge as trajectories [56].
+
+ In response to open science movements [57], numerous scientific general-purpose data repositories at scales
+ ranging from institutional to open globally scoped repositories emerged. Scientific data sharing resources
+ such as Dataverse [58], FigShare (http://figshare.com), Dryad [59], Mendeley Data (https://data.mendeley.
+ com), Zenodo (http://zenodo.org), DataHube (http://datahub.io), OSF (https://osf.io), or NOMAD (https://
+ nomad-coe.eu) accept a wide range of data types in a large variety of formats. The deposited data can be ac-
+ cessed globally through a unique, preserved DOI. Compared with well-curated, special-purpose archives like
+ the wwPDB, most scientific data sharing resources do not aim to integrate, harmonize, validate, or standardize
+ the deposited data. Since appropriate references and metadata are often not available, it is difficult to filter
+ suitable data from the huge variety of deposited files and databases. To overcome this challenge, the estab-
+ lishment of information platforms summarizing and integrating available data should be instrumental in
+ providing confidence in open source deposition concepts until global data standards are established. Web-
+ sites such as https://fairsharing.org/ or https://okfn.org/ are helpful resources recommending repositories
+ for scientific data, standards, and policies [60].
+
+
+
+
+capabilities of stand-alone viewer programs such as VMD [19] or others highlighted here [38] that inte-
+grate manifold built-in analysis tools like root mean square deviation (RMSD), radius of gyration, ex-
+tracting min/max coordinates/distances, heat maps, contact maps, energy plots and many more.
+
+Despite their differences, MDsrv and HTMoL allow instant and interactive dynamic web-based visu-
+alization of MD trajectories through intuitive graphical user interfaces (GUIs). After set up of the
+server by the MD simulation distributer, the data can be streamed directly through the web without
+the requirement to download any trajectory data or to install software by the user/observer. The tra-
+jectories become immediately available in the browser as soon as a link served by the creator of MD
+simulations (also known as MD simulation distributer) is clicked by the user/observer. In addition, the
+MDsrv and HTMoL visualization can be embedded into any website to be combined with other user-
+specified analysis tools.
+
+
+Towards Common Platforms for Sharing and Visualization
+Scientific data can be shared through centralized or decentralized solutions. Centralized sharing op-
+tions provide a highly efficient way to gather and distribute research results via the web. The wwPDB
+serves as a blueprint for centralized solutions to share structural information via the web [24]. Precisely
+curated data are accurately and richly annotated by data-depositing authors with easy on-the-point
+keywords to ensure findability by the broader community. Additionally, all data deposited to the
+wwPDB are freely and openly accessible and reusable. Furthermore, a major reason for the success
+of the wwPDB is that most journals require structural biologists to upload their structure information
+to the database prior to publication of their manuscripts. This synergistic effect has led to exception-
+ally high citation rates of publications, especially on novel structures deposited in the wwPDB [39].
+
+A similar positive effect could also be expected for MD simulations if trajectories and related data
+would become accessible and interoperable at the moment of publication (Box 1). In contrast to
+
+
+
+906   Trends in Biochemical Sciences, November 2019, Vol. 44, No. 11
+Box 3. Technical Developments Enabling Web Molecular Graphics
+Molecular graphics have been a part of the web since its early days (Figure I). Initially, browsers could not
+display 3D content by themselves but relied on plugins [e.g., Chime (MDL Information Systems, Inc. https://
+www.umass.edu/microbio/chime/abtchime.htm)] or extensions (Java as used by Jmol [61] and OpenAstex-
+Viewer [62]) that had to be installed in addition to the browser. Lack of access to hardware accelerated graphics
+and inflexible data streaming have been major limitations for web molecular graphics. In recent years, ad-
+vances in browser technology have opened up new possibilities for web molecular graphics and rendering
+techniques [28].
+
+Modern browsers now include native support for GPU hardware acceleration through the Web Graphics Li-
+brary (WebGL) Application Programming Interface (API) (https://www.khronos.org/registry/webgl/specs/
+latest/). This enables web molecular graphics tools to provide fast 3D graphics on par with desktop programs.
+In addition to GPU rendering, WebGL also includes support for handling binary data natively in the browser
+which makes working with numerical and binary data much more efficient. Starting with GLmol (https://
+github.com/biochem-fan/GLmol), the new browser capabilities have led to an explosion of web molecular
+graphics tools, including PV (https://github.com/biasmv/pv), 3Dmol.js [63], NGL [13], Molmil [64], LiteMol
+[65], and more (Figure I).
+
+Nowadays, nearly all computers have multicore processors and the Web Workers API runs computations in
+worker threads in parallel, leveraging the many cores of processors. As an additional benefit, the worker
+threads perform tasks in the background without blocking the user interface. This is helpful for computationally
+intensive tasks like calculating molecular surfaces and is employed, for example, by NGL and 3Dmol.js.
+
+To provide real-time access to large amounts of data on demand, an efficient, low overhead data streaming
+approach is often used. The WebSocket protocol (https://tools.ietf.org/html/rfc6455) enables this interaction
+between a web browser and a web server and is much more efficient than the traditional HTTP protocol (as used
+by MDsrv [31]). WebSockets are used by HTMol [34] and MegaMol [29,30] to stream MD trajectories to a web
+browser.
+
+A new generation of web applications is leveraging these tools enabled by the advances in browser technol-
+ogies for modern computer-aided drug design [66] and general molecular sciences [22]. Additionally, a new
+collaborative project, Mol* [67], was started to develop a common tool for web molecular graphics to better
+meet visualization challenges.
+
+
+
+
+                                                                                   Trends in Biochemical Sciences
+
+Figure I. Timeline (Center) of Relevant Web Browser Technologies (Bottom) and Popular Web Molecular
+Graphics Tools (Top).
+The listed web molecular graphics tools can be divided into a pre and post WebGL era (light green to
+increasingly dark green). Pre WebGL: MDL Chime (MDL Information Systems, Inc. https://www.umass.edu/
+microbio/chime/abtchime.htm), Jmol/JSmol [61], AstexViewer [62]. Post WebGL: GLmol (https://github.
+com/biochem-fan/GLmol), Jolecule (http://jolecule.com/), PV (https://github.com/biasmv/pv), 3Dmol.js [63],
+NGL Viewer [13], LiteMol [65], Molmil [64], and iCn3D [74] and Web3DMol [75].
+
+
+
+
+                                                                                    Trends in Biochemical Sciences, November 2019, Vol. 44, No. 11   907
+data uploaded to the wwPDB, MD simulations can accumulate huge trajectory files ranging from
+gigabytes to terabytes, which may raise concerns about a sharable solution for storage and handling
+(see Outstanding Questions). However, sharing of huge amounts of data is feasible as demonstrated
+by other data-intensive science fields. The Galaxy Project [40] is a prominent example showing how
+community fostered standards and guidelines promote efficient and accurate sharing and reuse of
+huge genomic data [41].
+
+Nevertheless, the establishment of centralized sharing platforms requires many efforts, guidelines,
+community engagement, and a central dedicated and sustainably funded organization [42]. Commu-
+nity engagement is crucial as any centralized organization has to be guided by the community. The
+wwPDB has, for example, various task forces for validation, format development, and regarding new
+experimental techniques [43,44]. Centralized, special-purpose MD platforms may accordingly be
+considered a first step on the way towards the establishment of global MD platforms. Several such
+platforms have already been created (Table 1), but only BIGNASim [45] and GPCRmd (http://www.
+gpcrmd.org/) feature interactive visualization of trajectories. BIGNASim is a platform containing a
+database system and analysis portal for MD simulations of nucleotides [45]. It includes a comprehen-
+sive analysis tool package and a spartan interactive visualization of trajectories by JSmol, limited to
+play and pause. Curated simulations by users can be up- and downloaded. Moreover, a reduced
+version of BIGNASim can be installed as a local platform to serve sensitive or unpublished data via
+Docker images by individual researchers/MD simulation distributers.
+
+The GPCRmd is a comprehensive database and web platform for MD simulations of GPCRs and
+related analysis (http://www.gpcrmd.org/). It uses the MDsrv for interactive visualization of trajec-
+tories with predefined settings to highlight GPCR specific features (Figure 2). Linked to the MDsrv
+are pharmacological, biochemical, or biophysical data like mutations or X-ray crystallography density
+maps and an interactive, topic-specific Flareplot analysis (https://gpcrviz.github.io/flareplot/). The
+platform has a descriptive, easily searchable framework and includes an application for simulation
+setup and deposition, also available with unique idem/DOI. Similar to the Galaxy Project [40],
+GPCRmd is discussed, designed, and influenced by a research community which makes the platform
+frequently used, widely supported, and sustainable.
+
+For research areas and fields where no centralized sharing platforms are available, individual researchers or
+groups can enrich their own websites with embedded simulations (e.g., http://nglviewer.org/mdsrv/
+examples). In contrast to the default settings of centralized options, sharing through decentralized solu-
+tions allows the creator of MD simulations to define study specific pre-settings. Analogously, user-specified
+analysis tools can be combined with interactive visualization in a modular fashion. As an example, iBIOMES
+facilitates searchability and findability by providing a metadata schema for indexing and summarizing MD
+data in a web-searchable representation [46,47]. In summary, decentralized options may be used by scien-
+tists preferring instant, independent and creative solutions for sharing and publication of MD trajectories.
+Moreover, it may be the primary way to share trajectories with collaboration partners fostering critical dis-
+cussions already on an early stage of the project.
+
+
+Concluding Remarks and Future Perspectives
+Visualization and sharing of MD trajectories can be considered initial steps towards a community
+following the FAIR principles. We expect several lines of developments guiding this process, though
+several issues remain to be resolved (see Outstanding Questions). Notably regarding shared visual-
+ization in context of the FAIR principles, the data must be findable and accessible and sufficiently
+interoperable to allow for visualization. Especially, findability suffers from poor description while reus-
+ability suffers from missing verification for completeness and coherence of all MD data. In the broader
+context of making MD simulations reproducible, the interoperability and reusability aspects become
+more important. Currently, there are no widely accepted guidelines for making MD data globally find-
+able or accessible. A comprehensive and constantly developing discussion and description is needed
+to examine if full FAIR compliance can be obtained for all MD data, whether it is needed and how
+much it would cost.
+
+
+
+908   Trends in Biochemical Sciences, November 2019, Vol. 44, No. 11
+                                                                  Name          Topic/ specificity      Access/      Collection   Deposition/   Setup   Analysis   Data       Structural      Trajectory      Searchable   Shareable   Status        Refs            Accessed
+                                                                                                        usage        available    upload                tools      mining     visualization   visualization
+
+                                                                  BIGNASIM      Nucleic acids           Open         Yes          Yes           Yes     Yes        Yes        Yes             Limited         Yes          Yes         Active        [45]            2019/01/
+                                                                                                        access                                                                                                                                                       29
+
+                                                                  Cyclo-lib     Cyclodextrins           Public       Yes          Yes           No      Yes        Yes        Yes             No              Yes          Limited     Active        [68]            2019/01/
+                                                                                                        access                                                                                                                                                       29
+
+                                                                  Dynameomics   native state and (un)   Not stated   Yes          No            No      Yes        Yes        Yes             No              Limited      Limited     Inoperative   [69]            2019/01/
+                                                                                folding dynamics                                                                                                                                                                     29
+
+                                                                  GPCRmd        GPCR                    Open         Yes          Yes           Yes     Yes        Possible   Yes             Yes             Yes          Yes         Active        http://www.     2019/01/
+                                                                                                        access                                                                                                                                       gpcrmd.org      29
+
+                                                                  Mdbox         all                     Open         No           Yes           No      Yes        Possible   No              No              Yes          Yes         Prototype     http://www.     2019/01/
+                                                                                                        access                                                                                                                                       mdbox.org       29
+Trends in Biochemical Sciences, November 2019, Vol. 44, No. 11
+
+
+
+
+                                                                 MemProtMD      Membrane proteins       Open         Yes          No            No      Yes        Possible   Yes             No              Yes          Yes         Active        [70]            2019/01/
+                                                                                                        access                                                                                                                                                       29
+
+                                                                 MoDEL/         Monomeric soluble       Academic     Yes          No            Yes     Yes        No         Yes             No              Yes          Limited     Not           [71]            2019/01/
+                                                                 MDWeb          proteins                use                                                                                                                            updated                       29
+
+                                                                 NMRlipids      Lipid bilayers          Open         Yes          Yes           No      No         Possible   No              No              Yes          Yes         Active        http://www.     2019/01/
+                                                                 Database                               access                                                                                                                                       nmrlipids.fi/   29
+
+                                                                 Table 1. List of (Selected) MD Databases
+909
+                                                                                                                              Trends in Biochemical Sciences
+
+
+Figure 2. Screenshot from GPCRmd (http://www.gpcrmd.org/).
+The interactive visualization is shown on the left panel: in the upper part, the embedded MDsrv is showing the molecular dynamics (MD) trajectory together
+with X-ray crystallography density maps. Below, a G protein-coupled receptor (GPCR)-specific selection mode can be used to visualize GPCR-specific
+structural features. The analysis (right panel) is interconnected to the interactive visualization by the MDsrv. By clicking on a link within the Flareplot
+(right upper part), the hydrogen bonding network between those residues is directly visualized in the MDsrv (left upper part). On the right lower panel,
+the time-dependent development of a distance between two atoms clicked within the MDsrv is plotted.
+
+
+The availability of online tools for interactive visualization can set a novel standard for sharing of MD
+trajectories: first, raw and unprocessed trajectories prior to extensive analysis can be shared within
+workgroups to guide initial research, before sharing the MD outcome with collaborators and a
+broader audience (Figure 1). This development accelerates as user-friendliness and acceptance of
+tools for interactive visualization of MD trajectories improve and scientific data repositories become
+standardized. Consciousness for interactive visualization and sharing options of MD simulations will
+
+
+
+910   Trends in Biochemical Sciences, November 2019, Vol. 44, No. 11
+grow through appropriate workshops, social media discussions, scientific meetings, or simply by suc-
+                                                                                                                                 Outstanding Questions
+cessful integration into centralized MD platforms such as GPCRmd.
+                                                                                                                                 How can we address concerns to
+                                                                                                                                 overcome the common resistance
+We believe a particularly important step will be the integration of interactive visualization of MD
+                                                                                                                                 and reluctance in sharing and pub-
+trajectories into reviewing processes and ultimately journal policies that have a major impact on                                lishing complete data sets of MD
+the research behavior of individual scientists [48]. Recently established journal formats such as                                simulations? Will shared visualiza-
+ActivePapers [49] or the Living Journal of Computational Molecular Science (https://www.                                         tion help in this process?
+livecomsjournal.org/) already foster interactive web-based publications. Nevertheless, journals will
+                                                                                                                                 How could general guidelines and
+gradually adapt their policies with authors increasingly sharing their trajectories and reviewers asking
+                                                                                                                                 standards for sharing of MD simula-
+for interactive visualization. A similar trend can be predicted for funding agencies exploring appro-
+                                                                                                                                 tions be defined and how should
+priate and effective ways to publish MD simulation projects. Specifically, centers for high-perfor-                              they be controlled?
+mance computing would significantly gain visibility if results of funded research projects are pre-
+sented in an interactive and intuitive way. First steps in adopting journal policies for MD are                                  What requirements should scienti-
+presented by https://fairsharing.org or [50].                                                                                    fic journals demand for MD simula-
+                                                                                                                                 tion data? How should they update
+                                                                                                                                 their guidelines?
+The benefits of interactive visualization and sharing of MD trajectories may have to overcome com-
+mon resistance and reluctance in publishing complete data sets, specifically of raw data [41,51].                                What are the (minimum) require-
+We believe that publishing complete datasets and trajectories will help the community to reinterpret                             ments to ensure a rich annotation,
+data, reevaluate outliers, and provide a more realistic picture of the complex and often nonergodic                              description, and verification of
+nature of MD simulations, because we realize that although automatization of setups and analysis of                              completeness and coherence of all
+                                                                                                                                 MD simulation files for full or partial
+MD simulations facilitates application and analysis, it also entails the risk of misinterpretations by
+                                                                                                                                 compliance     with      the     FAIR
+newcomers. Adopting the FAIR principles by the MD simulation community may help to identify
+                                                                                                                                 principles?
+setup issues and false interpretations already during the reviewing process and promote critical
+discussions.                                                                                                                     Should all replicates or only repre-
+                                                                                                                                 sentative MD simulation trajec-
+In summary, visualization and sharing of MD simulations may increase the reliability and understand-                             tories be deposited and published?
+
+ing of this technique and foster a more direct understanding of molecular dynamics. This develop-                                Is deposition of complete MD tra-
+ment will facilitate access and ultimately broaden the outreach of MD simulations in structural                                  jectories required, or will future
+biology, education, and society.                                                                                                 hardware acceleration make (re-)
+                                                                                                                                 production of simulations (poten-
+                                                                                                                                 tially from snapshots) even on
+Acknowledgments
+                                                                                                                                 extended      timescales     more
+This work was supported by the Deutsche Forschungsgemeinschaft (DFG) Sfb740/B6, HI1502/1-2, by                                   feasible?
+Stiftung Charité, Berlin Institute of Health (BIH) and the Einstein Center Digital Future (P.W.H.). The
+RCSB PDB was jointly funded by the National Science Foundation (NSF), the National Institutes of                                 To what extend shall analysis data
+                                                                                                                                 become      standardized       and
+Health (NIH), and the US Department of Energy (NSF DBI-1338415; PI: S.K. Burley). We further would
+                                                                                                                                 visualized?
+like to thank the reviewer and especially the editor Sannie Culbertson for their helpful comments and
+suggestions.                                                                                                                     How should MD-derived transient
+                                                                                                                                 state models, transition paths, or
+                                                                                                                                 binding energies requiring elabo-
+References                                                                                                                       rate curation be published and
+ 1. Dror, R.O. et al. (2012) Biomolecular simulation: a          8. Liu, X. et al. (2019) Structural insights into the process   shared?
+    computational microscope for molecular biology.                 of GPCR-G protein complex formation. Cell 177,
+    Annu. Rev. Biophys. 41, 429–452                                 1243–1251.e12                                                Would it be helpful to link raw data
+ 2. Perilla, J.R. et al. (2015) Molecular dynamics               9. Levitt, M. (2014) Birth and future of multiscale
+                                                                                                                                 and protocols of integrative/hybrid
+    simulations of large macromolecular complexes.                  modeling for macromolecular systems (Nobel
+    Curr. Opin. Struct. Biol. 31, 64–74                             Lecture). Angew. Chemie Int. Ed. 53, 10006–10018             method models from MD simula-
+ 3. Elgeti, M. et al. (2013) Precision vs flexibility in GPCR   10. Vlachakis, D. et al. (2014) Current state-of-the-art         tions to the wwPDB?
+    signaling. J. Am. Chem. Soc. 135, 12305–12312                   molecular dynamics methods and applications. Adv.
+ 4. Manglik, A. and Kobilka, B. (2014) The role of protein          Protein Chem. Struct. Biol. 94, 269–313                      Should MD data in general be
+    dynamics in GPCR function: insights from the b2AR           11. Lee, J. et al. (2016) CHARMM-GUI Input Generator             curated and archived like experi-
+    and rhodopsin. Curr. Opin. Cell Biol. 27, 136–143               for NAMD, GROMACS, AMBER, OpenMM, and
+                                                                                                                                 mentally derived structural data by
+ 5. Rose, A.S. et al. (2014) Position of transmembrane              CHARMM/OpenMM simulations using the
+    helix 6 determines receptor G protein coupling                  CHARMM36 additive force field. J. Chem. Theory               the wwPDB? Who or which organi-
+    specificity. J. Am. Chem. Soc. 136, 11244–11247                 Comput. 12, 405–413                                          zation will be responsible for that
+ 6. Velgy, N. et al. (2018) GPCRs: What can we learn from       12. Doerr, S. et al. (2017) High-throughput automated            effort?
+    molecular dynamics simulations? In Methods in                   preparation and simulation of membrane proteins
+    Molecular Biology, pp. 133–158, Humana Press                    with HTMD. J. Chem. Theory Comput. 13, 4003–4011             Are general data sharing platforms
+ 7. Wingler, L.M. et al. (2019) Angiotensin analogs with        13. Rose, A.S. and Hildebrand, P.W. (2015) NGL Viewer: a
+                                                                                                                                 sufficient for deposition and
+    divergent bias stabilize distinct receptor                      web application for molecular visualization. Nucleic
+    conformations. Cell 176, 468–478.e11                            Acids Res. 43, W576–W579                                     sharing of MD simulations or are
+
+
+
+
+                                                                                            Trends in Biochemical Sciences, November 2019, Vol. 44, No. 11           911
+14. Rose, A.S. et al. (2018) NGL viewer: web-based                    computational science. Curr. Opin. Chem. Eng. 23,
+    molecular graphics for large complexes.                           1–13                                                        special-purpose MD platforms,
+    Bioinformatics 34, 3755–3758                                39.   Markosian, C. et al. (2018) Analysis of impact metrics      centralized or distributed, a more
+15. Crouser, R.J. et al. (2017) Toward theoretical                    for the Protein Data Bank. Sci. Data 5, 180212
+                                                                                                                                  appropriate solution?
+    techniques for measuring the use of human effort in         40.   Afgan, E. et al. (2018) The Galaxy platform for
+    visual analytic systems. IEEE Trans. Vis. Comput.                 accessible, reproducible and collaborative
+                                                                                                                                  Where and how should scientists
+    Graph. 23, 121–130                                                biomedical analyses: 2018 update. Nucleic Acids
+16. Keim, D.A. et al. (2009) Visual analytics: scope and              Res. 46, W537–W544                                          deposit their simulation data at
+    challenges. In Visual Data Mining, pp. 76–90,               41.   Martens, L. and Vizcaı́no, J.A. (2017) A golden age for     the moment?
+    Springer                                                          working with public proteomics data. Trends
+17. Dasgupta, A. et al. (2017) Familiarity vs trust: a                Biochem. Sci. 42, 333–341                                   How can we handle large data stor-
+    comparative study of domain scientists’ trust in visual     42.   Anderson, W.P. (2017) A global coalition to sustain         age      transfer      bandwidth
+    analytics and conventional analysis methods. IEEE                 core data. Nature 543, 179
+                                                                                                                                  requirements?
+    Trans. Vis. Comput. Graph. 23, 271–280                      43.   Sali, A. et al. (2015) Outcome of the first wwPDB
+18. Hirst, J.D. et al. (2014) Molecular simulations and               hybrid/integrative methods task force workshop.
+                                                                                                                                  Will deposition of MD simulation
+    visualization: introduction and overview. Faraday                 Structure 23, 1156–1167
+    Discuss. 169, 9–22                                          44.   Read, R.J. et al. (2011) A new generation of                data at scientific data sharing re-
+19. Humphrey, W. et al. (1996) VMD: visual molecular                  crystallographic validation tools for the Protein Data      sources in combination with inter-
+    dynamics. J. Mol. Graph. 14, 33–38                                Bank. Structure 19, 1395–1412                               active visualization prove useful;
+20. Pettersen, E.F. et al. (2004) UCSF Chimera? A               45.   Hospital, A. et al. (2016) BIGNASim: a NoSQL
+                                                                                                                                  for example, for interdisciplinary
+    visualization system for exploratory research and                 database structure and analysis portal for nucleic
+    analysis. J. Comput. Chem. 25, 1605–1612                          acids simulation data. Nucleic Acids Res. 44, D272–         research, reusage, teaching, and
+21. Schroeder, R. (2018) The internet in everyday life II. In         D278                                                        publishing?
+    Social Theory after the Internet, pp. 101–125, UCL          46.   Thibault, J.C. et al. (2014) iBIOMES Lite: summarizing
+    Press                                                             biomolecular simulation data in limited settings.           Which features should the next
+22. Abriata, L. (2017) Web apps come of age for                       J. Chem. Inf. Model. 54, 1810–1819                          generation of tools for interactive
+    molecular sciences. Informatics 4, 28                       47.   Thibault, J.C. et al. (2014) Data model, dictionaries,
+                                                                                                                                  visualization of MD trajectories
+23. Abriata, L.A. et al. (2018) Augmenting research,                  and desiderata for biomolecular simulation data
+    education, and outreach with client-side web                      indexing and sharing. J. Cheminform. 6, 4                   integrate to improve usefulness?
+    programming. Trends Biotechnol. 36, 473–476                 48.   Stodden, V. et al. (2018) An empirical analysis of
+24. Berman, H. et al. (2003) Announcing the worldwide                 journal policy effectiveness for computational
+    Protein Data Bank. Nat. Struct. Mol. Biol. 10, 980                reproducibility. Proc. Natl. Acad. Sci. U. S. A. 115,
+25. Berman, H.M. (2000) The Protein Data Bank. Nucleic                2584–2589
+    Acids Res. 28, 235–242                                      49.   Hinsen, K. (2015) ActivePapers: a platform for
+26. Burley, S.K. et al. (2019) RCSB Protein Data Bank:                publishing and archiving computer-aided research.
+    biological macromolecular structures enabling                     F1000Research 3, 289
+    research and education in fundamental biology,              50.   Elofsson, A. et al. (2019) Ten simple rules on how to
+    biomedicine, biotechnology and energy. Nucleic                    create open access and reproducible molecular
+    Acids Res. 47, D464–D474                                          simulations of biological systems. PLoS Comput.
+27. Berman, H.M. et al. (2012) The Protein Data Bank at               Biol. 15, e1006649
+    40: reflecting on the past to prepare for the future.       51.   Longo, D.L. and Drazen, J.M. (2016) Data sharing.
+    Structure 20, 391–396                                             N. Engl. J. Med. 374, 276–277
+28. Mwalongo, F. et al. (2016) State-of-the-art report in       52.   Wilkinson, M.D. et al. (2016) The FAIR guiding
+    web-based visualization. Comput. Graph. Forum 35,                 principles for scientific data management and
+    553–575                                                           stewardship. Sci. Data 3, 160018
+29. Mwalongo, F. et al. (2016) GPU-based remote                 53.   Phillips, J.C. et al. (2005) Scalable molecular dynamics
+    visualization of dynamic molecular data on the web.               with NAMD. J. Comput. Chem. 26, 1781–1802
+    Graph. Models 88, 57–65                                     54.   Bowers, K.J. et al. (2006) Molecular dynamics –
+30. Grottel, S. et al. (2015) MegaMol – a prototyping                 scalable algorithms for molecular dynamics
+    framework for particle-based visualization. IEEE                  simulations on commodity clusters. In Proceedings of
+    Trans. Vis. Comput. Graph. 21, 201–214                            the 2006 ACM/IEEE conference on Supercomputing
+31. Tiemann, J.K.S. et al. (2017) MDsrv: viewing and                  - SC ’06, p. 84, IEEE
+    sharing molecular dynamics simulations on the web.          55.   Arnold, A. et al. (2013) ESPResSo 3.1: molecular
+    Nat. Methods 14, 1123–1124                                        dynamics software for coarse-grained models. In
+32. McGibbon, R.T. et al. (2015) MDTraj: a modern open                Lecture Notes in Computational Science and
+    library for the analysis of molecular dynamics                    Engineering 89 LNCSE, pp. 1–23, Springer
+    trajectories. Biophys. J. 109, 1528–1532                    56.   Lotz, S.D. and Dickson, A. (2018) Unbiased molecular
+33. Michaud-Agrawal, N. et al. (2011) MDAnalysis: a                   dynamics of 11 min timescale drug unbinding reveals
+    toolkit for the analysis of molecular dynamics                    transition state stabilizing interactions. J. Am. Chem.
+    simulations. J. Comput. Chem. 32, 2319–2327                       Soc. 140, 618–628
+34. Carrillo-Tripp, M. et al. (2018) HTMoL: full-stack          57.   Editorial. (2018) Data sharing and the future of
+    solution for remote access, visualization, and analysis           science. Nat. Commun. 9, 2817
+    of molecular dynamics trajectory data. J. Comput.           58.   Crosas, M. (2011) The Dataverse Network: an open-
+    Aided Mol. Des. 32, 869–876                                       source application for sharing, discovering and
+35. Berendsen, H.J.C. et al. (1995) GROMACS: a                        preserving data. D-Lib Mag. 17, https://doi.org/10.
+    message-passing parallel molecular dynamics                       1045/january2011-crosas
+    implementation. Comput. Phys. Commun. 91, 43–56             59.   Klas, W. and Greenberg, J. (2008) Metadata for
+36. Brooks, B.R. et al. (2009) CHARMM: The biomolecular               Semantic and Social Applications DC-2008 Berlin,
+    simulation program. J. Comput. Chem. 30, 1545–                    Göttingen University Press
+    1614                                                        60.   Data, S. (2018) Scientific Data Recommended
+37. Case, D.A. et al. (2005) The Amber biomolecular                   Repositories. https://doi.org/10.6084/m9.figshare.
+    simulation programs. J. Comput. Chem. 26, 1668–                   1434640.v12
+    1688                                                        61.   Hanson, R.M. (2010) Jmol – a paradigm shift in
+38. Dubbeldam, D. et al. (2019) Highlights of (bio-)                  crystallographic visualization. J. Appl. Crystallogr. 43,
+    chemical tools and visualization software for                     1250–1260
+
+
+
+
+912    Trends in Biochemical Sciences, November 2019, Vol. 44, No. 11
+62. Hartshorn, M.J. (2002) AstexViewer: a visualisation      69. van der Kamp, M.W. et al. (2010) Dynameomics: a
+    aid for structure-based drug design. J. Comput.              comprehensive database of protein dynamics.
+    Aided Mol. Des. 16, 871–881                                  Structure 18, 423–435
+63. Rego, N. and Koes, D. (2015) 3Dmol.js: molecular         70. Newport, T.D. et al. (2019) The MemProtMD
+    visualization with WebGL. Bioinformatics 31, 1322–           database: a resource for membrane-embedded
+    1324                                                         protein structures and their lipid interactions. Nucleic
+64. Bekker, G.-J. et al. (2016) Molmil: a molecular viewer       Acids Res. 47, D390–D397
+    for the PDB and beyond. J. Cheminform. 8, 42             71. Meyer, T. et al. (2010) MoDEL (molecular dynamics
+65. Sehnal, D. et al. (2017) LiteMol suite: interactive          extended library): a database of atomistic molecular
+    web-based visualization of large-scale                       dynamics trajectories. Structure 18, 1399–1409
+    macromolecular structure data. Nat. Methods 14,          72. Plesser, H.E. (2018) Reproducibility vs. replicability: a
+    1121–1122                                                    brief history of a confused terminology. Front.
+66. Yuan, S. et al. (2017) Implementing WebGL and                Neuroinform. 11, 76
+    HTML5 in macromolecular visualization and modern         73. Barba, L.A. (2018) Terminologies for reproducible
+    computer-aided drug design. Trends Biotechnol. 35,           research. https://arxiv.org/pdf/1802.03311.pdf
+    559–571                                                  74. Wang, J. et al. (2018) iCn3D, a web-based 3D Viewer
+67. Sehnal, D. et al. (2018) Mol*: towards a common              for the visualization of biomolecular structure and
+    library and tools for web molecular graphics. In             sequence annotation. bioRxiv. https://doi.org/10.
+    Proceedings of the Workshop on Molecular                     1101/501692
+    Graphics and Visual Analysis of Molecular Data           75. Shi, M. et al. (2017) Web3DMol: interactive protein
+    (MolVA ’18), pp. 29–33, Eurographics Association             structure visualization based on WebGL. Nucleic
+    Aire-la-Ville                                                Acids Res. 45, W523–W527
+68. Mixcoha, E. et al. (2016) Cyclo-lib: a database of       76. Guixà-González, R. et al. (2017) Membrane
+    computational molecular dynamics simulations of              cholesterol access into a G-protein-coupled
+    cyclodextrins. Bioinformatics 32, 3371–3373                  receptor. Nat. Commun. 8, 14505
+
+
+
+
+                                                                                        Trends in Biochemical Sciences, November 2019, Vol. 44, No. 11   913
+

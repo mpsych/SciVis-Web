@@ -1,0 +1,476 @@
+      WebVR based Interactive Visualization of Open Health Data
+                    Hayet Hadjar                                           Abdelkrim Meziane                                        Rachid Gherbi
+       Research Centre for Scientific and                          Research Centre for Scientific and                          Univesity of Paris-Saclay
+        Technical Information (CERIST)                              Technical Information (CERIST)                                  Orsay, France
+               Algiers, Algeria                                            Algiers, Algeria                                    rachid.gherbi@u-psud.fr
+              hhadjar@cerist.dz                                          ameziane@cerist.dz
+
+                                                    Insaf Setitra                                       Noureddine Aouaa
+                                     Research Centre for Scientific and                          Research Centre for Scientific and
+                                      Technical Information (CERIST)                              Technical Information (CERIST)
+                                             Algiers, Algeria                                            Algiers, Algeria
+                                            isetitra@cerist.dz                                          naouaa@cerist.dz
+ABSTRACT                                                                                         and analyze complex and dynamic datasets. This can make a big dif-
+Visualization and manipulation of complex and multivariate data                                  ference in how we experience data and make decisions that impact
+in virtual worlds is important for both holders of these data and                                humane based analytics and also businesses across industries.
+for their users. Indeed, Virtual Reality helps to make multidimen-                                   Indeed, VR’s ability to immerse in new environments opens new
+sional data more intelligible and to bring useful information and                                avenues of research in the field of data visualization (dataviz). It
+knowledge. Offering Virtual Reality to browsers, also known as                                   is âĂĲintrinsically well suited to human perception, intuition and
+Web Virtual Reality, moreover, simplifies access, multi sharing and                              pattern recognition. It allows to better perceive some data difficult
+manipulation of complex and multivariate data. In this paper, we                                 to understand with traditional visualization techniquesâĂİ details
+propose a new system for exploring and visualizing multidimen-                                   George Djrogovski, a renowned astrophysicist and founder of Virtu-
+sional data in WebVR. The system implements three methods that                                   alitics. 2D technology limits the ability to visualize the relationships
+we compare based upon several criteria. As the area of application,                              and interactions of many variables, the graph that can be under-
+we use health data that we collect from open data portals.                                       stood with the stereo connected to the head is about three times
+                                                                                                 larger than the 2D graph for a given error rate, “The immersive as-
+CCS CONCEPTS                                                                                     pect gives the possibility of exploring huge data in a synthetic way
+                                                                                                 and so constitute the strong points of our system, because it offers
+• Human-centered computing → Visualization systems and
+                                                                                                 a global point of view of the data subjacent structure”[6]. VR can
+tools; • Applied computing → Health informatics;
+                                                                                                 also help visualizing web data since the evolution of data mining
+                                                                                                 has arrived to browsers, and opened a wide range of possibilities.
+KEYWORDS                                                                                         Nowadays, many companies such as Facebook, HTC and Samsung
+Interactive visualization, WebVR, Open data, Health data, Virtual                                are investing billions of dollars in the production of VR headsets.
+Reality, Data Science, Dataviz.                                                                      Among tools that help visualizing web data in VR stands WebVR.
+ACM Reference Format:                                                                            WebVR is an open source JavaScript API for the use of virtual
+Hayet Hadjar, Abdelkrim Meziane, Rachid Gherbi, Insaf Setitra, and Noured-                       reality applications on web. It was created in 2014 by actors from
+dine Aouaa. 2018. WebVR based Interactive Visualization of Open Health                           the Mozilla community and lead to a complete framework for web
+Data. In International conference on Web Studies (WS.2 2018), October 3–5,                       dataviz called (A-Frame). The WebVR API provides input/output
+2018, Paris, France. ACM, New York, NY, USA, 8 pages. https://doi.org/10.                        for VR head mounted displays (HMDs), such as the Oculus Rift,
+1145/3240431.3240442                                                                             HTC Vive, Samsung Gear VR, or Google Cardboard, in a browser.
+                                                                                                     Data analysis of large clusters can help decision makers identify
+1     INTRODUCTION                                                                               new models and understand complex concepts. Thus, when using
+                                                                                                 dataviz tools such as WebVR, the end user can easily penetrate
+Immersive Analytics (IA) is an emerging research domain that in-
+                                                                                                 deeper into specific areas and quickly access a global image. An
+vestigates the use of novel display and interface technologies in
+                                                                                                 illustration of our dataviz VR system is presented in Figure 1.
+analytical reasoning and decision making [3]. In such evolution Vir-
+                                                                                                     As part of the research projects of the DSISM labs of the Research
+tual Reality (VR) takes place and proposes new ways of visualizing
+                                                                                                 Center on Scientific and Technical Information (CERIST) around
+data. VR technologies are suitable to explore new ways to visualize
+                                                                                                 the VR for health, we focus this paper on visualization of Open
+                                                                                                 health Data using WebVR.
+ACM acknowledges that this contribution was authored or co-authored by an employee,
+contractor or affiliate of a national government. As such, the Government retains a                  The main contributions of this research are:
+nonexclusive, royalty-free right to publish or reproduce this article, or to allow others
+to do so, for Government purposes only.                                                             (1) Using WebVR to improve understanding and interpreting a
+WS.2 2018, October 3–5, 2018, Paris, France                                                             multidimensional dataset in an efficient way, by demonstrat-
+© 2018 Association for Computing Machinery.                                                             ing graphical results in VR space. Generated models can be
+ACM ISBN 978-1-4503-6438-6/18/10. . . $15.00
+https://doi.org/10.1145/3240431.3240442                                                                 used for future projects.
+                                                                                            56
+WebVR based Interactive Visualization of Open Health Data                                                WS.2 2018, October 3–5, 2018, Paris, France
+
+
+
+
+                                                                               Figure 2: Navigating on Mars using VR. Top: the panoramic
+                                                                               mosaic of the Curiosity Mars rover images used in this ex-
+                                                                               periment, with some of the features of interest indicated
+                                                                               with the arrows. Bottom left: an example of a map with the
+Figure 1: An illustration of the end userâĂŹs interaction                      estimated relative positions of different features. Bottom
+with dataviz in VR system                                                      right: a schematic illustration of the geometry used in the
+                                                                               computation of distance and angle errors [5]
+    (2) Presenting analysis of health data using VR which leads to a
+        rapid decision-making, and more efficiency in health sector.              The Styrian Diversity Visualization Project [1] has similar goals
+    (3) Comparing the different proposed techniques of visualizing             to our project: “WebVR based Interactive Visualization of Open
+        health data.                                                           Health Data”,i.e. the objective is: to promote open data. In [5] statis-
+   The remaining of this paper is organized as follows. We detail in           tical open data are loaded in the form of CSV files, the D3.js library
+“Section 2” the advantages of using a WebVR system in dataviz, in              is used to graphically output the data that is stored in memory of a
+“Section 3” we present state of art of dataviz, and explore primarily          web browser.
+dataviz tools in VR systems with comparisons of our system to                     B3.js is a library similar to D3.js, and is used for creating interac-
+each presented one. “Section 4” is dedicated to describe our chosen            tive VR datavizs on a web browser that can be viewed through the
+methods for dataviz and compared them. We conclude our work in                 Oculus Rift and manipulated with the Leap Motion controller[11].
+“Section 5” and depict therein some perspectives.                              Due to this advantage, D3.js can be replaced by B3.js in WebVR
+                                                                               implementation.
+2    ADVANTAGES OF USING A WEBVR                                                  Also in [5] A-Frame is used for exploring data in Mixed Reality
+     SYSTEM IN DATAVIZ                                                         (MR) system.
+                                                                                  The prototype application of “Synthetic Visualizations in Web-
+Building interactive visualizations on the web by developers allows            based Mixed Reality” [17] consists of a web-based system that uses
+targeting a wider audience, Using WebVR technologies for that has              A-Frame for depicting in situ 3D visualizations. A similar method
+the following advantages:                                                      is proposed in our approach (A-Frame with d3.js), the difference is
+    (1) WebVR supports a variety of popular libraries such as D3.js            the use of a VR system in our approach while [11] use an MR/AR
+        and Ggplot2, for data binding and manipulation with the                system (Augmented and Mixed Reality).
+        Leap Motion controller.                                                   The system structure of data exchange in âĂĲResearch and
+    (2) WebVR allows to display a graphical result in a variety of             Application of the 3D Virtual Community Based on WEBVR and
+        devices, such as Smartphone and Head Mounted Displays                  RIAâĂİ is presented in Figure 3.
+        (HMDs).
+    (3) With 360 degree of space, it is possible to analyze multidi-           3.1     Dataviz tools in VR system
+        mensional data, display and interpret a large spheres or data          There is a massive choice of tools available for data analytics in VR
+        points and see more relationships in data such as data-audio-          systems, here are some examples:
+        relationships.
+    (4) It is also possible to interact and collaborate with other net-           3.1.1 Iviz. Iviz is a Unity3D-based data visualization proposed
+        worked users, in the same space or chart. Thanks to WebVR              by C. Donalek[5]. iViz has full support for the Leap Motion con-
+        technology.                                                            troller and the Oculus Rift headset and allows multi-user collab-
+                                                                               orative data exploration. Holders of Pie explored ways in which
+3    RELATED WORKS                                                             they could visualize big data in VR1 , rendering data points onto a
+                                                                               spiral which arched over the user. Authors also used handheld VR
+Powerful Virtual Reality Platforms for visual data Analysis and
+                                                                               peripheral controllers to interact with the data, by changing the
+multidimensional collaborative exploration go live and a lot of
+                                                                               virtual dimension properties of both the spiral and data points.
+researches are in progress.
+                                                                                  In Figure 4 an avatar near the top of the image represents a stu-
+   Currently, scientists studying Mars use various image mosaics
+                                                                               dent, exploring data in a virtual world based on OpenSim vCaltech.
+(See Figure 2) in the VR immersive environment to better under-
+stand the terrain and estimate relative positions and distances [5].           1 http://www.mastersofpie.com
+
+                                                                          57
+WS.2 2018, October 3–5, 2018, Paris, France                                                                                          H. Hadjar et al.
+
+
+
+
+                                                                                 Figure 5: Collaborative visualization of Data with Virtuali-
+                                                                                 tics
+
+
+
+
+Figure 3: The System Structure of the Network VR Based on
+Web-3D [23]
+
+                                                                                 Figure 6: Cartographic mode with animation of the evolu-
+                                                                                 tion of the data on a time scale in DataSpotR
+
+
+
+                                                                                    Within the Immersive Virtualitics Platform VIP (See Figure 5),
+                                                                                 Virtualitics offers the Shared Virtual Office (SVO). SVO is a col-
+                                                                                 laborative and fully customizable shared space for building VR
+                                                                                 dashboards, analyzing data and presenting and discuss ideas. VIP
+                                                                                 is currently in private closed Beta.
+
+                                                                                    3.1.3 Data SpotR. Data SpotR created in 2016 is a 3D and VR
+                                                                                 visualization tool released from B-com labs. It uses 3D and virtual
+                                                                                 reality to detect undetectable 2D data. This software allows to for-
+                Figure 4: User interactions with Iviz
+                                                                                 mat large volumes of data in order to visualize them in several
+                                                                                 modes of representation on 2D plans and 3D. Data SpotR ensures
+                                                                                 the concrete and real materialization of data. The tool relies on
+In the XYZ different data are mapped with values and parameters                  powerful and extensible proprietary real-time data injection tech-
+(sizes, point shapes, colors and transparencies), the representation             nology. DataspotR is designed on the best real-time visualization
+of the data is in 8 visualization dimensions. There is also a possibility        engine used in the video game industry (Unity3D™).
+to integrate external web links into the data point.                                A Cartographic mode (See Figure 6) was used to identify the
+                                                                                 best equipped IPTV countries in the world. The histogram mode
+    3.1.2 Virtualitics. Virtualitics is the first platform to merge Ar-
+                                                                                 provided an evolution of this market over a period chosen in a single
+tificial Intelligence, Big Data and Virtual/Augmented Reality. This
+                                                                                 view. And a cloud of points pointed to trends that were difficult to
+company has made the immersive, collaborative data analysis, since
+                                                                                 detect in the two previous modes. The transition from one graphic
+2016, in California (USA)2 . In Virtualtics data can be explored with
+                                                                                 representation model to another is done with a mouse click from
+10 dimensions of visual analysis.
+                                                                                 an intuitive interface that also allows a selection of duration and
+                                                                                 the switch from 2D to 3D. A simple approach of the tool which
+2 https://www.virtualitics.com                                                   seemed to us more functional and intuitive while ensuring renders
+                                                                            58
+WebVR based Interactive Visualization of Open Health Data                                                       WS.2 2018, October 3–5, 2018, Paris, France
+
+
+without latency. The tool is running on a simple laptop PC with a
+basic configuration.
+   3.1.4 NeuroCave. NeuroCave is an open source web-based im-
+mersive visual analytics tool, proposed by Johnson J.G. Keiriz[10],
+for exploring the human connectome datasets. Brain researchers
+can interact in different environments (standard desktop, portable
+VR headsets). NeuroCave offers synchronized comparison of dif-
+ferent connectomes (brain networks) and layouts. The tool enables
+to perform the exploration of the intrinsic geometry of the brain,
+users can switch quickly and explore all the regions of the brain,
+with a easy interface to use, including stereoscopy for better depth
+perception. NeuroCave provides new functionality to support a
+range of analysis tasks not available in other visualization software
+platforms.
+   NeuroCave uses the force directed edge bundling (FDEB) algo-
+rithm to group edges going in the same direction[8].Demos and
+tests of the tool are available3 , as well as the source code4 .                                    Figure 7: Exemple of 4D scatter plot
+
+4    OUR IMPLEMENTATION AND
+     FUNCTIONALITIES                                                             virtual space [12]. Clusters extracted via the Louvain algorithm are
+                                                                                 used for coloring data points.
+Our goal is to propose new dataviz techniques, that cannot be ac-                   The visualizations in WebVR of data with (xyz position, Val) take
+quired with the traditional 2D visualization process. “Shneiderman’s             different forms:
+Mantra” [18] summarizes the process of interactive visualization
+                                                                                     (1) 3D scatter plot.
+by: "Overview first, Zoom and Filter, then Details-on-Demand.âĂİ.
+                                                                                     (2) 4D scatter plot (See Figure 7).
+A good visualization system then, must be able to:
+                                                                                     (3) 3D charts and bar plots.
+   (1) Present a complete view of a dataset (Overview).                              (4) 3D Scatter plot with surface.
+   (2) Offer the possibility to its users to be able to zoom on the                  (5) 3D Object Property Space.
+        data of interest.
+   (3) Filter the uninteresting data of all those to visualize
+                                                                                 4.1        Methods
+   (4) Give the complete detail of each element to the user request
+       (Details-on-Demand)                                                       To explore data with WebVR, we describe three methods with A-
+                                                                                 Frame framework [13]:
+   For a visualization to be considered interactive, it must meet two
+criteria: “Human input” and “Response time”.                                         4.1.1 Method 1: “A-Frame and D3.js”. Since A-Frame is used
+   A-Frame is a tag-based abstraction layer built on top of WebVR                with DOM elements, D3’s selection API can be used to generate
+and JavaScript and is used to create virtual reality environments                and modify 3D elements, including the VR friendly “fusecursor” as
+and applications that run in a web browser [20], A-Frame added                   if it was SVG.
+interactivity by “Raycasting”, it gives us the ability to detect when                Data are loaded as multiple individual CSV files, which are then
+an object is “gazed at” or “clicked on”.                                         parsed and held in memory in the web browser. Graphical output
+   A-Frame can also animate Objects, for example: With “A-Frame-                 is generated using the D3.js library [2].
+animation”, a sphere can be rotated by 360 degrees on the Y axis.                    Interactive visualizations of data are done using the library D3.js.
+   Our web application uses A-Frame with solely open health data,                In a first experiment, we use the dataset of disease_democ.csv.
+which is freely available via the open data portals [16]. In our                     Data illustrating a theory linking the emergence of democratic
+case the data consist of characteristic vectors with N independent               political systems and reduced rates of infectious diseases and epi-
+measurements, the N-dimensional data space takes the following                   demics, analytical comparison among 170 countries in the global
+form: in the visualization space, each data dimension is mapped to               network of infectious diseases and epidemics. The construction
+one axis (X or Y or Z) with:                                                     of the VR scene is done using A-Frame and the D3 library on dis-
+                                                                                 ease_democ data. The user can display details information by flying
+                         Data = {x1, x2, x3, . . . xn}               (1)         over these points in a 3D space, using the mouse. Each point rep-
+   Visualization space= { XYZ positions, point sizes, shapes, RGBA               resents Income_group or a categorical variable for each country,
+or HSV colors, textures, glyphs, point orientations, animations, . . . }.        with detail of democratization score (See Figure 85 ).
+   The choice of the efficient mapping algorithm is critical, t-SNE                  (1) High income, non-OECD: orange.
+algorithm [22] can be used for finding a 3D manifold rather than                     (2) High income, OECD: light blue.
+a 2D one, XOR algorithm is used to calculate the distance of the                     (3) Low income: purple.
+3 https://creativecodinglab.github.io/NeuroCave/
+                                                                                     (4) Low middle income: dark blue.
+4 https://github.com/CreativeCodingLab/NeuroCave                                 5 For   a demo visit: http://193.194.91.152/test/disease_contry.html
+                                                                            59
+WS.2 2018, October 3–5, 2018, Paris, France                                                                                             H. Hadjar et al.
+
+
+
+Figure 8: Visualization database “Disease democ” with “A-                            Figure 10: Visualization Database Fisher’s Iris with A-Frame
+Frame and D3.js”                                                                     and R(Shiny + ggplot2) using HTC-Vive’s vive controller
+
+
+
+
+                                                                                     Figure 11: Visualization Database Fisher’s Iris with A-Frame
+                                                                                     and R(Shiny + ggplot2) Oculus Rift’s hand-controller
+Figure 9: Visualization database “Pediatrician Timeout”
+with “A-Frame and D3.js”
+
+
+
+
+                                                                                        Make R data available in Web-based virtual reality experiences
+   (5) Upper middle income: light green.                                             for immersive, cross-platform datavizs. Includes the “gg-aframe”
+   A second evaluation was done using the database “Pediatrician                     JavaScript package for a Grammar of Graphics declarative HTML
+Timeout.csv”, file imported from Data.gouv.fr [4].                                   syntax to create 3-dimensional visualizations [15]. The Shiny pack-
+   In Figure 9 we show data on-screen 3D bar chart, each bar chart                   age of R software allows users to develop interactive R applications
+corresponds to the value per city of the waiting time for pediatrician               on the web.
+appointments, we have used a vertical orientation in space of 360                       Ggplot2 is a system for “declaratively” creating graphics, based
+degree6 .                                                                            on “The Grammar of Graphics”. User provide the data, tell “ggplot2”
+   It looks like a 2D visualization, but the advantage here is the                   how to map variables to aesthetics, what graphical primitives to
+360° space, where we explore a huge amount of data. More 3D bars                     use, and “ggplot2” takes care of the details [21].
+compared to a classic visualization.                                                    In our interactive system dataviz (See Figure 10), we can easily
+   3D bar charts are among the most commonly used 3D visual-                         load CSV JSON or RDS file of open data portals in webapp, and build
+izations and are supported in most visualization and spreadsheet                     histograms, 3D scatter plots by dragging variable name cards and
+software [9].                                                                        dropping them onto the desired axes using vive controller of HTC-
+   The advantage of this method is that it can be used in VR/AR/MR                   Vive. The end user can interact using hand-controller of Oculus
+system.                                                                              Rift, and perform the same previously mentioned manipulations
+                                                                                     (See Figure 11).
+   4.1.2 Method 2: “A-Frame and R (Shiny, Ggplot2)”. The goal is                        The advantage of this method is that with shiny of R package,
+to allow the viewer to have a better sense for 3D data and interact                  the end users can easily load different datasets, the benefit that
+with the data directly through the gaze and head and movements                       emerges from using ggplot2 for network visualization is also the
+of the hands.                                                                        speed at which it can plot fairly large networks [19]. Finally, it
+6 For   a demo visit: http://193.194.91.152/test/d3_Pediatrician_Timeout.html        allows deploying the IOS application on the Shinyapps.io server.
+                                                                                60
+WebVR based Interactive Visualization of Open Health Data                                                            WS.2 2018, October 3–5, 2018, Paris, France
+
+
+Links of our application deployment can be found in Shinyapps.io7 ,
+in local server8 , and video demo9                                                            Figure 12: Visualization database with “A-Frame and
+                                                                                              Node.js” using avatars
+   4.1.3 Method 3: “A-Frame and Node.js”. Node.js is a free soft-
+ware and event platform in JavaScript oriented to network applica-
+tions that must be able to scale. It uses the virtual machine V8 and
+implements under the MIT license CommonJS specifications.
+   Among the native modules of Node.js, there is http, which allows
+the development of HTTP server. It is possible to do without web
+servers such as Nginx or Apache when deploying sites and web
+applications with Node.js.
+   Concretely, Node.js is a low-level environment allowing the
+execution of JavaScript on the server side. Node.js is becoming
+more and more popular as a server platform, it is used by Groupon,
+Vivaldi, SAP, LinkedIn, Microsoft, Yahoo !, Walmart, Rakuten, Sage
+and PayPal.
+   Node.js can be compared to Python, Ruby, Java, PHP. There is a
+multitude of such comparisons in the web. Among the advantages
+of Node.js we highlight:
+    (1)   Free software (MIT license).
+    (2)   No-blocking model.
+    (3)   Very active community.
+    (4)   Integrated package system (NPM).
+    (5)   Large companies use it.
+    The most important advantage of this method is that it allows
+synchronous or real-time communication in our application, using
+its socket.io library, which helps us to use Websockets easily. The
+socket.io library is based on several synchronous communication
+techniques such as WebSocket, Ajax Long Polling. . . , these tech-
+niques allow us to leave some kind of “pipe” communication open                               (only one user logged in the space), and display the color scale with
+between the client and the server.                                                            detail of variables near the graph.
+                                                                                                 In (b), there are three users connected in this space, label or
+   How it works: The operations performed at the server are:                                  name of user is displayed with avatars, the avatar was modeled
+    (1) Extraction and data processing of the file loaded by the user.                        with Blender (Free 3D software) and imported to the scene.
+    (2) Creation and initialization of objects for each of the file                              This method uses the A-Frame library for creating 3D objects;
+        (tuple) records which contains the following attributes: X, Y,                        large file visualizations produce several objects that may require a
+        Z, size, and color.                                                                   good graphics card to avoid bugs. This technique is more detailed
+    (3) Creation of a menu for the graph from the columns of the                              in [7].
+        file.                                                                                    We summarize the operations of the system in the following
+    (4) Create a new object for each new connected user that con-                             diagram (Figure 13).
+        tains the attributes: Position and rotation.
+    (5) Updating objects after each action received from the user
+                                                                                              4.2    Comparison of methods
+        and sending new changes to users.
+    (6)                                                                                       Table 1 is a comparative table of methods according to certain
+                                                                                              criteria, to give a general vision to the developers and to help make
+   The operations at the user level are:
+                                                                                              the choice according to existing skills.
+    (1) Update of the objects (points of the graphs and user) after                              Using modern hardware is important for effective large data visu-
+        each change from the data sent by the server.                                         alization, the GPU and graphics memory offer the best performance
+    (2) Move the user and change data of the graph objects (coordi-                           for most applications.
+        nates, color and size) using the chart menu sending data to                              Developers will be able to choose the appropriate method, in or-
+        the server after each action.                                                         der to achieve powerful visualization tools, developers have ability
+   The result is shown in Figure 12. In the diagram (a) display all                           to innovate and solve problems, help to create stable and flexible
+the variables of database “Pediatrician Timeout” with one avatar                              visualization platforms and frameworks, allows any user to tap into
+                                                                                              a wealth of data and test new visualizations with relative ease.
+7 https://datavizcerist.shinyapps.io/dataviz/
+                                                                                                 Second method is used by the tool “ADIT” developed by “William
+8 http://193.194.91.152:3838/dataviz/
+9 The                                                                                         Murphy”, this year’s “ADIT” is be able to render more than 50,000
+      video is available to download from the following address, then play it with VLC
+or other video player: http://193.194.91.152/test/CERIST_Dataviz_HTC_VIVE.mp4                 data points in full VR speed.
+                                                                                         61
+WS.2 2018, October 3–5, 2018, Paris, France                                                                                   H. Hadjar et al.
+
+                                         Table 1: Comparative table of the proposed methods
+
+                                                                                Method 1            Method 2                Method 3
+ Interactive data visualizations in Web browsers                                   Yes                 Yes                     Yes
+ Interactive plotly visualizations                                                 Yes                 Yes                     Yes
+ Plateforms:
+ Firefox (Nightly)                                                                 Yes                 Yes                     Yes
+ Internet Explorer                                                                 No                  No                      Yes
+ Google Chrome                                                                     Yes                 No                      Yes
+ Safari                                                                            Yes                 No                      Yes
+ Opera                                                                             Yes                 No                      Yes
+ iPhone                                                                            Yes                 No                      Yes
+ iPad                                                                              Yes                 No                      Yes
+ Browser dependencies (Compatibilities)                                           Bugsa                Yes                     Yes
+ Loading External Data                                                            Bugsb                Yes                    Yesc
+ Modern asynchronous patterns                                                      Yesd                Yes                    Yese
+ Sharing data across sessions (Real Time api)                                   Not tested             Yesf                   Yesg
+ IO model                                                                         Risky                Yesh                    Yes
+ Web server                                                                      Apache               Shiny                  Node.js
+ Possibility combination with                                               R, Jupiter Notebook         D3                 Canvas 2D
+ Open source                                                                       Yes                 Yes                     Yes
+ Graphic technology                                                            SVG, HTML          HTML5 (Shiny)    SVG, WebGL with Node.js
+ Manipulation with the Leap Motion controller                                      Yes                 Yes                     Yes
+ Interactivity (responds to mouse hover/click)                                     Yes                 Yes                     Yes
+ Relational Database (MySQL, PostgreSQL, etc. with Amazon RDS))                    Noi                 Yesj                   Yesk
+    a.   See https://github.com/shawnbot/aight for partial IE8 compatibility. No dependencies needed for other browsers supported.
+    b.   Need the fs package (In windows).
+    c.   With Node.js module xlsx.
+    d.   Adopting in new version of D3 (d3.js).
+    e.   With Node.js module xlsx.
+    f.   In shinyapps.io, with data stored in external device.
+    g.   With Socket.IO, with data stored in external device.
+    h.   In shinyapps.io.
+    i.   Needs other language: PHP or MySQL.
+    j.   In R : RPostgreSQL , RMySQL.
+    k.   Need a MySQL driver for MySQL.
+
+
+5   CONCLUSION AND PERSPECTIVES                                                 The system that we proposed explores three dataviz methods
+The use of novel visualization methods to explore data, leads to             in VR: using “A-Frame and D3.js”, using “A-Frame and R(Shiny,
+better performance in decision-making. It is a roadmap which                 Ggplot2)”, and using “A-Frame and Node.js”. All elements of the
+seems to appeal to investors and professionals in the field of data-         proposed methods are free and open source; developers can then
+visualization.                                                               create, modify and implement easily custom web Virtual reality
+   The prototype application that we have proposed in this paper             dataviz by adding new features as needed. In this paper, we have
+consists of a WebVR-based system that uses A-Frame framework                 chosen open health data as an area of application; however the
+combined with the three libraries: d3.js ggplot2 and node.js. These          system can be extended to several other fields. A-Frame can also
+libraries have functions that support reading dataset extracted from         be used with other software like Blender or Unity 3D to create
+open health data portals. The data can be in JSON or CSV format              3D objects, which can be used in several areas like online games,
+that we mapped in 3D visualizations.                                         Marketing and teachings.
+
+
+                                                                       62
+WebVR based Interactive Visualization of Open Health Data                                                  WS.2 2018, October 3–5, 2018, Paris, France
+
+
+                                                                              of the USTHB Mr. Seifeddine Zeghichi and Mr. Abdessalam Lahmil
+Figure 13: Architecture and Procedure of the Proposed Sys-                    for their contribution in the coding of method three (A-Frame with
+tem                                                                           Node.js).
+
+                                                                              REFERENCES
+                                                                               [1] Keith Andrews, Thomas Traunmüller, Thomas Wolkinger, Robert Gutounig, and
+                                                                                   Julian Ausserhofer. 2015. Building an open data visualisation web app using a
+                                                                                   data server: the Styrian diversity visualisation project. In Proceedings of the 15th
+                                                                                   International Conference on Knowledge Technologies and Data-driven Business.
+                                                                                   ACM, 48.
+                                                                               [2] Mike Bostock. 2010. D3: Data-Driven Documents. https://aframe.io
+                                                                               [3] Tom Chandler, Maxime Cordeil, Tobias Czauderna, Tim Dwyer, Jaroslaw
+                                                                                   Glowacki, Cagatay Goncu, Matthias Klapperstueck, Karsten Klein, Kim Mar-
+                                                                                   riott, Falk Schreiber, et al. 2015. Immersive analytics. In Big Data Visual Analytics
+                                                                                   (BDVA), 2015. IEEE, 1–8.
+                                                                               [4] Data.gouv.fr. 2013. Délai d’attente rendez-vous pédiatre. https://www.data.gouv.
+                                                                                   fr/storage/f/2013-12-20T17-38-22/Delai_rdv_pediatres_2012.xlsx
+                                                                               [5] Ciro Donalek, S George Djorgovski, Alex Cioc, Anwell Wang, Jerry Zhang,
+                                                                                   Elizabeth Lawler, Stacy Yeh, Ashish Mahabal, Matthew Graham, Andrew Drake,
+                                                                                   et al. 2014. Immersive and collaborative data visualization using virtual reality
+                                                                                   platforms. In Big Data (Big Data), 2014 IEEE International Conference on. IEEE,
+                                                                                   609–614.
+                                                                               [6] Nicolas Férey, J Hérisson, and R Gherbi. 2005. Immersive graph-based visual-
+                                                                                   ization and exploration of biological data relationships. Data Science Journal 4
+                                                                                   (2005), 189–194.
+                                                                               [7] Hayet HADJAR, Abdelkrim Meziane, Rachid GHERBI, Insaf Setitra, Abdessalam
+                                                                                   Lahmil, et al. 2018. WebVR based Interactive Visualization of Open Health Data.
+                                                                                   Technical Report. CERIST.
+                                                                               [8] Danny Holten and Jarke J Van Wijk. 2009. Force-directed edge bundling for
+                                                                                   graph visualization. In Computer graphics forum, Vol. 28. Wiley Online Library,
+                                                                                   983–990.
+                                                                               [9] Yvonne Jansen, Pierre Dragicevic, and Jean-Daniel Fekete. 2013. Evaluating the
+                                                                                   efficiency of physical visualizations. In Proceedings of the SIGCHI Conference on
+                                                                                   Human Factors in Computing Systems. ACM, 2593–2602.
+                                                                              [10] Johnson JG Keiriz, Liang Zhan, Morris Chukhman, Olu Ajilore, Alex D Leow, and
+                                                                                   Angus G Forbes. 2017. Exploring the Human Connectome Topology in Group
+                                                                                   Studies. arXiv preprint arXiv:1706.10297 (2017).
+                                                                              [11] Huy Le, Ajjen Joshi, and Margrit Betke. [n. d.]. b3.js: A library for interactive
+                                                                                   web data visualizations in virtual reality.
+                                                                              [12] Zhihan Lv, Tengfei Yin, Yong Han, Yong Chen, and Ge Chen. 2011. WebVR-web
+   As future perspective for the method “A-Frame and d3.js” we                     virtual reality engine based on P2P network. Journal of Networks 6, 7 (2011), 990.
+                                                                              [13] Diego Marcos, Don McCurdy, and Kevin Ngo. 2018. A-Frame, A web framework
+cite: (i) Integration with Jupyter Notebook, (ii) Optimization for                 for building virtual reality experiences. https://aframe.io
+Mobile speed, and Speed for large amounts of data. For the method             [14] Mozilla. 2017. A proposal for WebXR, based on the WebVR extension. https:
+“A-Frame and R(shiny, ggplot2)” one perspective would be to inves-                 //github.com/mozilla/webxr-api
+                                                                              [15] William Murphy. 2017. ’WebVR’ Data Visualizations with ’RStudio Shiny’
+tigate interaction and collaboration within the environment. Indeed                and ’Mozilla A-Frame. https://cran.r-project.org/web/packages/shinyaframe/
+it will be necessary to check the possibility to integrate virtual as-             shinyaframe.pdf
+                                                                              [16] OpenDataSoft. n.d.. Les portails Open Data autour du monde. https://www.
+sistants in the visualization space, and to work collaboratively with              opendatasoft.fr/ressource-liste-portails-open-data-dans-le-monde/
+other people geographically distant for example: using an avatar.             [17] Panagiotis D Ritsos, Joseph W Mearman, James R Jackson, and Jonathan C Roberts.
+Future work for the method “A-Frame and node.js” is integration                    [n. d.]. Synthetic Visualizations in Web-based Mixed Reality. ([n. d.]).
+                                                                              [18] Ben Shneiderman. 1996. The eyes have it: A task by data type taxonomy for infor-
+voice chat for communication.                                                      mation visualizations. In Visual Languages, 1996. Proceedings., IEEE Symposium
+   Finally, another perspective is to explore data by extending We-                on. IEEE, 336–343.
+bVR with AR support. Example of such an extension is WebXR                    [19] Samantha Tyner, François Briatte, and Heike Hofmann. 2017. Network Visualiza-
+                                                                                   tion with ggplot2. The R Journal (2017).
+Viewer [14] which uses Apple’s ARKit to display WebXR content                 [20] Ronald P. Vullo and Michelle A. Catalfamo. 2017. Dynamically Generating Virtual
+using AR.                                                                          Reality Scenes Using Molly and A-Frame. International Conference on Internet
+                                                                                   Computing and Internet of Things (ICOMP’17) (2017). https://csce.ucmss.com/cr/
+                                                                                   books/2017/LFS/CSREA2017/ICM3266.pdf
+ACKNOWLEDGMENTS                                                               [21] H. Wickham. 2010. ggplot2: An Implementation of the Grammar of Graphics. R
+                                                                                   package version 0.8.7. http://CRAN.R-project.org/package=ggplot2
+The authors would like to thank Mrs Zenati and all members at                 [22] Wikipedia. 2015. t-SNE algorithm. https://en.wikipedia.org/wiki/T-distributed_
+industrial engineering and robotics division in the Centre for De-                 stochastic_neighbor_embedding
+velopment of Advanced Technologies (CDTA) for their support,                  [23] Mengxin Zhang, Zhihan Lv, Xiaolei Zhang, Ge Chen, and Ke Zhang. 2009. Re-
+                                                                                   search and Application of the 3D Virtual Community Based on WEBVR and RIA.
+invaluable help and encouragement. Our thanks also to the trainees                 Computer and Information Science 2, 1 (2009), 84.
+
+
+
+
+                                                                         63
+

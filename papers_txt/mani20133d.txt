@@ -1,0 +1,280 @@
+                    3D Web Based Surgical Training Through Comparative Analysis
+                                             Ganapathy Mani∗,                                                     Wei Li†
+                                      Department of Computer Science                                  Department of Computer Science
+                                       George Washington University                                    George Washington University
+                                          Washington DC, USA                                              Washington DC, USA
+
+
+Abstract                                                                                          1     Introduction
+
+Experienced surgeons mostly face fewer complications and have                                     According to a recent study [Herndon 2013], surgical errors cause
+more control precision in a surgical procedure than the novice                                    50,000 deaths per year in the United States which is a decrease
+trainees. The residents and novice students (trainees) are trained                                in the percentage of deaths from 1.5% to only 1.2% since 2002.
+through watch-and-learn basis during real surgeries performed by                                  Despite the implementation of new safety methods and intensive
+the experienced surgeons (attending physicians). The human pa-                                    training procedures, the surgical errors continue to cause deaths and
+tient simulators are also used for training in so many medical fields                             damages. For example, Denver Health researchers report that there
+including surgery. Plus, several 3D e-learning portals are used for                               are over 4560 physician-reported adverse events per year in the state
+surgical training to boost the learning performance of the trainees.                              of Colorado [ABCNews Oct. 19, 2010].
+Even though there are many tools and methods used in surgical
+training which provide extensive hands-on training experience to                                  1.1    Surgical Errors
+trainees, they still require suggestions, guidance and surgical ma-
+neuvering techniques from experienced surgeons to perform a com-                                  Most experienced surgeons are likely to have very few surgical
+plex surgery. But the current training methods and tools are con-                                 complication rates compared to less experienced surgeons. [Sokol
+strained due to the limited availability of experienced surgeons in                               and Wilson 2008] defines a surgical complication as any undesir-
+training rooms. The existing e-learning systems provide a simple                                  able, unintended, and direct result of surgery affecting the patient
+3D simulation of the surgery with less interactive features and al-                               which would not have occurred had the surgery gone as planned.
+most no real-time comments from experienced surgeons. In con-                                     We can assume that the patient wants the most experienced sur-
+trast to the existing 3D e-learning portals, we propose a real-time                               geon or at least a surgeon with the best track record to perform the
+interactive 3D web based environment that will allow the trainees                                 surgical procedure on him/her. This will reduce the probability of
+to compare their surgical procedures in training to that of the ex-                               surgical complications happening during surgery. To become an ex-
+perienced surgeons through a website built on WebGL and X3D                                       pert in surgery, it takes years of practice and learning [Çetin 2012]
+frameworks. We also propose a new cloud computing architec-                                       [Adedeji et al. 2009]. The surgical training is a long and expen-
+ture to reduce the resource usage on the client-side and optimize                                 sive process and much of its done by watch-and-learn basis when
+the real-time updates through WebGL. The proposed architecture                                    an experienced surgeon trains a junior surgeon either with the help
+will be able to receive real-time updates from trainees and experi-                               of human patient simulator or on a real patient. Sometimes a local
+enced surgeons. As a precedent of our research in surgical training,                              software simulation system with 3D simulations of surgical proce-
+we show a real-time simulation of intubation procedure which was                                  dures will be used for training as well. This process is very expen-
+built using the X-ray computed tomography (CT scan) with intuba-                                  sive and demand much time from the experienced surgeons, and it
+tion simulator. We measure some important parameters in surgical                                  may be potentially dangerous for patients [Adedeji et al. 2009].
+training like angle of the surgical tool and distance between the tool
+and softer body part in the intubation path. Finally, we discuss the                              [Roberts et al. 2006] points to the phrase ”See one, do one, teach
+future direction of our research and optimization of the current de-                              one”, apprenticeship model of surgical training for over hundred
+sign, and deployment in a surgical training environment.                                          years, to paraphrase the traditional training methods of surgical ed-
+                                                                                                  ucation in the operating rooms. The study points out that these
+CR Categories: I.3.6 [Computer Graphics]: Methodology and                                         traditional methods are increasingly challenged by ethical as well
+Techniques—Interaction techniques; I.3.7 [Computer Graphics]:                                     as legal concerns, when it comes to the safety of the patients, heavy
+Three-Dimensional Graphics and Realism—Virtual reality;                                           work week training hours and surgical complications. But these is-
+                                                                                                  sues can be solved by 3D surgical simulations, real-time comments
+                                                                                                  and updates for the trainees. Especially when they compare their
+Keywords: medical education, surgical training, WebGL, cloud                                      maneuvers and decisions for a particular surgery to that of an ex-
+computing, intubation                                                                             perienced surgeons, it offers the experience equal to a real surgery
+                                                                                                  on a patient. Through these training methods, we will be able to
+   ∗ e-mail:gans87@gwmail.gwu.edu                                                                 address risk management concerns, patient safety, and work hours
+    † e-mail:gw    liwei@gwmail.gwu.edu                                                           requirements with more efficiency.
+
+                                                                                                  1.2    Existing Tools and Methods
+
+                                                                                                  Over the last few years, several training methods have been de-
+                                                                                                  veloped using motion capturing and analysis tools. Imperial Col-
+Permission to make digital or hard copies of part or all of this work for personal or
+                                                                                                  lege Surgical Assessment Device (ICSAD) is a commercially avail-
+classroom use is granted without fee provided that copies are not made or distributed             able motion tracking system which is used in surgical training and
+for commercial advantage and that copies bear this notice and the full citation on the            anesthesiology as an objective assessment tool of manual dexter-
+first page. Copyrights for components of this work owned by others than ACM must be               ity [Hayter et al. 2009]. It is one of the efficient tools to evaluate
+honored. Abstracting with credit is permitted. To copy otherwise, to republish, to post on
+servers, or to redistribute to lists, requires prior specific permission and/or a fee.
+                                                                                                  the hand maneuver efficiency in surgeons and to measure manual
+Request permissions from permissions@acm.org.                                                     dexterity of them [Moorthy et al. 2003] [Aggarwal et al. 2007].
+Web3D 2013, June 20 – 22, 2013, San Sebastian, Spain.
+Copyright © ACM 978-1-4503-2133-4/13/06 $15.00
+
+
+                                                                                             83
+Some e-learning systems, especially 3D simulators, that support the              have the flexibility of receiving data in real-time and updating the
+conventional medical education and training are proliferating fast.              computed model, and sending the updated model to the client-side
+Traditionally these e-learning materials (3D simulations, movies,                (trainee-side) systems.
+animations) are used to educate anatomical basics better than text
+books. These are very useful in training when it comes to deci-
+sion making and treatment for a complex surgical procedure. One
+of the major drawbacks of local software simulation systems is
+that their limitation on content actuality and real-time updates [Birr
+et al. 2012]. Currently there are several online as well as offline
+e-learning systems ([Höhne. et al. 2003] and [Crossingham et al.
+2009]) for teaching and learning anatomical basics using 3D sim-
+ulations for interactive visualization. But most of the web-based
+training systems require special plugins and none of them offer ac-
+curate simulations based on patient data. So the learner end up
+learning just the basics of surgical hand maneuvers and control pre-
+cision techniques. One of the most detailed study about the impact
+of online and offline e-learning portals has been done in [Pape-
+Köhler et al. 2010]. They conclude that none of the technologies
+have fulfilled all criteria in terms of curricular integrity, accuracy of
+scientific content and validity.
+
+1.3   Our Contribution
+
+In order to gain the skills of an experienced surgeon, the trainees                    Figure 1: Architecture of the surgical training system.
+should be able to compare their surgical maneuvers and control pre-
+cision skills with that of an experienced surgeon’s and repeat those             The trainees raw data will also be sent to the cloud to compute
+maneuvers to perform a successful surgical procedure on a patient.               the 3D simulation for comparison with the expert simulation. The
+Sometimes new surgeons may even have to compare their hand mo-                   comparison process and the parameters used for comparison will
+tion with experts in real-time during a complex surgical procedure               be discussed in section 3. The cloud server simulation is setup in a
+for reference. We argue that the existing tools do not provide such              way that if there are any changes to the input data then a trigger will
+an interactive framework for surgical training. In this paper, we                be set up to update the client-side systems in real-time after the new
+propose a novel approach to address these issues and increase the                3D simulation is complete. Another advantage of our architecture
+experience of trainees near the level of experienced surgeons. Our               is that the experienced surgeons can communicate with the trainees
+system simulation will be built in a server at a computing cloud and             from anywhere in the world and provide feedback through any com-
+the computed 3D simulation will be rendered using WebGL at the                   munication mechanism. The recent studies show that the WebGL
+user end. WebGL does not require any platform-specific browser                   can support the chatting mechanism for all services from Google,
+plugins for the simulation thus increasing the availability of training          Microsoft and Yahoo! [Lubbers et al. 2011]. In summary, our archi-
+and education materials anywhere in the world. Since our system is               tecture allows the trainees and the experienced surgeons to collabo-
+built on cloud, we reduce the computation cost of the end user sys-              rate and train through web environment where they can update their
+tems and send the computed 3D simulation to the users with high                  input data and communicate with the trainees in real-time . Since
+speed. One of the important features of our system is its real-time              the system shifts the storage, communication and computing costs
+interactivity with the capability of comparing surgical parameters               to the cloud server, the client or the server only deals with input and
+(holding-angle of surgical tool, pressure applied with the tool etc.,)           visualization thus optimizing the communication and comparison
+trainee and experienced surgeon. The trainees will also be able                  processes without any delay.
+to receive comments from the experts in real-time. We show the
+prototype of our initial simulation and progress in this paper. We
+strongly believe that our research will be a major contribution in
+                                                                                 3    Simulation Setup with OpenGL
+surgical training.
+                                                                                 We use a CT scan data set obtained from the George Washington
+                                                                                 University Hospital to build the 3D model of the intubation sim-
+2     Architecture of the System                                                 ulator using OpenGL in the cloud. As shown in Figure 2, the
+                                                                                 intubation simulator is a kind of human patient simulator used in
+One of the most important use of cloud computing is to act as com-               the training of intubation procedures like laparoscopic surgeries. It
+munication medium among several server and client systems [Arm-                  has been placed on a Magnetic Tracking Device (MTD). The MTD
+brust et al. April 2010]. It achieves the goal of shifting computing             will be set up without touching any metal surfaces to avoid letting
+and storage cost from the server-side as well as the client-side thus            unwanted noise into the data. One of the example of a MTD is
+optimizing the computation and increasing the speed of data trans-               the ”Flock of Birds” system [C.G.M. et al. 1999] which is a non-
+portation. Motivated by this idea, we designed our system (See                   invasive electromagnetic tracking device. This has been used for
+Figure 1) with cloud computing principle. The system consists of a               three-dimensional analysis of overall spine motion with better re-
+computation module in the cloud which is capable of applying the                 sults with respect to accuracy in cervical spine [Gelalis et al. 2009].
+raw data to the scanned 3D model of human patient simulator, and                 The set up captures the movements of the surgeon, surgical tool
+compare the surgical parameters of a trainee and an expert. The raw              angle and its pressure points. This data will be sent to the simula-
+data from the experienced surgeons will be sent to the cloud system              tion software and updated in real-time. Pressure points are nothing
+where it will be given as input to the simulation module for comput-             but the pressure in Pascal (N/m2 or kg.m−1 .s−2 ) created by the
+ing a 3D animation (or movie). After the computation the animation               surgical tool on a particular point assumed as damaged area in the
+will be loaded in the client-side systems when requested through a               intuabtion simulator. We measure two parameters as of now. One
+web interface. The server-side (expert surgeons-side) system will                is the angle created by the surgical tool when its in the hands of a
+
+
+                                                                            84
+surgeon (or trainee) with respect to MTD and the tool-distance (in          patient. As Figure 4 shows the red lines, the angle of the surgical
+mm) between softer parts of the intubation simulator and surgical           tool changes based on the orientation of the tool. In order to avoid
+tool (see Figure 3 with the values 26.12sec, 34.55 ◦ and 19.31mm).          confusion, we set the minimum parameter values for the angle so
+We have set a calibrate button to record the motion and surgical pa-        that after a certain angle has been reached, we will be displaying
+rameters.                                                                   an error without comparing the input data from the trainees. In
+                                                                            this way, the system will be able concentrate on minute details of
+                                                                            the trainee for comparison instead of comparing every single time
+                                                                            when an error occurs thus saving computation and communication
+                                                                            overhead of the entire system.
+
+
+                                                                            4   Using WebGL and X3D for Surgical Train-
+                                                                                ing
+
+                                                                            We use X3D [web 2011], an ISO Web3D standard, because of its
+                                                                            features to export and render 3D simulation objects through XML-
+                                                                            based textual encoding. The X3D content can be rendered as well
+                                                                            as integrated in real-time with the interactive web applications us-
+                                                                            ing X3DOM framework [Behr et al. 2010]. One of the major ad-
+                                                                            vantages of X3D is the easy integration into the HTML Document
+                                                                            Object Model (DOM) because no additional transformation of 3D
+                                                                            nodes will be necessary for displaying 3D simulations on a web-
+                                                                            site. We also use Web Graphics Library (WebGL), a javascript API
+                                                                            which provides a scalable and GPU-supported implementation of
+Figure 2: Simulation set up for surgical training with pressure             dynamic 3D simulations and models with access on real-time. For
+points displayed in red.                                                    our simulation model NVIDIA graphics processing unit was used.
+                                                                            WebGL is a plugin-free, platform independent javascript API which
+Even though there are several parameters to consider when compar-           is also supported by most of the web browsers in their latest releases
+ing trainee and experienced surgeon’s movements and control pre-            (e.g. Mozilla Firefox, IEWebGL for Internet explorer and Google
+cision, our initial simulation accounts for comparing the pressure          Chrome). WebGL closely matches OpenGL ES 2.0 and uses GLSL
+points and right handling of the surgical tool. The simulation soft-        as language for shader programs [Birr et al. 2012].
+ware from two different computers send measured input data to the
+cloud system and the software makes the comparison of these two             In our system, the surgical 3D simulations (or movies) rendered
+parameters. It checks for any inconsistencies between the trainee-          with WebGL can be moved, rotated, and zoomed without the need
+side system inputs and expert-side systems inputs. If it finds any          of installing any additional browser plugins.
+inconsistencies then it immediately alerts the trainee-side system
+with a message showing a suggestion of how much adjustment is
+required in angle, tool-distance and pressure to match the expert-
+side simulation parameters.
+
+
+
+
+                                                                                 Figure 4: User interface of surgical training simulation.
+
+
+Figure 3: Measuring surgical parameters: First graph shows the              The CT scan of the intubation simulator (see Figure 4) is being
+angle of surgical tool and the second shows the tool-distance.              loaded into the localhost using WAMP server. The raw input data
+                                                                            from the trainee is sent through the web page to OpenGL simula-
+An important point to notice here is that the current system can            tion software in the computing cloud. In the cloud, the simulation
+handle the initial setups like how to hold the surgical instrument          software creates a new 3D simulation with the updated input data
+and how much pressure must be applied in the affected area of the           from the trainee and compares the parameter with the experts.
+
+
+                                                                       85
+5    Discussion                                                                  S TOICA , I., AND Z AHARIA , M. April 2010. A view of cloud
+                                                                                 computing. Commun. ACM 53, 4 (Apr.), 50–58.
+One of our main challenges in this research project is calibrating
+                                                                               B EHR , J., J UNG , Y., K EIL , J., D REVENSEK , T., Z OELLNER , M.,
+the real world to the virtual world. In a surgical procedure several
+                                                                                  E SCHLER , P., AND F ELLNER , D. 2010. A scalable architecture
+circumstances change for each patient. Plus, the analysis as well as
+                                                                                  for the html5/x3d integration model x3dom. In Proceedings of
+decision making varies to patient to patient. Even though we can
+                                                                                  the 15th International Conference on Web 3D Technology, ACM,
+classify the surgical training based on the type of surgical proce-
+                                                                                  New York, NY, USA, Web3D ’10, 185–194.
+dure, internal parameters like patient’s strengths, side effects, extra
+diseases, sensitive parts, etc., and external parameters like surgical         B IRR , S., M NCH , J., S OMMERFELD , D., AND P REIM , B. 2012.
+resources availability, type of instruments etc., affect the outcome              A novel real-time web3d surgical teaching tool based on webgl.
+of a surgery. The surgical parameters change for each patient. For                In Bildverarbeitung fr die Medizin 2012, T. Tolxdorff, T. M. De-
+example, the expert surgeon might have performed the surgery for                  serno, H. Handels, and H.-P. Meinzer, Eds., Informatik aktuell.
+a 30 year old patient but it does not mean that a 60 year old will                Springer Berlin Heidelberg, 404–409.
+have to have the same pressure with the surgical tool. But our ini-
+tial simulation software system is not yet capable of tackling the             Ç ETIN , A. 2012. 3d web based learning of medical equipments
+challenges mentioned above. In the future, we intend to advance                    employed in intensive care units. Journal of Medical Systems
+the system in the following ways:                                                  36, 167–174.
+
+    • Understanding the internal and external parameters which af-             C.G.M., M., H., F., VAN DER H ELM F.C.T., H.M., V., AND
+      fect each surgical procedure and provide a manual input mod-               P.M., R. 1999. Calibration of the ”flock of birds” electromag-
+      ule where users or experts can enter patient-specific data thus            netic tracking device and its application in shoulder motion stud-
+      the system will be reconfigured to guide the trainee for that              ies. Journal of Biomechanics 32, 6, 629–633.
+      patient. In other words, the system has to be patient-and-               C ROSSINGHAM , J. L., J ENKINSON , J., W OOLRIDGE , N.,
+      surgeon-oriented, considering all the factors as inputs to pro-             G ALLINGER , S., TAIT, G. A., AND M OULTON , C.-A. E. 2009.
+      vide an optimal surgical training.                                          Interpreting three-dimensional structures from two-dimensional
+                                                                                  images: a web-based interactive 3d teaching model of surgical
+    • Optimizing the comparison mechanism with client-side vali-
+                                                                                  liver anatomy. HPB 11, 6, 523–528.
+      dation based on predefined surgical parameters and improving
+      the user interface to extend the functionality of website.               G ELALIS , I., D E F RATE , L., S TAFILAS , K., PAKOS , E., K ANG ,
+                                                                                  J., AND G ILBERTSON , L. 2009. Three-dimensional analysis
+6    Conclusion                                                                   of cervical spine motion: reliability of a computer assisted mag-
+                                                                                  netic tracking device compared to inclinometer. European Spine
+                                                                                  Journal 18, 276–281.
+In this paper, we offered a novel surgical training for trainees with
+the ability to compare their maneuvers (angle of surgical equip-               H AYTER , M., F RIEDMAN , Z., B OULD , M., H ANLON , J.,
+ment, tool-distance, pressure etc.) to that of the experienced sur-               K ATZNELSON , R., B ORGES , B., AND NAIK , V. 2009. Vali-
+geons and gain valuable experience to successfully perform com-                   dation of the imperial college surgical assessment device (icsad)
+plex, life-saving surgeries. Our system leverages cloud computing                 for labour epidural placement. Canadian Journal of Anesthe-
+to reduced computation, communication and storage overhead thus                   sia/Journal canadien d’anesthsie 56, 6, 419–426.
+increasing the efficiency of the entire system. Our system uses
+platform-independent and plugin-independent WebGL and X3D                      H ERNDON , J. H. 2013. The patient first. above all do no harm
+technologies for visualization through web. The system is equipped                (primum non nocere). The Journal of Bone & Joint Surgery 95,
+with the ability of real-time updates as well as communication fea-               4, 289–290.
+tures so that the trainees can receive feedback and comments imme-             H ÖHNE ., K. H., P FLESSER ., B., AND S CHUMACHER , U. 2003.
+diately from experts. In the future, we plan to extend the function-              VOXEL-MAN 3D-Navigator: Inner Organs. Springer Electronic
+ality of the system by considering more surgical parameters from                  Media.
+patients and surgeons as inputs. We intend to consider specific sur-
+gical procedures and sub-procedures to provide accurate training               L UBBERS , P., A LBERS , B., AND S ALIM , F. 2011. The future of
+for the trainees. Finally, we plan to deploy the fully-developed ver-             html5. In Pro HTML5 Programming. Apress, 313–321.
+sion for testing in a surgical training environment.
+                                                                               M OORTHY, K., M UNZ , Y., D OSIS , A., B ELLO , F., AND DARZI ,
+                                                                                 A. 2003. Motion analysis in the training and assessment of min-
+References                                                                       imally invasive surgery. Minimally Invasive Therapy & Allied
+                                                                                 Technologies 12, 3-4, 137–142.
+ABCN EWS,       Oct.   19,     2010.             Surgical    er-
+                                                                               PAPE -K ÖHLER , C., C HMELIK , C., H EISS , M., AND JAUCH , K.
+ rors     continue    despite     new     safety     guidelines.
+                                                                                 2010. Elektronische operationslehren und blogs. Der Chirurg
+ http://abcnews.go.com/Health/Wellness/study-finds-medical-
+                                                                                 81, 14–18.
+ mishaps-universal-protocol-era/story?id=11910796.
+                                                                               ROBERTS , K., B ELL , R., AND A NDREW, D. 2006. Evolution
+A DEDEJI , S., S OKOL , D., PALSER , T., AND M C K NEALLY, M.                    of surgical skills training. World Journal of Gastroenterol 12,
+   2009. Ethics of surgical complications. World Journal of Surgery              3219–3224.
+   33, 732–737.
+                                                                               S OKOL , D., AND W ILSON , J. 2008. What is a surgical complica-
+AGGARWAL , R., D OSIS , A., B ELLO , F., AND DARZI , A. 2007.                     tion? World Journal of Surgery 32, 942–944.
+  Motion tracking systems for assessment of surgical skill. Surgi-
+  cal Endoscopy 21, 2, 339–339.                                                2011. Web3d consortium. x3d - open standards for real-time 3d
+                                                                                 communication. http://www.web3d.org/x3d.
+A RMBRUST, M., F OX , A., G RIFFITH , R., J OSEPH , A. D., K ATZ ,
+   R., KONWINSKI , A., L EE , G., PATTERSON , D., R ABKIN , A.,
+
+
+                                                                          86
+

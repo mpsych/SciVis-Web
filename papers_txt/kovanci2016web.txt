@@ -1,0 +1,613 @@
+Journal of Integrative Bioinformatics, 13(4):298, 2016                              http://journal.imbio.de/
+
+
+           Web-based hybrid-dimensional Visualization and
+           Exploration of Cytological Localization Scenarios
+
+                    Gökhan Kovanci1, Mehmood Ghaffar1, Björn Sommer2,3,*
+                     1
+                         Bio-/Medical Informatics Department, Bielefeld University,
+                             Universitätsstraße 25, 33615 Bielefeld, Germany
+
+
+
+
+                                                                                                               This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License (http://creativecommons.org/licenses/by-nc-nd/3.0/).
+                          2
+                              Computational Life Sciences, University of Konstanz,
+                               Universitätsstraße 10, 78457 Konstanz, Germany
+                         3
+                             Faculty of Information Technology, Monash University,
+                                20 Research Way, 3800 Melbourne, Australia
+
+
+                                                  Summary
+
+        The CELLmicrocosmos 4.2 PathwayIntegration (CmPI) is a tool which provides hybrid-
+        dimensional visualization and analysis of intracellular protein and gene localizations in the
+        context of a virtual 3D environment. This tool is developed based on Java/Java3D/JOGL
+        and provides a standalone application compatible to all relevant operating systems.
+        However, it requires Java and the local installation of the software. Here we present the
+        prototype of an alternative web-based visualization approach, using Three.js and D3.js. In
+        this way it is possible to visualize and explore CmPI-generated localization scenarios
+        including networks mapped to 3D cell components by just providing a URL to a
+        collaboration partner. This publication describes the integration of the different
+        technologies – Three.js, D3.js and PHP – as well as an application case: a localization
+
+
+
+
+                                                                                                               Copyright 2016 The Author(s). Published by Journal of Integrative Bioinformatics.
+        scenario of the citrate cycle. The CmPI web viewer is available at:
+        http://CmPIweb.CELLmicrocosmos.org.
+
+
+1          Introduction
+The CELLmicrocosmos 4.2 PathwayIntegration (CmPI) is a software framework which can be
+used to visualize protein- and gene-related pathways in their cytological environment [1]. For
+this purpose, CmPI supports the localization of these pathways by connecting to different
+databases. The pathways can be easily imported using formats like GraphML (comprehensive
+file format for graphs), SBML (System Biology Markup Language), AND Visio (PubMed-
+based text mining data) and StringDB (Database of known and predicted protein-protein
+interactions) [2–4]. CmPI also contains a network editor which can be used to generate
+pathways and the 3D viewer supports 3D-stereoscopic visualization. Segmented cell
+component models are based on the VRML97 format (Virtual Reality Modelling Language).
+Nowadays, usually Blender or Fiji (Is Just ImageJ) are used for the model creation process [5],
+[6].
+Gene- or protein-related identifiers can be localized by connecting to the Bio Data Warehouse
+(BioDWH)/DAWIS-M.D. or ANDCell [7–9]. The localization entries contained in DAWIS-
+M.D. are derived from databases, such as UniProt, Reactome, and the Gene Ontology [10–12].
+CmPI provides a number of different approaches to analyse and visualize different localization
+scenarios. A single protein usually features a number of different localization entries which may
+
+
+*
+    To whom correspondence should be addressed. Email: bjoern@CELLmicrocosmos.org
+
+doi:10.2390/biecoll-jib-2016-298                                                                          1
+Journal of Integrative Bioinformatics, 13(4):298, 2016                       http://journal.imbio.de/
+differ in the publication source, as well as in the associated cell component, or even the cell
+component layer. For example, in our previous work we analysed the molecular environment
+and co-localizations of the MPDZ/MUPP1-related protein and recently protein cascades in
+cardiac phenotypes [13], [14]. A standard example which was used to verify the subcellular
+localization process is the localization of the citrate cycle and the glycolysis [1]. Each
+localization is based on a publication, a web link, or a text-mined abstract (in case of ANDCell).
+Because the analysis of each and every localization entry is time consuming, an alternative
+localization method was introduced: the Subcellular Localization Charts (SLC) [15].
+
+
+
+
+                                                                                                        This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License (http://creativecommons.org/licenses/by-nc-nd/3.0/).
+The SLC provide a simplified way to predict common localizations among associated proteins.
+These proteins may be associated by their corresponding pathway, by a direct reaction or
+protein-protein interaction edge, or other text mining-based associations. It is possible to
+analyse the overall localization of a pathway, or to visualize the localizations for all
+proteins/genes.
+Based on the localization strategy, different localization scenarios may be generated. And these
+localization scenarios may be the base for further discussions with other scientists.
+Another common problem for the localization prediction is the fact that molecules are traveling
+inside cells; the cell components associated with corresponding genes/proteins often change
+over time. In our approach, also different localization scenarios can be used to visualize
+localization changes over time.
+But usually it is not required that all scientists involved in the discussion install CmPI on their
+computer. This is a redundant process in case the user only wants to visualize and explore a
+distinct localization scenario without modifying it. To tackle this issue, a simple web-based tool
+was developed which is able to visualize the localization scenarios in a convenient and easy
+way. These Localization Scenarios can be used for the following purposes:
+      •   discussion of different potential localization scenarios for particular gene/protein
+          networks among scientists, combining functional and structural information,
+
+
+
+
+                                                                                                        Copyright 2016 The Author(s). Published by Journal of Integrative Bioinformatics.
+      •   representation of different time stamps of localization scenarios,
+      •   illustration of intracellular pathways for educational purposes, or
+      •   initial discussion of complex tours using the Space Map [16].
+In summary, the main target group of the here introduced online tool are researchers who want
+to explore specific localization scenarios created with CmPI.
+
+2         Related Work
+Related approaches which should be shortly discussed in this context are focusing 1) at the
+visualization of cell models inside the browser, and 2) and the visualization of cytological
+localizations of protein-/gene-related networks.
+
+2.1       Browser-based Cell Visualization
+
+As previously mentioned, our in-house tool CmPI is focusing at the visualization of cell maps.
+A related approach is cellPACK, a software project which can be used in combination with
+different 3D modelling tools, such as Blender or Cinem4D®, to develop complex mesoscopic
+cell models [6]. But it is not focusing on the abstract visualization of networks in correlation
+with cell models, its main purpose is to support 3D modellers during the modelling of cells by
+combining different packing algorithms to create filled cells. cellVIEW is a tool based on the
+commercial Unity3D® engine which can be used to visualize the models created with
+cellPACK, but it is currently not available for the web browser and was not developed based
+on WebGL [17].
+
+doi:10.2390/biecoll-jib-2016-298                                                                   2
+Journal of Integrative Bioinformatics, 13(4):298, 2016                       http://journal.imbio.de/
+Recently, a number of 3D web visualizations on the molecular level are being developed.
+Jmol/JSmol or Jolecule are tools which can be used to visualize PDB files [18–20]. Also, the
+related Protein Data Bank which provides the PDB files includes different 3D viewers
+supporting the molecular level [18]. Other tools, such as Aquaria, provide hybrid-dimensional
+visualizations, just like the tool discussed in this publication. Aquaria is combining 2D with 3D
+visualization [21] with the subjective to visualize and analyse proteins based on the PDB format
+in combination with their sequences [22]. Hybrid-dimensional browser visualization recently
+gains growing popularity among biomedical scientists [23], [24].
+
+
+
+
+                                                                                                        This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License (http://creativecommons.org/licenses/by-nc-nd/3.0/).
+2.2       Browser-based Localization Visualization of Biological Networks
+
+All these third-party tools are focusing on the visualization of cellular structures, but our CmPI
+additionally combines these cellular structures with subcellular localization information in 3D
+space. Whereas there is – to our knowledge – no web-based tool available to visualize networks
+in 3D cell environments, there is a tool supporting the visualization of localized 2D networks:
+the previously-mentioned CellWhere [25]. Similar to the Cytoscape plugin Cerebral,
+CellWhere uses 2D layouts to visualize gene-related networks in multiple abstract layers
+representing cell components [26]. While CmPI is a tool which tries to support many different
+organisms and is tissue-independent, CellWhere focusses on the localization of muscle-related
+research. The localization process in CmPI is done semi-automatically by using the previously-
+mentioned SLC, but the localization process in CellWhere is fully automatized by providing
+confidence scores, which are also known from, e.g., COMPARTMENTS. The large advantage
+of CellWhere is that the user is directly provided with the prediction of a single potential
+localization scenario, but is it not possible to explore alternative localization scenarios.
+The generation of different localization scenarios, especially in 3D space, is a unique feature of
+CmPI, and CmPIweb is the first web tool which can be used to visualize these scenarios in the
+browser.
+
+
+
+
+                                                                                                        Copyright 2016 The Author(s). Published by Journal of Integrative Bioinformatics.
+3         Architecture/Implementation
+To enable the visualization and exploration of the generated cell models associated with
+localized pathways, the CELLmicrocosmos 4.2 PathwayIntegration web viewer (CmPIweb)
+was developed.
+CmPIweb required the following basic functionalities:
+      •   loading of cell models in .Cm3 and .Cm4 format,
+      •   visualization of 3D cell models associated with pathways in the browser,
+      •   visualization of 2D networks in the browser, and
+      •   visualization of a subset of Subcellular Localization Charts in the browser.
+
+3.1       CmPIweb: Three-tier Architecture
+
+To enable the integration of all previously described features in a simple way, a three tier
+architecture was realized. Figure 1 illustrates the architecture.
+PHP is used for transferring the files from the server to the client, decompressing ZIP archives
+and local file handling (Figure 1). A particular requirement was the support for 100 MB+ files
+via web, and here PHP was chosen as an appropriate technology. Moreover, the original
+CELLmicrocosmos.org website which is hosting CmPIweb is also being developed in PHP.
+Therefore, a seamless integration in the future will be possible.
+
+doi:10.2390/biecoll-jib-2016-298                                                                   3
+Journal of Integrative Bioinformatics, 13(4):298, 2016                          http://journal.imbio.de/
+Three.js is a WebGL framework providing a scene graph–based API and visualization and
+exploration in most browsers, such as Chrome®, Firefox, Internet Explorer®, or Safari® [27].
+The huge advantage of WebGL is the fact that all recent popular browsers support this standard
+without any need to install additional browser plugins. Three.js supports also the VRML97
+format, which is used by CmPI to import/export 3D cell models. In comparison to Java3D,
+Three.js is a very recent technology which is more flexible and easy to use. Three.js is also
+available with a number of stereoscopic 3D-related features, such as anaglyph, cross-eyed and
+parallax barrier. We showed in a recent publication that the 3D-stereoscopic exploration is a
+valuable approach to increase the insight into the structure of a cell [28]. For this reason, the
+
+
+
+
+                                                                                                           This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License (http://creativecommons.org/licenses/by-nc-nd/3.0/).
+future extension of this tool into the third dimension could be a valuable approach. Moreover,
+it is already implemented in CmPI. In addition, Three.js supports the import of different file
+formats, such as binary code, images, scenes, and of course JSON. Three.js, Java3D as well as
+VRML97 use a scene graph model to abstracting the 3D structures. Although VRML is a quite
+old format, going back to 1995 (version 1.0) and 1997 (version 2.0), it is still often used as it is
+a standard format which is supported by most 3D modelling packages such as Blender ][6],
+[29]. The scene graph-based structure is, however, used by many other formats. It is also used
+to create the cell models. Each cell component is represented by a 3D structure which is
+positioned in 3D space by using the depicted structure. This similarity between Java3D, VRML
+and Three.js was an important reason why Three.js for the development of CmPIweb.
+D3.js (Data-Driven Documents) is a JavaScript–based visualization library providing fast
+browser-based 2D visualization [30]. Many biomedical tools are nowadays using D3.js and
+related approaches [31]. It can be used to create SVG objects which can further be useful for
+large datasets that uses D3.js functions to generate rich text/graphic charts and diagrams.
+Nowadays it is used by a wide range of visualization and analysis approaches which are found
+at the corresponding webpage [32]. In CmPIweb it is used to visualize the 2D networks of the
+biomedical pathways, as well as to visualize the localization charts shown on the bottom of
+Figure 1. These charts are based on the previously discussed subcellular localization charts.
+
+
+
+
+                                                                                                           Copyright 2016 The Author(s). Published by Journal of Integrative Bioinformatics.
+
+
+
+
+    Figure 1: The three-tier Architecture of CmPIweb: PHP, Three.js, and D3.js. Details on the file
+    loading process can be found in Figure 2.
+
+doi:10.2390/biecoll-jib-2016-298                                                                      4
+Journal of Integrative Bioinformatics, 13(4):298, 2016                               http://journal.imbio.de/
+3.2       CmPIweb: Loading of Localization Scenarios
+
+There are two ways to load different cell models containing cytological pathways into
+CmPIweb, as shown in Figure 2:
+      1) loading an external file by using a URL (GET parameter), or
+      2) loading a local file by using a file chooser.
+Using the first approach, the .Cm3 file (containing only a 3D cell model) or the .Cm4 file
+(containing a 3D cell model plus the localized network) have to be packed as a ZIP file. The
+
+
+
+
+                                                                                                                This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License (http://creativecommons.org/licenses/by-nc-nd/3.0/).
+ZIP file has to be uploaded to a server from where it is available via URL.
+In case the file is loaded locally, the File-API is used. In this case, the user can select the local
+files to be loaded into the browser application. It is possible to use the CmPI standard files,
+consisting of .Cm3/.Cm4 and VRML 97 files, or by selecting a ZIP package containing all files.
+Figure 2 (right) shows the online loading process. First, the ZIP file is downloaded to the server
+of the web application. Then, it is unpacked on the server and then loaded into the memory of
+the local computer. Once the loading is done, the file is deleted from the server.
+In case the file is locally loaded, the loading process is only started on the local computer. As
+unpacking and processing of a file is all done locally, no deletion operation takes place on the
+server. The loading process of locally-stored files is much faster than for external files.
+
+
+
+
+                                                                                                                Copyright 2016 The Author(s). Published by Journal of Integrative Bioinformatics.
+
+
+
+
+      Figure 2: Server-Client approach during loading: loading of online-available files (left) and local
+      files (right).
+
+doi:10.2390/biecoll-jib-2016-298                                                                            5
+Journal of Integrative Bioinformatics, 13(4):298, 2016                       http://journal.imbio.de/
+3.3       CmPIweb: Navigation
+
+Because navigation is crucial in 3D environments, CmPIweb provides three navigation modes
+based on the modes implemented in CmPI, but they are strongly simplified and optimized for
+browser compatibility:
+      •   Floating Mode: The user 'floats' in the cell environment by using WASD-keys or the
+          mouse wheel to move forward/backwards. In addition, the following mode can be
+          initiate via double click:
+
+
+
+
+                                                                                                        This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License (http://creativecommons.org/licenses/by-nc-nd/3.0/).
+      •   Object-Bound Mode: The selected cell component or node is centred and the movement
+          occurs around its centre by mouse movement while the left mouse button is pressed.
+          Again with the mouse wheel forward/backward movement is triggered. This mode is
+          suspended by double-clicking into an empty area.
+      •   Flight Mode: By holding the CTRL key down, the user can fly forward by using the left
+          mouse button, and fly backward, by using the right mouse button, whereas the mouse
+          movement changes the direction.
+
+4         Application
+The following example was already discussed in the first version of CmPI: the combination of
+the citrate cycle and the glycolysis [1]. It is a standard example because it is common knowledge
+that the citrate cycle is attributed to mitochondria, and the glycolysis to the cytosol. By using
+the previously-introduced SCL, it is a straight forward to predict the localization to the
+corresponding localizations. This process is discussed in detail in the book chapter: “Network
+Analysis and Integration in a Virtual Cell Environment” [33].
+By using the following URL, the application is started in the browser by simultaneously loading
+
+
+
+
+                                                                                                        Copyright 2016 The Author(s). Published by Journal of Integrative Bioinformatics.
+the given file:
+http://CmPIweb.CELLmicrocosmos.org/?url=http://www.cellmicrocosmos.org/cm4files/A
+nimal_Cell__1_72__hsa00010-20__1_4_2014[Cm4].zip
+The first part of the URL represents the locations of the CmPIweb application, the second part
+(non-bold font, starting with “?url”), represents the absolute path of the ZIP file to be loaded.
+Figure 5 shows the loaded cell model. Here, the KEGG citrate cycle and the glycolysis are
+shown (hsa00010 and has00020) [34]. The localization was previously done by using CmPI.
+All localization results are visible to the user by using the bottom table on Figure 3 Top. But in
+contrast to CmPI it is not possible to modify this table in CmPIweb – only the result can be
+explored.
+It is possible to change the colour of the different entries – for this purpose, it is just required
+to click on the corresponding table entry representing a cell component on the right side of the
+application shown in Figure 5. The colours of the citrate cycle as well as glucose cycle can also
+be changed by clicking on the pathway table at the bottom of the application.
+Obviously, the citrate cycle is localized at the mitochondrial region, whereas the glycolysis is
+localized at the cytosol. This localization is a very straightforward task by using CmPI and the
+result covers basic biological knowledge.
+Figure 3 Top shows the complete cell environment associated with the metabolic network. The
+3D view on the right side shows both pathways in 2D, drawn using the original KEGG layout
+and depicting both pathways-connecting enzymes by inter-pathway edges.
+
+doi:10.2390/biecoll-jib-2016-298                                                                   6
+Journal of Integrative Bioinformatics, 13(4):298, 2016                             http://journal.imbio.de/
+
+
+
+
+                                                                                                              This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License (http://creativecommons.org/licenses/by-nc-nd/3.0/).
+                                                                                                              Copyright 2016 The Author(s). Published by Journal of Integrative Bioinformatics.
+
+
+
+
+    Figure 3: CmPIweb visualizing the citrate cycle and the glycolysis pathway inside an animal cell.
+    Top: The complete cell is shown in the centre and on the left side the complete pathway is shown.
+    Centre: The mitochondrion is focused which contains the citrate cycle (red), whereas the glycolysis
+    is located in the cytosol (yellow); Bottom: Focusing at the enzyme 4.1.1.32, which is part of the
+    citrate cycle as well as the glycolysis pathway and located on the surface of the mitochondrion.
+
+doi:10.2390/biecoll-jib-2016-298                                                                          7
+Journal of Integrative Bioinformatics, 13(4):298, 2016                               http://journal.imbio.de/
+
+
+
+
+                                                                                                                This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License (http://creativecommons.org/licenses/by-nc-nd/3.0/).
+    Figure 4: CmPIweb provides a simplified version of the Subcellular Localization Charts. The
+    actually chosen localization for the specific localization scenario is indicated by the colour of the
+    enzyme nodes in Figure 3, in the 2D as well as 3D view. The cell components’ colours are based on
+    the localization colours which are also used for the charts. Top: visual summary of all enzyme
+    localization entries as derived from the databases of CmPI; Bottom Left: The SLC for enzyme
+    4.1.1.32 selected in Figure 3 Bottom; Bottom Right: The Localization Table entry for 4.1.1.32
+    including the alternative localization entries triggered by mouse click on the corresponding entry.
+
+
+
+
+                                                                                                                Copyright 2016 The Author(s). Published by Journal of Integrative Bioinformatics.
+By moving towards the cell using the previously-discussed Floating Mode methods, the close-
+up view of the mitochondrion associated with the citrate cycle (red colour) is created, as seen
+in Figure 3 Centre. In the neighbourhood of the mitochondrion the glycolysis pathway
+associated with the cytosol is visible.
+Now, by zooming into the pathways using the 2D view, specific nodes become visible – here,
+the enzyme 4.1.1.32. Now, a force-directed layout is used to mix both pathways, providing a
+better overview concerning inter-pathway enzymes like 4.1.1.32. Now, a double click is
+performed on this node in the 2D viewer, and the view automatically centres the corresponding
+enzyme and the user can move towards the node by using the already discussed methods of the
+Object-Bound Mode. Figure 3 Bottom shows the resulting view. On the right side the selected
+and/or focused node is indicated in the 2D view by increased size.
+Figure 4 Top shows the overview of the Subcellular Localization Charts. In this way, all
+enzymes’ subcellular localizations are visible and comparable. Figure 4 Bottom shows
+exclusively all localization entries for 4.1.1.32. The actually-selected localization is shown: the
+“mitochondrion”, more precisely: its “Outer Membrane” of the species “homo sapiens”. “4/5”
+indicates that this is the fourth of five localization layers (matrix, inner membrane,
+intermembrane space, outer membrane, and the cloud). The result comes from the curated
+BRENDA database [36]. Also, the localization references are shown which are linked to the
+corresponding publications. By clicking on the actually-selected localization entry, the list of
+all available entries is shown. In this way it is possible to explore alternatives. However, in
+contrast to CmPI it is not possible at the moment to change the localization scenario based on
+the changes in the table, as CmPIweb is only intended as a viewer.
+
+
+doi:10.2390/biecoll-jib-2016-298                                                                            8
+Journal of Integrative Bioinformatics, 13(4):298, 2016                          http://journal.imbio.de/
+
+5        Discussion and Outlook
+Here, a simple approach was presented to visualize intracellular localized pathways by
+combining web-based 2D and 3D visualization. In this way, hybrid-dimensional visualization
+approaches was realized by using just a web browser (Figures 3 and 4) [21]. Since the
+localization are based on often online-available data, they can be easily evaluated by clicking
+on the corresponding localization sources at the bottom part of the Localization Table in Figure
+4. Moreover, different localization scenarios can be discussed which might be especially
+
+
+
+
+                                                                                                           This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License (http://creativecommons.org/licenses/by-nc-nd/3.0/).
+interesting in case the 3D structure of the cell is relevant for specific scenarios, like in case of
+more complex protein cascades [14]. A big advantage would be also if explicit 3D coordinates
+of molecular data could be provided, e.g. based on 3D MALDI technology [35]. An additional
+important feature in this context would be the representation of cell structures by using
+volumetric rendering. However, this will be a demanding task because the 3D rendering
+performance of a browser is still quite limited. This limitation of a browser is also relevant for
+CmPIweb, because it is recently not optimized for loading files with a size of multiple hundreds
+of megabytes. Here, the standalone tool CmPI is the better option.
+Also, other relevant visualization aspects can be observed. In Figure 3 Top, the whole cell is
+shown, in Figure 3 Bottom, a detail is shown, focussing at the enzyme 4.1.1.32. This aspect is
+called the Focus+Context paradigm which is often used for the presentation of biological data
+[36]. While in the foreground, the actually relevant enzyme is shown in the focus, the
+background – the context – shows the remaining reactions of the two metabolic pathways.
+Moreover, the 2D view (Figures 3 right) is able to provide the complete overview of the
+discussed pathways.
+Related approaches, such as COMPARTMENTS and CellWhere provide statistical approaches
+
+
+
+
+                                                                                                           Copyright 2016 The Author(s). Published by Journal of Integrative Bioinformatics.
+to predict protein-related localizations [16], [17]. Although these resources provide fast access
+and explicit predictions of subcellular localizations, often the processes behind the localization
+prediction are not fully transparent. SLC provide an alternative of applying Visual Analytics-
+related approaches to localization data provided by databases. But in near future it would be
+preferable to combine both approaches: statistical prediction with user-in-the-loop analysis.
+Because the localization scenarios only provide static snapshots of a cell, another important
+feature in the future would be the support of dynamic data, enabling the illustration of changes
+over time.
+Scientists can utilize this tool as a source for their future research. In the future, it could be also
+used as a part of a virtual graphical database network for biology and related fields. Based on
+this web tool a web component could be developed to explore every possible biochemical
+activity. Another important goal could be the future use to teach school and undergraduate
+students the inner cell composition in an interactive way, associating the cellular structure with
+3D networks. For this purpose, we are planning to optimize this tool in the near future for
+mobile devices.
+This can be on a cognitive basis highly effective, as the internal structure of a cell is spatially
+spread and quite complex, comparable to a small universe. A future approach could be to use
+the stereoscopic capabilities of Three.js to achieve better learning outcomes, as well as invoking
+the interest in this technology in Bioinformatics [28].
+This tool is meant to be a starting point for an improved understanding of microscopic
+mechanisms in a more convenient and easy way.
+
+doi:10.2390/biecoll-jib-2016-298                                                                      9
+Journal of Integrative Bioinformatics, 13(4):298, 2016                  http://journal.imbio.de/
+
+6       Availability and Requirements
+The CmPI software is available at: http://Cm4.CELLmicrocosmos.org
+The CmPIweb is available at: http://CmPIweb.CELLmicrocosmos.org
+To load files from your webpage with CmPIweb, please use the following syntax:
+http://CmPIweb.CELLmicrocosmos.org/?url=http://www.your-url.org/full-path/Cm4-file.zip
+The file discussed in the context of this publication can be found here:
+
+
+
+
+                                                                                                   This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License (http://creativecommons.org/licenses/by-nc-nd/3.0/).
+http://CmPIweb.CELLmicrocosmos.org/?url=http://www.cellmicrocosmos.org/cm4files/Ani
+mal_Cell__1_72__hsa00010-20__1_4_2014[Cm4].zip
+
+Acknowledgements
+Our thanks go to the reviewers helped improving the original manuscript. Additional thanks to
+Falk Schreiber and Karsten Klein for a valuable quick discussion on Figure 1.
+
+References
+[1] B. Sommer, J. Künsemöller, N. Sand, A. Husemann, M. Rumming, and B. Kormeier.
+    CELLmicrocosmos 4.1: an interactive approach to integrating spatially localized
+    metabolic networks into a virtual 3D cell environment. in BIOINFORMATICS 2010 -
+    Proceedings of the 1st International Conference on Bioinformatics, part of the 3rd
+    International Joint Conference on Biomedical Engineering Systems and Technologies
+    (BIOSTEC 2010), 2010, :90–95.
+[2] M. Hucka, F. T. Bergmann, S. Hoops, S. M. Keating, S. Sahle, J. C. Schaff, L. P. Smith,
+    and D. J. Wilkinson. The Systems Biology Markup Language (SBML): language
+
+
+
+
+                                                                                                   Copyright 2016 The Author(s). Published by Journal of Integrative Bioinformatics.
+    specification for level 3 version 1 core. 2010.
+[3] P. S. Demenkov, T. V. Ivanisenko, N. A. Kolchanov, and V. A. Ivanisenko. ANDVisio:
+    A new tool for graphic visualization and analysis of literature mined associative gene
+    networks in the ANDSystem. In silico biology, 11(3):149–161, 2012.
+[4] A. Franceschini, D. Szklarczyk, S. Frankild, M. Kuhn, M. Simonovic, A. Roth, J. Lin, P.
+    Minguez, P. Bork, and C. von Mering. STRING v9. 1: protein-protein interaction
+    networks, with increased coverage and integration. Nucleic acids research, 41(D1):D808–
+    D815, 2013.
+[5] J. Schindelin, I. Arganda-Carreras, E. Frise, V. Kaynig, M. Longair, T. Pietzsch, S.
+    Preibisch, C. Rueden, S. Saalfeld, and B. Schmid. Fiji: an open-source platform for
+    biological-image analysis. Nature Methods, 9(7):676–682, 2012.
+[6] Blender. blender.org - Home of the Blender project - Free and Open 3D Creation Software.
+    2014. [Online]. Available: http://www.blender.org/. [Accessed: 22-Jul-2014].
+[7] T. Töpel, B. Kormeier, A. Klassen, and R. Hofestädt. BioDWH: a data warehouse kit for
+    life science data integration. Journal of Integrative Bioinformatics, 5(2):93, 2008.
+[8] O. A. Podkolodnaya, E. E. Yarkova, P. S. Demenkov, O. S. Konovalova, V. A. Ivanisenko,
+    and N. A. Kolchanov. Application of the ANDCell computer system to reconstruction and
+    analysis of associative networks describing potential relationships between myopia and
+    glaucoma. Russian Journal of Genetics: Applied Research, 1(1):21–28, 2011.
+[9] K. Hippe, B. Kormeier, T. Töpel, S. Janowski, and R. Hofestädt. DAWIS-MD-a data
+    warehouse system for metabolic data. GI Jahrestagung, 2:720–725, 2010.
+
+doi:10.2390/biecoll-jib-2016-298                                                             10
+Journal of Integrative Bioinformatics, 13(4):298, 2016                      http://journal.imbio.de/
+[10] U. Consortium. Update on activities at the Universal Protein Resource (UniProt) in 2013.
+     Nucleic acids research, 41(D1):D43–D47, 2013.
+[11] D. Croft, G. O’Kelly, G. Wu, R. Haw, M. Gillespie, L. Matthews, M. Caudy, P. Garapati,
+     G. Gopinath, and B. Jassal. Reactome: a database of reactions, pathways and biological
+     processes. Nucleic Acids Research, 39(suppl 1):D691–D697, 2011.
+[12] M. Ashburner, C. A. Ball, J. A. Blake, D. Botstein, H. Butler, J. M. Cherry, A. P. Davis,
+     K. Dolinski, S. S. Dwight, and J. T. Eppig. The Gene Ontology Consortium (2000) Gene
+     Ontology: tool for the unification of biology. Nature Genetics, 25:25–29, 2000.
+
+
+
+
+                                                                                                       This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License (http://creativecommons.org/licenses/by-nc-nd/3.0/).
+[13] B. Sommer, E. S. Tiys, B. Kormeier, K. Hippe, S. J. Janowski, T. V. Ivanisenko, A. O.
+     Bragin, P. Arrigo, P. S. Demenkov, A. V. Kochetov, V. A. Ivanisenko, N. A. Kolchanov,
+     and R. Hofestädt. Visualization and analysis of a Cardio Vascular Disease-and MUPP1-
+     related biological network combining text mining and data warehouse approaches. Journal
+     of Integrative Bioinformatics, 7(1):148, 2010.
+[14] S. C. Mueller, B. Sommer, C. Backes, J. Haas, B. Meder, E. Meese, and A. Keller. From
+     single variants to protein cascades: Multi-scale modeling of SNV sets in genetic disorders.
+     Journal of Biological Chemistry, :jbc. M115. 695247, 2015.
+[15] B. Sommer, B. Kormeier, P. S. Demenkov, P. Arrigo, K. Hippe, Ö. Ates, A. V. Kochetov,
+     V. A. Ivanisenko, N. A. Kolchanov, and R. Hofestädt. Subcellular Localization Charts: A
+     new visual methodology for the semi-automatic localization of protein-related data sets.
+     Journal of Bioinformatics and Computational Biology, 11(1):1340005, 2013.
+[16] B. Sommer, A. Hamacher, O. Kaluza, T. Czauderna, M. Klapperstück, N. Biere, M.
+     Civico, B. Thomas, D. G. Barnes, and F. Schreiber. Stereoscopic Space Map – Semi-
+     immersive Configuration of 3D-stereoscopic Tours in Multi-display Environments.
+     Electronic Imaging, Proceedings of Stereoscopic Displays and Applications XXVII,
+     2016(5):1–9, Feb. 2016.
+
+
+
+
+                                                                                                       Copyright 2016 The Author(s). Published by Journal of Integrative Bioinformatics.
+[17] M. Le Muzic, L. Autin, J. Parulek, and I. Viola. cellVIEW: a tool for illustrative and multi-
+     scale rendering of large biomolecular datasets. in Proceedings of the Eurographics
+     Workshop on Visual Computing for Biology and Medicine, 2015, :61–70.
+[18] H. M. Berman, J. Westbrook, Z. Feng, G. Gilliland, T. N. Bhat, H. Weissig, I. N.
+     Shindyalov, and P. E. Bourne. The Protein Data Bank. Nucleic acids research, 28(1):235–
+     242, Jan. 2000.
+[19] Jmol: an open-source Java viewer for chemical structures in 3D. 2015. [Online].
+     Available: http://jmol.sourceforge.net/. [Accessed: 05-Mar-2013].
+[20] B. Ho. [Online]. Available: https://jolecule.com. [Accessed: 12-Oct-2016].
+[21] B. Sommer, S. J. Wang, L. Xu, M. Chen, and F. Schreiber. Hybrid-Dimensional
+     Visualization and Interaction - Integrating 2D and 3D Visualization with Semi-Immersive
+     Navigation Techniques. in Big Data Visual Analytics (BDVA), 2015, 2015, :1–8.
+[22] S. I. O’Donoghue, K. S. Sabir, M. Kalemanov, C. Stolte, B. Wellmann, V. Ho, M. Roos,
+     N. Perdigão, F. A. Buske, and J. Heinrich. Aquaria: simplifying discovery and insight
+     from protein structures. Nature methods, 12(2):98–99, 2015.
+[23] M. de Ridder, K. Klein, and J. Kim. CereVA - Visual Analysis of Functional Brain
+     Connectivity. in Proceedings of the 6th International Conference on Information
+     Visualization Theory and Applications (VISIGRAPP 2015), 2015, :131–138.
+
+
+
+
+doi:10.2390/biecoll-jib-2016-298                                                                 11
+Journal of Integrative Bioinformatics, 13(4):298, 2016                      http://journal.imbio.de/
+[24] C. R. Bernier, A. S. Petrov, C. C. Waterbury, J. Jett, F. Li, L. E. Freil, X. Xiong, L. Wang,
+     B. L. Migliozzi, and E. Hershkovits. RiboVision suite for visualization and analysis of
+     ribosomes. Faraday discussions, (169):195–207, 2014.
+[25] L. Zhu, A. Malatras, M. Thorley, I. Aghoghogbe, A. Mer, S. Duguez, G. Butler-Browne,
+     T. Voit, and W. Duddy. CellWhere: graphical display of interaction networks organized
+     on subcellular localizations. Nucleic acids research, 43(W1):W571–W575, 2015.
+[26] A. Barsky, J. L. Gardy, R. E. W. Hancock, and T. Munzner. Cerebral: a Cytoscape plugin
+     for layout of and interaction with biological networks using subcellular localization
+
+
+
+
+                                                                                                       This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License (http://creativecommons.org/licenses/by-nc-nd/3.0/).
+     annotation. Bioinformatics, 23(8):1040–1042, 2007.
+[27] three.js - Javascript 3D library. 2014. [Online]. Available: http://threejs.org. [Accessed:
+     13-Sep-2014].
+[28] B. Sommer, C. Bender, T. Hoppe, C. Gamroth, and L. Jelonek. Stereoscopic cell
+     visualization: from mesoscopic to molecular scale. Journal of Electronic Imaging,
+     23(1):011007-1-011007-10, 2014.
+[29] R. Carey, G. Bell, and C. Marrin. Iso/iec 14772-1: 1997 virtual reality modeling language
+     (vrml97). The VRML Consortium Incorporated, 34, 1997.
+[30] M. Bostock, V. Ogievetsky, and J. Heer. D3 data-driven documents. Visualization and
+     Computer Graphics, IEEE Transactions on, 17(12):2301–2309, 2011.
+[31] H. T. Nim, M. B. Furtado, M. W. Costa, N. A. Rosenthal, H. Kitano, and S. E. Boyd.
+     VISIONET: intuitive visualisation of overlapping transcription factor networks, with
+     applications in cardiogenic gene discovery. BMC bioinformatics, 16(1):1, 2015.
+[32] M. Bostock. D3.js - Data-Driven Documents. 2014. [Online]. Available: http://d3js.org.
+     [Accessed: 13-Sep-2014].
+
+
+
+
+                                                                                                       Copyright 2016 The Author(s). Published by Journal of Integrative Bioinformatics.
+[33] B. Sommer. Network Analysis and Integration in a Virtual Cell Environment. in
+     Approaches in Integrative Bioinformatics, :275–297, Springer, 2014, 275–297.
+[34] M. Kanehisa, S. Goto, Y. Sato, M. Furumichi, and M. Tanabe. KEGG for integration and
+     interpretation of large-scale molecular data sets. Nucleic acids research, 40(D1):D109–
+     D114, 2012.
+[35] H. Thiele, S. Heldmann, D. Trede, J. Strehlow, S. Wirtz, W. Dreher, J. Berger, J. Oetjen,
+     J. H. Kobarg, and B. Fischer. 2D and 3D MALDI-imaging: conceptual strategies for
+     visualization and data mining. Biochimica et Biophysica Acta (BBA)-Proteins and
+     Proteomics, 1844(1):117–137, 2014.
+[36] A. J. Robinson and T. P. Flores. Novel techniques for visualising biological information.
+     in Proceedings of the Fifth International Conference on Intelligent Systems for Molecular
+     Biology (ISMB-97), 1997, 5:241–249.
+
+
+
+
+doi:10.2390/biecoll-jib-2016-298                                                                 12
+

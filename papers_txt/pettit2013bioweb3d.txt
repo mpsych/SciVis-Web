@@ -1,0 +1,418 @@
+Pettit and Marioni BMC Bioinformatics 2013, 14:185
+http://www.biomedcentral.com/1471-2105/14/185
+
+
+
+
+ SOFT WA R E                                                                                                                                 Open Access
+
+bioWeb3D: an online webGL 3D data
+visualisation tool
+Jean-Baptiste Pettit* and John C Marioni*
+
+
+  Abstract
+  Background: Data visualization is critical for interpreting biological data. However, in practice it can prove to be a
+  bottleneck for non trained researchers; this is especially true for three dimensional (3D) data representation. Whilst
+  existing software can provide all necessary functionalities to represent and manipulate biological 3D datasets, very
+  few are easily accessible (browser based), cross platform and accessible to non-expert users.
+  Results: An online HTML5/WebGL based 3D visualisation tool has been developed to allow biologists to quickly and
+  easily view interactive and customizable three dimensional representations of their data along with multiple layers of
+  information. Using the WebGL library Three.js written in Javascript, bioWeb3D allows the simultaneous visualisation of
+  multiple large datasets inputted via a simple JSON, XML or CSV file, which can be read and analysed locally thanks to
+  HTML5 capabilities.
+  Conclusions: Using basic 3D representation techniques in a technologically innovative context, we provide a
+  program that is not intended to compete with professional 3D representation software, but that instead enables a
+  quick and intuitive representation of reasonably large 3D datasets.
+
+
+Background                                                                          Amira 3D [5], V3D [6], the Allen Brain Atlas [7] or
+Visualisation is a key challenge in the analysis of large                           Cytoscape [8]. These tools are very complete and usu-
+biological datasets, especially when analysing organized                            ally complex to operate for non-expert users. Moreover,
+structures with distinct sub-clusters [1]. This is par-                             they require installation on every machine they are used
+ticularly important when analysing 3-Dimensional (3D)                               on, which makes sharing inconvenient. To address this
+datasets. When a biological process or feature has been                             issue, some 3D visualisation tools have been built online
+described spatially by a set of 3D referenced points, either                        and are accessible through the browser directly, such as
+via laboratory work (confocal microscopy for example) or                            AstexViewer [9], which is utilised by the Protein Databank
+generated within a simulation, with some data attached                              Europe via a Java Applet. More recently, visualisation tools
+to each point in space, the first step in interpreting the                          developed using HTML5/WebGL capabilities have been
+data is to visualise it. Once the data are visualised and                           described, although they have focused on very specific
+their quality assessed, downstream analysis can proceed.                            applications, such as analysing radiology data [10].
+For example, a typical second step is to cluster the obser-                            Importantly, as yet no tool has allowed biologists to view
+vations into different classes based upon the information                           their own 3D data directly online in an easy, fast, interac-
+associated with each point; those results will also need                            tive and secure way. Using WebGL and the JavaScript 3D
+visualisation.                                                                      library Three.js, bioWeb3D aims to be a simple, generic,
+  While various 3D visualisation tools have been devel-                             tool for tackling this problem.
+oped, they have typically been made available via a
+locally installed piece of software such as BioLayout                               Implementation
+Express3D [2], Arena3D [3], 3D Genome Tuner [4],                                    bioWeb3D allows the user to represent any 3D dataset
+                                                                                    on their browser by defining only two files. The two files
+*Correspondence: jbpettit@ebi.ac.uk; marioni@ebi.ac.uk                              can either be formatted as JSON or XML files, two widely
+EMBL-EBI, European Molecular Biology Laboratory - European Bioinformatics           used structured formats on the web [11,12], or directly as
+Institute, CB10 1SD, Cambridge, UK                                                  Comma Separated Values files (CSV).
+
+                                       © 2013 Pettit and Marioni; licensee BioMed Central Ltd. This is an Open Access article distributed under the terms of the Creative
+                                       Commons Attribution License (http://creativecommons.org/licenses/by/2.0), which permits unrestricted use, distribution, and
+                                       reproduction in any medium, provided the original work is properly cited.
+Pettit and Marioni BMC Bioinformatics 2013, 14:185                                                                   Page 2 of 7
+http://www.biomedcentral.com/1471-2105/14/185
+
+
+
+
+   The first file used by the application, referred to as the    Listing 1 Json dataset file
+“dataset file”, contains the coordinates of every point in
+                                                                 {"dataset" : {
+the dataset. The second type of file used, the “information
+                                                                        "name" : "my superb dataset",
+layer” file, describes one or several information layers that
+                                                                        "chain": true,
+are associated with the points defined in the first file. For
+                                                                         "points" :
+example, if each point defines the location of a cell within a
+                                                                          [
+tissue, the second file could describe whether a particular
+                                                                            [
+gene is expressed in each cell. That way the tissue expres-
+                                                                               0.5,
+sion profile can be represented in the spatial context of the
+                                                                               100,
+tissue.
+                                                                               -50.5
+   Datasets can be viewed and compared in up to four
+                                                                            ],
+“worlds” (each world refers to a separate visualisation sub-
+                                                                            [
+window) at the same time. Although browser based, the
+                                                                               200,
+application, fully written in Javascript, does not need to
+                                                                               10,
+send any data to the host server. Instead, the modern inter-
+                                                                               0.0
+net browser’s local file system reading capabilities are used
+                                                                            ],
+through the HTML 5 FileReader functionality. This allows
+                                                                            [
+the application to handle, in a very short period of time,
+                                                                              3,
+large datasets while ensuring that the privacy of the data
+                                                                              250.15,
+is maintained.
+                                                                              15
+Although the focus is on making bioWeb3D simple and
+                                                                            ]
+easy to use, some options are available to customise how
+                                                                          ]
+datasets are represented. The application can be used to
+                                                                      }
+visualise sequential information, such as 3D protein struc-
+                                                                 }
+tures, in which case a solid line can be drawn between
+the points. In other situations, such as when a population
+of cells is considered, the points are viewed as individual
+particles. The information layers are visualised by colour-      of the primary internet browsers’ interpreter. Com-
+ing the 3D points according to the class that each point         pared to other data-interchange languages, such as XML,
+belongs to.                                                      JSON is also easily human readable thanks to a light-
+                                                                 weight syntax. However, some applications might out-
+Technological overview                                           put data only in an XML format and not JSON, as
+bioWeb3D is fully written in HTML/Javascript. It relies          the latter is generally more web oriented. For this
+heavily upon a relatively recent 3D javascript library           reason bioWeb3D can also accept XML as an input
+called Three.js [13]. This library is used as the main           format.
+interface between WebGL (cross-platform, royalty-free            Furthermore, much data generated in the biological sci-
+web standard for a low-level 3D graphics API) [14]               ences is stored within CSV files. Converting CSV docu-
+and javascript. More specifically, bioWeb3D allows the           ments to the JSON or XML format is not always trivial. In
+generation and manipulation of simple Three.js objects.          order to facilitate this process, the application is also able
+Indeed the primary challenge associated with the creation        to directly render simple CSV files that follow a certain
+of bioWeb3D has been to design interactions between              format as an input.
+the 3D visualisation and the user interface in the most
+efficient way.                                                   Dataset file specification
+The 3D data are rendered using simple 2D quadri-                 When the user adds a new Dataset file, a new Dataset
+laterals positioned in the 3D space according to their           section is created in the “Data” panel of the application.
+coordinates. This simple technique has been selected             Each dataset file contains one dataset.
+to keep bioWeb3D as light-weight as possible whilst
+ensuring good quality visualisation performance and              JSON format The dataset file should have a root object
+fluidity.                                                        called “dataset” which contains:
+Defining the input file formats                                    • The “name” property of the dataset (e.g., “my
+JSON is the recommended format to input files into                   dataset”);
+bioWeb3D because of its rigorous structure and its                 • The “chain” parameter, which should be set to true if
+fast object generation, which is directly built into all             the points are connected (the default value is false ) -
+Pettit and Marioni BMC Bioinformatics 2013, 14:185                                                                   Page 3 of 7
+http://www.biomedcentral.com/1471-2105/14/185
+
+
+
+
+Listing 2 XML dataset file                                         Listing 3 CSV dataset file
+<?xml version="1.0" ?>                                             0.5,100,-50.5
+<dataset>                                                          200,10,0.0
+    <name>my superb dataset</name>                                 3,250.15,15
+    <chain>true</chain>
+    <points>
+        <point>
+            <x>0.5</x>                                             CSV format Each line represents a point and the three
+            <y>100</y>                                             coordinates on each line must be separated by “comma”
+            <z>-50.5</z>                                           characters.
+        </point>                                                     As an example, Listing 3 carries the same information
+                                                                   as the JSON file in Listing 1. We note that although the
+             <point>                                               spatial information remains the same it is not possible to
+                 <x>200</x>                                        set a name or to connect the points within a CSV file
+                 <y>10</y>                                         input.
+                 <z>0.0</z>                                        Information layer file specification
+             </point>                                              The Information layer file contains information about the
+                                                                   points described in the Dataset file. The information in
+        <point>                                                    this file has to be given in the same order as the points
+            <x>3</x>                                               defined in the Dataset file.
+            <y>250.15</y>
+            <z>15</z>
+                                                                   JSON format The information layer files must have a
+        </point>
+                                                                   root element named “information”. Since one information
+    </points>
+                                                                   file can define multiple information sets, the structure
+</dataset>
+                                                                   below “information” is a list. Each element of the list is
+                                                                   structured as follows:
+
+    the data will be considered sequentially, with each              • The “name” property (optional);
+    point connected by a solid line to the previous and              • The “numClass” property, which indicates the
+    next point according to its order in the dataset file;             number of different classes the data will be assigned
+  • The “points” property, which is a two dimensional                  to;
+    array representing a list of (x,y,z) vectors that define         • The “labels” property, which defines a list of names for
+    the co-ordinates of the points.                                    the “numClass” classes previously defined (optional);
+                                                                     • The “values” property, which defines the class of each
+  Listing 1 is an example of a minimal 3 points dataset file.          point in the dataset. As points do not have single IDs,
+                                                                       this property must be in the same order and have the
+XML format The dataset XML format used is very sim-                    same length as the points defined in the dataset file.
+ilar to the previously defined JSON format. The file must
+have a root object called “<dataset>” which contains:                For example coming back to the 3 points defined in
+                                                                   Listing 1, two information layers could correspond to:
+  • The “<name>” property of the dataset (e.g., “my
+    dataset”);                                                       • one clustering algorithm that puts the first two points
+  • The “<chain>” parameter, which should be set to true               together in class one and the third point alone in a
+    if the points are linked (the default value is false ) - the       second class
+    data will be considered sequentially, with each point            • a second clustering algorithm that puts each point in
+    connected by a solid line to the previous and next                 a separate class
+    point according to its order in the dataset file;
+                                                                     In this case the Information layer file would look like
+  • The “<points>” property, which contains all the
+                                                                   Listing 4.
+    single “<point>” elements that define the dataset.
+    Each “<point>” has three properties to define its
+    spatial location, namely “<x>”, “<y>” and “<z>”.               XML format The information layer XML format used is
+                                                                   very similar to the previously defined JSON format. The
+  Listing 2 contains the same minimal dataset as Listing 1         information layer files must have a root element named
+but formatted in XML.                                              “<information>”. Since one information file can define
+Pettit and Marioni BMC Bioinformatics 2013, 14:185                                                                  Page 4 of 7
+http://www.biomedcentral.com/1471-2105/14/185
+
+
+
+
+Listing 4 JSON information layer file                           Listing 5 XML information layer file
+{ ‘‘information’’ :                                             <?xml version="1.0" ?>
+  [                                                             <information>
+    {                                                               <set>
+       ‘‘name’’: ‘‘clustering algo 1’’,                                 <name>clustering algo 1</name>
+       ‘‘numClass’’: ‘‘2’’,                                             <numClass>2</numClass>
+       ‘‘labels’’ : [                                                   <labels>
+         ‘‘Category 1’’,                                                    <label>Category 1</label>
+         ‘‘Category 2’’                                                     <label>Category 2</label>
+       ],                                                               </labels>
+       ‘‘values’’: [                                                    <values>
+         1,                                                                 <value>1</value>
+         1,                                                                 <value>1</value>
+         2                                                                  <value>2</value>
+       ]                                                                </values>
+    },                                                              </set>
+    {                                                               <set>
+       ‘‘name’’: ‘‘clustering algo 2’’,                                 <name>clustering algo 2</name>
+       ‘‘numClass’’: ‘‘3’’,                                             <numClass>3</numClass>
+       ‘‘values’’: [                                                    <values>
+         1,                                                                 <value>1</value>
+         2,                                                                 <value>2</value>
+         3                                                                  <value>3</value>
+       ]                                                                </values>
+    }                                                               </set>
+  ]                                                             </information>
+}
+
+
+                                                                Listing 6 CSV information layer file
+multiple information sets, the structure below “<informa-       1,1
+tion>” is a list of “<set>” elements. Each “<set>” element is   1,2
+structured as follows:                                          2,3
+  • The “<name>” property (optional);
+  • The “<numClass>” property, which indicates the
+    number of different classes the data will be assigned       as Listing 4. Note that it is not possible to use the “labels”
+    to;                                                         or “name” properties available in Listing 4 within a CSV
+  • The “<labels>” property, which contains as many             information layer file.
+    individual “<label>” properties as the number of
+    different classes. Each “<label>” defines the names for
+    one class (optional);                                       Results and discussion
+  • The “<values>” property, which contains all the single      Basic usage
+    “<value>” properties, each one defining the class of        The goal of bioWeb3D is to allow scientists unfamiliar
+    each point in the dataset. As points do not have single     with visualisation software to explore 3D data very quickly
+    IDs, the “<value>” properties must be in the same           without having to install any software. To illustrate its
+    order and have the same length as the points defined        utility we applied bioWeb3D to study heterogeneity in
+    in the dataset file.                                        gene expression levels across cells in the brain of the
+                                                                marine annelid Platynereis dumerilii. Using a newly devel-
+  Listing 5 carries the exact same information as Listing 4.
+                                                                oped technique called PrImR [15], Tomer and colleagues
+                                                                were able to generate a map of pseudo-cells within the
+CSV format Each column represents the class to which a          Platynereis dumerilii brain, before determining whether a
+point belongs. The separation character between columns         pre-defined set of genes were expressed in each pseudo-
+must be a “comma”. Listing 6 carries the same information       cell. In the context of bioWeb3D, the locations of the
+Pettit and Marioni BMC Bioinformatics 2013, 14:185                                                                                           Page 5 of 7
+http://www.biomedcentral.com/1471-2105/14/185
+
+
+
+
+ Figure 1 An example of the application of bioWeb3D. The 3D location of cells within the brain of the marine annelid Platynereis dumerilii is
+ shown. Two classes are displayed (in green and blue) along with the shadow of the remaining cells. The User interface is visible on the right of the
+ screen and can be hidden. Data for this figure was taken from [15].
+
+
+
+
+pseudo-cells are used to generate the “Dataset” file and                      in the current world and generate a list of classes that
+information about the sets of cells that define clusters                      the user can modify regarding their visibility and colour.
+with similar gene expression profiles are used to gen-                        The “View” panel enables the user to choose which of
+erate the “Information Layer” file. In Figure 1 we illus-                     the worlds are shown on the screen, ranging from 1 to
+trate the results — each point represents a pseudo-cell                       4. Finally, the “Settings” panel provides the user with a
+and its colour indicates the class (or cluster) to which it                   number of options that affect all worlds and all datasets,
+belongs to.                                                                   such as modifying the axes scales, modifiying the trans-
+  bioWeb3D can be used to visualise datasets derived                          parency and size of raw data points and information
+from a wide variety of biological assays. Examples are                        layer coloured points. The user can also choose to enable
+shown on the Github wiki [16], where we display a 3D                          centering of the data around 0 or leave the coordinates
+representation of a Principal Component Analysis (PCA)                        as inputted.
+carried out with R and the 3D structure of a protein
+extracted from the PDBe database.                                             bioWeb3D and local software
+  More generally, the user can interact with the visu-                        Many 3D visualisation software tools, most of which
+alisation via an interface on the right of the screen,                        require local installation, exist and provide similar func-
+which contains three panels. In the “dataset” panel, the                      tionalities with standard 3D format input such as Wave-
+user can choose the datasets and information layer files                      front .OBJ. Some are extremely generic and power-
+that should be represented in each world. This panel                          ful like Blender or Amira 3D. However, these tools
+also allows the user to show/hide specific classes of the                     are not typically oriented towards a scientific audi-
+selected information layers. Each dataset file entered will                   ence. Moreover, those that are more focused on sci-
+create a new sub-panel where the user can input infor-                        ence are often targeted towards a very specific appli-
+mation layer files for that world. Selecting an informa-                      cation, especially in the medical sciences [4]. In this
+tion layer in the drop-down list will display the data                        context, we believe that bioWeb3D can be useful as
+Pettit and Marioni BMC Bioinformatics 2013, 14:185                                                                                Page 6 of 7
+http://www.biomedcentral.com/1471-2105/14/185
+
+
+
+
+it is completely generic and browser based. It should         Availability and requirements
+also be noted that recent browser improvements regard-        The full source code is available on the Github page of the project [16]. A live
+                                                              version of the software is online [19]. You will require a graphical card and a
+ing GPU acceleration through the WebGL paradigm               browser with WebGL capabilities to run bioWeb3D.
+allow bioWeb3D to visualise several hundred thou-
+sand points. Additionally, local software is usually plat-    Project name: bioWeb3D
+                                                              Project home page: http://www.ebi.ac.uk/~jbpettit/bioWeb3D
+form specific, which is not the case for browser based        Operating system: Platform independent
+applications.                                                 Programming language: HTLM/Javascript
+                                                              Other requirements: Browser and graphic card with WebGL capabilities
+                                                              License: Academic Free License ("AFL") v. 3.0
+bioWeb3D and java applets
+As mentioned previously, browser based 3D visualisation       Competing interests
+tools currently exist mainly in the form of Java Applets.     The authors declare no competing interests.
+This technology has attracted much criticism in 2012          Authors’ contributions
+regarding security flaws, leading the “United States Com-     JBP developed the presented software and drafted the manuscript. JCM has
+puter Emergency Readiness Team” to advise that all Java       been involved in writing and editing the manuscript. He has also given the
+                                                              final approval of this version to be submitted. All authors read and approved
+Applets should be disabled due to current and future Java     the final manuscript.
+vulnerabilities [17]. The development of WebGL tech-
+nology is viewed by many as a candidate for replacing         Acknowledgements
+                                                              The authors would like to acknowledge Samuel Croset, Stijn van Dongen,
+Applets.                                                      Konrad Rudolph and Sergio Martinez Cuesta for helpful discussion and
+                                                              criticisms. We also thank Raju Tomer and Detlev Arendt for providing the
+Current limitations                                           Platynereis data displayed in Figure 1. Funding for this study was provided by
+                                                              the European Molecular Biology Laboratory (EMBL).
+The main current limitation of a WebGL based appli-
+cation is the machine and browser compatibility. Only         Received: 1 March 2013 Accepted: 29 May 2013
+computers with fairly recent graphic cards will be able       Published: 7 June 2013
+to run a 3D environment. It should also be noted that         References
+Microsoft has notified the developer community that           1. Rubel O, Weber GH, Huang MY, Bethel EW, Biggin MD, Fowlkes CC,
+Internet Explorer is not scheduled to support WebGL in            Luengo Hendriks CL, Keranen SV, Eisen MB, Knowles DW, Malik J, Hagen
+                                                                  H, Hamann B: Integrating data clustering and visualization for the
+the near future. However, importantly, Chrome, Firefox,           analysis of 3D gene expression data. IEEE/ACM Trans Comput Biol
+Safari and Opera all now support WebGL applications.              Bioinform 2010, 7:64–79.
+Moreover, we note that WebGL is also supported on             2. Freeman TC, Goldovsky L, Brosch M, van Dongen S, Mazière P, Grocock RJ,
+                                                                  Freilich S, Thornton J, Enright AJ: Construction, visualisation, and
+mobile platforms such as iOS or Android [18].                     clustering of transcription networks from Microarray expression
+                                                                  data. PLoS Comput Biol 2007, 3(10):e206.
+Open source and collaborative development                     3. Pavlopoulos GA, O’Donoghue SI, Satagopam VP, Soldatos TG, Pafilis E,
+                                                                  Schneider R: Arena3D: visualization of biological networks in 3D.
+As a fully open source software, the source code for
+                                                                  BMC Syst Biol 2008, 2:104.
+bioWeb3D is available on Github [16], a web platform          4. Wang Q, Liang Q, Zhang X: 3D Genome tuner: compare multiple
+that allows interested parties to collaborate on the devel-       circular genomes in a 3D context. Genomics Proteomics Bioinformatics
+opment of the project. In the wiki page “Contribute               2009, 7(3):143–146.
+                                                              5. Stalling D, Westerhoff M, Hege HC: Amira: a highly interactive system
+to bioWeb3D”, directions to alter or add capabilities             for visual data analysis. In The Visualization Handbook, chapter 38. Edited
+to bioWeb3D are provided for users who wish to get                by Charles D. Hansen and Chris R. Johnson: Elsevier; 2005:749–767.
+involved.                                                     6. Peng H, Ruan Z, Long F, Simpson JH, Myers EW: V3D enables real-time
+                                                                  3D visualization and quantitative analysis of large-scale biological
+                                                                  image data sets. Nature Biotechnol 2010, 28(4):348–353. [http://www.
+Conclusions                                                       pubmedcentral.nih.gov/articlerender.fcgi?artid=2857929&tool=
+bioWeb3D is designed to be a simple and quick way to              pmcentrez&rendertype=abstract]
+                                                              7. Lein ES, Hawrylycz MJ, Ao N, Ayres M, Bensinger A, Bernard A, Boe AF,
+view 3D data with a specific focus on biological appli-           Boguski MS, Brockway KS, Byrnes EJ, Chen L, Chen L, Chen TM, Chin MC,
+cations. Being browser-based, the software can be easily          Chong J, Crook BE, Czaplinska A, Dang CN, Datta S, Dee NR, Desaki AL,
+used from any computer without the need to install a piece        Desta T, Diep E, Dolbeare TA, Donelan MJ, Dong HW, Dougherty JG,
+                                                                  Duncan BJ, Ebbert AJ, Eichele G, et al.: Genome-wide atlas of gene
+of software. Importantly, bioWeb3D has been designed              expression in the adult mouse brain. Nature 2007, 445(7124):168–176.
+to offer a very straightforward and easy-to-use work-         8. Shannon P, Markiel A, Ozier O, Baliga NS, Wang JT, Ramage D, Amin N,
+ing environment. Despite current limitations in terms of          Schwikowski B, Ideker T: Cytoscape: a software environment for
+compatibility or rendering performance for large num-             integrated models of biomolecular interaction networks. Genome
+                                                                  Res 2003, 13:2498–2504.
+bers of points, we believe that bioWeb3D will enable          9. Hartshorn MJ: Astex Viewer: a visualisation aid for structure-based
+non-experts in 3D data representation to quickly visu-            drug design. J Comput Aided Mol Des 2002, 16(12):871–881.
+alise their data and the information attached to it in        10. Kulkarni DB, Doijade MM, Devrukhkar CS, Zilpe GR, Surana RR: Article:
+                                                                  NetraRIS - a web based DICOM viewer. Int J Comput Appl 2012,
+many biological contexts, thus facilitating downstream            48(24):40–44. [Published by Foundation of Computer Science, New York,
+analyses.                                                         USA].
+Pettit and Marioni BMC Bioinformatics 2013, 14:185                                                                                       Page 7 of 7
+http://www.biomedcentral.com/1471-2105/14/185
+
+
+
+
+11. Wilde E: Putting things to REST. Transport 2007, 15(November):567–583.
+12. XML applications and initiatives [http://xml.coverpages.org/
+    xmlApplications.html]
+13. Three.js - JavaScript 3D library [http://mrdoob.github.com/three.js/]
+14. WebGL 1.0 Specification [https://www.khronos.org/registry/webgl/
+    specs/1.0/]
+15. Tomer R, Denes AS, Tessmar-Raible K, Arendt D: Profiling by image
+    registration reveals common origin of annelid mushroom bodies
+    and vertebrate pallium. Cell 2010, 142(5):800–809.
+16. bioWeb3D on github [http://github.com/jbogp/bioWeb3D]
+17. United States Computer Emergency Readiness Team [http://www.kb.
+    cert.org/vuls/id/636312]
+18. Compatibility table for WebGL [http://caniuse.com/webgl]
+19. bioWeb3D online [http://www.ebi.ac.uk/~jbpettit/bioWeb3D/]
+
+ doi:10.1186/1471-2105-14-185
+ Cite this article as: Pettit and Marioni: bioWeb3D: an online webGL 3D data
+ visualisation tool. BMC Bioinformatics 2013 14:185.
+
+
+
+
+                                                                               Submit your next manuscript to BioMed Central
+                                                                               and take full advantage of:
+
+                                                                               • Convenient online submission
+                                                                               • Thorough peer review
+                                                                               • No space constraints or color ﬁgure charges
+                                                                               • Immediate publication on acceptance
+                                                                               • Inclusion in PubMed, CAS, Scopus and Google Scholar
+                                                                               • Research which is freely available for redistribution
+
+
+                                                                               Submit your manuscript at
+                                                                               www.biomedcentral.com/submit
+

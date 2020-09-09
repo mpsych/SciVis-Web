@@ -1,0 +1,843 @@
+Received March 13, 2019, accepted March 28, 2019, date of publication April 10, 2019, date of current version April 16, 2019.
+Digital Object Identifier 10.1109/ACCESS.2019.2909655
+
+
+
+
+Visualizing Three-Dimensional Ocean Eddies
+in Web Browsers
+LI LIU         1,   DEBORAH SILVER1 , AND KAREN BEMIS2
+1 Department of Electrical and Computer Engineering, Rutgers, The State University of New Jersey, New Brunswick, NJ 08901, USA
+2 Department of Marine and Coastal Sciences, Rutgers, The State University of New Jersey, New Brunswick, NJ 08901, USA
+
+Corresponding author: Li Liu (l.liu6819@gmail.com)
+This work was supported by the U.S. National Science Foundation (NSF) under Grant OCE-1049088.
+
+
+
+
+  ABSTRACT Despite the importance of mesoscale eddies, and other three-dimensional features discernable
+  in numerical simulations of ocean circulations, to the understanding of oceanic heat transport and climate
+  change, there are few dedicated three-dimensional visualization tools for scientists to use. This paper presents
+  a framework for the visualization of three-dimensional (3D) ocean eddies in web browsers. The framework
+  includes a feature-based eddy computation algorithm implemented by a standalone C++ program and a
+  web graphics library-based 3D eddy viewer. Combining eddy extraction, tracking, query, and interactive
+  visualizations in one workflow, the proposed framework is designed to facilitate the visual exploration
+  and analysis of ocean eddies and thus help domain experts get more insight into the process of ocean
+  circulation. In the framework, the feature-based algorithm significantly reduces the storage requirement of
+  data and the rendering cost of visualization tasks by exploiting the coherence between consecutive data
+  frames and focusing on just those regions of interest. The 3D eddy viewer presents eddy visualizations
+  within a standard web browser, which enables the easy sharing of the tool and the results between scientific
+  collaborators at different locations on diverse platforms without the need to install specialized software.
+  In this paper, the general considerations in the design process as well as the technical facts of the framework,
+  the application of the framework to a high-resolution regional ocean simulation, the general usage scenarios
+  of the 3D eddy viewer and the user evaluation are discussed.
+
+
+  INDEX TERMS Ocean eddies, geospatial visualization, feature tracking, 3D, WebGL.
+
+
+I. INTRODUCTION                                                                                 illustrate the dominantly horizontal dynamics in the ocean,
+Mesoscale ocean eddies are typically understood as vor-                                         they do not address all questions that are important to the
+tices that are 50 - 200 km in diameter, may live for sev-                                       oceanographic communities. For example: How do eddies
+eral months, and can propagate across an ocean basin [23].                                      interact with ocean stratification? How do such interactions
+They play an important role in transporting heat, salt, and                                     affect the observed degree of taper? How does an eddy evolve
+nutrients in the ocean, both horizontally and vertically.                                       from its birth to disappearance? What are the differences
+In the past few decades, the computational power to sup-                                        between cyclonic and anti-cyclonic eddies in distribution and
+port three-dimensional computer modeling of ocean circula-                                      motion? These questions, about the structure of eddies, their
+tion has greatly increased, enabling oceanographers to study                                    internal variation in physical properties (e.g., temperature
+ocean eddies in three dimensions at unprecedented precision                                     and nutrients), and their motions over time and space, are
+and scope. However, publications in oceanography typically                                      fundamentally three-dimensional.
+still show only simple two-dimensional plots of eddy vari-                                         Driven by the above needs and the interests of scien-
+ables on the surface and in vertical sections [1], [3], [10]. One                               tists, three-dimensional visualization technologies have been
+major reason is the limitations of the dedicated visualiza-                                     developed and used in the analysis of ocean eddies. Pre-
+tion tools that are available to the oceanographic commu-                                       vious studies used visualization to provide a census of the
+nity. While 2D eddy representations efficiently and simply                                      eddies in a given dataset, visualize the spatial distribution
+                                                                                                of eddies [12], [23], [25], and show the migration paths of
+                                                                                                eddies [12], [26]. Three-dimensional ray casting techniques
+   The associate editor coordinating the review of this manuscript and
+approving it for publication was Lei Wei.                                                       and specialized colormaps were used to visualize the eddy
+
+                                            2169-3536 2019 IEEE. Translations and content mining are permitted for academic research only.
+44734                                             Personal use is also permitted, but republication/redistribution requires IEEE permission.     VOLUME 7, 2019
+                                           See http://www.ieee.org/publications_standards/publications/rights/index.html for more information.
+L. Liu et al.: Visualizing Three-Dimensional Ocean Eddies in Web Browsers
+
+
+
+
+structure and depth [15]. Our previous work in [7] com-                     a common environment for all users, which promotes collab-
+bines the hand-drawn figurative depiction of mesoscale ocean                orative research and customized extensions.
+eddies with time-dependent (time-varying) feature-based                        The remainder of the paper is organized as follows:
+visualization techniques to automatically produce illustrative              Section II reviews the related work and Section III introduces
+visualizations from a high-resolution regional ocean model.                 the proposed framework for eddy visualization. We elaborate
+This combination allows the entire dataset to be summarized                 our eddy feature computation method in Section IV and
+into a single concise view but still enables structural under-              describe the ocean data and the implementation performance
+standing of ocean eddies and their dynamics.                                in Section V. The 3D eddy viewer is presented in Section VI.
+   Existing data visualization software such as ParaView,                   In Section VII, we demonstrate the usage scenarios of the
+VisIt, and EnSight can often support the visualization of                   eddy viewer. A user evaluation is provided in Section VIII.
+time-varying volume data (e.g., ocean data). However, these                 Finally, conclusions and future work are given in Section IX.
+tools are usually proprietary, require licenses and installation
+on a specified operating system and software environment,                   II. RELATED WORKS
+and have a steep learning curve [24]. Another issue with the                Previous research related to the methodologies adopted in
+existing visualization applications is that they often display              this paper includes time-varying volume visualization, ocean
+the sequence of data frames (i.e., timesteps) as animations                 eddy visualization, and data visualization software.
+without considering the temporal coherence between data                        Visualizations of time-varying volume data usually fall
+frames. Last but not least, these visualization tools are not               into two major categories: time-independent algorithms and
+designed specifically for exploring ocean eddies and thus fail              time-dependent algorithms. Time-independent algorithms
+to satisfy many common requirements of scientists. Despite                  process multiple timesteps independently and display the
+the above-mentioned successful eddy visualizations that have                sequence of timesteps as an animation. Related methods
+been developed, a dedicated eddy visualization tool that pro-               generally include reducing the storage size of data to make it
+vides a one-stop solution from data processing to visualiza-                more manageable (e.g., compression, temporal subsampling,
+tion without the need to install specialized software is still              and contouring), preselecting transfer functions for direct vol-
+desperately needed by domain researchers.                                   ume rendering, and interactive hardware-accelerated volume
+   The major challenges of developing such a tool include: a.               rendering [9]. Most existing data visualization software adopt
+incorporating different data formats and coordinate systems                 time-independent algorithms as default ways of temporal
+into one workflow; b. efficiently presenting large amounts                  navigation. In contrast, time-dependent algorithms introduce
+of data without the loss of the details; and c. assuring easy               a dependency between neighboring timesteps. Two common
+distribution and installation of the tool given the range of                methods are particle tracing and feature-based method (also
+users and potential platforms. To address these challenges,                 known as feature extraction and tracking) [24]. Particle trac-
+this study extends the illustrative eddy visualizations in our              ing is a fundamental method for the visualization of flow field
+previous work [7] to an integrated framework for the visu-                  data and is usually computational complex and intensive.
+alization and analysis of three-dimensional ocean eddies in                 The feature-based method (e.g., [19], [20]) exploits the data
+web browsers. Combining eddy extraction, tracking, query,                   coherence between consecutive timesteps and focuses on just
+and interactive visualizations in one workflow, the pro-                    those regions of interest. The resulting significant reduction
+posed framework is designed to facilitate the visual explo-                 in the storage requirement of data and rendering cost of
+ration and analysis of ocean eddies using the efficiency of                 visualization tasks makes the feature-based method highly
+feature-based algorithms, a customized visualization design,                suitable for WebGL-based visualizations. Thus, this approach
+the ubiquity of web browsers, and the capabilities of Web                   is followed in this work.
+Graphics Library (WebGL) as well as GPUs and thus to help                      Understanding the motion of ocean eddies and visualizing
+domain experts get some insight into the process of ocean                   the eddies along with their motions in three-dimensions is
+circulation.                                                                of increasing interest to the oceanographic, environmental,
+   The main contributions of this work include: (1) Investi-                and meteorological communities. Zhu and Moorhead [26]
+gating ocean eddies and their motions as independent enti-                  tracked eddy instances over time by calculating their corre-
+ties, which highlights their internal properties and individual             lation probabilities between successive timesteps and placed
+movements. (2) Representing the process of eddy migration                   the reconstructed three-dimensional structures of eddies in an
+as a series of temporal-spatial patterns called eddy paths                  ocean bathymetry of the Pacific Ocean off the coast of Japan.
+and efficiently querying eddy paths from tracking eddies                    Studies have also visualized the structure of ocean eddies.
+over their life cycles. (3) Proposing web-compatible eddy                   Grant et al. [5] visualized the vertical structure and the life
+metadata to reduce the storage requirement of data and                      cycle of large anti-cyclonic eddies associated with the loop
+the rendering cost of visualization tasks. (4) Developing                   current by showing the raising and sinking of the thermocline
+a WebGL-based viewer to present the three-dimensional                       associated with eddy genesis and decay. Petersen et al. [12]
+visualizations of eddies within any standard web browsers.                  tracked eddies from a high-resolution simulation of the global
+The viewer has the benefit of not requiring a client-side                   ocean and presented the shape of eddies as isosurfaces of
+installation, offering centralized maintenance, and ensuring                the Okubo-Weiss parameter. Three-dimensional ray casting
+
+VOLUME 7, 2019                                                                                                                        44735
+                                                                      L. Liu et al.: Visualizing Three-Dimensional Ocean Eddies in Web Browsers
+
+
+
+
+techniques and specialized colormaps were used to visualize        TABLE 1. Example figures of the visualizations.
+the eddy structure and depth [15]. Our previous work in [7]
+combines the hand-drawn figurative depiction of mesoscale
+ocean eddies with feature-based visualization techniques to
+automatically produce three-dimensional illustrative visual-
+izations from a high-resolution regional ocean model. This
+study extends some of the techniques in [7] to accommodate
+presenting visualizations in web browsers.
+   Data visualization software such as ParaView, VisIt, and
+EnSight can extend their applications to time-varying volume
+data. These programs display the sequence of timesteps as
+animation and support temporal navigation in the form of           and space, while the students were especially interested in
+linear time slider and VCR-like controls (i.e., play, stop, step   exploring the multiple geometric (e.g., volume) and physical
+forward, and step backward) [24]. Three different animation        properties (e.g., temperature) of individual eddy instances.
+modes are usually provided: a sequence of defined or selected      Based on the requirement analysis and the characteristics of
+frames (e.g., the keyframe animation in EnSight), an ani-          time-dependent feature-based algorithm, four visualizations
+mation of a specific duration (e.g., the sequence mode in          were designed to help users explore eddies from an ocean data
+ParaView), and a sequence of all timesteps. Multiple oper-         in three-dimensions. These visualizations are:
+ations (e.g., filtering, cutting, changing color schemes) can         Daily eddy instance view which places all eddy instances
+be applied to individual timesteps. However, these visualiza-      of a day in the bounding box of the data frame to give users
+tion tools do not consider the temporal correlations between       some basic idea of the relative positions, sizes, shapes, and
+consecutive data frames and are not specifically designed for      distributions of eddies before locating an individual eddy
+exploring ocean eddies. They usually fail to satisfy some          from the visualization for more details.
+very basic tasks in studying ocean eddies such as observ-             Individual eddy path view which illustrates the motion of
+ing the interactions between different eddies and the varia-       an individual eddy in its life cycle as a series of consecutive
+tions of multiple physical properties along with the motion        timesteps in space (i.e., an eddy path) with a directional line
+of eddies. Additionally, existing visualization software all       above the eddy path to convey the direction of eddy motion
+require installation and have specifications on the software       and to provide a sense of continuity. Users can adjust the
+environment such as the versions of OpenGL. An installation-       distance between the consecutive timesteps, isolate a timestep
+free and dedicated eddy visualization tool is needed by the        from the eddy path, and compare different timesteps.
+domain experts, which motivates this study.                           Eddy skeleton overview where eddy instances in multiple
+                                                                   days or timesteps of multiple eddy paths are represented as
+III. DESIGN AND APPROACH                                           simple glyphs (cylinders) and are placed in the context of a
+The overarching goal of this study is to present a frame-          geographic map (e.g., ocean basin and coastline). This visu-
+work for the exploratory visualization of ocean eddies in          alization permits observation of a large portion of the dataset
+web browsers. An integrated framework that combines eddy           and intends to provide an efficient and succinct overview of
+extraction, tracking, and visualization in one workflow can        the vertical extent and spatial (horizontal) distribution of the
+provide researchers with a one-stop solution to explore eddies     visualized eddies with eddy vertical transfer highlighted.
+in 3D from ocean data so that they can focus on more                  3D eddy path overview which presents an ‘‘overview +
+advanced questions in research.                                    detailed’’ view where the loaded eddy paths are presented in
+                                                                   the context of a geographic map (the same as that of eddy
+A. VISUALIZATION DESIGN                                            skeleton overview) and allows users to isolate each individual
+The potential audience for the eddy visualizations include         eddy path from the visualization for more details. In the visu-
+scientists and students in oceanography, meteorology, and          alization, timesteps of eddy paths are presented as isosurfaces
+environmental sciences. As part of our design process, we          of eddy features to highlight the interactions between eddy
+interviewed four domain experts (two from environmental            paths, add a sense of continuity, and bring a more real and
+sciences, two from oceanography) and five graduate students        detailed overview of eddy motions to users.
+(two from environmental sciences, three from oceanogra-               Some of these visualizations have been published in our
+phy) to collect their requirements. We found that all of the       previous work [7]. Table 1 lists the accompanying example
+potential users expect an intuitive and interactive method to      figures of these visualizations in this paper.
+facilitate the exploratory visualization of ocean eddies. They
+want to observe the existing ocean eddies in a given day           B. APPROACH OVERVIEW
+and further to see a big picture of eddies along with their        An overview of the proposed eddy visualization framework
+motions in a geographic context within a period of time.           is illustrated in Figure 1. The framework is divided into
+The scientists particularly want to track ocean eddies over        two major parts: eddy computation and eddy visualization.
+their life cycles to understand the dynamics of eddies in time     In the eddy computation part, time-dependent feature-based
+
+44736                                                                                                                           VOLUME 7, 2019
+L. Liu et al.: Visualizing Three-Dimensional Ocean Eddies in Web Browsers
+
+
+
+
+FIGURE 1. An overview of the proposed eddy visualization framework. The framework includes a feature-based eddy computation algorithm and a 3D
+eddy viewer: the computation algorithm generates web-compatible eddy metadata for visualization; the viewer reads and converts the eddy metadata to
+a series of polygon meshes and renders these polygon meshes as visualizations in a web browser using the WebGL API and the capabilities of GPUs.
+Users’ interactions with the graphic user interface and the visualizations are supported in the 3D eddy viewer.
+
+
+
+
+algorithms are chosen to generate web-compatible metadata                   A. EDDY IDENTIFICATION AND EXTRACTION
+for efficient loading and rendering of a large amount of data               In identifying ocean eddies, we choose one of the ocean
+in web browsers and to enable a structural understanding of                 community’s canonical methods: the Okubo-Weiss (OW)
+ocean eddies and their motions. The workflow of the com-                    parameter [11], [22]. Generally, the OW parameter describes
+putation starts from reading and preprocessing ocean data                   the relative dominance of deformation with respect to rotation
+(a series of data frames), identifying and extracting eddy                  of the flow. It divides the ocean into regions dominated by
+features (i.e., regions of interest) from every data frame,                 vorticity, regions dominated by strain or deformation, and a
+tracking the extracted eddy features over time, and isolating               background where neither effect is dominant. Regions dom-
+eddy paths from the tracking history and the metadata of                    inated by vorticity are potentially eddies. Mathematically,
+extraction. Important physical and geometric properties are                 the OW is defined as:
+computed in the process. In the visualization part, the four
+designed visualizations are implemented by combining the                                          OW = Sn2 + Ss2 − ω2                          (1)
+WebGL techniques with standard visualization techniques                     where Sn and Ss are the normal and shear components of
+such as surface rendering (i.e., rendering the isovalue surface             strain respectively, and w is the relative vorticity of the flow.
+of a volumetric object) so that users can explore the metadata              They are different combinations of partial differentiations of
+of eddy computation at different levels from a single eddy                  the horizontal velocities (u and v) in the x and y directions.
+instance to multiple eddy paths in a web browser. Present-                                                  ∂u ∂v
+ing visualizations inside a standard web browser waives the                                           Sn =     −                               (2)
+                                                                                                            ∂x   ∂y
+requirement of a client-side installation, ensures a common
+                                                                                                            ∂v ∂u
+environment for all users by centralized maintenance, and                                              Ss =    +                               (3)
+facilitates the easy sharing of the tools and the interactive                                               ∂x   ∂y
+parametrization of visualizations between research collabo-                                                 ∂v ∂u
+                                                                                                       ω=      −                               (4)
+rators at different locations on diverse platforms.                                                         ∂x   ∂y
+                                                                               Eddies can be identified where the calculated OW values
+IV. FEATURE-BASED EDDY COMPUTATION                                          exceed a given threshold. Given a positive threshold value,
+The eddy computation algorithm described in this section                    the OW parameter allows partitioning of the ocean data into
+is based on the time-dependent feature-based visualization                  strain dominated and vorticity dominated domains.
+techniques. These techniques can significantly reduce the                      To extract vorticity dominated features, a region-growing
+amount of data that needs to be visualized by focusing on just              algorithm [16], [20] with a threshold of 0.2σOW is applied to
+those regions of interest. The process consists of identifying              the OW parameter field in every data frame. Note that the
+interesting regions or coherent structures of a dataset (i.e.,              threshold value changes in each data frame as the OW param-
+eddies in this work), automatically extracting these features               eter depends on time. Connected components of points with
+from each timestep using a variant of segmentation, and                     OW values below the threshold are extracted from the data
+matching extracted features from a timestep to the next using               as vorticity-dominated features which are potential eddies.
+volume overlap, pattern matching or feature-vector matching.                Attributes of each extracted eddy feature, such as volume,
+
+VOLUME 7, 2019                                                                                                                               44737
+                                                                              L. Liu et al.: Visualizing Three-Dimensional Ocean Eddies in Web Browsers
+
+
+
+
+FIGURE 2. A method to filter out non-eddy high-vorticity features and to
+determine the spin orientations of eddies. The directions of velocity
+vectors are checked at every data point on the plane 10 meters below the
+ocean surface. The direction angles are discretized into four axis
+quadrants.
+
+
+mass, centroid, and bounding box are also computed during
+the process of extraction.
+   Though the OW parameter can identify eddies both at and
+below the surface of the ocean, it also identifies high-vorticity
+features that should not be considered as eddies, particularly
+meanders in the Gulf Stream and other strong currents [23].                FIGURE 3. Four geometric properties are computed for each eddy feature
+To filter out non-eddy high-vorticity features, we check the               in the process of eddy computation: depth, volume, radius, and vorticity
+                                                                           orientation.
+directions of velocity vectors on a plane at about 10 meters
+below the sea surface (Figure 2) for each extracted feature.
+The direction is estimated as the angle between each point’s
+velocity vector and the positive X axis (a vector pointing to
+the east direction). As shown in Figure 2, these angles are                surface rendering). The metadata of each data frame is stored
+discretized into four quadrants: 0 to 90 degrees (Quadrant                 in two text files: one saves data points of eddy features
+I), 90 to 180 degrees (Quadrant II), 180 to 270 degrees                    (point metadata); the other saves isosurfaces of eddy features
+(Quadrant III), and 270 to 360 degrees (Quadrant IV). As a                 (surface metadata). The computed geometric and physical
+circular flow, an eddy should contain velocity vectors in                  properties are written in both files.
+all four angle domains. If the velocity vectors are con-
+sistent in the clock-wise direction, the feature is labeled                B. EDDY TRACKING
+an anti-cyclonic eddy. If the vectors are consistent in the                Since an eddy is considered as a temporal phenomenon,
+counter-clockwise direction, the feature is labeled a cyclonic             the complete description must include all of its instances
+eddy. Features with inconsistent vectors are discarded as non-             along the time axis and their associated properties [26]. Once
+eddies. Here, cyclonic and anti-cyclonic are vorticity orien-              eddies have been identified and extracted from the raw data,
+tations. In the northern hemisphere, a cyclonic eddy spins                 they are correlated over time with an overlap-based feature
+counter-clockwise and an anti-cyclonic eddy spins clockwise.               tracking algorithm [20] to determine which eddy instances in
+   After extracting eddy features from the raw data, three                 consecutive timesteps belong to the same eddy. We refer to
+geometric properties (i.e., depth, radius, and volume) are                 this spatial-temporal process of an eddy migration over its
+computed for each eddy feature (Figure 3) based on the                     life cycle as an eddy path. In an eddy path, the eddy may go
+metadata of eddy features (e.g., centroids, bounding box).                 through five states from its birth to death: birth, continuation,
+We also pull temperature and salinity from the raw data                    merge, split, and death [10] as defined below:
+frames and compute the horizontal velocity magnitude using                    Birth - An eddy in the current timestep does not corre-
+velocity vectors u and v:                                                  spond to any eddies in the previous timestep.
+                 VelocityMagnitude = u2 + v2                        (5)       Continuation - An eddy from the previous timestep corre-
+                                                                           sponds to just one eddy in the current timestep (no interaction
+   To reduce the rendering cost for an efficient visualization,            with other eddies).
+the Marching Cubes algorithm [8] is applied to compute an                     Merge - Two eddies from the previous timestep correspond
+isovalue surface (i.e., isosurface, a 3D analog of an iso-                 to one eddy in the current timestep.
+value line) of each eddy feature. Using isosurfaces, a volume                 Split - An eddy from the previous timestep corresponds to
+dataset can be rendered by a simple polygonal model (i.e.,                 two eddies in the current timestep.
+
+44738                                                                                                                                   VOLUME 7, 2019
+L. Liu et al.: Visualizing Three-Dimensional Ocean Eddies in Web Browsers
+
+
+
+
+                                                                              TABLE 2. Output files and file descriptions.
+
+
+
+
+FIGURE 4. Sequences of timesteps from three example eddy paths are
+juxtaposed in three rows. An eddy may go through five states in its life
+cycle: birth, continuation, merge, split, and death.
+
+
+                                                                              where MD indicates the migration distance and n is the
+   Death - An eddy from previous timestep does not corre-                     number of timesteps (days) in the eddy path.
+spond to any eddies in the current timestep.
+   The result of eddy tracking is a text-based correspondence
+                                                                              D. PROGRAM DESIGN AND ARCHITECTURE
+list (tracking history) which records the evolution of eddies
+in each timestep (day).                                                       A standalone C/C++ program with the support of VTK
+                                                                              libraries (https://www.vtk.org/) was developed to implement
+                                                                              the feature-based eddy computation algorithm introduced
+C. EDDY PATH ISOLATION
+                                                                              previously. The program consists of four modules to handle
+Tracking is only the first step in detecting eddy paths. With
+                                                                              the general control and the three major steps of feature-based
+numerous eddy features spanning hundreds of timesteps,
+                                                                              eddy computation. Figure 5 shows the architecture of the
+a method is needed to isolate each eddy path from the extrac-
+                                                                              program, the pipeline of implementation, and the file for-
+tion and tracking metadata. An isolated eddy path contains a
+                                                                              mat of the metadata for web-based visualization. As shown
+sequence of eddy features (Figure 4). Our method applies a
+                                                                              in Figure 5a, the naming protocol for the source code files
+three-step eddy path isolation algorithm as described below.
+                                                                              follows meaningful and descriptive schemes. To run the pro-
+   Step 1: Query the correspondence list to create a list of
+                                                                              gram, users need to specify some configuration information
+eddy sequences. The algorithm searches ‘‘death’’ events in
+                                                                              such as the locations of the input and output files, the number
+every timestep from the correspondence list of eddy features.
+                                                                              of timesteps, variable names, threshold, and the geographical
+Whenever a ‘‘death’’ event is found, the algorithm will iter-
+                                                                              scope of the data.
+atively trace this eddy back to the previous timesteps until it
+                                                                                 The output files of the program are listed in Table 2 with
+finds the ‘‘birth’’ event of this eddy. A list is created to record
+                                                                              brief descriptions. The isosurfaces of eddy features in a day
+each eddy path as a sequence of triplet: timestep, index of the
+                                                                              or in an eddy path, which are saved as *.day files and *.path
+eddy feature in this timestep, and the state in the evolution
+                                                                              files respectively, are the metadata for visualization. In a
+process. In the computation, we set a minimum lifetime cutoff
+                                                                              feature isosurface file (Figure 5b), each feature entry starts
+on the duration of eddy paths, usually to 30 days (but this can
+                                                                              with a special line ‘‘155 155 155’’ and is followed by the
+be changed by users).
+                                                                              geometric properties and the ranges of the variables. The
+   Step 2: Extracts every timestep of each eddy path from
+                                                                              feature is then written as a sequence of vertices and triangles:
+the metadata of eddy extraction and save the eddy paths as
+                                                                              a ‘‘vertex line’’ contains the coordinates of this vertex and the
+independent files based on the created list.
+                                                                              interpolated values of non-primary variables (temperature,
+   Step 3: Compute the duration (the number of days) and
+                                                                              salinity, and velocity magnitude in this implementation) at
+migration distance of each eddy path. The migration distance
+                                                                              this vertex; a ‘‘triangle line’’ saves the vertex indices of a
+of an eddy path is computed by accumulating the Euclidian
+                                                                              triangle. This file format is believed to be more efficient and
+distance of center points (Cx, Cy, 0) on the ocean surface
+                                                                              thus more web-compatible than the widely used OBJ file
+between each pair of timesteps:
+                                                                              format which uses the first character of each line to specify
+                 n q
+                 X                                                            the type of command (i.e., ‘‘v’’ for vertices, ‘‘f’’ for faces of a
+       MD =         (Cxi+1 − Cxi )2 + (Cyi+1 − Cyi )2                   (6)   triangle).
+                 k=1
+
+VOLUME 7, 2019                                                                                                                             44739
+                                                                                   L. Liu et al.: Visualizing Three-Dimensional Ocean Eddies in Web Browsers
+
+
+
+
+FIGURE 5. (a) The architecture and pipeline of the eddy computation program. The program includes a module for general control and three modules to
+implement the feature-based computation. (b) The file format of the feature isosurface file which is used for surface rendering in the visualization. File
+extensions and file headers are used to differentiate eddy features in a data frame (*.day files) and timesteps of an eddy path (*.path files).
+
+
+
+
+V. DATA AND COMPUTATION PERFORMANCE
+A. DATA
+The ocean data used for this study is from a multi-decadal
+regional ocean model simulation [6]. The simulation was
+performed using the Regional Ocean Modeling System
+(ROMS) [18], which solves the incompressible, hydro-
+static, primitive equations with a nonlinear free surface.
+It employs orthogonal curvilinear coordinates in the horizon-
+tal and a generalized topography following coordinate in the
+vertical [6]. The simulation domain covers the major path of
+the Gulf Stream through the northwest Atlantic (Figure 6).
+   In this study, the implementation covers the most recent
+three years (2005 - 2007) in the simulation with 1095 daily
+NetCDF [13] files (approximately 1.67 GB per file). The
+vertical coordinate and stretching functions follow the ROMS
+conventions. For details about this particular simulation,
+                                                                                FIGURE 6. The ROMS data which was used to illustrate our framework
+please see [6], [18]. The data contains 56 variables and uses                   covers the major path of the Gulf Stream through the Northwest Atlantic
+a geographic coordinate system with the spatial coverage                        Ocean. The red box in the map is an approximate bound of the eddy
+from 258.34◦ to 315.19◦ in longitude, 8.78◦ N to 53.83◦ N in                    computation.
+
+latitude, and 0 meter to 5500 meters in altitude. Each data
+frame has 760 ∗ 360 grid points with a horizontal spacing of 7                  TABLE 3. Elapsed times and output files.
+km and 40 vertical terrain-following levels stretched toward
+the surface so as to resolve the surface boundary layers.
+
+B. COMPUTATION PERFORMANCE
+Our implementation of the eddy computation program was
+performed on a Dell XPS desktop with an Intel Core i7-
+4770 (3.40 GHz ∗ 8) CPU, 16 GB memory, and a Nvidia
+GTX 760 graphics card (2 GB video memory), running under                        and preprocessing), eddy tracking, and eddy path isolation
+Ubuntu 16.04 LTS.                                                               (including metadata creation). The generated files were saved
+   The 1095 ROMS data frames (1.78 TB in total) were                            in a new folder. Table 3 lists the elapsed times and the file
+downloaded from the data server and were stored in a local                      sizes of the output (the tracking table and eddy path list are
+folder. Some important parameters of the program running                        negligible in file size and so are not listed in the table).
+are set as follows: a) depths of eddy features > 100 meters; b)
+volume of eddy features > 50 data points; c) duration of eddy                   VI. 3D EDDY VIEWER
+paths > 20 days. The performance is evaluated by the elapsed                    We developed EddyViz, a browser-based viewer to imple-
+times and the output files of the computation. In the eddy                      ment the designed eddy visualizations by surface render-
+computation program, three timer functions were set to count                    ing the isosurfaces of eddy features within web browsers.
+the elapsed times of eddy extraction (including data reading                    The viewer supports interactive surface rendering of 3D
+
+44740                                                                                                                                        VOLUME 7, 2019
+L. Liu et al.: Visualizing Three-Dimensional Ocean Eddies in Web Browsers
+
+
+
+
+FIGURE 7. The user interface of the 3D eddy viewer ‘‘EddyViz’’. EddyViz
+implements the designed interactive visualizations of eddies in four
+independent webpages.              pt
+
+
+objects (i.e., eddy features in this study) and overlaying
+3D geographic maps through the WebGL API. WebGL has
+been adopted by most modern browsers, which allows users
+to create beautiful and high-performance three-dimensional
+applications, using the capabilities of the GPU in computers.
+The viewer is written in JavaScript language with the support
+of Three.js library [2], a JavaScript 3D Library for WebGL.
+As a browser-running and open source product, EddyViz is
+easy to get running and gives users a unique opportunity to
+monitor what happening in the code and permits the adaption
+of the code into their particular interests whenever needed.
+   As the user interface of EddyViz shown in Figure 7,                      FIGURE 8. Exploring eddy instances in a day. (a) The daily eddy instance
+the four eddy visualizations are implemented in four inde-                  view presents all of the eddy instances in this day (data frame) in the
+                                                                            bounding box of the data frame. Two colors are used to differentiate
+pendent webpages. Each webpage contains a viewport for                      cyclonic (green) and anti-cyclonic (purple) eddies. An eddy (the 24th in
+visualization and a control panel to manipulate file I/O, vari-             this data frame) is selected from the visualization and presented
+                                                                            independently in (b). The eddy is color-coded by the temperature
+ables changes, and fire functions on the fly. In the viewer,                variation on its surface. A color bar on the top of the webpage shows the
+users can zoom in/out, rotate, and pan a visualization by                   range of the temperature variations.
+mouse or keyboard. The scale of vertical exaggeration in the
+visualizations is set to 1000. By default, when openning up
+eddy skeleton overview and 3D eddy path overview, a 3D                      usage scenarios with the key tasks that the viewer as well as
+geographic map will be automatically loaded as the back-                    the included visualizations are designed to support. The data
+ground. The map is generated by combining ocean basin                       for exploration is the isosurfaces of eddy features (surface
+bathymetry with land surface topography for the east coast of               metadata) and covers three years (2005 - 2007) in the ROMS
+the US and creating a terrain elevation surface using Delau-                data. More features and functionalities of EddyViz can be
+nay Triangulation [14]. As currently implemented, the terrain               found in the accompanying video to this paper.
+elevation surface creation uses a high-resolution elevation
+dataset from National Oceanic and Atmospheric Administra-
+                                                                            A. EXPLORING EDDY INSTANCES IN A DAY
+tion (NOAA, http://www.noaa.gov/). Users can also create
+their own maps and replace the default one. In EddyViz,                     In the first scenario, student A was doing a daily analysis
+the isosurfaces of eddy feature can be either rendered as                   of eddies in the Spring of 2005. She first opened the web-
+a solid color or be color-coded by any of the three physi-                  page ‘‘Daily Eddy Instances View’’ from the user interface
+cal properties chosen in the eddy computation: temperature,                 (as shown in Figure 7) of EddyViz, then clicked the ‘‘File
+salinity, and velocity magnitude, with different color maps.                Open’’ button in the control panel. In the opened file selection
+Minor coding updates could provide a different selection of                 dialog, she selected a *.day file stored in the local hard
+physical properties.                                                        drive. Once the data file was loaded, the basic information
+                                                                            of this data frame (i.e., file name, date, and the number of
+VII. USAGE SCENARIOS                                                        eddies) was displayed in the control panel. As shown in
+In this section, we illustrate the functionality and utility of             Figure 8a, all of the eddy instances in the day Aprill 30, 2005
+the developed 3D eddy viewer EddyViz by using three typical                 (i.e., eddy features in the corresponding data frame) were
+
+VOLUME 7, 2019                                                                                                                                 44741
+                                                                      L. Liu et al.: Visualizing Three-Dimensional Ocean Eddies in Web Browsers
+
+
+
+
+listed on the right-hand side of the webpage and spun clock-
+wise (anti-cyclonic eddies) or counter-clockwise (cyclonic
+eddies). These eddy instances were also visualized as a daily
+eddy instance view in the center of the webpage. The visual-
+ization gave the student an overall daily distribution and ori-
+entation of cyclonic (green) and anti-cyclonic (purple) eddies.
+The student found that most eddies have a tapering shape
+and the two types of eddies were almost equal numbered in
+this day. She also noticed that the anti-cyclonic eddies were
+larger in size and were positioned to the north of cyclonic
+eddies. To verify her judgement, the student clicked the button
+‘‘Export Data Information’’ in the control panel to request the
+basic information and statistics of the eddies in this day which
+was displayed in a separated webpage.
+   After having some overall understanding of the eddy
+instances in this day, student A double clicked an eddy feature
+(the 24th on the list) in the visualization to get more details
+(note: an individual eddy feature can also be chosen from the
+list on the right-hand side). The webpage then switched to
+a ‘‘single eddy mode’’ where the selected eddy was visual-
+ized independently with its basic information (i.e., location,
+spin orientation, radius, depth, and volume) displayed in the
+control panel. To observe different physical properties of
+the chosen eddy, she color-coded the eddy by temperature,
+salinity, and velocity magnitude successively with different
+colormaps. Figure 8b illustrates the variation of temperature
+on the surface of the eddy. As can be found from the figure,
+the temperature of this eddy first reduces as the eddy pene-
+trates into the ocean then stays constant after the depth went     FIGURE 9. Exploring timesteps of an eddy path. (a) The individual eddy
+beyond some level which is defined as the isothermal curve.        path view presents all of the timesteps of an eddy path as isosurfaces
+                                                                   which are color-coded by velocity magnitude. The arrow above highlights
+Finally, the student switched back to the initial mode of the      the continuation and direction of the eddy motion. (b) The first and the
+visualization and continued to pick another eddy feature for       last timesteps of the eddy path are color-coded by temperature, salinity,
+                                                                   and velocity magnitude and are represented as wireframes in a
+analysis.                                                          coordinated view for comparison. The colorbars and the red brackets
+                                                                   below indicate the variation ranges of the three physical properties on
+B. EXPLORING TIMESTEPS OF AN EDDY PATH                             these two timesteps. On the bottom left corner of the webpage, a small
+                                                                   inset presents a miniature of the eddy path with the two chosen
+In the second scenario, scientist B wanted to study the general    timesteps highlighted in solid red color.
+process of eddy migration by focusing on the motion of an
+individual eddy over its life cycle. In the webpage ‘‘Individual
+Eddy Path View’’ of EddyViz, he selected a *.path file             spaces between the consecutive timesteps were increasing as
+from the data folder and loaded the file into the webpage.         the eddy evolved.
+The information in the control panel indicated that this eddy         To summarize the structural and temporal changes of this
+had a counter-clockwise orientation and lasted 44 days from        eddy in its life cycle, the scientist compared the first and the
+May 9 to June 22 in the year 2005. All timesteps that this eddy    last timestep of the eddy path in a coordinated view where the
+went through in its life cycle were listed on the right-hand       two chosen timesteps were both color-coded by temperature,
+side of the webpage and were presented as an individual eddy       salinity, and velocity magnitude and were represented as
+path view without any distracting context. To avoid occlusion      wireframes to highlight the topological structures (Figure 9b).
+by successive timesteps, the scientist adjusted the distance       As shown in Figure 9b, the three representations of the first
+between each two neighboring timesteps to a factor of ten          timestep are listed on the first row while those of the last
+relative to the actual distance. He then color-coded the visu-     timestep are listed on the second row. The color bars on the
+alized features by different physical properties and rotated the   top of the visualization show the ranges of variations in these
+visualization to observe the eddy path from different angles.      physical properties; the two red brackets below the color bars
+The individual eddy path view in Figure 9a illustrates the         indicate the ranges for the two selected timesteps. From the
+changes of velocity magnitude on the surface of this eddy          visualization and the geometric information in the control
+along with its motion. From the visualization, he noticed that     panel, the scientist found that the eddy became bigger, higher,
+the eddy seemed to go through an intensification process:          hotter, saltier, and faster at the end of its life cycle compared
+the features became more colorful and bigger in size and the       with its initial stage.
+
+44742                                                                                                                           VOLUME 7, 2019
+L. Liu et al.: Visualizing Three-Dimensional Ocean Eddies in Web Browsers
+
+
+
+
+FIGURE 10. This eddy skeleton overview summarizes all of the eddy instances that had depths penetrating into the ocean at least 1727 meters in the year
+2007. In the visualization, each timestep of an eddy path is represented as a simple glyph (skeleton) and is placed in a context of the ocean basin and
+coastline. It is clear that the cyclonic eddies (yellow) which mostly appeared in the south were outnumbered by the anti-cyclonic eddies (purple) which
+gathered in the north.
+
+
+
+
+C. SUMMARIZING EDDIES IN A PERIOD OF TIME                                     to use another visualization, which is 3D eddy path overview,
+In the third scenario, scientist C was doing a longitudinal                   to summarize the motion of eddies in the year 2007. All of
+study of eddy evolution in the North Atlantic. Considering                    the eddy paths in 2007 were visualized as a 3D eddy path
+the large portion of data that would be involved, she believed                overview as shown in Figure 11. From the figure, she found
+that studying eddies day by day or focusing on individual                     that the cyclonic eddies (green) were more likely to move
+eddies was no longer effective. Instead, she would like to see                westward while anti-cyclonic eddies (purple) tended to move
+a big picture of eddies in a long time period. In EddyViz,                    to different directions. She then isolated a cyclonic and an
+she opened up the webpage ‘‘Eddy Skeleton Overview’’,                         anti-cyclonic eddy paths from the overview visualization suc-
+then selected and loaded all of the *.day files of the year                   cessively and presented them in a separate view (as shown on
+2007 through the control panel in the webpage. All of the                     the top of Figure 11) to get more details of these two eddies.
+eddy instances saved in the loaded files were visualized as an                Some basic information (i.e., date, duration, and distance) of
+eddy skeleton overview. From the visualization, the scientist                 the selected eddy paths were displayed in the control panel.
+noticed that the cyclonic eddies (yellow) were more likely to                 Finally, she requested a statistic summary of all of the eddy
+appear in the south while the anti-cyclonic eddies (purple)                   paths in the year 2007.
+were mostly gathered in the north. Both types of eddies were
+almost equal numbered. Also, most eddies extended less than                   VIII. USER EVALUATION
+2000 meters below the sea surface (the deepest point of the                   The effectiveness of the visualizations and the utility of the
+ocean basin is 5500 meters). Using a scrollbar in the control                 viewer EddyViz was evaluated by a survey study to determine
+panel, she slowly filtered the eddy cylinders (skeletons) in                  how well the method proposed in this paper satisfies the
+the visualization by the depths (penetration into the ocean) of               requirements of the potential users.
+eddies from 300 meters to 2000 meters to oberve the changes
+in the distributions and numbers of the visualized eddies. She                A. THE PROCEDURE
+found that the cyclonic eddies were gradually outnumbered                     The study involved 22 graduate students and postdoctoral fel-
+by the anti-cyclonic eddies when the depth threshold went                     lows (12 female, 10 male) from the Department of Marine and
+beyond 900 meters. In Figure 10, the eddy skeleton overview                   Coast Science and the Department of Environmental Sciences
+presents all of the eddy instances that have depths penetrated                at Rutgers University. They all had research or study expe-
+into the ocean at least 1727 meters in the year 2007.                         rience with ocean eddies before. After a brief introduction
+   Although the eddy skeleton overview presents an efficient                  to the project and a demonstration on the EddyViz (approxi-
+and simplified overview of eddies, the scientist felt some                    mately 10 minutes in total), the study participants were asked
+important information such as the size, shape, and interaction                to complete three basic tasks (similar to the user scenarios
+of eddies were missing from the visualization. She decided                    in the previous section) to make sure they used the viewer
+
+VOLUME 7, 2019                                                                                                                                  44743
+                                                                                   L. Liu et al.: Visualizing Three-Dimensional Ocean Eddies in Web Browsers
+
+
+
+
+FIGURE 11. This 3D eddy path overview presents a bunch of selected eddy paths in the context of ocean basin and coastline. A red ball is added above
+the last time step of each visualized eddy path to convey the moving direction of the eddy. The visualization shows that cyclonic eddies (green) tend to
+move westward while anti-cyclonic eddies (purple) move to different directions. A cyclonic and an anti-cyclonic eddy paths are isolated by
+double-clicking them in the visualization and are displayed separately as shown on the top of the figure.
+
+
+
+
+FIGURE 12. Results of survey study. Six out of the ten survey statements receive an average rating over 4 (good) and the remaining four statements were
+scored over 3 (fair).
+
+
+sufficiently. Next, the participants used the viewer to explore                 of visualization and green-colored bars for the statements of
+the data based on their individual interests. Finally, they were                the utility of EddyViz). Statistically, the visualization aspects
+invited to fill out a survey assessing the visualizations and                   received ratings of over 4 (good) on four statements and
+their user experiences. The survey contains five statements                     over 3 (fair) on the remaining item. The free-form written
+about the visualization design and five statements about the                    responses and the oral comments also tended towards positive
+utility of EddyViz (see Table 4). Each statement in the survey                  attitudes.
+uses a five-point Likert scale (1 = very poor, 2 = poor, 3                      (a) Most participants (20 out of 22) thought the visualiza-
+= fair, 4 = good, 5 = excellent). We strongly encouraged the                    tions were well-designed and effective in general, which
+participants to add comments to each statement and to suggest                   received an average score of 4.45 with a standard devia-
+new functionalities for the viewer.                                             tion σ of ±0.67 in the statement S1. The students were
+                                                                                amazed to see and to interact with the eddy visualizations.
+B. THE RESULTS                                                                  Many students commented on the visualizations as ‘‘innova-
+Figure 12 summarizes all of the participants’ ratings on the                    tive’’ and ‘‘provide a close view to ocean eddies and their
+ten survey statements (blue-colored bars for the statements                     movements’’.
+
+44744                                                                                                                                        VOLUME 7, 2019
+L. Liu et al.: Visualizing Three-Dimensional Ocean Eddies in Web Browsers
+
+
+
+
+TABLE 4. User study survey statements.                                         The utility and user experience aspects of EddyViz exposed
+                                                                            more limitations and received lower ratings on average. The
+                                                                            critical comments (both written and verbal) from the students
+                                                                            usually focused on basic operations that would increase the
+                                                                            ‘‘user-friendliness’’ of the viewer such as a more advanced
+                                                                            and reliable interaction in locating and filtering objects from
+                                                                            visualizations and making the navigation more intuitive and
+                                                                            controlled.
+                                                                            (d) The ratings on the statements S6 and S7 are high. 16 out
+                                                                            of 22 participants agreed that the design of EddyViz was
+                                                                            rational (S6’s average score is 4, with σ = ±0.69) and 18 par-
+                                                                            ticipants had fun using the viewer (S7’s average score is 4.14,
+                                                                            with σ = ±0.71). Participants were generally impressed with
+                                                                            a dedicated and installation-free tool for eddy visualization.
+                                                                            Frequently repeated descriptive terms for the viewer in the
+                                                                            written or oral comments include: visual, interactive, clear,
+                                                                            innovative, and cool.
+                                                                            (e) Surprisingly, the usefulness and helpfulness of EddyViz
+                                                                            (S8) were not much favored by the participants (average score
+                                                                            is 3.55, with σ = ±1.06). Five participants commented
+                                                                            on how the tool could benefit their research in future. One
+                                                                            of them stated, ‘‘It is nice to have a noncommercial and
+                                                                            web-based tool for this special domain. This tool enables
+                                                                            more interactive and knowledge gain compared to traditional
+                                                                            data slice browsing.’’ However, some participants concerned
+                                                                            about the separation of data processing from the viewer and
+                                                                            the generality of the viewer. As one student would have liked
+                                                                            to ‘‘get the visualizations directly from the original ocean
+                                                                            simulation.’’ Another student wanted to ‘‘use the tool for
+(b) The statements S2, S3, and S5 received ratings over 4                   visualizing eddies from other ocean data’’.
+(good). For S2, 15 participants agreed that the daily eddy                  (f) The participants rated the 9th statement from 1 to 5, which
+instance view can facilitate the exploration of eddy instances              resulted in a low average score (2.91) and a high standard
+in a day and the statement received an average score of 4 (σ =              deviation (±1.23). This might be because of the abstractness
+±0.81). For S3, 19 participants believed that the individual                (if not confusing) of the file names, the constraints of web
+eddy path view can help them get a better understanding                     browsers, and some limitations of the data reading functional-
+of the motion of an eddy (the average score is 4.26, with                   ity in EddyViz under current implementation. We found that
+σ = ±0.73). One research fellow told us ‘‘showing the                       the browser experienced a very long responding time when
+trajectories of an eddy in 3D is more visual and intuitive than             a participant tried to load all of *.day files to the viewer.
+the tranditional 2D plot with arrows’’. Another student called              A research fellow commented that ‘‘It is hard to find a data
+this visualization as ‘‘an effective and succinct way to observe            file by the date of eddy occurrence. I can not tell which files
+the motion of an eddy’’. For S5, almost all of the participants             belong to 2005 or 2006.’’ Four other participants also wished
+(21 out of 22) accepted that the 3D eddy path overview gave                 ‘‘the ability to load eddy data from remote hard drives’’.
+them a big picture of eddy migrations in a region, which                    (g) The participants had few to no problems with the smooth-
+resulted in an average score of 4.21 (σ = ±0.54). One                       ness of navigation in the viewer and thought the viewer was
+comment on this statement reads ‘‘it summarizes different                   self-explanatory, which results in an average score of 3.41
+life histories of eddies and how these eddies are affected by               (σ = ±0.96) for S10.
+interactions with each other and the ocean basin’’.                            The overall ratings and the free-form written responses in
+(c) In contrast, the statement S4 received a fair rating (the               the surveys and the participants’ verbal comments during or
+average score = 3.37, with σ = ±0.83). 14 participants held a               after the study confirm the overall success of the designed
+positive attitude toward the statement and one student particu-             visualizations and support the utility of EddyViz in general.
+larly liked the eddy skeleton overview as ‘‘it provides a simple            Although the absence of eddy computation in the study and
+overview of the distributions of cyclonic and anticyclonic                  the reliance on expressed opinions limit the interpretation of
+eddies and the thresholds can be used to adjust the eddies in               results, the study suggests that the potential users liked an
+the ocean bottom topography.’’ However, some participants                   installation-free and dedicated 3D eddy viewer for exploring
+raised criticisms such as ‘‘the density of the plotted items on             eddies from ocean data and favored the novelty and effective-
+the map’’ and ‘‘the relative simplicity of the functionality’’.             ness of our method in general. The study gave us much more
+
+VOLUME 7, 2019                                                                                                                       44745
+                                                                      L. Liu et al.: Visualizing Three-Dimensional Ocean Eddies in Web Browsers
+
+
+
+
+qualitative information regarding how researchers can benefit      expanding the applications. Finally, we intend to process data
+from the visualizations to gain a better understanding of          from the simulation environment or other powerful central-
+the ocean eddies in different perspectives (e.g., distribution,    ized infrastructure and visualize the results in web browsers.
+shape, physical properties, dynamics). Many of the comments        This client-server architecture will leave the heavy computa-
+from the participants have been being used or considered for       tion tasks in the server side so that the client side can execute
+the improvement of our method.                                     as few operations as possible to obtain a directly renderable
+                                                                   representation.
+IX. CONCLUSION AND FUTURE DEVELOPMENT
+The main motivation of this paper is to provide a one-stop         APPENDIX
+solution from processing the ocean data to visual exploration      EDDY COMPUTATION PROGRAM
+of 3D ocean eddies and to make the ocean data as well as           This program reads time varying ‘‘Regional Ocean Mod-
+the visualization tool more accessible and interpretable to        eling System’’ (ROMS) data and creates a set of meta-
+a wider audience. For this reason, the focus has been on           data (e.g., *.day files, *.path files, etc.) for eddy visual
+developing a browser-based visualization tool that does not        exploration and data analysis. More information about
+require any special software to be installed on the client side    the program, the access to the source code, and the
+and thus enables sharing the tools and the visualization results   introduction on how to run the code can be found at:
+easily with remote collaborators working in different plat-        http://vizlab.rutgers.edu/eddyprogram The website also con-
+forms or software environments. The proposed visualization         tains some example data for testing the program. Please note,
+framework in this paper contains a time-dependent feature-         the ROMS data is not made available to the public at the
+based algorithm implemented by a standalone C++ program            moment. For the access to the ROMS data, please contact:
+and a browser-based 3D eddy viewer named EddyViz. The              Dr. Dujuan Kang: dujuan@marine.rutgers.edu Dr. Enrique
+visualization design was based on specific requirements from       Curchitser: enrique@marine.rutgers.edu
+potential users and also considered the constraints imposed
+by web browsers. The feature-based algorithm generates the
+isovalue surfaces of eddies to reduce the rendering cost of        EDDYVIZ
+visualization and also supports a structural understanding         EddyViz reads the *.day and *.path files that are gener-
+of ocean eddies and their motions. EddyViz presents 3D             ated from the eddy computation program and presents these
+eddy visualizations within a standard web browser using            files as visualizations in web browsers. A link to EddyViz:
+the capabilities of WebGL as well as GPUs. In this paper,          http://vizlab.rutgers.edu/eddyviz.html
+the application of the framework to a high-resolution regional        All of the functionalities in EddyViz have been tested
+ocean simulation of the northwest Atlantic Ocean and the           in Firefox and Google Chrome. The basic operations can
+general usage scenarios of EddyViz are discussed. A user           be found from the accompanying video of this manuscript.
+evaluation was conducted and the results confirm the success       Please note, the number of opened tabs or webpages in a
+of the visualization design and the potential of the proposed      browser will affect the speed of data loading and visualization
+framework in helping researchers understand ocean eddies.          rendering.
+   Although the proposed visualization framework provides
+a considerable set of useful features and fulfills the initial     ACKNOWLEDGMENT
+design goal, we have become aware of some of the limita-           The authors would like to thank the Department of Environ-
+tions in implementing the framework. For the future devel-         mental Sciences, Rutgers University, and the Department of
+opments, four major aspects can be explored to advantage.          Marine and Coastal Sciences, Rutgers University, for provid-
+First of all, for the feature-based eddy computation program,      ing the ocean simulation data. They would also like to thank
+we plan to convert the C++ code to Matlab code and han-            Dr. E. Curchitser and Dr. Kang for their valuable suggestions
+dle the input parameters to the program through a Matlab           and many useful feedbacks along the way. They would also
+graphic user interface (GUI). Matlab is a well-documented          like to thank all students and researchers who participated in
+standard code scripting language (popular in both academia         the user studies. They would also like to thank the anonymous
+and industry) and is fully readable even by novice users.          reviewers for the useful suggestions.
+This is also a preferred coding method by most scientists.
+Secondly, for EddyViz, we decide to make the visualizations
+which are currently implemented in independent webpages            REFERENCES
+more coordinated so that users can switch between different         [1] A. Amores, O. Melnichenko, and N. Maximenko, ‘‘Coherent mesoscale
+                                                                        eddies in the North Atlantic subtropical gyre: 3-D structure and transport
+visualizations. Thirdly, we have only applied the framework             with application to the salinity maximum,’’ J. Geophys. Res. Oceans,
+to Gulf Stream eddies from the particular ROMS model in                 vol. 122, no. 1, pp. 23–41, Jan. 2017.
+this work. In consideration of the universality, we plan to         [2] R. Cabello. (2010). Three. js.. [Online]. Available: https://github.
+                                                                        com/mrdoob/three.js
+apply the framework to other ocean eddies (e.g., mesoscale
+                                                                    [3] R. M. Castelao, ‘‘Mesoscale eddies in the south atlantic bight and the gulf
+eddies in the Northwestern Pacific Ocean). We also anticipate           stream recirculation region: Vertical structure,’’ J. Geophys. Res. Oceans,
+improvements to the data reading and preprocessing parts in             vol. 119, no. 3, pp. 2048–2065, Mar. 2014.
+
+44746                                                                                                                              VOLUME 7, 2019
+L. Liu et al.: Visualizing Three-Dimensional Ocean Eddies in Web Browsers
+
+
+
+
+ [4] A. Chaigneau, T. M. Le, G. Eldin, C. Grados, and O. Pizarro, ‘‘Vertical                                 LI LIU received the B.S. degree in electronic
+     structure of mesoscale eddies in the eastern South Pacific Ocean: A com-                                and communications engineering from Donghua
+     posite analysis from altimetry and Argo profiling floats,’’ J. Geophys. Res.                            University, Shanghai, China, the M.S. degree in
+     Oceans, vol. 116, p. C11, Nov. 2011.                                                                    signal and information processing from Beijing
+ [5] J. Grant, G. Erlebacher, and J. O’Brien, ‘‘Case study: Visualizing ocean                                Normal University, Beijing, China, and the Ph.D.
+     flow vertical motions using Lagrangian-Eulerian time surfaces,’’ in Proc.                               degree in computer engineering from Rutgers, The
+     IEEE Vis., Nov. 2002, pp. 529–532.                                                                      State University of New Jersey. His research inter-
+ [6] D. Kang and E. N. Curchitser, ‘‘Gulf stream eddy characteristics in a                                   ests include scientific visualization, computational
+     high-resolution ocean model,’’ J. Geophys. Res. Oceans, vol. 118, no. 9,                                fluid dynamics visualization, tracking motions in
+     pp. 4474–4487, Sep. 2013.                                                                               scientific simulations, volume graphics, machine
+ [7] L. Liu, D. Silver, K. Bemis, D. Kang, and E. Curchitser, ‘‘Illustrative         learning, image processing and understanding, information visualization,
+     visualization of mesoscale ocean eddies,’’ Comput. Graph. Forum, vol. 36,       and UI/UX design.
+     no. 3, pp. 447–458, Jun. 2017.
+ [8] W. E. Lorensen and H. E. Cline, ‘‘Marching cubes: A high resolution
+     3D surface construction algorithm,’’ ACM SIGGRAPH Comput. Graph.,
+     vol. 21, no. 4, pp. 163–169, 1987.
+ [9] K. L. Ma, ‘‘Visualizing time-varying, volume data, ’’ Comput. Sci. Eng.,
+     vol. 5, no. 2, pp. 34–42, 2003.                                                                             DEBORAH SILVER received the B.S. degree from
+[10] D. Matsuoka, F. Araki, Y. Inoue, and H. Sasaki, ‘‘A new approach to                                         the School of Engineering, Columbia University,
+     ocean eddy detection, tracking, and event visualization–application to the                                  and the M.S. and Ph.D. degrees in computer sci-
+     northwest pacific ocean,’’ Procedia Comput. Sci., vol. 80, pp. 1601–1611,                                   ence from Princeton University. She has been a
+     Jun. 2016.                                                                                                  Principal Investigator with the Vizlab, CAIP Cen-
+[11] A. Okubo, ‘‘Horizontal dispersion of floatable particles in the vicinity of                                 ter, Rutgers, The State University of New Jersey,
+     velocity singularities such as convergences,’’ Deep Sea Res. Oceanogr.                                      since joining the faculty. She has taught courses
+     Abstracts, vol. 17, no. 3, pp. 445–454, 1970.                                                               in computer graphics, visualization, data struc-
+[12] M. R. Petersen, S. J. Williams, M. E. Maltrud, M. W. Hecht, and                                             tures, software engineering, and robotics. She is
+     B. Hamann, ‘‘A three-dimensional eddy census of a high-resolution                                           involved in different visualization projects includ-
+     global ocean simulation,’’ J. Geophys. Res. Oceans, vol. 118, no. 4,            ing oceanic visualization, medical visualization, CFD visualization, and
+     pp. 1759–1774, 2013.                                                            volume graphics. She was an Associate Dean of continuing and profes-
+[13] R. Rew and G. Davis, ‘‘NetCDF: An interface for scientific data access,’’       sional education with the School of Engineering, from 2008 to 2010. She
+     IEEE Comput. Graph. Appl., vol. 10, no. 4, pp. 76–82, Jul. 1990.                is currently a Professor with the Department of Electrical and Computer
+[14] J. Ruppert, ‘‘A Delaunay refinement algorithm for quality 2-dimensional         Engineering, Rutgers, The State University of New Jersey, and also the Exec-
+     mesh generation,’’ J. Algorithms, vol. 18, no. 3, pp. 548–585, 1995.            utive Director of the Professional Science Master’s Program. Her research
+[15] F. Samsel, M. Petersen, G. Abram, T. L. Turton, D. Rogers, and J. Ahrens,       interest includes scientific visualization. She has been co-chair of the papers
+     ‘‘Visualization of ocean currents and eddies in a high-resolution global        session and program co-chair of the yearly IEEE Visualization conference,
+     ocean-climate model,’’ in Proc. Int. Conf. High Perform. Comput., Netw.,        she has been a Vice Chair of operations for the IEEE Technical Committee on
+     2015. pp. 1–3.                                                                  Computer Graphics, from 1993 to 2000, and she was on the Editorial Com-
+[16] R. Samtaney, D. Silver, N. Zabusky, and J. Cao, ‘‘Visualizing features and      mittee of the IEEE TRANSACTION ON VISUALIZATION AND COMPUTER GRAPHICS,
+     tracking their evolution,’’ Computer, vol. 27, no. 7, pp. 20–27, Jul. 1994.     from 1995 to 2000.
+[17] W. J. Schroeder, B. Lorensen, and K. Martin, The Visualization Toolkit: An
+     Object-Oriented Approach to 3D Graphics. New York, NY, USA: Kitware,
+     2004.
+[18] A. F. Shchepetkin and J. C. McWilliams, ‘‘A method for computing
+     horizontal pressure-gradient force in an oceanic model with a nonaligned
+                                                                                                               KAREN BEMIS received the B.S. degree in geo-
+     vertical coordinate,’’ J. Geophys. Res. Oceans, vol. 108, p. C3, Mar. 2003.
+                                                                                                               physics from Rice University, Houston, TX, USA,
+[19] H. W. Shen, ‘‘Visualization of large scale time-varying scientific data,’’
+                                                                                                               in 1988, the master’s degree in oceanography, and
+     J. Phys. Conf. Ser., vol. 46, no. 1, p. 535, 2006.
+                                                                                                               the Ph.D. degree in geological sciences in the mor-
+[20] D. Silver and X. Wang, ‘‘Tracking and visualizing turbulent 3D features,’’
+     IEEE Trans. Vis. Comput. Graph., vol. 3, no. 2, pp. 129–141, Apr. 1997.
+                                                                                                               phology of volcanos, especially small explosive
+                                                                                                               volcanoes called cinder cones with Rutgers, The
+[21] V. Sood, B. John, R. Balasubramanian, and A. Tandon, ‘‘Segmentation and
+     tracking of mesoscale eddies in numeric ocean models,’’ in Proc. IEEE Int.                                State University of New Jersey, in 1995. She went
+     Conf. Image Process., vol. 3, Sep. 2005, p. III-469.                                                      on to the MIT/WHOI Joint Program in oceanogra-
+[22] J. Weiss, ‘‘The dynamics of enstrophy transfer in two-dimensional hydro-                                  phy to study heat flux, where she learned to love
+     dynamics,’’ Phys. D Nonlinear Phenomena, vol. 48, nos. 2–3, pp. 273–294,                                  hydrothermal systems and fluid dynamics, while
+     1991.                                                                           working with D. V. Herzen and D. Smith and left the Joint Program, in 1991.
+[23] E. Williams et al., ‘‘Visualization and analysis of eddies in a global ocean    After a short internship at the NJ Geological Survey studying groundwater
+     simulation,’’ Comput. Graph. Forum , vol. 30, no. 3, pp. 991–1000, 2011.        flow in the Passaic River System, she returned to hydrothermal systems,
+[24] M. Wolter, ‘‘Navigation in time-varying scientific data,’’ Ph.D dissertation,   in 1996 to work with P. Rona as a postdoctor with the Institute of Marine
+     RWTH Aachen University, Aachen, Germany, 2010.                                  and Coastal Sciences, Rutgers University. Through Peter, she was introduced
+[25] J. Woodring, M. Petersen, A. Schmeißer, J. Patchett, J. Ahrens, and             to Deborah Silver and Scientific Visualization. She is currently an Assistant
+     H. Hagen, ‘‘In situ eddy analysis in a high-resolution ocean cli-               Research Professor with the Department of Marine and Coastal Sciences,
+     mate model,’’ IEEE Trans. Visualizat. Comput. Graph., vol. 22, no. 1,           Rutgers, The State University of New Jersey. She continues to study cinder
+     pp. 857–866, Jan. 2016.                                                         cones in Guatemala and sonar imaging of hydrothermal systems while
+[26] Z. Zhu, and R.J. Moorhead, ‘‘Extracting and visualizing ocean eddies in         exploring other uses of scientific visualization in geologic problems and the
+     time-varying flow fields,’’ in Proc. 7th Int. Conf. Low Vis., Aug. 1995,        psychology of understanding and using visualizations.
+     pp. 206–211.
+
+
+
+
+VOLUME 7, 2019                                                                                                                                                44747
+

@@ -1,0 +1,1050 @@
+1760                                                           IEEE TRANSACTIONS ON VISUALIZATION AND COMPUTER GRAPHICS, VOL. 26, NO. 4, APRIL 2020
+
+
+
+
+              Scientific Visualization as a Microservice
+                        Mohammad Raji , Alok Hota , Student Member, IEEE, Tanner Hobson ,
+                                     and Jian Huang , Senior Member, IEEE
+
+       Abstract—In this paper, we propose using a decoupled architecture to create a microservice that can deliver scientific visualization
+       remotely with efficiency, scalability, and superior availability, affordability and accessibility. Through our effort, we have created an open
+       source platform, Tapestry, which can be deployed on Amazon AWS as a production use microservice. The applications we use to
+       demonstrate the efficacy of the Tapestry microservice in this work are: (1) embedding interactive visualizations into lightweight web
+       pages, (2) creating scientific visualization movies that are fully controllable by the viewers, (3) serving as a rendering engine for high-end
+       displays such as power-walls, and (4) embedding data-intensive visualizations into augmented reality devices efficiently. In addition, we
+       show results of an extensive performance study, and suggest how applications can make optimal use of microservices such as Tapestry.
+
+       Index Terms—Scientific visualization, visualization systems, cloud computing, web applications, and distributed visualization
+
+                                                                                       Ç
+
+1      INTRODUCTION
+
+W       HILE the web has transformed the way our society uses
+        computers and computing technology over the past 20
+years, the web architecture has undergone rapid and acceler-
+                                                                                           scalability of audience, (3) formalize and unify the commu-
+                                                                                           nication between client and server as simplified rendering
+                                                                                           requests. The Tapestry system treats each rendering request
+ating improvements itself, gradually becoming one of the                                   independently and automates request handling through the
+most robust, scalable, and general client-server architectures.                            use of Docker Swarm [6].
+    Since client-server is a core design in scientific visualiza-                              Using rendering requests as the unifying interface, we
+tion, our field has dedicated much effort to map the scientific                            were able to further simplify the complexity on the client-side
+visualization pipeline onto the web architecture; for example,                             and introduce 3D scientific visualizations into the standard
+to increase the mobility of scientific visualization applications,                         Web Document Object Model (DOM) as very lightweight
+to reach a wider audience, and to use the rich web ecosystem                               objects called hyperimages [5]. A web page can contain as
+for building interactive tools and websites. To this end, our                              many hyperimages as the web developer would like. When
+field first explored ways to adopt the web browser as                                      not interacted with, the performance cost of a hyperimage
+a general client in scientific visualization applications. Para-                           is equal to that of any static image, and its impact on web
+ViewWeb [1], ViSUS [2], XML3D [3], ArcticViewer [4] are a                                  page load time is negligible. When a user interacts with
+few of the most well known successes in that regard.                                       a hyperimage, the in-browser user experience is as if the
+    The next step is to explore whether web services can                                   whole scientific visualization is local. A hyperimage transpar-
+serve as performance servers in the client-server settings of                              ently translates user interactions into web requests, issues the
+scientific visualization. This work extends our previous                                   requests, and receives and caches new images from the server.
+efforts [5] in which we presented Tapestry, a platform for                                 Hyperimages are not only interactive themselves. Interactions
+the scalable delivery of scientific visualization. Tapestry is                             on different hyperimages embedded in the same DOM can be
+an open source platform1 that separates application states                                 linked and synchronized via hyperactions [5].
+from the server and makes the server stateless.                                                While web services directly serve users, microservices
+    The benefits of using stateless servers are multi-fold:                                serve application developers, so that new applications can
+(1) make it feasible to use virtualized containers, parallel                               make agile and scalable use of a suite of highly available
+swarm management, auto load balancing, and auto-scaling                                    and accessible services, instead of having to remain tightly-
+in scientific visualization applications, (2) make it practical                            coupled with certain hardware or platforms.
+to expand application design goals to also include expand-                                     In this work, we extend Tapestry into an independently
+ing accessibility of the visualizations, i.e., to improve the                              deployable microservice, in particular, by increasing control-
+                                                                                           lable granularity and parallel end-points in the system. We
+                                                                                           also release Tapestry in the form of a Docker image (details
+    1. https://github.com/seelabutk/tapestry
+                                                                                           in Section 3.4), which is portable across cloud platforms such
+   The authors are with the Department of Electrical Engineering and Computer             as Amazon AWS.
+    Science, University of Tennessee, Knoxville, TN 37996. E-mail: {mahmadza,                  Herein, we show that the Tapestry microservice can facili-
+    ahota, thobson2}@vols.utk.edu, huangj@utk.edu.                                         tate the following application innovations: (1) embed volume
+Manuscript received 21 Feb. 2018; revised 16 Oct. 2018; accepted 29 Oct.                   visualization into lightweight web pages that work interac-
+2018. Date of publication 5 Nov. 2018; date of current version 4 Mar. 2020.                tively even on mobile phones, (2) create portable and user-
+(Corresponding author: Mohammad Raji.)
+Recommended for acceptance by J. Ahrens.                                                   controllable movies of scientific visualizations, (3) serve as an
+Digital Object Identifier no. 10.1109/TVCG.2018.2879672                                    efficient and cost-effective parallel rendering engine for large
+                                   1077-2626 ß 2018 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.
+                                                 See ht_tps://www.ieee.org/publications/rights/index.html for more information.
+
+
+    Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+RAJI ET AL.: SCIENTIFIC VISUALIZATION AS A MICROSERVICE                                                                                                       1761
+
+
+power-wall displays, (4) embed interactive volume render-
+ings into augmented reality devices (e.g., HoloLens) in a very
+lightweight manner.
+   Besides enabling novel applications, scalability is another
+key aspect of microservices. To that end, we have conducted
+an extensive performance study of the Tapestry microser-
+vice. For deployment platforms, we tested on an institu-
+tional cloud and Amazon AWS cloud. Our scalability tests
+included up to 100 geographically distributed test workers.
+Regarding test methodology, we included batch-mode
+                                                                                  Fig. 1. Comparing a monolithic design (left) and a decoupled design
+stress test, realistic user behavior based monkey testing,                        (right). In a monolithic design, application states exist throughout the
+and actual application usage testing. Our test datasets come                      component stack. In a decoupled design, compute-intensive tasks such
+from typical domains of scientific visualization.                                 as rendering and data management are encapsulated in stateless serv-
+   We will discuss related works in Section 2, Tapestry’s                         ices and accessed through a unified cloud-hosted gateway.
+architecture in Section 3, demonstrative applications in
+Section 4, and results in Section 5. The conclusion is in                         on demand [4]. Paired with Cinema [13], ArcticViewer
+Section 6.                                                                        addresses needs by the in-situ visualization community par-
+                                                                                  ticularly well. However, pre-rendering typically generates
+2     BACKGROUND                                                                  a large amount of rendered images that may or may not be
+                                                                                  used by the end-user.
+Delivering scientific visualization with mobility is full of
+challenges, regardless of whether web is involved, because                        2.2 Architectural Designs of Client-Server
+scientific visualization is resource heavy. With today’s ever                     Regardless of whether a web browser is used, delivering
+expanding needs for analytics on datasets of growing sizes,                       visualizations with mobility should ideally combine the
+scientific visualization’s simultaneous requirement of com-                       best of both data-space and image-space designs. For exam-
+puting capabilities, data bandwidth, and interactivity calls                      ple, it should be “expressive and flexible” like in data-space
+for our field to rethink the traditional client-server delivery                   systems [7], and be “immediately available” like in image-
+mechanisms of scientific visualization.                                           space systems [13].
+                                                                                     This need can benefit from having a more clear separation
+2.1 Using Web Browsers as a Visualization Client                                  of concerns, where the expressive and flexible interactions are
+Over the years, visualization researchers have made much                          handled separate from the highly available and efficient
+effort to make interactive visualizations work inside web                         computing.
+browsers. The creation of D3 in 2011 became one of the                               Existing applications often take a monolithic approach
+most recognized milestones [7] in that regard. Other notable                      (Fig. 1-left). In result, the 1-to-1 mapping between client and
+successes include: (i) visualization system interfaces, such                      server has become a standard design in existing systems, such
+as Visualizer and LightViz [1]; (ii) API-based scientific data                    as VisIt[14], ParaView[15], and web-based systems like Para-
+management applications, such as MIDAS using the Para-                            ViewWeb. Previous works have also explored adding staging
+ViewWeb API [8]; (iii) plugin-based web browser systems                           nodes in between the client and the server, in order to achieve
+backed by a high-end resource, such as ViSUS using an IBM                         better system performances [16], [17], while continuing to
+BlueGene [2]; and (iv) plugin free implementations backed                         abide by the monolithic 1-to-1 mapping between client-server.
+by custom clusters, such as XML3D [9], [10].                                         A decoupled design (Fig. 1-right) can separate the highly
+    Within a browser, the scientific visualizations can be                        responsive visual application from the compute-intensive
+implemented in data-space or image-space. A naive data-space                      components such as rendering. In that regard, Tapestry [5]
+implementation is to download the dataset into a browser                          was the first example to our knowledge that implemented
+and then render it using libraries such as WebGL or VTK.                          such decoupling and allow the client-server to have an m-to-n
+js [11]. This has the obvious limitations of available band-                      relationship, where m and n can be any number above 1.
+width and working memory on the local machine. More                                  By simplifying the client-server interface into rendering
+scalable data-space systems perform data processing and                           requests, Tapestry’s server-side is responsible for rendering
+rendering on a remote server and transmit final or interme-                       and is completely oblivious to anything application related;
+diate data to the client web browser for further handling.                        that is, it has become stateless, free of application logic. The
+Those solutions fit better with the high-end computing com-                       server can answer simultaneous requests from m different
+munity [1], [2], [8], [9], [10], where server-side computing                      clients. On the client-side, a web-page can contain visualiza-
+and networking resources tend to be abundant. Regardless,                         tions of many datasets, potentially hosted on n different
+when data is large, the networking and in-browser comput-                         servers.
+ing overhead can still be overwhelming. In particular,                               While computing services commonly use HPC platforms,
+render performance would be slow on mobile devices,                               the Tapestry server was instead created as a web service man-
+leading to an unresponsive web page.                                              aged by Docker [5], to reap the benefits of automatic load
+    Image-space techniques can be used for remote visualiza-                      balancing, auto-scaling, and automatically parallelized data
+tion in general [12]. As a more recent success, ArcticViewer                      transfers that are standard in today’s web technology.
+is a web visualization system that improves in-browser                               In this work, we further extend Tapestry so that the Tapes-
+user experience by serving pre-rendered images of datasets                        try server can run as an Amazon AWS deployed microservice,
+
+    Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+1762                                                       IEEE TRANSACTIONS ON VISUALIZATION AND COMPUTER GRAPHICS, VOL. 26, NO. 4, APRIL 2020
+
+
+which is independently deployable, fine-grained, and light-
+weight. For example, as we will show in Section 5.6, using the
+Tapestry microservice, applications can achieve interactive
+performance at minuscule costs. Hence, scientific visualiza-
+tion can be more accessible and available than before.
+   Established tools that have played a pioneering role in
+today’s computational science, such as VisIt [14], ParaView
+[15], and Arctic Viewer [4], should be able to adopt Docker
+based microservice model for resource-scaling purposes too.
+
+2.3 Server-Side Rendering
+Volume visualization is well understood from an algorithm
+perspective [18]. Highly efficient implementations using
+many-core processors, either GPU or CPU, are available as
+community-maintained open-source renderers [14], [15], [19],
+[20]. In this work, we use OSPRay [19] because of its rendering
+performance. Additionally, its software-only nature makes
+it easier to manage in a typical cloud-managed container.
+A GPU-based renderer that exhibits similar throughput to
+OSPRay can also be used. Unlike in our previous version
+where PNG was used, we now encode OSPRay-rendered
+framebuffers as JPG images, because of its better compression
+rate and faster in-browser decompression.
+   Level-of-detail is a proven approach to manage the trade-
+off between speed and quality for time-critical visualiza-
+tion [21], [22], [23]. Tapestry uses a similar approach. When
+a user interacts with the 3D visualization in the web docu-
+ment, rendering requests are made at a lower resolution. After
+a user pauses, rendering requests are made at a higher resolu-
+tion. This is detailed in Section 3.1.2.
+   Parallel visualization generally takes three approaches:
+data-parallel, task-parallel, and a hybrid of the two [24], [25].
+Our primary concern is system throughput (i.e., rendering
+requests/sec). We chose the task-parallel approach to process
+                                                                                  Fig. 2. The Tapestry system architecture, which separates the applica-
+rendering requests in parallel. As is commonly done [26],
+                                                                                  tion space and system space.
+we group worker processes into a two-level hierarchy: (i) the
+computing cluster as a whole, (ii) each computing node.
+                                                                                  each session when a user accesses the application, e.g., a web
+Worker processes on the same node share datasets via mem-
+                                                                                  page with embedded 3D visualizations. The application space
+ory-mapped regions of disk. Using known methods to resolve
+                                                                                  can have many instances. The system space is a single entity
+I/O bottlenecks [27], we have a dedicated I/O layer as the
+                                                                                  shared by all instances of the application space.
+data manager on each node to manage pre-loading the data
+                                                                                     In the application space, a hyperimage is the universal
+once Tapestry starts (detailed in Section 3.2.1).
+                                                                                  interactive visualization object. Each hyperimage is controlled
+                                                                                  by an attached Tapestry object in JavaScript, which presents
+3      ARCHITECTURE                                                               the 3D interactions and automatically requests services from
+Tapestry decouples client and server and separates the                            the server, by way of issuing rendering requests. Details in
+application space from the system space. We do so by for-                         Section 3.1.
+malizing rendering requests as a reduced and restricted                              The system space is cloud hosted on a cluster of nodes.
+interface, and the only interface, between the two spaces.                        These nodes comprise a Docker Swarm [6]. The swarm
+As shown in the system diagram (Fig. 2), the generation of                        abstracts handling of rendering requests into a cluster of
+rendering requests in the application space is asynchronous                       microservices implemented in virtualized containers, which
+and distributed. On the server side, rendering requests                           the swarm manages altogether as a collection. The system
+are automatically distributed to many disparate endpoints                         also includes elastic task handling, request routing, and
+through typical web server load balancers and ensures                             automatic resource scaling. Details in Section 3.2.
+scalability.                                                                         Connections between the two spaces are simple, short,
+   The application space maintains the dynamic states related                     and transient rendering requests. An application instance
+to the application and interaction. The system space is dedi-                     can generate many rendering requests concurrently. The
+cated to answering rendering requests and stays stateless                         system space can answer a large amount of rendering
+without maintaining any application state information.                            requests simultaneously. The system space does not relate
+   The two spaces have different life cycles. The system space                    one rendering request with another, and treats each request
+stays up as long as the cloud service is up. The application                      independently, even when the rendering requests are from
+space exists as individual instances, with one instance per                       the same application instance.
+
+    Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+RAJI ET AL.: SCIENTIFIC VISUALIZATION AS A MICROSERVICE                                                                                                      1763
+
+
+                                                                                                                TABLE 1
+                                                                                                         Supported Hyperactions
+
+                                                                                 Action                                         Description
+                                                                                 position(x, y, z)            Sets the position of the camera
+                                                                                 rotate(angle, axis)          Rotates the camera angle degrees about the
+                                                                                                              given axis
+                                                                                 zoom(z)                      Sets the relative camera Z position
+Fig. 3. Hyperimages are DOM elements. In the application space, each             link(id1, ...)               Links the viewpoint of other hyperimages to
+hyperimage element is paired with a Tapestry object, which handles                                            the current hyperimage’s camera
+user interaction and communicate with the Tapestry server.                       unlink(id1, ...)             Unlinks the viewpoint of other hyperimages
+                                                                                 play()                       Animates the time steps of a time series data-
+3.1 Application Space                                                                                         set
+                                                                                 stop()                       Stops the time series animation
+Using Tapestry, the presentation of the visualization resides
+                                                                                 time(t)                      Changes the timestep to t
+in a desktop/mobile web browser as an embedded object.                           switch_config(name)          Switches to a new hyperimage configuration
+   Within a browser, we could consider using the HTML5
+canvas or the 3D-enhanced WebGL canvas [28]. However,
+we chose to use a simple image tag (<img>) instead for                           the hyperimage cycles through time steps 5 to 15 when
+several reasons. First, HTML5 and WebGL canvases are                             animated.
+heavyweight elements with initialization costs. Their perfor-                        In addition to mouse and hand gestures, Tapestry allows
+mance also relies on the user’s hardware. Second, the                            a customizable type of interaction: hyperactions. Hyperactions
+output of many visualizations is an image and therefore an                       provide a way for the DOM to manipulate a hyperimage
+<img> tag is a natural medium that does not need any                             without user intervention. A simple use case of a hyperaction
+post-processing and is widely used across the web ecosys-                        is a hyperlink in a text that rotates a hyperimage to a specific
+tem. We refer to our enhanced <img> tags as hyperimages.                         viewpoint. Hyperactions essentially provide a simple connec-
+                                                                                 tion between textual content and volume renderings. Any
+3.1.1 Control of Visualization Objects                                           standard DOM element can be converted to a hyperaction by
+Fig. 3 shows a closeup of Tapestry’s application space in                        adding three attributes: the class hyperaction, a for attri-
+a web setting. An application can use as many hyperimages                        bute that denotes which hyperimage should be associated
+as the developer desires. In this example, we show a single                      with the action, and a data-action attribute describing the
+hyperimage in the DOM, but multiple may be present.                              action itself. For example, a hyperlink that sets the camera
+In essence, a hyperimage is a simple <img> tag with                              position of a hyperimage is shown in Listing 2.
+extended capabilities. As a user interacts with a hyperimage,                        When clicked on, this hyperaction sets the camera position
+a controlling JavaScript object generates and submits render-                    of the hyperimage with the id of teapot1 to ð10; 15; 100Þ. A list
+ing requests to the server automatically, updates the received                   of supported actions and their syntax is shown in Table 1. The
+renders and updates the hyperimage’s src attribute.                              logic behind what hyperactions do is also controlled by Tapes-
+   The Graphics Context (GC) of each hyperimage is con-                          try objects. When a Tapestry object is initialized, it looks at the
+trolled by an attached Tapestry object in the tapestry.js                        DOM for hyperimages and their corresponding hyperactions
+JavaScript code. The GC information includes: camera man-                        and sets up event handlers for the hyperactions’ action. Two
+agement through arcball, an image buffer for received images,                    example applications in Section 4 make use of hyperactions.
+event handlers and a list of other hyperimages that may be
+linked to the object. Optional settings such as initial camera
+                                                                                 Listing 2. An Example Hyperaction that Sets the Camera
+position can be sent to the Tapestry constructor if needed.
+                                                                                 Position to the Given Position for the Teapot Dataset
+                                                                                 <a
+Listing 1. Sample Code for Adding a Hyperimage into a                                  class="hyperaction"    for="teapot1"                   data-action="
+                                                                                 position=10,15,100">a new viewpoint</a>
+Webpage
+<script> $(".hyperimage").tapestry({}); </script>
+<img class="hyperimage" data-dataset="supernova"/>                               3.1.2 Generation of Rendering Requests
+                                                                                 The DOM defines the structure of a web page, and the Java-
+   Listing 1 shows the full HTML code to embed a 3D visu-                        Script provides interactivity and control. The relationship
+alization on a web page. The second line of Listing 1 shows                      between a hyperimage (a DOM element) and the related
+a simple hyperimage of a supernova. The class attribute                          Tapestry object is no exception to that. When a user interacts
+identifies the tag as a hyperimage, and the dataset being                        with a hyperimage through mouse or touch gestures, the
+rendered is added in the data-dataset attribute. Note,                           corresponding Tapestry object manages callback functions
+data-* is the standard prefix for custom attributes in                           and generates rendering requests as needed. While interac-
+HTML5 [29]. Hyperimages become interactive by replacing                          tion is happening, it continues to send new requests to the
+the source attribute of the tag. When the user is not interact-                  server-side and asks for updated renders.
+ing, a hyperimage is effectively a simple image.                                    During interaction (e.g., when rotating), the object
+   For time varying data, a hyperimage can take an optional                      requests interaction resolution images (2562 by default) to
+data-timerange attribute. The value of this attribute repre-                     allow for smoother movement. When interaction stops, the
+sents the time step range through which the volume                               object requests a viewing resolution image (10242 ).
+can animate. This range is formatted as <integer>..<                                Rendering requests are sent using the HTTP GET method.
+integer>. For example, a value of 5 .. 15 would mean that                        As a result, renderings can be saved or shared after interaction
+
+   Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+1764                                                      IEEE TRANSACTIONS ON VISUALIZATION AND COMPUTER GRAPHICS, VOL. 26, NO. 4, APRIL 2020
+
+
+just like any image with a valid address. A rendering request
+takes the form of http://HOST/DATASET/POS_X/POS_Y/
+POS_Z/UP_X/UP_Y/ UP_Z/RESOLUTION/OPTIONAL. The
+DATASET parameter denotes which configured dataset
+should be rendered. The camera position is given by
+<POS_X, POS_Y, POS_Z>, and the up vector is given by
+<UP_X, UP_Y, UP_Z>. RESOLUTION denotes the ren-
+dering’s resolution. Finally, additional optional parameters
+can be added as a comma separated string of key-value pairs.
+For example, to specify the time step in a temporal series.
+
+Listing 3. Two Rendering Requests for a Well-Known
+Supernova Simulation [30]. The Values Represent Camera
+Position, up Vector, and Image Size, Respectively. The
+                                                                                 Fig. 4. A container is the basic processing unit in Tapestry’s system
+Second Request Includes an Optional Time step Parameter                          space. Each container runs an instance of the hyperimage server.
+http://host.com/supernova/128.0/-256.0/500.0/0.707/0.0/
+     0.707/256
+                                                                                 A physical node refers to the real machine on which multiple
+http://host.com/supernova/128.0/-256.0/500.0/0.707/0.0/
+                                                                                 Docker containers may be launched. There may be multiple
+     0.707/256/timestep,5
+                                                                                 physical nodes. A Docker container is an in-memory virtual
+                                                                                 operating system.
+   Tapestry objects also control the volume of rendering
+                                                                                    Fig. 4 shows a single Docker container. Each container
+requests. For example, a user’s mouse can typically emit up
+                                                                                 includes an instance of a hyperimage server, which is a web
+to 125 move events per second (on a common 125 Hz
+                                                                                 server that manages attributes of given datasets, and han-
+mouse). We set a default policy: let every fifth event trigger
+                                                                                 dles any rendering requests it receives in sequence.
+a rendering request. This policy generates up to 25 render-
+ing requests per second.
+                                                                                 3.2.1 Container-Based Rendering Services
+   Due to the minimal interface between the client and
+server, requests can also be generated in batches and by                         Virtualization and containerization are classic concepts in
+scripts, for more complicated applications. Section 4 shows                      software architecture [31]. Open-source software container
+this in more detail through several applications.                                platforms have become popular, including for HPC com-
+                                                                                 puting services [32].
+3.1.3 Non-Invasive Embedding                                                        We chose Docker [6] containers because they are light-
+From an application developer perspective, Tapestry pro-                         weight, and provide a robust and simple interface. Each
+vides non-invasive integration in clients. In other words, it                    Docker container includes a small, stripped-down version
+is simple to integrate and customize and does not cause any                      of an operating system as well as all the dependencies
+global changes in the host web application.                                      needed to run an application independently. Multiple
+    More specifically, hyperimages in the client are self-                       containers can run on the same node.
+contained and do not share state with each other. This means                        Each physical node runs a local Docker daemon, which
+that they can be independently added or removed in a page.                       manages all running containers on that node. Across nodes,
+    Another aspect of non-invasiveness are hyperactions.                         we use Docker Swarm as another layer of abstraction on top
+Hyperactions are behaviors, not objects. In other words,                         of a collection of physical nodes, allowing a pool of contain-
+they can be added to a variety of HTML elements (e.g., but-                      ers to have unified entry points as well as leverage Docker
+tons, hyperlinks, images, etc.) and enable interaction with                      Swarm’s load balancer.
+a hyperimage. Those HTML elements can be freely styled                              In Tapestry, each Docker container is based on a
+and edited by the developer.                                                     stripped down version of Ubuntu, which runs a hyper-
+    Users of scientific visualization often need to tweak                        image server instance inside. The Docker Swarm Manager
+and edit visualization tools to add new capabilities. To                         monitors and manages the containers, routes incoming ren-
+facilitate this, the Tapestry server can take an optional                        dering requests, and load balances the containers using its
+app directory as input at runtime. JavaScript, HTML, or                          internal Ingress load balancer [33].
+CSS source code in the app directory overrides those of                             When a hyperimage server starts, it loads all pre-
+Tapestry’s default, allowing for easy hot-swappable func-                        configured datasets into memory using a memory-
+tional changes. In other words, client-side changes to a                         mapped loading operation. In other words, containers
+user’s application do not require a re-compile or restart                        that reside in the same worker node only load the data
+of the Tapestry service.                                                         once and only during system startup.
+
+3.2 System Space                                                                 3.2.2 Hyperimage Server and Data Attributes
+The sole concern of the system space is to process render-                       A hyperimage server is initialized once and lives for the life-
+ing requests. It is a task-parallel computing system, using                      time of the cloud service. A hyperimage server takes a config-
+distributed resources that auto-scale on demand.                                 uration directory during initialization. All valid configuration
+   In system space, we make a distinction between a physical                     files – properly formatted JSON files – within this directory
+node, a Docker container, and a hyperimage server instance.                      are used to provide data attributes for the server instance.
+
+   Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+RAJI ET AL.: SCIENTIFIC VISUALIZATION AS A MICROSERVICE                                                                                                       1765
+
+
+These configuration files, provide basic information about the                    options and then rendering the requested image using the
+datasets. An example configuration file is shown in Listing 4.                    OSPRay renderer.
+                                                                                     Each incoming rendering request contains the dataset,
+Listing 4. Example Configuration File Providing Data                              camera position, up vector, the resolution of the render, and
+Attributes                                                                        potentially time-step. Camera and renderer settings are
+                                                                                  updated accordingly.
+{
+    "filename" : "/path/to/data/magnetic.bin",
+                                                                                     OSPRay performs the rendering according to the above
+    "dimensions" : [512, 512, 512],
+                                                                                  parameters. The life-cycle of the OSPRay rendering objects in
+    "colorMap" : "cool to warm",                                                  each server are equal to that of the hyperimage server itself.
+    "opacityAttenuation" : 0.5,                                                   Data and rendering attributes are pre-configured per volume
+    "backgroundColor" : [38, 34, 56]                                              during hyperimage server initialization. When the render
+}                                                                                 completes, we composite the OSPRay framebuffer onto the
+                                                                                  appropriate background color and encode as a JPG image.
+    The configuration files are a list of key-value pairs. A com-                 There is no need to store the image to disk on the server, so
+plete list of keys and possible values for configuration files                    the encoding is done to a byte stream in memory. At this
+can be found in our previous work [5]. These parameters are                       point, all information about the camera position and other
+standard visualization data attributes. Basic information                         dynamic state parameters are no longer needed nor held.
+about the dataset, such as filename and dimensions are                               The web server sends the rendered image as JPG byte
+required, but most others are optional and can revert to                          stream (e.g., image/jpg MIME type) from the rendering
+default values. Different transfer functions require different                    module. The Docker Swarm Manager, which routed the
+configuration files. However, they can all point to the same                      request to this container, handles responding to the appro-
+dataset. Memory-mapping assures that the dataset used by                          priate user. The hyperimage server itself remains oblivious to
+different configurations are only loaded to memory once for                       whom it has communicated with.
+each node.
+    Additional configuration keys available also include                          3.2.4 Elastic System Operation
+isosurfaceValues and specular to control isosurface                               Job Assignment and Runtime Management.
+rendering if desired. Note that Tapestry uses OSPRay’s                                Using a single container, rendering requests from n users
+implicit isosurface rendering to provide images of surfaces.                      will be queued up by the web server. Each request will occupy
+Implicit isosurfaces avoid the need to explicitly compute                         the container until rendering and network transfer of the
+and store surface geometry, which allows the server to                            image is complete. With multiple containers, any container
+remain stateless.                                                                 available can be selected for any given rendering request.
+    Currently, the server handles raw binary and NetCDF files,                    Sequential requests from a single user can be routed to differ-
+two common formats for scientific data. The filename pro-                         ent containers on different physical nodes. This has two main
+vided may be a path to a single file, i.e., a static volume, or                   benefits: (i) new rendering requests can be processed while
+a path with wildcard characters to describe multiple volumes,                     other requests are blocked for I/O, network transfer, or ren-
+i.e., a time-varying series. Example filenames for a time-vary-                   dering; and (ii) elastic routing provides fault tolerance when a
+ing series could be: ”/supernova/*.bin” for all available                        hyperimage server or physical node goes down.
+time steps or ”/supernova/time_[2-7].bin” for 5 spe-                                 The volume of rendering requests is variable over time and
+cific time steps.                                                                 hard to predict. We monitor the current load on all containers
+    During initialization, the datasets referred to by the con-                   and scale the number of containers up or down accordingly,
+figurations are loaded. Since each physical node may run                          through the runtime manager (RM) shown in Fig. 2.
+multiple server instances, we memory-map the datasets                                 Our RM, like RMs on typical cloud platforms, implement
+when loading. This allows the physical node’s host operat-                        elasticity by periodically checking CPU usage across all con-
+ing system to maintain an in-memory map of a file that can                        tainers, and start new containers or close idling containers
+be given to each server instance. This reduces I/O costs and                      as needed. In our previous work, we showed how Tapestry
+allows using multiple configuration files to reference the                        leveraged such auto-scaling on an institutional cluster [5].
+same dataset without additional overhead.                                         In this work, we deploy Tapestry on Amazon AWS as a micro-
+    Attributes about the dataset from the configuration, such                     service and, to this end, benefit from Amazon’s auto-scaling
+as transfer function or data variable, are kept alongside the                     RMs transparently.
+reference to the data. Multiple configuration files may refer-                        Cache Container. In each physical node, we have added an
+ence the same dataset, for example, using varying transfer                        Nginx cache container intercepting all messages between
+functions. This flexibility allows for more power in the ren-                     hyperimage servers and the outside. In a completely transpar-
+dering requests.                                                                  ent manner, this enables caching for the Tapestry microser-
+                                                                                  vice instances. Server responses are now cached based on
+3.2.3 Handling of Rendering Requests                                              the incoming request. This improves efficiency and scalability
+After being routed from a unified endpoint to a specific                          for many use cases. For example, commonly used view
+Docker container, a rendering request is handled by a                             angles, isovalues, etc. in repeated batches of renderings for
+hyperimage server. Rendering requests from the client ask                         hypervideos and tiled renderings can now be simply reused,
+for an image URL in which various parameters are embed-                           saving hyperimage servers to handle new rendering requests.
+ded. Image requests are processed by the C++ web server,                          Note that client-side caching inside web browsers also take
+built with the Pistache library [34], by first parsing the                        place transparently by browsers themselves.
+
+    Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+1766                                                      IEEE TRANSACTIONS ON VISUALIZATION AND COMPUTER GRAPHICS, VOL. 26, NO. 4, APRIL 2020
+
+
+    Controllable Granularity. Tapestry’s server-side is a task-                  examples), cache_report (to view the number of cache
+parallel engine. As known for task-parallel systems in general,                  hits and misses) among others. Extra features of the inter-
+the granularity of the tasks can affect the parallel efficiency of               face can be seen using the help subcommand.
+the overall system. In this work, we have added a tiling mech-
+anism to Tapestry as an option so that an application can                        3.4 Deployment on Amazon AWS as a Microservice
+choose to use finer granularity to achieve better performance.                   Although the achieved performance metrics on public clouds
+    With tiling, a single hyperimage can be divided into many                    may be lower than on institutional clouds, public facing cloud
+<img> tags on the client-side. Each tile represents a portion                    platforms, such as Amazon AWS, provide true Internet-scale
+of the final render and is rendered on a different container in                  availability and accessibility at very affordable cost levels.
+parallel to other tiles. Using tiling, the client-side creates a ren-                To create a Tapestry service on AWS from scratch, only
+der request for each tile and sends them to the server-side.                     a few steps are needed. AWS provides a load balancer that
+Once the response comes back, the appropriate <img> is                           is instrumental in distributing rendering loads across multi-
+updated with the result.                                                         ple machines. For the setup, an AWS load balancer needs to
+    The setting “tiling,TILE_NUMBER-N_TILES” is an                               be started with its listening port set to a publicly accessible
+optional parameter in the rendering request to specify tiling.                   port for the service; typically the default HTTP port 80. The
+For example, tiling,u-16 denotes that the rendering                              load balancer must then be configured to forward traffic to
+request is for the first tile out of a 16-tile render. Once this                 some alternative port (e.g., 8,080).
+rendering request reaches a hyperimage server, the server                            After that, an AWS Elastic Container Service (ECS) service
+calculates the portion of the volume that it needs to render                     can be created. Tapestry’s Docker image then needs to be
+and updates the OSPRay camera’s clip space.                                      uploaded to Amazon’s cloud-based registry and needs to
+    When rendered tiles are returned to the client-side, the                     include any necessary data and configurations. The ECS
+tiles are placed in the DOM in their own corresponding                           service needs to point to this image and use the previously
+<img> tag. Because each tile request can be sent indepen-                        specified private port (8,080). Finally, the user needs to scale
+dently and routed to the correct position in the hyperimage,                     the service as necessary; often a higher number than would be
+there is no explicit compositing step required. That is, we                      used on an institutional cloud because AWS shares the
+provide stitch-free tiling.                                                      resources with other users and services.
+    Multiple Endpoints. Docker Swarm uses an Ingress load                            In studying the performance of Tapestry on Amazon
+balancer [33]. The setup allows any physical node to be an                       AWS, we were mostly interested in choosing the optimal
+endpoint for incoming requests. The requests are then                            type of machine and measuring the price for a desired
+routed to a free container. As a new addition, in this work,                     frame-per-second performance. In our tests, we spawned
+we have added support for multiple endpoints in the client                       various numbers of different machines and sent rendering
+(tapestry.js). The host parameter in a Tapestry object                           requests of different image sizes and measured the round
+can be set to an array of host addresses. Endpoints are then                     trip time. As a summary of the outcome, we found to sup-
+chosen using a round-robin approach in the client in Tapes-                      port a large number of simultaneous users, using a large
+try objects. This achieves two purposes. First, the problem                      number of small T2 type instances is more cost effective.
+of bottlenecking at a node’s inbound traffic is alleviated.                      However, for super resolution renderings for a few users,
+Second, browsers typically only open a limited number of                         the Compute-Optimized machines are more suitable. More
+sockets per host address (e.g., Chrome currently defaults to                     detailed results are shown in Section 5.4. Additionally, to
+opening 6 connections per destination host (endpoint) [35].)                     simplify usage on cloud services, we have released a Docker
+By using multiple endpoints, Tapestry objects can take                           image of Tapestry.2
+advantage of more open sockets.
+    In the case of Amazon’s cloud, AWS also has a load bal-                      4    APPLICATION DEVELOPMENT
+ancer that provides the same effect as Docker Swarm’s and
+is called the Elastic Load Balancer (ELB). Multiple ELBs can                     In this section, we describe three application development
+target the same set of machines to provide a similar effect                      settings enabled by using the Tapestry microservice. Specific
+on AWS as on our institutional Docker Swarm. The address                         application performance results are in Section 5.6.
+of the ELBs can be used as endpoints in Tapestry clients.
+                                                                                 4.1 Embedding Visualizations into Web Pages
+3.3 Deployment on Institutional Clouds                                           Hyperimages can be easily added to a web page using
+Tapestry’s source code comes with a command-line inter-                          HTML tags and a short JavaScript function call. To integrate
+face (CLI) named tapestry.sh that simplifies setting up                          hyperimages into a page, the developer must include the
+and running the backend on institutional clouds. Linux and                       tapestry.js file and its dependencies: arcball.js, sylvester.js,
+Docker Swarm are the only requirements for running the                           math.js and jQuery.js. Then, one line of JavaScript needs
+Tapestry system. With Docker Swarm installed, users can                          to be called to initialize all hyperimages: $(".hyper-
+simply run ./tapestry.sh build and ./tapestry.sh                                 image").tapestry();
+run to run the system. Since Tapestry is built inside Docker                        This call creates a Tapestry object per hyperimage tag.
+containers, the build is guaranteed to be successful on                          Parameters such as default size of the hyperimage and
+machines that run Docker. In that regard, Docker has sim-                        camera position can be sent to the object through the
+plified portability. The command-line interface also con-                        constructor.
+tains other sub-commands such as scale (for manually
+scaling the system), example (to download and run the                                2. https://hub.docker.com/r/seelabutk/tapestry
+
+
+   Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+RAJI ET AL.: SCIENTIFIC VISUALIZATION AS A MICROSERVICE                                                                                                      1767
+
+
+
+
+Fig. 5. Left: Embedded a volume rendering of tornado (dataset details in
+Table 3) in a Wikipedia page on tornadoes. Users can start and stop an           Fig. 6. Embedding four time steps of a supernova simulation into a
+animated temporal sequence. Right: The same page also works on                   NASA educational web page (dataset details in Table 3). The four hyper-
+mobile phones. The page used to hold a static image showcasing the               images (bottom right) can be linked or unlinked using the hyperaction in
+shape of a stovepipe tornado. Now users can interactively see the tem-           the caption below it. Previously, the page had only a static figure (top
+poral progression of the natural phenomenon.                                     right) showing an artist’s rendition. Now users can also interactively
+                                                                                 explore how a supernova evolves over time.
+
+
+4.1.1 Time-Varying Data Animation (Wikipedia Example)                            4.1.2 Multiple Linked Views (NASA Example)
+Listing 5 shows the changes needed to include a hyperimage                       Here we show a NASA educational outreach page explaining
+of a time-varying dataset into a Wikipedia page.                                 supernovae. The relevant code changes are in Listing 6. The
+                                                                                 modified page is shown in Fig. 6.
+Listing 5. Code for Adding a Hyperimage of a Time                                   The page now contains four hyperimages showing con-
+Varying Simulation into the Wikipedia Tornado Page                               secutive time steps of a supernova simulation. The views
+                                                                                 can be linked and unlinked with the hyperaction in the
+$(".hyperimage").tapestry({
+  "host": "http://host.com:port/",
+                                                                                 caption. When linked, all four hyperimages move together
+  "width": 256, "height": 256, "zoom": 300,
+                                                                                 when a user interacts with any one of them.
+  "n_timesteps": 20
+});                                                                              4.2 Controllable Movies of Scientific Visualization
+<img id="timeseries" class="hyperimage"
+                                                                                 By unifying the interface of the Tapestry microservice as
+   data-volume="tornado" data-timerange="0..20"/>
+                                                                                 simple rendering requests, we can achieve more complex
+<a class="hyperaction" for="timeseries"
+                                                                                 application logic, for example, for making movies of scien-
+   data-action="play()"></a>
+                                                                                 tific visualization.
+<a class="hyperaction" for="timeseries"
+   data-action="stop()"></a>
+                                                                                 Listing 7. Sample Script for a Hypervideo with Two
+                                                                                 Keyframes
+                                                                                 <script id="video" type="text/json">
+Listing 6. Code Needed to Insert the Four Linkable
+                                                                                 {
+Hyperimages and Hyperaction into NASA’s Supernova                                  "keyframe0": {
+Web Page                                                                             "rotation": [-0.72, 0.30, 0.62, 0.51, 0.83, 0.19, -
+<script>                                                                             0.46, 0.45, -0.75],
+  $(".hyperimage").tapestry({                                                        "zoom": 500, "timestep": 0, "isovalue": 0.2
+    "host": "http://host.com:port/",                                               },
+    "width": 128, "height": 128, "zoom": 300                                       "keyframe1": {
+  });                                                                                "rotation": [0.44, -0.16, 0.88, 0.43, 0.90, -0.05, -
+</script>                                                                            0.78, 0.40, 0.46],
+<img id="s1" class="hyperimage" data-dataset="nova1" />                              "zoom": 200, "timestep": 20, "isovalue": 0.7
+<img id="s2" class="hyperimage" data-dataset="nova2" />                            }
+<img id="s3" class="hyperimage" data-dataset="nova3" />                          }
+<img id="s4" class="hyperimage" data-dataset="nova4" />                          </script>
+<a class="hyperaction" for="s1"                                                  <div class="hypervideo" data-keyframeid="video"
+  data-action="link(s2,s3,s4)"></a>                                                   data-dataset="supernova"></div>
+
+    Fig. 5 shows the Wikipedia page on tornadoes after
+the modification. The page includes a hyperimage linked                             Traditionally, making a visualization movie requires
+to a series of time steps from a tornado simulation data-                        creating the keyframes first. Then, a movie is created by ren-
+set. Two hyperactions can be seen in the code. Users can                         dering all of the intermediate frames sequentially. Making
+click a hyperaction to play or stop the animation, while                         changes to an already-made movie requires a user to have
+still having the ability for 3D interaction with the volume                      access to significant computing resources, and is usually
+rendering.                                                                       a very time consuming process.
+
+   Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+1768                                                      IEEE TRANSACTIONS ON VISUALIZATION AND COMPUTER GRAPHICS, VOL. 26, NO. 4, APRIL 2020
+
+
+
+
+                                                                                 Fig. 8. A volume rendering of the turbine blade dataset shown through
+                                                                                 HoloLens.
+
+
+Fig. 7. A webpage for creating and manipulating hypervideos. A user can
+add keyframes, edit existing keyframes, and export movies. Editing the              The performance of hypervideo renderings is presented
+movie can be to modify camera angle, time step, isovalue, color map, etc.        in Section 5.6.
+
+    Using the Tapestry microservice, we can make the                             4.3 Augmented Reality and Power-Wall
+movie-making process interactively controllable by a user                        The endpoints of the Tapestry microservice is served by
+from within a simple web browser. While offloading all                           Docker Swarm following standard HTTP protocols. This
+rendering tasks to the microservice, we simplify the applica-                    kind of generality allows any application to simply access
+tion space of the movie-making process to just the textual                       the endpoints (e.g., via Linux’s curl). When using the Tap-
+representations of the keyframes (i.e., the corresponding                        estry microservice, the application space does not have to
+rendering requests). We call these application-space con-                        be related to web browsers at all. We further provide two
+structs, hypervideos.                                                            demonstrative examples as follows.
+    Hypervideos can be embedded in HTML with the class                              For the first example, we developed HoloTapestry, a C#
+attribute set to hypervideo, and their data-keyframes                            application for augmented reality using the Tapestry micro-
+set to a JSON file. Alternatively, developers can set the                        service. This prototype runs on a Microsoft HoloLens device
+data-keyframeid attribute to the id of a script tag that                         and performs stereo renderings using two textured planes,
+contains the JSON. Listing 7 shows an embedded hypervi-                          rotated so they stay normal to the viewer’s eyes. Each plane
+deo with two keyframes.                                                          independently updates its texture by making rendering
+    Using and interacting with hypervideos is different from                     requests to the microservice based on the current camera
+traditional movies in important ways.                                            parameters from the HoloLens. Transparency is achieved
+    First, each keyframe can be presented on a web page as                       by setting the background color of the renders to black as is
+a hyperimage, which has all of the interactivity described in                    standard in HoloLens applications.
+Section 4.1, including allowing the user to alter the key-                          In result, Tapestry microservices allowed us to deliver
+frame by changing the view. The generation of intermediate                       volume renderings of a 7.5 GB dataset to an AR device with
+frames is automatic. We use linear interpolation for changes                     2 GB of memory by writing about 100 lines of code. Fig. 8
+in timesteps, isovalues, and zoom levels; we interpolate                         shows a view of the turbine blade dataset on a desk. The
+camera rotations using slerp [36].                                               performance of HoloTapestry is in Section 5.6. HoloTapes-
+    Second, in a traditional movie, only the keyframes are                       try is open-source.3
+controllable. In contrast, due to the Tapestry microservice                         For the second example, we target power-wall displays,
+treating all rendering requests in the same way, we turn                         which is arguably one of the most prized tools for demonstrat-
+each individual frame in the movie into a hyperimage.                            ing advances in science and engineering. Traditionally, each
+In this way, when a viewer watches the movie, he or she                          power-wall facility is accompanied by its own computing
+can pause the movie at any time to interact and navigate                         cluster. Due to the typical tiled nature of power-walls, pro-
+around the dataset freely.                                                       ducing super-resolution renderings using the Tapestry micro-
+    Third, because of the microservice’s availability, the movie,                service is straightforward. One can use a short Shell script that
+i.e the hypervideo, can remain text-only, and hence remain                       batch-generates rendering requests through curl. Or, one
+compact, easily editable, sharable, and version controlled.                      can run a web browser across the power-wall and have the
+In addition, while changing number of frames, screen resolu-                     browser transparently issue the batch of rendering requests,
+tion, splitting and re-joining movies etc., are hard for tradi-                  one per each tile in the image, in order to achieve parallel
+tional movies, they are trivial tasks for hypervideos.                           acceleration on the server side. In both cases, a lightweight
+    For creating hypervideos, Fig. 7 shows a GUI that is                         single-node can deliver data-intensive visualizations onto the
+essentially a web page. A user can interactively add and                         whole power-wall.
+control the key frames. When the keyframes are set, the                             Fig. 9 shows a user using Tapestry to inspect defects in
+user can play the animation or export the video in the form                      a 3D printed wind turbine blade on a 4  3 power-wall
+of JSON text or as MP4 (rendered and encoded server-side                         display. The volume is created by scanning the actual 3D
+using ffmpeg). At all times, the Tapestry microservice serves
+as the rendering engine.                                                            3. https://github.com/seelabutk/holotapestry
+
+
+   Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+RAJI ET AL.: SCIENTIFIC VISUALIZATION AS A MICROSERVICE                                                                                                            1769
+
+
+                                                                                                             TABLE 2
+                                                                                                Amazon AWS Instances Used in this Work
+
+                                                                                  Instance                  Core Cnt              Memory               # Containers
+                                                                                  t2.micro                   1 vCPU                 1 GiB                    1
+                                                                                  t2.medium                  2 vCPUs                4 GiB                    2
+                                                                                  c5d.large                  2 vCPUs                4 GiB                    2
+                                                                                  c5d.xlarge                 4 vCPUs                8 GiB                    3
+                                                                                  c5.2xlarge                 8 vCPUs                16 GiB                   3
+                                                                                  c5d.2xlarge                8 vCPUs                16 GiB                   3
+                                                                                  c5.9xlarge                36 vCPUs                72 GiB                   7
+                                                                                  c5d.18xlarge              72 vCPUs               144 GiB                   14
+
+                                                                                  The t2 prefix (e.g., t2.micro) refers to general purpose instances, while the c5 prefix
+Fig. 9. A user using Tapestry to inspect a 3D printed wind turbine on a           refers to compute optimized instances. The containers column shows the
+4  3 power-wall. Renderings are 2048  2048 in resolution.                       maximum number of containers allowed by AWS on each particular instance.
+
+printed model using neutron scattering [37]. The renderings                       this is much lower than the 0.8 ratio on institutional cloud
+are at 20482 resolution, rendered in 256 tiles (1282 pixels per                   (explained in Section 5.3), we use the max number of con-
+tile) in parallel. The tiles are synchronized using a global                      tainers allowed by AWS.
+barrier. Tiled-based performance is detailed in Section 5.1.                          For applications to run optimally on the cloud, there are
+                                                                                  three accelerations to consider, all of which are independent
+                                                                                  of Tapestry. Instead, they are solely application-side policies.
+5     RESULTS AND DEPLOYMENT                                                          First, use tiling. Instead of sending a rendering request for
+Our testing platforms include our institutional cloud and                         a 10242 image, send 16 rendering requests of 2562 tiles. These
+Amazon AWS instances. Our institutional cloud setup                               per-tile rendering requests will be answered by the Tapestry
+includes three machines each with 24 physical cores                               microservice in parallel. For example, a t2.medium instance
+(dual-socket Xeon E5-2650 v4, 2.9 GHz, 128 GB memory)                             has 2 vCPU and 2 GB memory, each available for 4.6 cents/
+and three machines each with 28 cores (dual-socket Xeon                           hour. It’s easily affordable, and beneficial for fault tolerance,
+E5-2650 v4, 2.9 GHz, 256 GB memory).                                              to get a cohort of 100 t2.mediums to use for Tapestry.
+   On AWS, we tested seven different types of instances.                              We have found a simple and general heuristic to set tiling
+Table 2 shows the detailed list. The “d” suffix (e.g., c5d.                       factor to 16. A tiling factor of 4 still limits the amount of paral-
+xlarge) refers to AWS instances with SSDs. For our system,                        lelism that can be exploited. A tiling factor of 64 creates too
+the SSDs do not affect the runtime performance, only micro-                       much management overhead for the client. Based on our tests,
+service initiation time.                                                          a tiling factor of 16 reliably leads to 3 to 4 times faster render-
+   Our testing includes: (i) using 1 single container to serve                    ing performance, as compared to when tiling is not used. Tile
+1 rendering request (Section 5.2), (ii) using an institutional                    size or image size of 642 or smaller is to fine grained. In all our
+cluster to serve a varying number of emulated streams of                          demo applications, we lower bound tile size to 1282 .
+rendering requests (Section 5.3), (iii) using Amazon AWS                              Second, use a lower interaction-resolution and a higher
+cloud to serve a varying number of emulated request                               viewing-resolution. As discussed in Section 2.3, level-of-
+streams (Section 5.4), (iv) using AWS cloud to serve a vary-                      detail is very effective to ensure user-experience. Specifi-
+ing number of simulated users (Section 5.5), and (v) perfor-                      cally, when needing a visualization at a viewing resolution
+mance of demonstrative applications as experienced by a                           of 10242 , during interaction for faster response time, it is
+user (Section 5.6).                                                               helpful to use a lower interaction resolution. Regardless of
+   Among the above tests, (i) - (iii) are to understand how                       whether rendering for interaction- or viewing-resolutions,
+the Tapestry server performs, independent of user behavior.                       all of our demo applications use tiling (to benefit from paral-
+(iv) is to understand the quality of service received by                          lel server-side rendering).
+a cohort of simultaneous users performing exactly the same                            Third, use multi-threaded downloading. Most modern
+kinds of operations. (v) is to understand how a single user                       web browsers implement this by default. For example,
+experiences applications supported by the Tapestry micro-                         Chrome automatically opens 6 asynchronous socket connec-
+service. Note that end-users are not affected by dataset load                     tions for each destination host. When accessing Tapestry
+time in these tests because all datasets are pre-loaded before                    from a non-browser client (e.g., curl), we have also found
+the service starts.                                                               parallel connections helpful.
+                                                                                      Hence, we have set up our tests of Tapestry microservices,
+5.1 Configuring the Tapestry Microservice                                         in Sections 5.4, 5.5, and 5.6, using the following assumptions:
+This section discusses application policies to consider when                      (1) each user has 6 concurrent request streams, (2) tile-based
+deploying Tapestry on the cloud.                                                  rendering requests, (3) when testing for user experience, use
+    When deploying on Amazon AWS, because virtual                                 a viewing-resolution of 10242 and a interaction-resolution
+instances have to share their physical nodes with others,                         of 2562 .
+Amazon by default sets a low cap on the number of contain-
+ers. For example (as shown in Table 2), on c5d.18xlarge                           5.2 Rendering Pipeline Performance
+(with 72 vCPUs), the Amazon imposed container count cap                           We benchmarked the rendering and encoding process using
+is 14, which translates to a 0.2 container/core ratio. Because                    three variables that affect render time: image size, level of
+
+    Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+1770                                                       IEEE TRANSACTIONS ON VISUALIZATION AND COMPUTER GRAPHICS, VOL. 26, NO. 4, APRIL 2020
+
+
+                              TABLE 3
+                    The Datasets Used in this Work
+
+Dataset                            Size per            Spatial           Time
+                                   Volume            Resolution          Steps
+Boston teapot with lobster          45 MB         356  256  178         1
+Isotropic turbulence [39]           64 MB         256  256  256         1
+Jet flames [40]                    132 MB          264  396  66        122
+Superstorm [41] (1 run)            201 MB          254  254  37         49
+Tornado [42] (wind velocity)       257 MB         480  480  290        600
+Supernova [30]                     308 MB         432  432  432         60
+Magnetic reconnection [43]         512 MB         512  512  512         1
+Turbine blade [37]                 7500 MB       1589  698  1799        1
+
+For time-varying data, varying time steps were used during testing.
+
+attenuation of a ramp opacity map, and number of samples
+per pixel. We used 6 image sizes (642 , 1282 , 2562 , 5122 , 10242 ,              Fig. 10. System throughput results showing request rate versus
+and 20482 ), 4 attenuation values (1.0, 0.5, 0.1, and 0.01), and                  response time for various image sizes in log scale. The linear regression
+4 sampling rates (1, 2, 4, and 8). The target hardware was                        trendlines are over-plotted indicating the linear growth of response time
+                                                                                  in relation to the number of concurrent request streams.
+a 24-core node of our institutional cluster with a single con-
+tainer. We then tested each combination of these parameters,
+resulting in 96 test cases. We repeated each of the 96 cases                         In our experiments, the size of the rendered images var-
+10 times with the camera at a randomized positions to simu-                       ied between a few kilobytes for low resolutions up to under
+late the effects of the volume being at different distances and                   300 KB for 20482 images. The exact size of the generated
+angles. We calculate the average time taken for 10 renders for                    images depends on the content of the rendering.
+a given test case. To see the effect of image sizes, we then aver-
+aged the times for each image size. This simulates possible                       5.3 Tapestry Server Throughput
+variation in image quality within same-sized images.                              In order to evaluate our system’s throughput, we imple-
+   The target datasets were: supernova, isotropic turbulence,                     mented a stress test of Tapestry microservices running on
+and magnetic reconnection (described in Table 3). All three                       our institutional cluster. We orchestrated multiple test
+datasets are structured grids of floating point values. To mea-                   machines to send rendering requests to Tapestry simulta-
+sure rendering time, each image was rendered to OSPRay’s                          neously. In other words, each test machine sends a different
+internal framebuffer and was then discarded to avoid buffer                       request stream to the server.
+copy or encoding time. We then tested the encoding time                               The testing master starts by spawning testing workers on
+(without saving to disk) separate from render time. Results                       the test machines. The master then waits until all test work-
+are shown in Table 4. Note that rendering time does not                           ers have finished their tests. Test workers use curl to send
+necessarily increase linearly with image size (a known charac-                    rendering requests at a rate of 25 requests/second, while
+teristic of ray-tracing [38]).                                                    randomly changing rendering parameters (e.g., camera
+   The fastest rendering case was unsurprisingly 642 image                        position) for each request. Finally, the master reads off the
+size. Within the test cases that used a 642 image, attenuation                    test logs from a shared queue and saves to disk. The logs
+of 0.1 and sample rate of 1 resulted in the fastest renders                       list request-sent and response-received times that allow us
+at 0.001 seconds, approximately 1,000 frames per second.                          to measure the average time it takes our system to respond
+On the other hand, the slowest renders occurred with 20482                        to rendering requests. This throughput testing suite is writ-
+images.                                                                           ten in Python and is included in the Tapestry repository.
+   We also compared the encoding time of PNG vs JPG (at                               To increase the load on the system, we simply increase
+100 percent quality). PNG was the image format used in our                        the number of test workers. Like in Section 5.2, initially our
+previous work [5]. On average, JPG was 2.5 times faster                           test target was one Tapestry container in a single 24 core
+in encoding than PNG and generated byte streams were                              node of our cluster. We ran each test 100 times on the super-
+generally smaller.                                                                nova, turbulence and tornado datasets (Table 3). For each
+                                                                                  dataset, we generated rendering requests for six image
+                                                                                  sizes: 642 , 1282 , 2562 , 5122 , 10242 , and 20482 .
+                            TABLE 4
+ Average Benchmarking Results for Rendering Requests Using                            We then averaged the response time collected, to show
+  the Supernova, Isotropic Turbulence, and Magnetic Datasets                      an overall system throughput under a mixture of different
+                                                                                  sizes of rendering jobs. Fig. 10 shows the scaling curves for
+Image size        Rendering        PNG Enc.        JPG Enc.       Round-trip      various image sizes. When doubling image size, average
+                   time (s)         time (s)        time (s)       time (s)       response time approximately increased by a factor of 4,
+64  64              0.003            0.005           0.003         0.009         which is expected.
+128  128            0.004            0.011           0.005         0.016
+256  256            0.009            0.035           0.012         0.030             Then, we tested for the effect of the number of containers
+512  512            0.024            0.122           0.037         0.092         per node. In this test, we kept the number of testing workers
+1024  1024          0.083            0.452           0.147         0.284         constant (150), and varied the number of Tapestry contain-
+2048  2048          0.338            1.651           0.580         1.066
+                                                                                  ers. Fig. 11 shows the results for three image sizes. For all
+The round-trip time for each request includes render, encode, and transfer time   image sizes, as we gradually increase the number of con-
+to and from the server with JPG encoding.                                         tainers from 1 towards 20, average response time improves.
+
+   Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+RAJI ET AL.: SCIENTIFIC VISUALIZATION AS A MICROSERVICE                                                                                                      1771
+
+
+
+
+Fig. 11. Results showing the relationship between the number of containers
+in our institutional cloud and average response time. The optimal number of
+containers is shown to be 20 for a machine with 24 physical cores.
+
+
+After reaching 20 containers, adding more containers did
+not yield noticeable improvements.
+   With the hardware being a single node with 24 physical
+cores, getting best performance with roughly 20 containers
+suggests roughly a 0.8 container/core ratio. Through addi-
+tional testing, we found this ratio to be quite consistent on
+institutional cloud.
+
+5.4 AWS Microservice Throughput
+Next, we evaluated Tapestry’s performance on Amazon
+AWS. In particular, we looked at the relationship between
+FPS versus Price over various tile sizes: 642 , 1282 , and 2562 .
+   Since Tapestry is a compute-intensive service, we tested                      Fig. 12. Graphs showing FPS versus price on Amazon AWS for 6 (top)
+                                                                                 and 120 (bottom) concurrent request streams. Each point in the scatter
+Amazon’s Compute-Optimized instances as well as T2 Per-                          plots belong to a different AWS instance and configuration. 10 FPS and
+formance instances [44]. We chose T2 machines because                            30 FPS are marked in green.
+of their ability to sustain CPU workload and low costs
+[44]. For each instance type, we ran different number of                         server-side parallel rendering; when an application requests
+machines. For more powerful machines we were limited to                          tiles of 2562 , the target image resolution is actually 10242 .
+lower quantities due to Amazon’s policies.                                           To evaluate the choices of AWS instances, we used 120
+   For the supernova dataset, Fig. 12 shows FPS vs Price for 6                   concurrent request streams and a tile size of 1282 (i.e., tar-
+and 120 concurrent request streams with all of our tested                        geting a typical desktop visualization resolution of 5122 ).
+AWS instance types. Each point in the scatter plot represents                    Fig. 13a shows the performance of different instance types
+an AWS instance type and configuration.                                          in blue for 120 streams. The cost of these instances can be
+   For example, Fig. 12-top shows the cost to sustain 10 FPS                     seen in Fig. 13b. It appears that the cost correlates quite well
+when rendering tiles of 2562 is approximately $4/hour.                           with the desired FPS. The two graphs also show that
+Please note, tiling lets applications transparently leverage                     although large Compute-Optimized machines (towards the
+
+
+
+
+Fig. 13. (a) Shows a comparison between the rendering performance of various AWS instances for 120 and 6 concurrent request streams (both at
+a request rate of 25 FPS). In a Chrome browser that uses 6 request streams per host, the former results in 20 users while the latter results in 1 user.
+Compute-optimized instances perform better with 6 request streams. (b) Shows the cost of different AWS instances.
+
+   Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+1772                                                      IEEE TRANSACTIONS ON VISUALIZATION AND COMPUTER GRAPHICS, VOL. 26, NO. 4, APRIL 2020
+
+
+
+
+Fig. 14. Graph showing the estimated point at which T2 instances sur-            Fig. 16. Graph showing the scalability of the system. The 72 core cluster
+pass compute-optimized instances at efficiency.                                  is the same as the one used in our previous work [5]. In both cases, we
+                                                                                 used 100 users (simulated on AWS with monkey-testing).
+
+right) perform better, they are less cost-efficient. A reason
+may be that larger machines are more suited for fewer users                         Each of the t2.micro instances ran a lightweight version of
+and large tile sizes. Fig. 13a shows that by lowering the                        Ubuntu and a headless Chrome browser. Our testing script
+number of request streams to 6 (red bars), the rendering                         used SSH to connect to all 100 instances and run our hyper-
+speed of the Compute-Optimized instances grew much                               image test page within the headless browser, and with
+more than a large number of smaller machines such as 100                         monkey testing controlling the interactions.
+t2.medium instances.                                                                When the monkey testing interactions were done, the
+   Furthermore, we compared the performance of 100 t2.                           JavaScript code within the page sent timing results to a sim-
+medium machines and 3  72 core C5D.18xlarge machines.                           ple Python server that log the results to a file. The timing
+Based on the changes in the number of concurrent requests                        results included request times, response times, and the reso-
+from 6 to 120, we used the least squares fitting model to esti-                  lution of requested images. On average, 3.46 percent of the
+mate where the performance of the two meet. The fitness of                       images were at viewing resolution (10242 ), and the rest
+the model had a root mean square error of 0.019. Fig. 14                         were interaction resolution (2562 ).
+shows that at 380 concurrent request streams (i.e., about                           Fig. 15 shows average response time for a varying num-
+60 simultaneous uses), 100 t2.medium instances become                            ber of testing clients. The blue line shows when the testing
+more cost-efficient.                                                             clients are deployed on Amazon AWS, and the red line
+                                                                                 shows when the testing clients are on the local area network
+5.5 User Experience Benchmarking                                                 as the institutional cluster. The result shows diminishing
+                                                                                 differences due to network proximity as the number of test-
+To test our system’s performance under realistic workloads,
+                                                                                 ing clients increase, which can lead to network congestion
+we used “monkey testing”, a standard approach to stress-test
+                                                                                 regardless of proximity.
+web pages. Monkey testing involves simulating interactions
+                                                                                    Fig. 16 shows the same test repeated to reveal resource-
+across elements of the page. We used this on hyperimages
+                                                                                 scalability of our platform. We expanded the deployment
+to simulate user interaction. We ran the “natural monkey
+                                                                                 from 3 nodes (72 cores, blue curve) to 6 nodes (156 cores,
+testing” scripts in the same configuration as before [5], only
+                                                                                 red curve). In both of these two cases, the testing clients
+that in this work 100 Amazon t2.micro instances were acting
+                                                                                 were deployed on AWS.
+as testing clients. The datasets used were supernova, turbu-
+lence and magnetic (Table 3).
+                                                                                 5.6 Application Performance
+                                                                                 To test the performance of the applications in (Section 4)
+                                                                                 with a single user, we used three C5.9xlarge AWS instances
+                                                                                 as server.
+                                                                                    For hyperimage embedding, we conducted a single
+                                                                                 monkey-testing user test on a web page with a visualization
+                                                                                 of a dataset selected randomly (full list in Table 3). On aver-
+                                                                                 age, interaction-resolution renderings (2562 ) were rendered
+                                                                                 at a speed of 9.43 FPS, while viewing-resolution renderings
+                                                                                 (10242 ) achieved 2.08 FPS. In other words, when a user stops
+                                                                                 interacting, a high quality rendering is provided in less than
+                                                                                 0.5 seconds.
+                                                                                    We also looked at the overhead of including the client-side
+                                                                                 JavaScript code for Tapestry. On average, pages with Tapestry
+                                                                                 enabled loaded 1.29 times slower than pages without Tapes-
+Fig. 15. Response time for a varying number of users is shown. The               try included. For example, a Wikipedia page without hyperi-
+slower out-of-network results are from 100 simulated users on AWS,
+accessing our institutional cloud. The in-network results are from 100           mages, loaded in 510 ms, while with hyperimages, it took
+simulated users in our local 1 Gbps network.                                     659 ms. Most of this overhead is due to the jQuery library.
+
+   Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+RAJI ET AL.: SCIENTIFIC VISUALIZATION AS A MICROSERVICE                                                                                                       1773
+
+
+    Hypervideo performance essentially depends on the                             ACKNOWLEDGMENTS
+server throughput since interpolation has a negligible cost.
+                                                                                  The authors would like to thank the anonymous reviewers of
+In our tests, we created three hypervideos for different data-
+                                                                                  this and previous versions of the manuscript for their valuable
+sets (5 keyframes each). We chose to generate 50 frames
+                                                                                  comments and suggestions. The authors are supported in part
+between every two keyframe and therefore 200 frames were
+                                                                                  by US National Science Foundation Award CNS-1629890,
+rendered for each video. Our video playback speed was set
+                                                                                  Intel Parallel Computing Center (IPCC) at the Joint Institute
+to 30 frames per second; the 200 frame videos were approxi-
+                                                                                  of Computational Science of University of Tennessee, and the
+mately 6 seconds long. The keyframes were chosen at ran-
+                                                                                  Engineering Research Center Program of the National Science
+dom with different angles, and zoom levels. On average,
+                                                                                  Foundation and the Department of Energy under US National
+it took 70.66 seconds to render a full video.
+                                                                                  Science Foundation Award Number EEC-1041877.
+    When changing one of the keyframes, on average, the read-
+justment of a keyframe took 21.15 seconds, since most of the
+intermediate frames were auto-cached by the cache container                       REFERENCES
+(Section 3.2.4). A user can watch the video as it renders albeit                  [1]    S. Jourdain, U. Ayachit, and B. Geveci, “ParaViewWeb, a web
+at the rendering speed. Any subsequent playback is at                                    framework for 3D visualization and data processing,” in Proc.
+30 frames/second. All hypervideo tests were done using                                   IADIS Int. Conf. Web Virtual Reality Three-Dimensional Worlds,
+a resolution of 10242 .                                                                  2010, Art. no. 1.
+                                                                                  [2]    V. Pascucci, G. Scorzelli, B. Summa, P.-T. Bremer, A. Gyulassy,
+    We also tested the speed of our augmented reality applica-                           C. Christensen, S. Philip, and S. Kumar, “The visus visualization
+tion. To view volume renderings of the 7.5 GB sized turbine                              framework,” in High Performance Visualization: Enabling Extreme-
+dataset on a HoloLens (Fig. 8), HoloTapestry can update                                  Scale Scientific Insight, E. W. Bethel, H. Childs, and C. Hansen, Eds.
+                                                                                         London, U.K./Boca Raton, FL, USA: Chapman and Hall/CRC,
+renderings at a sustained speed of 4.5 FPS. The viewing-
+                                                                                         2012.
+resolution in the tests was 5122 (stereo, without explicit syn-                   [3]    K. Sons, F. Klein, D. Rubinstein, S. Byelozyorov, and P. Slusallek,
+chronization of left and right eye images), using all 6-nodes of                         “XML3D: Interactive 3D graphics for the web,” in Proc. 15th Int.
+our institutional cluster. While the speed of our prototype                              Conf. Web 3D Technol., 2010, pp. 175–184.
+                                                                                  [4]    Paraview ArcticViewer, 2018. [Online]. Available: https://kitware.
+implementation is not sufficient for practical use yet, we                               github.io/arctic-viewer/, Accessed on: Oct. 14, 2018.
+believe as hardware performance on AR devices improves,                           [5]    M. Raji, A. Hota, and J. Huang, “Scalable web-embedded volume
+better results can be achieved, and HoloTapestry can be uti-                             rendering,” in Proc. IEEE 7th Symp. Large Data Anal. Vis., Oct.
+lized in situations where the data is large and cannot be ren-                           2017, pp. 45–54.
+                                                                                  [6]    Software Container Platform - Docker: https://www.docker.
+dered on the device.                                                                     com/, 2018. [Online]. Available: https://www.docker.com/,
+                                                                                         Accessed on: Oct. 14, 2018.
+                                                                                  [7]    M. Bostock, V. Ogievetsky, and J. Heer, “D3 data-driven
+6     CONCLUSION AND FUTURE WORK                                                         documents,” IEEE Trans. Vis. Comput. Graph., vol. 17, no. 12,
+                                                                                         pp. 2301–2309, Dec. 2011.
+Traditionally, the computing resources that can be provi-                         [8]    J. Jomier, S. Jourdain, U. Ayachit, and C. Marion, “Remote
+sioned for a scientist restricts the kind of scientific visualiza-                       visualization of large datasets with midas and ParaViewWeb,”
+tion he or she can use. This limitation also hampers efforts to                          in Proc. 16th Int. Conf. 3D Web Technol., 2011, pp. 147–150. [Online].
+                                                                                         Available: http://doi.acm.org/10.1145/2010425.2010450
+make scientific visualizations accessible to large collaborating                  [9]    G. Tamm and P. Slusallek, “Plugin free remote visualization in the
+teams of users. Moreover, there are even more barriers                                   browser,” in Proc. SPIE/IS&T Electron. Imag., 2015, pp. 939 705–
+to share interactive scientific visualizations with the general                          939 705.
+public.                                                                           [10]   G. Tamm and P. Slusallek, “Web-enabled server-based and
+                                                                                         distributed real-time ray-tracing,” in Proc. 16th Eurographics Symp.
+    In this work, we describe Tapestry as an example to map                              Parallel Graph. Vis., 2016, pp. 55–68.
+the delivery architecture of scientific visualization onto a                      [11]   Kitware, “Vtk.js,” 2017. [Online]. Available: https://github.com/
+cloud platform, and have scientific visualization appear as                              Kitware/vtk-js, Accessed on: Jun. 10, 2017.
+                                                                                  [12]   J. Ding, J. Huang, M. Beck, S. Liu, T. Moore, and S. Soltesz,
+a microservice with rendering requests being the only API.                               “Remote visualization by browsing image-based databases with
+    Tapestry’s architectural design stems from decoupling and                            logistical networking,” in Proc. ACM/IEEE Conf. Supercomput.,
+shielding the visualization server-side away from application                            2003, pp. 34:1–34:11.
+logic and application states. Through deploying the stateless                     [13]   J. Ahrens, S. Jourdain, P. O’Leary, J. Patchett, D. H. Rogers, and
+                                                                                         M. Petersen, “An image-based approach to extreme scale in situ
+Tapestry servers on Amazon AWS, we show that high-end                                    visualization and analysis,” in Proc. Int. Conf. High Perform.
+visualization needs can be met by a cloud-hosted service in an                           Comput. Netw. Storage Anal., 2014, pp. 424–434.
+efficient, on-demand, and cost-effective manner.                                  [14]   H. Childs, E. Brugger, B. Whitlock, J. Meredith, S. Ahern, D. Pugmire,
+                                                                                         K. Biagas, M. Miller, C. Harrison, G. H. Weber, H. Krishnan, T. Fogal,
+    We believe there is a future potential that general data                             A. Sanderson, C. Garth, E. W. Bethel, D. Camp, O. R€   ubel, M. Durant,
+analysis and visualization tasks, beyond simple rendering,                               J. M. Favre, and P. Navratil, “VisIt: An end-user tool for visualizing
+can leverage decoupled architectures in similar ways to                                  and analyzing very large data,” in High Performance Visualization–
+achieve high performance, high availability, and high accessi-                           Enabling Extreme-Scale Scientific Insight. Boca Raton, FL, USA: CRC
+                                                                                         Press, Oct. 2012, pp. 357–372.
+bility. In particular, we would like to further combine Tapes-                    [15]   U. Ayachit, “The Paraview guide: A parallel visualization
+try with the area of augmented reality as well as improve its                            application,” Kitware, Inc., 2015.
+performance with AR applications. Another area for pursuing                       [16]   Q. Wu, J. Gao, M. Zhu, N. S. Rao, J. Huang, and S. Iyengar, “Self-
+                                                                                         adaptive configuration of visualization pipeline over wide-area
+in the future is adding specialized support for 3D graphics
+                                                                                         networks,” IEEE Trans. Comput., vol. 57, no. 1, pp. 55–68, Jan. 2008.
+and animation development. For general computer graphics                          [17]   R. Sisneros, C. Jones, J. Huang, J. Gao, B.-H. Park, and N. Samatova,
+concepts, dedicated rendering engines have been the norm.                                “A multi-level cache model for run-time optimization of remote
+It may be feasible to use microservices to support such use                              visualization,” IEEE Trans. Vis. Comput. Graph., vol. 13, no. 5,
+                                                                                         pp. 991–1003, Sep./Oct. 2007.
+cases on-demand.
+
+    Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+1774                                                      IEEE TRANSACTIONS ON VISUALIZATION AND COMPUTER GRAPHICS, VOL. 26, NO. 4, APRIL 2020
+
+[18] M. Meißner, J. Huang, D. Bartz, K. Mueller, and R. Crawfis,                 [43] F. Guo, H. Li, W. Daughton, and Y. H. Liu, “Formation of hard power
+     “A practical evaluation of popular volume rendering algorithms,”                 laws in the energetic particle spectra resulting from relativistic
+     in Proc. IEEE Symp. Volume Vis., 2000, pp. 81–90.                                magnetic reconnection,” Phys. Rev. Lett., vol. 113, no. 15, pp. 1–5,
+[19] I. Wald, G. Johnson, J. Amstutz, C. Brownlee, A. Knoll, J. Jeffers,              2014.
+     J. G€ unther, and P. Navratil, “OSPRay—A CPU ray tracing                    [44] Amazon, “Amazon AWS Instance Types,” (2018). [Online]. Avail-
+     framework for scientific visualization,” IEEE Trans. Vis. Comput.                able: https://aws.amazon.com/ec2/instance-types/, Accessed
+     Graph., vol. 23, no. 1, pp. 931–940, Jan. 2017.                                  on Oct. 2018.
+[20] NVIDIA IndeX, 2016. [Online]. Available: https://developer.
+     nvidia.com/index                                                                                    Mohammad Raji received the BS and MS
+[21] C. Zach, S. Mantler, and K. Karner, “Time-critical rendering of                                     degrees in computer engineering from Razi Uni-
+     discrete and continuous levels of detail,” in Proc. ACM Symp. Virtual                               versity, Iran, in 2008 and 2012, respectively, and
+     Reality Softw. Technol., 2002, pp. 1–8.                                                             the second MS degree in computer science from
+[22] X. Li and H.-W. Shen, “Time-critical multi-resolution volume                                        the University of Tennessee, in 2017. He is
+     rendering using 3D texture mapping hardware,” in Proc. IEEE/                                        currently working toward the PhD degree at the
+     ACM Symp. Volume Vis. Graph., 2002, pp. 29–36.                                                      University of Tennessee, Knoxville. His research
+[23] L. Bavoil, S. P. Callahan, P. J. Crossno, J. Freire, C. E. Scheidegger,                             interests include web-based data visualization
+     C. T. Silva, and H. T. Vo, “VisTrails: Enabling interactive multiple-                               systems, large scale visualization architectures,
+     view visualizations,” in Proc. IEEE Vis., 2005, pp. 135–142.                                        and deep learning.
+[24] J. Gao, J. Huang, C. R. Johnson, and S. Atchley, “Distributed data
+     management for large volume visualization,” in Proc. IEEE Vis.,
+     2005, pp. 183–189.                                                                                  Alok Hota received the bachelor of science
+[25] H. Yu, K.-L. Ma, and J. Welling, “A parallel visualization pipeline for                             degree in computer science from Fisk University,
+     terascale earthquake simulations,” in Proc. ACM/IEEE Supercomput.                                   the bachelor of engineering degree in computer
+     Conf., 2004, pp. 49–49.                                                                             engineering from Vanderbilt University, and the
+[26] J. Frey, T. Tannenbaum, M. Livny, I. Foster, and S. Tuecke, “Condor-                                master of science degree in computer science
+     G: A computation management agent for multi-institutional grids,”                                   from the University of Tennessee, Knoxville. He is
+     in Proc. 10th IEEE Int. Symp. High Perform. Distrib. Comput., 2001,                                 working toward the PhD degree at the University
+     pp. 55–63.                                                                                          of Tennessee, Knoxville. His research interests
+[27] W. Kendall, J. Huang, T. Peterka, R. Latham, and R. Ross, “Toward                                   include data visualization systems, large scale
+     a general I/O layer for parallel-visualization applications,” IEEE                                  visualization, and heterogeneous computing. He
+     Comput. Graph. Appl., vol. 31, no. 6, pp. 6–10, Nov./Dec. 2011.                                     is a student member of the IEEE.
+[28] A. Evans, M. Romeo, A. Bahrehmand, J. Agenjo, and J. Balt, “3D
+     graphics on the web: A survey,” Comput. Graph., vol. 41, pp. 43–                                    Tanner Hobson received the BS degree in com-
+     61, Jun. 2014.                                                                                      puter science from the University of Tennessee,
+[29] W3C, “Embedding custom non-visible data with the data                                               Knoxville, where he is currently working toward
+     attributes,” 2017. [Online]. Available: https://www.w3.org/TR/                                      the PhD degree. His research interests include
+     2011/WD-html5–20110525/elements.html#embedding-custom-                                              distributed computing, mixed reality visualization,
+     non-visible-data-with-the-data-attributes, Accessed on: Mar. 21,                                    and web-based systems architectures.
+     2017.
+[30] J. M. Blondin and A. Mezzacappa, “Pulsar spins from an instability
+     in the accretion shock of supernovae,” Nature, vol. 445, no. 7123,
+     pp. 58–60, 2007.
+[31] C. Pahl, “Containerization and the PaaS cloud,” IEEE Cloud Comput.,
+     vol. 2, no. 3, pp. 24–31, May/Jun. 2015.
+[32] J. Stubbs, W. Moreira, and R. Dooley, “Distributed systems of                                       Jian Huang received the PhD degree in com-
+     microservices using docker and serfnode,” in Proc. 7th Int. Workshop                                puter science from the Ohio State University, in
+     Sci. Gateways, 2015, pp. 34–39.                                                                     2001. He is a professor with the Department of
+[33] P. Kanuparthy, W. Matthews, and C. Dovrolis, “DNS-based                                             Electrical Engineering and Computer Science,
+     ingress load balancing: An experimental evaluation,” CoRR,
+                                                                                                         University of Tennessee, Knoxville. His research
+     vol. abs/1205.0820, 2012. [Online]. Available: http://arxiv.org/
+                                                                                                         focuses on data visualization and analytics. His
+     abs/1205.0820                                                                                       research has been funded by National Science
+[34] Mathieu Stefani, “Pistache http server,” 2017. [Online]. Available:                                 Foundation, Department of Energy, Department
+     http://pistache.io, Accessed on: Jun. 16, 2017.                                                     of Interior, NASA, UT-Battelle, and Intel.
+[35] “Maximum Number of Open Connections Per Browser,” (2018).
+     [Online]. Available: http://www.browserscope.org/?category=
+     network&v=top, Accessed on Oct. 2018.
+[36] K. Shoemake, “Animating rotation with quaternion curves,”                   " For more information on this or any other computing topic,
+     SIGGRAPH Comput. Graph., vol. 19, no. 3, pp. 245–254, 1985.
+[37] H. Bilheux, K. Crawford, L. Walker, S. Voisin, M. Kang, M. Harvey,          please visit our Digital Library at www.computer.org/csdl.
+     B. Bailey, M. Phillips, J. Bilheux, K. Berry, et al., “Neutron imaging
+     at the oak ridge national laboratory: Present and future capabilities,”
+     in Proc. 7th Int. Topical Meeting Neutron Radiography. Phys., 2013.
+[38] M. Meißner, J. Huang, D. Bartz, K. Mueller, and R. Crawfis,
+     “A practical evaluation of popular volume rendering algorithms,”
+     in Proc. IEEE Symp. Volume Vis., 2000, pp. 81–90.
+[39] D. Donzis, P. Yeung, and D. Pekurovsky, “Turbulence simulations
+     on Oð104 Þ processors,” in Proc. TeraGrid Conf., 2008.
+[40] C. S. Yoo, R. Sankaran, and J. H. Chen, “Direct numerical simulation
+     of turbulent lifted hydrogen jet flame in heated coflow,” 2007.
+[41] J. Sanyal, S. Zhang, J. Dyer, A. Mercer, P. Amburn, and R. Moorhead,
+     “Noodles: A tool for visualization of numerical weather model
+     ensemble uncertainty,” IEEE Trans. Vis. Comput. Graph., vol. 16,
+     no. 6, pp. 1421–1430, Nov./Dec. 2010.
+[42] R. Wilhelmson, M. Straka, R. Sisneros, L. Orf, B. Jewett, and
+     G. Bryan, “Understanding tornadoes and their parent supercells
+     through ultra-high resolution simulation/analysis,” 2013.
+
+
+
+
+   Authorized licensed use limited to: University of Massachusetts Boston. Downloaded on May 29,2020 at 20:27:46 UTC from IEEE Xplore. Restrictions apply.
+

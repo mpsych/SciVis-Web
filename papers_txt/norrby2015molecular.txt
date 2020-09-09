@@ -1,0 +1,687 @@
+                                                                                                                                                                                                                                                        Article
+
+                                                                                                                                                                                                                                            pubs.acs.org/jcim
+
+
+
+
+                                                                                                          Molecular Rift: Virtual Reality for Drug Designers
+                                                                                                          Magnus Norrby,†,‡ Christoph Grebner,† Joakim Eriksson,§ and Jonas Boström*,†
+                                                                                                          †
+                                                                                                           Department of Medicinal Chemistry, CVMD iMed, AstraZeneca, S-43183 Mölndal, Sweden
+                                                                                                          ‡
+                                                                                                           Department of Computer Sciences and §Department of Design Sciences, Lund University, S-223 62 Lund, Sweden
+                                                                                                              *
+                                                                                                              S Supporting Information
+See https://pubs.acs.org/sharingguidelines for options on how to legitimately share published articles.
+  Downloaded via UNIV OF MASSACHUSETTS BOSTON on July 8, 2020 at 18:27:24 (UTC).
+
+
+
+
+                                                                                                              ABSTRACT: Recent advances in interaction design have created new ways to use computers. One example is the ability to
+                                                                                                              create enhanced 3D environments that simulate physical presence in the real worlda virtual reality. This is relevant to drug
+                                                                                                              discovery since molecular models are frequently used to obtain deeper understandings of, say, ligand−protein complexes. We
+                                                                                                              have developed a tool (Molecular Rift), which creates a virtual reality environment steered with hand movements. Oculus Rift, a
+                                                                                                              head-mounted display, is used to create the virtual settings. The program is controlled by gesture-recognition, using the gaming
+                                                                                                              sensor MS Kinect v2, eliminating the need for standard input devices. The Open Babel toolkit was integrated to provide access to
+                                                                                                              powerful cheminformatics functions. Molecular Rift was developed with a focus on usability, including iterative test-group
+                                                                                                              evaluations. We conclude with reﬂections on virtual reality’s future capabilities in chemistry and education. Molecular Rift is open
+                                                                                                              source and can be downloaded from GitHub.
+
+
+                                                                                                          ■    INTRODUCTION
+                                                                                                          Molecules of the simplicity of dopamine or the complexity of
+                                                                                                                                                                                        Nowadays, visualizing and interacting with molecular models
+                                                                                                                                                                                     is a signiﬁcant part of a drug designer’s day job. Some common
+                                                                                                                                                                                     examples are (i) inspecting small molecule conformations
+                                                                                                          proteins and the famous DNA double helix are all three-
+                                                                                                                                                                                     obtained from a virtual screen, (ii) using conformational
+                                                                                                          dimensional (3D) objects. Obtaining knowledge about the 3D
+                                                                                                                                                                                     information to elucidate experimental data, such as solving X-
+                                                                                                          character of such small and large molecules is important in                ray crystallography structures or chemical shifts in NMR
+                                                                                                          many approaches contributing to drug discovery. One apparent               spectra, and (iii) identifying important structural features and
+                                                                                                          way to achieve this is to visualize and interact with 3D models            molecular interactions in ligand−protein X-ray structures (be it
+                                                                                                          of the molecular objects of interesteither in the real world or           experimentally determined or docked) to form design
+                                                                                                          in a virtual reality.                                                      hypotheses and to obtain a deeper understanding of the system
+                                                                                                             The concept of molecules as 3D objects emerged during the               at hand. The list can go on. In short, the ability to visualize
+                                                                                                          19th century and was independently proven by Le Bel and van’t              molecules is key to drug design and, of course, also in life
+                                                                                                          Hoﬀ around 1870.1 Experimental techniques, especially X-ray                science as a whole.
+                                                                                                          crystallography, have provided models of biological molecules                 A range of stand-alone molecular viewing computer
+                                                                                                          (e.g., penicillin and cholesterol) for almost a century. The ﬁrst          programs have been developed over the years. Some examples
+                                                                                                          X-ray structure of a protein (myoglobin) was solved in the late            are Rasmol,6 PyMol,7 VIDA,8 VMD,9 and Chimera.10 As of
+                                                                                                          ﬁfties.2 X-ray crystallography has since served as a source and            recently, web-based systems such as Jmol,11 AstexViewer,12
+                                                                                                          inspiration for the construction of models facilitating under-             iView,13 and the OpenEye 3D Web Toolkit14 have gained
+                                                                                                          standing and leading to many important discoveries.3 For                   traction. A large part of their appeal is the simplicity with which
+                                                                                                          example, the use of physical models was imperative for Watson              they integrate to build rich dynamic web sites. Most stand-alone
+                                                                                                          and Crick in the race towards creating the ﬁrst accurate 3D                and web-based molecular viewers support 3D-stereoscopic
+                                                                                                          model of the DNA structure.4 With the rise of computers, the               eﬀects. The stereo techniques can be divided into three main
+                                                                                                          focus switched from physical representations to computer                   classes: passive 3D (glasses that chromatically distort
+                                                                                                          generated models. An important innovation here was the ability             images15,16), active 3D (using shutter glasses and high
+                                                                                                          to display stereoscopic 3D views. The TAMS (Teaching Aids                  frequency image representations17), and autostereoscopic 3D
+                                                                                                          for Macromolecular Structure) is a notable example of an early             where no other headgear is required (such as the parallax
+                                                                                                          such project.5 They used two polarized slide projectors
+                                                                                                          mounted on a cardboard box to simulate stereoscopic 3D.                    Received: August 28, 2015
+                                                                                                          Much has happened since.                                                   Published: November 2, 2015
+
+                                                                                                                                        © 2015 American Chemical Society      2475                                                    DOI: 10.1021/acs.jcim.5b00544
+                                                                                                                                                                                                                           J. Chem. Inf. Model. 2015, 55, 2475−2484
+Journal of Chemical Information and Modeling                                                                                                     Article
+
+
+
+
+Figure 1. Oculus Rift goggles (left) used to create to the virtual reality environment in Molecular Rift. Oculus Rift applies a barrel (middle) and
+pincushion (right) distortion to the image, in combination with a wide FOV, to create the VR experience.
+
+barrier) in iView.13 Although aiming for essentially the same                 However, the 3D stereo eﬀect in iView merely oﬀers an
+eﬀect the underlying theories vary signiﬁcantly, as well as their             improved stereoscopic eﬀect, without essential functionalities
+implementation, performance, and the user experience (UX).                    such as head tracking or advanced interaction techniques. Head
+   Without a doubt, current molecular viewers (using these                    tracking means that you can turn your head and look around
+techniques) can generally provide adequate illusions of 3D                    and the view follows, as in real life. The prototype program
+stereo. But there are drawbacks. For example, the passive stereo              Oculus Crystal22 can display diﬀerent crystal packings in an
+approaches strip the models of their original color properties                interactive environment and thus oﬀers a full VR eﬀect.
+and thus hamper the analysis. Autostereoscopic methods suﬀer                  However, Oculus Crystal is limited to a few predeﬁned scenes.
+from lower resolution, and the shutter glasses required for the               The head-tracking, allowing the user to look in all directions,
+active 3D stereo are by far the most expensive appliance                      and the wide ﬁeld of view are key components for providing a
+needed. But, most importantly, a full immersion into a highly                 real VR experience.
+visual environment and a real 3D eﬀect is lacking for the                        An important aspect when implementing a VR is the
+available methods. This can be alleviated by implementing                     human−computer interaction (HCI). That is, to integrate the
+virtual reality (VR) techniques.18 It must be emphasized that a               human body into the virtual experience in a natural way.
+virtual reality experience is very diﬀerent from using standard               Wearing VR-goggles, such as Oculus Rift, limits the use of
+molecular visualizers. In the VR environment objects such as                  many external input devices (e.g. mouse, keyboards, and
+atoms and bonds have a location in 3D-space relative to the                   touchpads) since the goggles are not transparent. As a
+user’s position. This is not an illusion but an eﬀect. You feel like          consequence, new alternative interaction methods present an
+you are really there. It should be mentioned that virtual reality             opportunity. Kinect v2,23 developed by Microsoft for both
+is not new to life sciences (e.g. medicine, therapy) and gaming,              Windows and Xbox platforms, is such a motion sensing device
+but its improved performance and aﬀordability certainly is.                   speciﬁcally tailored to recognize gestures. Kinect v2 oﬀers high
+   Several diﬀerent techniques can be used to implement a                     ﬂexibility and is equipped with RGB color and infrared (IR)
+virtual reality, ranging from the simple Google Cardboard                     sensors to capture gestures. Although ﬁrst marketed for gaming,
+goggles19 to sophisticated CAVEs (cave automatic virtual                      its competitive pricing and ease of access has led to a spread
+environment) requiring dedicated rooms.20 Within chemistry                    into scientiﬁc ﬁelds. As an example, Alnowami et al. recently
+and drug discovery, MolDRIVE and its Reality Cube is an                       showed that Kinect sensors could be successfully used for gait
+exciting CAVE example of a highly interactive VR system.21                    tracking, an important indicator of health.24 Another life science
+The introduction of high-quality but relatively inexpensive head              application is the use of Kinect sensors in exercise games to
+mounted VR devices such as Oculus Rift (Figure 1) has opened                  treat people suﬀering from Parkinson’s disease.25
+up new opportunities for creating mobile stereoscopic 3D                         Finally, both Oculus Rift and MS Kinect v2 oﬀer free
+visualizers, which can be easily used at home or in oﬃce spaces.              software development kits (SDK’s)26,27 compatible with the
+Oculus Rift creates a stereoscopic 3D using two lenses and a                  Windows game engine Unity 5,28 through wrappers. SDK’s are
+LCD display. In brief, the VR eﬀect is created by displaying two              prewritten modules (or libraries or packages) available at your
+separate images, with slightly diﬀerent points of view. The VR                ﬁngertips intended to extend the capabilities of the tools. For
+experience is enchanced by applying two diﬀerent distortion                   example, packages related to image processing, changing colors,
+techniques to the ﬁeld of view (FOV). The pincushion                          interacting with hardware, keeping track of a user’s location,
+distortion (Figure 1) makes the display appear to occupy a                    performing complex numerical analysis, rendering text on the
+wider FOV. The (unwanted) distorted image is subsequently                     screen, and so forth are available providing an excellent
+treated with a barrel distortion (Figure 1) to cancel out the                 development platform.
+pincushion eﬀect. The eﬀect of increasing the FOV, without                       The overall goal of this project was to develop a versatile tool
+introducing any obvious distortions, can be observed by the                   providing the functionalities of a high-end molecular viewer
+user in this manner. That is, the lenses make it possible to                  together with a real VR experience to bring virtual reality into
+accommodate a large FOV on a small screen. The view is 3D                     the daily work of drug designers. In addition to using the tool in
+without distortions; straight lines look straight, just like in real          drug design projects we see opportunities to use it to inspire
+life.                                                                         and motivate people to learn more about life sciences (e.g. for
+   A lightweight version of the Oculus Rift technology has been               educational purposes). Molecular Rift was developed with an
+implemented in the web-based molecular viewer iView.13                        emphasis on user friendliness to improve the tool and thus the
+                                                                       2476                                                    DOI: 10.1021/acs.jcim.5b00544
+                                                                                                                    J. Chem. Inf. Model. 2015, 55, 2475−2484
+Journal of Chemical Information and Modeling                                                                                                            Article
+
+
+
+
+Figure 2. Start menu of Molecular Rift.
+
+user experience (UX). For this purpose, an iterative design and             download from the protein data bank (PDB),31,32 the VR is
+development cycle including several focus groups was used to                started and the control is shifted to gesture recognition. A
+test and evaluate new functionalities and to provide instant                summary of the visualization options implemented in the tool
+feedback to guide further development.                                      and thus the Table 1. Moreover, an in-game VR menu for
+
+■   IMPLEMENTATION
+   Development, Infrastructure, and Features of Molec-
+                                                                            common commands is available, see Figure 3. Keyboard
+                                                                            shortcuts were implemented to improve the usability (Table 2).
+                                                                            More details about implemented gestures and commands are
+ular Rift. Molecular Rift was developed in an iterative fashion,            given in the following sections.
+where each iteration cycle consisted of a design and
+development step followed by a focus-group evaluation. This                 Table 1. Summary of Molecular Rift features
+ensured that the UX could be monitored and that the usability
+of the tool was optimized toward the requirements of typical                     category                                     feature
+end-users: drug designers.                                                  ﬁle input formats       PDB, MOL2, and SDF
+   The development was performed in Windows 8.1 using the                   structure coloring      various color schemes
+game engine Unity 5 Personal Edition and MonoDevelop as                     primary structure       lines, sticks, ball-and-sticks, and CPK
+the primary editor. Kinect for Windows SDK v2.023 and its                     rendering
+application programming interface (API) were utilized for the               secondary               ribbons and alpha-trace
+                                                                              structure
+gesture recognition. The Oculus Rift Developer Kit 2 (DK2)                    rendering
+with the Oculus Rift 0.4.4-beta SDK and Windows Runtime26                   residue labeling        three-letter code and sequence number
+were used to create the virtual reality environment. The open               protein surfaces        van der Waals
+source cheminformatics tool-kit Open Babel29,30 was integrated              hydrogen bonds          intermolecular (ligand−protein)
+with Molecular Rift. All programming was done in C# due to its              ions and waters         yes (ball-and-stick)
+compatibility with the Windows environment.                                 virtual reality eﬀect   Oculus Rift
+   Molecular Rift is divided into two parts: one traditional start          human−computer          hand motions (MS Kinect v2), mouse, and keyboard
+menu (no VR) and one VR environment for the visualization                     interaction
+and interaction with molecular models. On initialization, the               in-game                 rotation, zooming, movement, translation, and center
+                                                                              manipulation            view
+start menu is launched within the graphical user interface                    modes
+(GUI). Options for typical settings, such as atom and bond                  cheminformatics         Open Babel (C#)
+representations, labels, color schemes etc. are shown (Figure 2)              tool-kit
+and subsequently applied. The main menu is controlled in a                  background color        black, white, gray, and space
+conventional fashion, by keyboard and mouse, facilitating the               pharmacophore           H-bond donors and acceptors, rings, positive and
+typing of text, which is still a challenge in most VR                         objects                 negative charges, lipophilic, excluded volumes
+environments. Upon loading a ﬁle containing 3D coordinates                  hydrogens display       all, none, or polar only
+of a molecular model, either by ﬁle browsing or remote                      force ﬁelds             mmﬀ94, uﬀ, and ghemical
+
+                                                                     2477                                                             DOI: 10.1021/acs.jcim.5b00544
+                                                                                                                           J. Chem. Inf. Model. 2015, 55, 2475−2484
+Journal of Chemical Information and Modeling                                                                                                        Article
+
+                                                                               atoms was calculated and the cylinder was positioned at the
+                                                                               center. The Unity lookAt function was subsequently used to
+                                                                               rotate the cylinder ends toward the bonded atoms positions.
+                                                                               The (single-) bond creation process is shown in Figure 4.
+
+
+
+
+Figure 3. In-game virtual reality menu of Molecular Rift which allows
+the user to modify the general appearance of, for example, ligand−
+protein complexes. Diﬀerent options include showing and hiding the             Figure 4. Three steps included in bond creation: Rendering the bond
+protein atoms, ribbons, C-alpha trace, water molecules, ions, or               (left), scaling the bond according to atom distance (middle), and
+hydrogen bonds. Two in-game hands are shown. While the in-game                 rotation toward the bonded atom positions (right).
+menu is active, a cursor is displayed steered by the right-hand.
+                                                                               Various bond types (single, double, triple, and aromatic) were
+Table 2. Overview of Keyboard Commands Implemented in                          assigned according to Open Babel Bond deﬁnitions and
+Molecular Rift                                                                 rendered in an identical fashion, although by four diﬀerent
+                                                                               graphical objects. The latter three (double, triple, and aromatic)
+                 action                               key
+                                                                               using tailor-made objects. The same technique as for line
+           move forward                              W                         representation was used for the stick representation, with the
+           move left                                 A                         only exception of using Unity’s standard capsules instead of
+           move right                                D                         cylinders, making the bonds appear thicker (and without sharp
+           move back                                 S                         edges). The ball-and-stick representation employed the line
+           move up                                   T                         representation combined with the Unity’s standard sphere
+           move down                                 G                         object to render the bonded atoms. The size of the sphere
+           zoom mouse                                wheel                     objects were scaled to match the Bondi33 atomic radii and
+           toggle menu                               N
+                                                                               colored according to atom type (several color schemes are
+           toggle ribbons                            R
+                                                                               available). Finally, atoms can be represented by a solid sphere
+           center view                               V
+                                                                               with a constant (large) radius in CPK representations.
+           new focus target                          P
+                                                                               Illustrations of the four representations are shown in Figure 5.
+           display details                           space
+                                                                                  Protein secondary structures are often visualized by C-alpha
+           screenshot                                L
+                                                                               traces or ribbon-like representations in standard molecular
+           reset center                              X
+                                                                               viewers. Secondary structure custom objects were thus created
+           lock atom selection                       Z
+
+
+   Graphical Representation of the Molecular Models
+3D VR Engine. The Unity 3D engine was used to develop the
+graphical environment for the VR experience. Unity is a cross-
+platform game engine oﬀering a ﬂexible and powerful
+development platform for creating interactive 3D experiences.28
+   Rendering structural features of proteins and ligands was
+done using standard geometric elements available via Unity, as
+well as using custom-made objects. Typical molecular
+representations such as lines, ball-and-sticks, sticks, and space-
+ﬁlling (CPK) for atomic representations, and ribbons and C-
+alpha traces for protein secondary structures were imple-
+mented. The interpretation of atom and bond types, ligands,
+and proteins, as well as secondary structures were performed
+using standard Open Babel functions; e.g. OBConversion to
+read PDB, MOL2, and SDF input ﬁles. The OBResidue and its
+GetResidueProperty and GetAtomProperty functions were
+used to identify proteins, ligands, ions, and water molecules.
+A detailed description for the various visualization representa-
+tions follows.
+   Line representations only render bonds between atoms;
+atoms are thus not speciﬁcally visualized. The line representa-                Figure 5. Diﬀerent representations available for ligand and atoms:
+tion was created using Unity’s standard cylinder object.                       lines (top-left), sticks (top-right), ball-and-sticks (bottom-left), and
+Accordingly, the Euclidean distance between two bonded                         CPK-spheres (bottom-right). PDB code: 2dhb.
+
+                                                                        2478                                                      DOI: 10.1021/acs.jcim.5b00544
+                                                                                                                       J. Chem. Inf. Model. 2015, 55, 2475−2484
+Journal of Chemical Information and Modeling                                                                                                    Article
+
+using Unity. The ribbon-shape objects were rendered by
+interpolating the atom positions using mirrored Bézier splines.
+In order to achieve smooth curves the control points are
+mirrored in each other, thus making the acceleration along the
+curve continuous. The secondary structure ribbon creation
+process is described in Figure 6. The OBMol GetTorsion
+
+
+
+
+                                                                              Figure 7. Intermolecular ligand−protein hydrogen bonds visualized
+                                                                              using Unity’s particle system.
+Figure 6. Example of ribbon display as a secondary structure
+visualization (left) and the secondary structure creation process
+(right). In order to achieve a smoother curve the control points are
+mirrored in each other (C1 into C2, C3 into C3′, and C0 into C0′),
+thus making the acceleration along the curve continuous.
+
+
+
+function was used to identify alpha-helices (as deﬁned by the
+torsions for two sets of four consecutive atoms (i.e., the φ- and
+ψ-angles) being in the range of 95−115°) when parsing PDB
+ﬁles. When an alpha-helix was encountered a slightly diﬀerent
+protocol was used. That is, only alpha carbons were used as
+control points to create a smooth-looking spiral, as compared
+to the standard ribbon depiction. The ribbon mesh was created
+using a modiﬁed version of StarManta’s TubeRenderer.34 To
+obtain an elliptic, almost ﬂat shape the original tube was
+modiﬁed by dividing the y-axis value by an arbitrary factor of
+10. The same approach as for the alpha-helix of ribbons was
+used to visualize the C-alpha trace, although using a small
+radius, making the representation to appear as a line.
+   The ability to highlight intermolecular hydrogen bonds is an               Figure 8. Residues can be labeled with residue type and number.
+important feature when analyzing ligand−protein complexes
+and was thus implemented. Open Babel OBAtom’s functions                       mented using Unity’s TextMesh class, which includes functions
+(IsHbondAcceptor and IsHbondDonor) were used to identify                      for displaying 2D text in a 3D environment.
+candidate atoms and their interatomic distances were                             In addition, options for displaying pharmacophore models
+subsequently evaluated. Hydrogen bonds (H-bonds) are                          were added to Molecular Rift. Typical pharmacophore
+rendered between all pairs of H-bond acceptor and donors                      elements, deﬁning essential features for speciﬁc ligand−protein
+within a typical H-bond distance (<3.5 Å), using Unity’s                      interactions either located on the ligand itself or projected
+particle system.35 The particle system creates a random                       points (vectors) representing the protein, include hydrophobic
+emission of tiny objects in a speciﬁed shape and direction.                   regions, aromatic rings, H-bond acceptors and donors
+The eﬀect of an electrical bond is achieved by placing one                    (including vectors), cations, anions, and excluded volumes.
+cylindrical particle system on each of the heavy atoms involved               Figure 9 illustrates a CB1 receptor antagonist pharmacophore
+in the hydrogen-bond and orienting the emission toward the                    model,35 for illustrational purposes. The PDB ﬁle format was
+other atom (Figure 7). The hydrogen-bonds between protein                     used to store the information needed to render the
+and ligands, water molecules, and ions can be toggled on and                  pharmacophores (see the Supporting Information). In this
+oﬀ using the in-game menu.                                                    context it should also be mentioned that intra- and
+   Various types of free text options were implemented. For                   intermolecular distances can be measured and work to allow
+example, amino acid alpha-carbons can be labeled with their                   future implementations of Open Babel available force ﬁelds
+residue names as the standard three letter codes describing the               (mmﬀ94, uﬀ, and ghemical) have been initialized.
+amino acid type. The three-letter code is concatenated with the                  Finally, to allow a real virtual reality experience the user
+sequence number (separated by a dash) representing the amino                  position is monitored with the Oculus positional tracker and a
+acid’s position in the protein chain; see Figure 8. The labels                3-axis accelerometer. In this fashion, the virtual reality
+were retrieved using Open Babel (OBResidue) and imple-                        environment follows the users head movements resulting in a
+                                                                       2479                                                   DOI: 10.1021/acs.jcim.5b00544
+                                                                                                                   J. Chem. Inf. Model. 2015, 55, 2475−2484
+Journal of Chemical Information and Modeling                                                                                                         Article
+
+                                                                                hand and the sensor. A rectangle around the hand was
+                                                                                subsequently deﬁned, with the palm joint at its center, to
+                                                                                increase performance by limiting the number of pixels needed
+                                                                                to be analyzed. The depth of each point in the rectangle was
+                                                                                extracted and compared to the depth of the palm. The
+                                                                                algorithm successfully tracked the hand and required low
+                                                                                computational resources since the number of pixel operations
+                                                                                was narrowed down to approximately 1% of the entire IR
+                                                                                frame. One drawback of this approach was that all objects close
+                                                                                to the hand and at a similar depth also were selected. For
+                                                                                instance, if a user’s hand came in contact with his/her head, the
+Figure 9. CB1 receptor antagonist pharmacophore model. The model                head was interpreted as part of the hand, resulting in an
+includes three hydrophobic elements (black), two hydrogen-bond                  incorrect gesture. This issue was, however, resolved by
+acceptor elements (red), one hydrogen-bond donor (blue), and three              determining how well the hand was tracked, using nearby
+excluded/forbidden volumes (cyan).                                              points and ignoring occasions when the hand was in the vicinity
+                                                                                of “disturbing” objects to improve the gesture recognition. For
+real virtual reality experience. The “center of view” selection                 example, by analyzing points deﬁning the elbow angle, the
+works analogous to eye-tracking. That is, the direction where                   location of the hand was predicted. The position of the head is
+the user is looking is predicted, by tracking the head rotation,                easiest to predict since it is usually between the shoulders.
+and an atom straight in front of the head is selected. This                        As done for hand tracking, the predeﬁned Kinect joints were
+method is also used for picking atoms when measuring                            utilized for ﬁnger tracking by combining the palm joint with the
+distances.                                                                      wrist joint. An approximate direction for the identiﬁed hand
+    Implementation of Gesture Recognition. Hand gestures                        was obtained by drawing a virtual line from the wrist to the
+have been studied extensively, especially in the ﬁeld of sign                   palm joint, also limiting the number of pixels to be analyzed
+language. For example, Stokoe37 deﬁned hand gestures by four                    (see Figure 11). A second line was drawn at the palm joint
+components: hand shape, location, orientation, and movement.
+By accounting for these four components when interpreting
+gestures, we can allow users to have a natural and intuitive
+interaction with Molecular Rift. The implemented gesture
+recognition in Molecular Rift makes use of three speciﬁc steps:
+hand tracking, ﬁnger tracking, and thumb tracking. Gesture
+feedback was also added by implementing two in-game hands.
+These hands (Figure 3) are moved through animations to
+                                                                                Figure 11. Direction line and two parallel lines deﬁning the search area
+mimic the gesture interpreted by the system and help the user
+                                                                                (left). The average edge distance for open (middle) and closed hand
+to control the interaction.                                                     (right).
+   The hand tracking algorithm uses frames recorded from only
+one sensor: the infrared (IR) Kinect sensor. Initial tests using
+both the color and the IR sensor showed poor performance,                       perpendicular to the ﬁrst line, and a third line at the ﬁngertip
+most probably due to the huge amount of data from the two                       position farthest away from the ﬁrst line. By traversing the
+cameras that needed to be processed. An advantage of the IR                     pixels included in the search rectangle between the second and
+sensor is that it is insensitive to colors. Furthermore, it allows              the third line in the direction from to palm joint (top) to the
+depth-calculations, which was used for ﬁltering away back-                      wrist joint (bottom), a method that successfully localizes all
+ground noise (i.e. pixels from the IR frames). Figure 10                        ﬁngers was obtained. Open and closed hand gestures were
+illustrates how the depth-map calculation using the IR sensor is                treated by adding an average distance line (middle line in
+performed.                                                                      Figure 11) to the search area. Depending on the ratio between
+   The 3D position of the user’s hand (the palm joint) was                      the farthest ﬁngertip point and the average distance, the opened
+located using Kinect’s native function (Body Basics-WPF). The                   and closed hand status can be determined. A hand is considered
+palm location was combined with the depth map, which was                        to be closed if no point above 20% of the average distance is
+obtained from another native Kinect function (Depth Basic-                      found. Finger gestures do not only involve recognizing all
+WPF). These were used to calculate the distance between the                     ﬁngers but also identifying which ﬁnger is which. The thumb
+                                                                                often plays a unique role in ﬁnger gestures and was tracked by a
+                                                                                speciﬁc method. A detailed description of the approach used is
+                                                                                available in the Supporting Information.
+                                                                                   The MS Kinect v2 sensor tracks multiple bodies (up to six)
+                                                                                by default and stores that information (of identiﬁed bodies) in a
+                                                                                list. The active user (i.e. the “focus target”) can be selected from
+                                                                                this list by iterating through all recognized targets using their
+                                                                                tracking ID. Once the end of the list is reached, the iteration
+Figure 10. Unmodiﬁed IR depth image of the scene (left), Kinect                 starts over from the ﬁrst entry. This was used to implement a
+sensor detected joints (middle), and the interpreted hand (right). The          function allowing switching between users. The ﬁrst entry is the
+extracted depth was used to ﬁlter out objects behind the identiﬁed              focus target by default.
+hand. In this way, a model of the hand in the depth image could be                  Commands and Gestures to Control Molecular Rift.
+generated.                                                                      Controlling the VR in Molecular Rift is performed with
+                                                                         2480                                                      DOI: 10.1021/acs.jcim.5b00544
+                                                                                                                        J. Chem. Inf. Model. 2015, 55, 2475−2484
+Journal of Chemical Information and Modeling                                                                                                    Article
+
+diﬀerent hand gestures. The gestures implemented in                          results from the ﬁrst focus-group revealed that the in-game
+Molecular Rift include movement, rotation, translation, zoom,                menu was accidentally launched on several occasions. The
+center-view, toggle in-game menu, cursor movement, and                       original gesture (for launching the in-game menu in the ﬁrst
+cursor click. Various right- and left-hand combinations of four              version of Molecular Rift) was closing the right-hand above the
+basic gestures were used; see Figure 12. For example, a closed               head. It was found that this gesture could be triggered when
+                                                                             another gesture (movement) was performed (when the user
+                                                                             intended to move upward in the virtual reality). When
+                                                                             comparing the usability scores for the two conﬂicting gestures
+                                                                             the toggle in-game menu showed a poorer score and it was
+                                                                             therefore re-engineered. Our solution was simply to shift the
+                                                                             gesture from the right to the left hand (and extend the thumb).
+                                                                             In the subsequent focus test, none of the 31 testers launched
+                                                                             the in-game menu unintentionally, suggesting that it was an
+                                                                             improvement. In addition, improvement ideas were collected
+                                                                             during the symposiums. Suggestions that were implemented
+Figure 12. Overview of the four diﬀerent basic gestures implemented          were the ability to measure atom−atom distances and the
+in Molecular Rift. The user’s left hand is shown.                            ability to change the center of view. That is, the center of view
+                                                                             in the initial version of Molecular Rift was deﬁned as the mean
+right hand signals “movement”, a left-hand lasso combined with               position of all atoms. Since a ligand−protein complex contains
+a closed right hand is the gesture for rotating molecular objects,           mostly protein atoms the rotation is eﬀectively performed
+and the right-hand lasso gesture is used for zooming. A                      according to the protein chain positions. Many scientists
+complete listing of the available hand gestures for controlling              expressed that they instead would like the option to rotate
+the system is available in the Supporting Information.                       around the ligand; the main point of interest.
+   A challenge when working with HCI is to deﬁne accurate                       The focus-group tests revealed that some gestures were more
+boundaries to evaluate if the recorded gesture was an intended               diﬃcult to recognize (by the sensor) than others. To improve
+interaction. For example, it was observed that a natural reaction            the recognition of the gestures, machine learning via the Visual
+when ﬁnishing an intended interaction was to lower the hand,                 Gesture Builder was employed.38 A range of users were
+often quite rapidly. This could cause issues such as making the              recorded while performing the speciﬁc gestures, in alternation
+molecule spin unintentionally. As a remedy, a function was                   with random gestures. The recorded frames were subsequently
+added that extracted the height coordinates of the hand joints.              marked as true or false, representing if the gesture was
+Consequently, all gestures where the hand was not raised above               performed correctly or not correctly in the speciﬁed frame, and
+the hip could be ﬁltered out. This method successfully solved                used to evaluate and design new gestures.
+the unintended interactions issues and allowed users to lower                   Data from surveying the third test group show that the 3D
+their hands without being interpreted as an interaction gesture.             visual eﬀects frequently exceeded the users’ expectations. A
+   Focus Groups to Optimize Molecular Rift. User tests                       summary is shown in Figure 13, revealing that the great
+were employed to evaluate the virtual reality and the gestures
+from a usability perspective to improve Molecular Rift. For this
+purpose, an iterative design and development cycle including
+several focus groups was used to test and evaluate
+functionalities and thus provide instant feedback to guide the
+development. The ﬁrst test group consisted of nine selected
+AstraZeneca employees, all of which had a background in
+medicinal chemistry and drug discovery. This smaller group of
+potential end-users allowed for in-depth instructions and was
+used to provide feedback about the usability of the program and
+detailed evaluations of all features. The two subsequent focus
+group evaluations were performed at two internal science
+symposiums and reached a much larger and diverse group of
+testers as compared to the ﬁrst iteration. The larger test groups
+were used to gather information on the most common gestures,                 Figure 13. Most users (9 out of 14) strongly agreed with the
+as well as on the general usability. These tests provided                    statement that they enjoyed using Molecular Rift, revealing a very
+quantitative data about the UX which was found to be very                    positive UX. Additionally, most users saw potential in the use of VR
+useful for further improvements. The results from the three                  tools in drug discovery. None experienced motions sickness.
+focus-group tests are given in more detail in the Supporting
+Information.                                                                 majority enjoyed Molecular Rift and ranked it as a useful tool in
+   The user testing allowed us to identify issues, and Molecular             drug design for the future. Interestingly, motion-sickness, an
+Rift was improved considerably during the diﬀerent develop-                  often reported issue of VR, was not reported by any of the test
+ment iterations. The main ﬁndings were that some of the                      users.
+gestures were diﬃcult to perform for some of the testers, and                   The focus-group evaluation showed that practice was
+that the sensitivity of the movement gesture needed to be ﬁne-               required to perform the gestures accurately. Nevertheless,
+tuned. New modiﬁed gestures and a diﬀerent sensitivity were                  most, if not all, of the users could successfully execute all
+implemented and subsequently re-evaluated, showing an                        gestures and control the virtual reality system after instructions
+improved rating by the users. To give a few examples, the                    and a few minutes of training.
+                                                                      2481                                                    DOI: 10.1021/acs.jcim.5b00544
+                                                                                                                   J. Chem. Inf. Model. 2015, 55, 2475−2484
+Journal of Chemical Information and Modeling                                                                                                   Article
+
+
+■    DISCUSSION AND OUTLOOK
+We have developed an accessible virtual reality environment to
+                                                                           quest toward optimizing the tools at hand, as well as developing
+                                                                           new ones must go on. To speculate about the future, VR may
+interact with molecular models, such as protein−ligand                     go beyond merely visualizing ligands and proteins. Imagine
+                                                                           being able to take a virtual stroll in a cell or, say, regions in the
+complexes, using Oculus Rift and Microsoft Kinect within the
+                                                                           brain and observe down/up regulation of the targeted
+framework of the Unity gaming development platform.
+                                                                           pathways.41
+Molecular Rift provides a unique experience and possibility of
+                                                                              Additional applications of virtual reality could attract the
+interacting in a virtual reality with molecular models. The
+                                                                           general interest in life science and education. In addition for
+general 3D visualization using Unity is on par with the industry
+                                                                           Molecular Rift to be used within drug hunting projects in a
+standards, while also oﬀering a new realistic VR experience. The
+                                                                           pharmaceutical setting we anticipate a role in academia. That is,
+main diﬀerence between conventional 3D computer graphics
+                                                                           chemistry as a university subject is nowadays quite unpopular
+and virtual reality is that in VR you are working with things as
+                                                                           among students. In many countries, such as in Sweden, a
+opposed to pictures of things. Traditional molecular visualizers
+                                                                           gloomy picture is reported; there is a steady decline in the
+show molecules in front of you. With Molecular Rift you can
+                                                                           number of students studying chemistry.42 Explanations for the
+step into ligand-protein complexes and feel like you are really
+                                                                           decline have been sought for, and studies report that chemistry
+there. The presence makes the diﬀerence. One reason for this is
+                                                                           education must be “more relevant” in order to better motivate
+the wider ﬁeld of view (FOV), another is head-tracking
+                                                                           and attract students.43 The phrase more relevant may be seen
+allowing the user to look in all directions.
+                                                                           as somewhat vague and what it actually entails remains largely
+   There are development opportunities to improve the
+                                                                           unclear. Nevertheless, developing chemistry courses that
+visualization further. First, adding a larger variety of options
+                                                                           engage students more and inspire them to further studies in
+for rendering representation of molecular systems, often
+                                                                           the ﬁeld is required, without a doubt. In the current era when
+available in stand-alone tools (e.g. PyMol,7 VIDA,8 and
+                                                                           kids spend a lot of time playing video and/or computer games
+VMD9), such as cropped surfaces (a feature requested by
+                                                                           we see opportunities to gamify chemistry.43 When designed
+testers), will improve the programs usability. Second, allowing
+                                                                           correctly, gamiﬁcation has proven to be successful in engaging
+users to perform interactive molecular design, by adding
+                                                                           people to change behaviors, develop skills, and solve problems,
+options to modify molecules (adding/deleting atoms and
+                                                                           in many diﬀerent areas. VR and gamifying Molecular Rift might
+bonds) and employing force ﬁeld calculations to energy
+                                                                           be one way to motivate students and inspire learning.
+minimize structures, would increase its utility. Work along
+                                                                              We have made the Molecular Rift code open source, and it
+these lines is in progress. The integration of a cheminformatics
+                                                                           can be downloaded for free from GitHub. We are certainly not
+toolkit (e.g., Open Babel) paves the way for achieving this goal
+                                                                           alone making our code available. For example, Google gives
+(of adding new functionalities).                                           away a lot of their software for free. The Apache web server as
+   The program Molecular Rift was tested and evaluated in
+                                                                           well as the Hadoop big data crunching platform have been
+development cycles using customized focus groups. During the               governed by this. Thus, much of the code in the world is freely
+tests, Molecular Rift was found to be well accepted and often              available, created by clever and generous commercial and
+praised with enthusiasm. The word “cool” was frequently used               noncommercial contributors cross the globe to serve their own
+by the users when assessing the tool. However, there is some               needs as well as providing spring-boards for others. This give-
+room for improvement with respect to the human−computer                    and-take relationship is complex, but we do hope that sharing
+interactions. The virtual reality in Molecular Rift is controlled          the Molecular Rift code will stimulate further development in a
+by speciﬁc hand motions. The human−computer interaction                    collaborative fashion.
+
+                                                                           ■
+using gestures requires initial training and the gestures we
+deﬁned may be further optimized to improve the interaction
+eﬃciency and learnability. In the future, other interaction                     CONCLUSIONS
+devices such as new gaming controllers may be investigated. In             The tool Molecular Rift represents a new generation of
+fact, future versions of Oculus Rift are reported to include               molecular visualization tools. It combines a real virtual reality
+custom optics, sensor systems, and algorithms to detect and                (VR) experience with a natural and interactive way of
+track hand movement.39,40 In this context, it should be noted              controlling the computer, as compared to the conventional
+that the ﬁrst oﬃcial version of Oculus Rift is expected to be              way of using artiﬁcial physical objects such as mouse and
+released in the beginning of next year (2016).                             keyboards. The unique and realistic 3D eﬀects oﬀered by the
+   The Kinect v2 sensor is equipped with an array of                       VR demonstrate potential when investigating various molecular
+microphones. We did explore voice recognition as an option                 systems. For example, protein−ligand complexes can be viewed
+to interpret sound input. However, due to an apparent lack of              in a completely new way. In this case, drug designers can step
+precision, voice control was not added to Molecular Rift.                  inside a protein and be fully immersed in the scene.
+Nevertheless, acoustic feedback using Unity’s AudioSource                  Furthermore, by employing SDK’s from Unity, Oculus Rift,
+class was added to signal activating and deactivating of the in-           Microsoft Kinect, and Open Babel, a ﬂexible, collaborative, and
+game menu as well as for the in-game menu selections to                    high-quality virtual reality development platform was achieved.
+improve usability.                                                         In this manner, Molecular Rift could easily be used and
+   With respect to impact, who would have envisaged ten years              enhanced by anyone at a relatively low cost (see Minimum
+ago that the smartphones would be in almost every person’s                 Requirements for Running Molecular Rift below). The
+hand? We did not. Similarly, the vision of VR as a routine tool            implemented MS Kinect v2 gesture control requires some
+may be considered naı̈ve within the area of molecular                      training, but according to our tests Molecular Rift users quickly
+visualizers. But, it should not be forgotten that a considerable           adapted to the new interaction system. Molecular Rift was
+part of the drug designer’s day-to-day job revolves around                 developed with a focus on usability, and it received very positive
+exactly thisvisualizing and interacting with molecules. The               feedback according to several focus groups.
+                                                                    2482                                                     DOI: 10.1021/acs.jcim.5b00544
+                                                                                                                  J. Chem. Inf. Model. 2015, 55, 2475−2484
+Journal of Chemical Information and Modeling                                                                                                        Article
+
+
+
+
+Figure 14. Oculus Rift (HMD) and Kinect v2 sensor placement used during Molecular Rift development.
+
+   The Molecular Rift code is open source available for free                      Assuming you are already in the possession of a fairly
+from GitHub. It is designed with the aim to bring virtual reality              standard PC (as outlined above) the cost for this VR
+to drug designers cross the globe. To fully understand the true                environment is currently around 500 USD (Kinect v2 USD
+potential of virtual reality, and tools like Molecular Rift, there is          150 and Oculus Rift USD 350). The MolecularRift executable
+really one option, and that is to test them.                                   requires no additional setup allowing instant testing.
+
+■    AVAILABILITY AND REQUIREMENTS
+The code can be downloaded for free from GitHub: http://
+                                                                               ■
+                                                                               *
+                                                                                   ASSOCIATED CONTENT
+                                                                               S Supporting Information
+github.com/Magnusnorrby/MolecularRift.                                         The Supporting Information is available free of charge on the
+   Setup of Hardware. For optimal performance of Molecular                     ACS Publications website at DOI: 10.1021/acs.jcim.5b00544.
+Rift, both the Kinect Sensors and the Oculus Position Tracker                       Sample pharmacophore input ﬁle format, the thumb
+need speciﬁc placements. Microsoft states that the Kinect v2
+                                                                                    tracking algorithm, complete list of available hand
+correctly tracks humans at distances between 0.5 and 4.5 m
+                                                                                    gestures, and focus group results (PDF)
+with its best performance in the 0.8−3.5 m range.45 The sensor
+has a 70° horizontal and 60° vertical angle of vision. It was
+decided to place the Kinect sensor above the computer screen
+at a height of approximately 1.8 m with a slight downward tilt.
+                                                                               ■   AUTHOR INFORMATION
+                                                                               Corresponding Author
+This placement allowed the tracker to monitor the interacting                  *E-mail: jonas.bostrom@astrazeneca.com.
+users from the waist up when standing in the 0.8−3.5 m range.
+                                                                               Notes
+By positioning the Kinect at the center of the screen it was also
+                                                                               The authors declare no competing ﬁnancial interest.
+
+                                                                               ■
+ensured that users placed straight in front of the screen would
+be optimally tracked. The Oculus positional tracker receives IR-
+signals from the HMD and thus need unobscured vision of it. It                     ACKNOWLEDGMENTS
+was decided to place it at the top of the computer screen. The                 We thank our AstraZeneca colleagues for their engagement and
+position of both sensors can be seen in Figure 14.                             for participating in the focus groups to help improve the tool.
+   Minimum Requirements for Running Molecular Rift.
+    • Microsoft Kinect v2 for Windows
+    • Oculus Rift Head Mount Display DK 2
+                                                                               ■   ABBREVIATIONS
+                                                                               SDK, software development kit; PDB, protein database; UX,
+    • Oculus Positional Tracker DK 2                                           user experience; GUI, graphical user interface; IR, infrared;
+    • Unity 5                                                                  FOV, ﬁeld of view; 3D, three-dimensional
+    • MonoDevelop with MonoC# compiler
+    • PC with
+           ◦ Windows 8 or 8.1 (x64)
+                                                                               ■   REFERENCES
+                                                                                (1) Riddell, F. G.; Robinson, M. J. T. J. H. van't Hoff and J. A. Le
+                                                                               BelTheir Historical Context. Tetrahedron 1974, 30, 2001−2007.
+           ◦ 1x USB 3.0                                                         (2) Kendrew, J. C.; Bodo, G.; Dintzis, H. M.; Parrish, R. G.; Wyckoff,
+           ◦ 2x USB 2.0 or higher (at least one powered)                       H.; Phillips, D. C. A Three-dimensional Model of the Myoglobin
+           ◦ DVI-D or HDMI graphics output                                     Molecule Obtained by X-ray Analysis. Nature 1958, 181, 662−666.
+           ◦ DX11 capable graphics adapter                                      (3) Anderson, A. C. The Process of Structure-Based Drug Design.
+           ◦ 4 GB memory                                                       Chem. Biol. 2003, 10, 787−797.
+
+                                                                        2483                                                      DOI: 10.1021/acs.jcim.5b00544
+                                                                                                                       J. Chem. Inf. Model. 2015, 55, 2475−2484
+Journal of Chemical Information and Modeling                                                                                                            Article
+
+ (4) Watson, J. D.; Crick, F. H. C. Molecular Structure of Nucleic                  (32) Berman, H. M.; Westbrook, J.; Feng, Z.; Gilliland, G.; Bhat, T.
+Acids: a Structure for Deoxyribose Nucleid Acid. Nature 1953, 171,                 N.; Weissig, H.; Shindyalov, I. N.; Bourne, P. E. The Protein Data
+737−738.                                                                           Bank. Nucleic Acids Res. 2000, 28, 235−242.
+ (5) Feldmann, R. J.; Bing, D. H. TAMS: Teaching Aids for                           (33) Bondi, A. van der Waals Volumes and Radii. J. Phys. Chem.
+Macromolecular Structure; Teachers manual, Division of Computer                    1964, 68, 441−451.
+Research and Technology (DCRT), NIH/PHS/DHEW, 1980.                                 (34) StarManta. TubeRenderer. http://wiki.unity3d.com/index.
+ (6) Sayle, R. A.; Milner-White, E. J.; RASMOL. RASMOL:                            php?title=TubeRenderer (accessed 2015/08/27).
+Biomolecular Graphics for All. Trends Biochem. Sci. 1995, 20, 374−                  (35) Unity 3D: Particle system. http://docs.unity3d.com/
+376.                                                                               ScriptReference/ParticleSystem.html (accessed 2015/08/27).
+ (7) PyMol. http://www.pymol.org/pymol (accessed 2015/08/27).                       (36) Boström, J.; Berggren, K.; Elebring, T.; Greasley, P. J.;
+ (8) VIDA. http://www.eyesopen.com/vida (accessed 2015/08/27).                     Wilstermann, M. Scaffold hopping, Synthesis and Structure−Activity
+ (9) Humphrey, W.; Dalke, A.; Schulten, K. VMD: Visual Molecular                   Relationships of 5,6-diaryl-pyrazine-2-amide Derivatives: a Novel
+                                                                                   Series of CB1 Receptor Antagonists. Bioorg. Med. Chem. 2007, 15,
+Dynamics. J. Mol. Graphics 1996, 14, 33−38.
+                                                                                   4077−4084.
+ (10) Pettersen, E. F.; Goddard, T. D.; Huang, C. C.; Couch, G. S.;
+                                                                                    (37) Stokoe, W. C. Sign Language Structure: an Outline of the Visual
+Greenblatt, D. M.; Meng, E. C.; Ferrin, T. E. UCSF Chimera A
+                                                                                   Communication Systems of the American Deaf. J. Deaf Stud. Deaf
+Visualization System for Exploratory Research and Analysis. J. Comput.             Educ. 2005, 10, 3−37.
+Chem. 2004, 25, 1605−1612.                                                          (38) Lower, B. Custom Gestures End to End with Kinect and Visual
+ (11) Jmol: An Open-source Java Viewer for Chemical Structures in                  Gesture Builder. http://channel9.msdn.com/Blogs/k4wdev/Custom-
+3D. http://www.jmol.org (accessed 2015/08/27).                                     Gestures-End-to-End-with-Kinect-and-Visual-Gesture-Builder (ac-
+ (12) Hartshorn, M. J. AstexViewer: a Visualisation Aid for Structure-             cessed 2015/08/27).
+based Drug Design. J. Comput.-Aided Mol. Des. 2002, 16, 871−81.                     (39) Pebbles Interfaces Joins Oculus. https://www.oculus.com/en-
+ (13) Li, H.; Leung, K.-S.; Nakane, T.; Wong, M.-H. iView: an                      us/blog/pebbles-interfaces-joins-oculus (accessed 2015/06/16).
+Interactive WebGL Visualizer for Protein-Ligand Complex. BMC                        (40) “Toybox Demo for Oculus Touch” at The oﬃcial Oculus
+Bioinf. 2014, 15, 56.                                                              YouTube account. http://www.youtube.com/watch?v=dbYP4bhKr2M
+ (14) OEChem. http://www.eyesopen.com/oechem-tk (accessed                          (accessed 2015/10/14).
+2015/08/27).                                                                        (41) Murcko, M. A.; Walters, P. W. Alpha Shock. J. Comput.-Aided
+ (15) Anaglyph 3D. http://en.wikipedia.org/wiki/Anaglyph_3D                        Mol. Des. 2012, 26, 97−102.
+(accessed 2015/08/27).                                                              (42) Broman, K.; Ekborg, M.; Johnels, D. Chemistry in Crisis?
+ (16) ChromaDepth. http://en.wikipedia.org/wiki/ChromaDepth                        Perspectives on Teaching and Learning Chemistry in Swedish Upper
+(accessed 2015/08/27).                                                             Secondary Schools. NorDiNa 2011, 7, 43−60.
+ (17) NVIDIA 3D Vision. http://www.nvidia.com/object/3d-vision-                     (43) Eilks, I.; Hofstein, A. From Some Historical Reﬂections on the
+main.html (accessed 2015/08/27).                                                   Issue of Relevance of Chemistry Education Towards a Model and an
+ (18) Virtual Reality. http://en.wikipedia.org/wiki/Virtual_reality                Advance Organizera Prologue. In Relevant chemistry Education -
+(accessed 2015/08/27).                                                             From Theory to Practice, Eilks, I.; Hofstein, A, Eds.; Sense: Rotterdam,
+ (19) Google Cardboard. http://www.google.com/get/cardboard                        2015; pp 1−10.
+(accessed 2015/08/27).                                                              (44) Boström, J. A World Without New DrugsPlay It Before You
+ (20) Cave Automatic Virtual Environment (CAVE) https://en.                        Live It, Pharma IQ blog “On Drug Design”. http://www.pharma-iq.
+wikipedia.org/wiki/Cave_automatic_virtual_environment (accessed                    com/pre-clinical-discovery-and-development/columns/a-world-
+                                                                                   without-new-drugs-play-it-before-you-live (accessed 2015/08/27).
+2015/10/14).
+                                                                                    (45) Microsoft Corporation, Human Interface Guidelines (HIG).
+ (21) Reality Cube. http://www.rug.nl/society-business/centre-for-
+                                                                                   http://go.microsoft.com/fwlink/?LinkID=403900&clcid=0x409 (ac-
+information-technology/research/hpcv/faciliteiten/realitycube (ac-
+                                                                                   cessed 2015/06/15).
+cessed 2015/10/14).
+ (22) Sakuta, M. OculusCrystal. http://github.com/msakuta/
+OculusCrystal (accessed 2015/08/27).
+ (23) Microsoft Kinect. http://www.microsoft.com/en-us/
+kinectforwindows (accessed 2015/08/27).
+ (24) Alnowami, M.; Khan, A.; Morfeq, A. H.; Alothmany, N.; Hafez,
+E. A. Feasibility Study of Markerless Gait Tracking Using Kinect. Life
+Sci. J. 2014, 11, 514−523.
+ (25) Galna, B.; Jackson, D.; Schofield, G.; McNaney, R.; Webster, M.;
+Barry, G.; Mhiripiri, D.; Balaam, M.; Olivier, P.; Rochester, L.
+Retraining Function in People with Parkinson’s Disease Using the
+Microsoft Kinect: Game Design and Pilot Testing. J. Neuroeng. Rehabil.
+2014, 11, 60−60.
+ (26) OculusRift SDK. http://developer.oculus.com/downloads/pc/
+0.6.0.1-beta/Oculus_SDK_for_Windows (accessed 2015/08/27).
+ (27) Microsoft Kinect 2.0 SDK. http://www.microsoft.com/en-us/
+download/details.aspx?id=44561 (accessed 2015/08/27).
+ (28) Unity 5. http://unity3d.com (accessed 2015/08/27).
+ (29) O’Boyle, N. M.; Banck, M.; James, C. A.; Morley, C.;
+Vandermeersch, T.; Hutchison, G. R. Open Babel: An Open Chemical
+Toolbox. J. Cheminf. 2011, 3, 33−33.
+ (30) OpenBabel Wiki. http://openbabel.org/wiki (accessed 2015/
+08/27).
+ (31) Bernstein, F. C.; Koetzle, T. F.; Williams, G. J. B.; Meyer, E. F.;
+Brice, M. D.; Rodgers, J. R.; Kennard, O.; Shimanouchi, T.; Tasumi,
+M. The Protein Data Bank. Eur. J. Biochem. 1977, 80, 319−324.
+
+                                                                            2484                                                      DOI: 10.1021/acs.jcim.5b00544
+                                                                                                                           J. Chem. Inf. Model. 2015, 55, 2475−2484
+

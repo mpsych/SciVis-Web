@@ -1,0 +1,1910 @@
+The VLDB Journal (2020) 29:93–117
+https://doi.org/10.1007/s00778-019-00588-3
+
+    SPECIAL ISSUE PAPER
+
+
+
+Making data visualization more efficient and effective: a survey
+Xuedi Qin1 · Yuyu Luo1 · Nan Tang2 · Guoliang Li1
+
+Received: 31 December 2018 / Revised: 16 October 2019 / Accepted: 21 October 2019 / Published online: 19 November 2019
+© Springer-Verlag GmbH Germany, part of Springer Nature 2019
+
+
+Abstract
+Data visualization is crucial in today’s data-driven business world, which has been widely used for helping decision making
+that is closely related to major revenues of many industrial companies. However, due to the high demand of data processing
+w.r.t. the volume, velocity, and veracity of data, there is an emerging need for database experts to help for efficient and
+effective data visualization. In response to this demand, this article surveys techniques that make data visualization more
+efficient and effective. (1) Visualization specifications define how the users can specify their requirements for generating
+visualizations. (2) Efficient approaches for data visualization process the data and a given visualization specification, which
+then produce visualizations with the primary target to be efficient and scalable at an interactive speed. (3) Data visualization
+recommendation is to auto-complete an incomplete specification, or to discover more interesting visualizations based on a
+reference visualization.
+
+Keywords Data visualization · Visualization languages · Efficient data visualization · Data visualization recommendation
+
+
+1 Introduction                                                            The Blossom of Data Visualization Undoubtedly, data visu-
+                                                                          alization has made great strides in many fields, contributed
+Data visualization, which transforms abstract data into phys-             by multiple communities.
+ical visions (for example, length, position, shape, color, and               The computer graphics community has significantly
+so on), is a powerful means to present compelling stories of              advanced the technology of rendering beautiful yet self-
+data to humans who are more visually oriented. Nowadays,                  interpretable visualizations using e.g., D3 [1].
+all organizations have more data than ever at their disposal.                The visualization community makes it easy for users to
+Consequently, more and more organizations use data and                    specify and interact with visualizations, such as D3 [1], Vega-
+advanced analytics to inform strategic and operational deci-              Lite [2], VizQL [3], Tableau [4], and Microsoft Power BI [5].
+sions. Data visualization is a natural fit for both giving a good            The database community has significantly improved the
+overview of massive data, and making it easier to interpret               user experience of seeing and interacting with data visu-
+the results of data analytics to data scientists.                         alization in real time, even for big data (e.g., for millions
+                                                                          or billions of records). For example, Hyper DB [6–8] is
+                                                                          the back-end engine to power up Tableau [4], and the Fal-
+                                                                          con project (available at GitHub https://github.com/uwdata/
+                                                                          falcon) makes D3 [1] highly scalable supported by Apache
+B    Guoliang Li
+                                                                          Spark.
+     liguoliang@tsinghua.edu.cn
+                                                                             In addition, data visualization has also been extensively
+     Xuedi Qin
+     qxd17@mails.tsinghua.edu.cn                                          used in many database-related applications, such as Excel [9],
+                                                                          Google Sheets [10], Oracle Data Visualization Desktop [11],
+     Yuyu Luo
+     luoyy18@mails.tsinghua.edu.cn                                        IBM DB2 [12], Amazon Quicksight [13], Microsoft Power
+                                                                          BI [5], and many others.
+     Nan Tang
+     ntang@hbku.edu.qa
+1    Department of Computer Science and Technology, Tsinghua
+     University, Beijing, China
+2    Qatar Computing Research Institute, HBKU, Doha, Qatar
+
+
+                                                                                                                              123
+94                                                                                                                                   X. Qin et al.
+
+
+                                                                                  In order to effectively involve users in the iterative
+                                                                              pipeline, the process of creating data visualizations must be
+                                                                              efficient and scalable, especially for the two components,
+                                                                              “Data Manipulation” and “Mapping”. Many researchers have
+Fig. 1 The data visualization pipeline                                        tried both interfacing with powerful and mature data pro-
+                                                                              cessing engines (such as translating visualization queries
+                                                                              to SQL queries to be evaluated over RDBMSs [17,20–
+The Pipeline of Data Visualization A typical iterative data
+                                                                              23]), and customizing existing systems for data visualization
+visualization pipeline1 is shown in Fig. 1.
+                                                                              tasks (such as HyperDB [6–8] for Tableau). There are also
+                                                                              approximate solutions [24,25] and progressive solutions [26–
+1. Data import is to retrieve the required data from a desired
+                                                                              28] to cope with big data, in order to provide real-time
+   data source.
+                                                                              response. Both visualization [1,27,29–31] and database com-
+2. Data preparation is to prepare the imported data for
+                                                                              munities [22,24,32–34] have signification contributions on
+   visualization, by e.g., normalizing values, correcting
+                                                                              efficient visualization.
+   erroneous entries, and interpolating missing values.
+                                                                              (3) Data Visualization Recommendation Precisely specify-
+3. Data manipulation is to select the data to be visualized
+                                                                              ing a visualization is hard, even for experts, simply because
+   (a.k.a. filtering from the visualization community) and
+                                                                              the understanding of what data to visualize, which story
+   possibly with other common operations such as joining
+                                                                              to tell, and how to visualize is a trial and error exercise
+   and grouping.
+                                                                              [17,22,35,36]. Hence, it is important that the visualization
+4. Mapping is to map the data obtained from the above
+                                                                              system can smartly guide users by providing recommenda-
+   process to geometric primitives (e.g., points and lines),
+                                                                              tions. Several systems [18,32,36,37] allow users to provide
+   together with their attributes (e.g., color, position, and
+                                                                              an ambiguous specification, and the system will either
+   size).
+                                                                              automatically complete the visualizations, or provide rec-
+5. Rendering is to transform the above geometric data into
+                                                                              ommendations. The works [20,38–41] from visualization
+   a visual representation.
+                                                                              community and [17,18,22,42] from database community
+                                                                              tackle the problem of visualization recommendation from
+   Based on the pipeline, we have identified three directions                 various angles.
+that make data visualization more efficient and effective, yet
+relevant to database researchers.
+(1) Visualization Specifications Visualization specifications                 Related Surveys Most existing surveys on visualization
+provide various ways that users can specify what they want.                   focus on a specific topic, such as graph visualization [43–
+There have been a great many studies from both visual-                        45], linked data visualization [46–48], ontology visualiza-
+ization [1,2,14–16] and database community [3,17–19] on                       tion [49], high-dimensional data visualization [50], temporal
+visualization specifications. We include it in this survey for                data visualization [51]. We survey techniques from a differ-
+two reasons:                                                                  ent perspective.
+                                                                                  For visualization specifications, Mei et al. [52] give a sur-
+    – Self-completeness: It is important for readers to know                  vey about classification, data source, presentation medium,
+      how to generate data visualizations.                                    etc., of visualization languages. We survey visualization lan-
+    – Language design perspective: It mainly serves the “Map-                 guages from the stack perspective and emphasize how these
+      ping” component of the pipeline (Fig. 1), by specifying                 languages are used from a practical perspective. There have
+      how to map different information to visual elements.                    also been some surveys [53,54] on exploratory data analy-
+      However, it has some overlap with the “Data Manipula-                   sis tools, which are complementary to our interactive data
+      tion” component, e.g., grouping and ordering operations                 visualization—we have added a discussion in the correspond-
+      can be specified in either step, which triggers a design                ing section.
+      choice problem between database languages (such as                          For efficient approaches for data visualization, Keim et
+      SQL) and visualization languages (see Sect. 2 for more                  al. [55] consider how to integrate databases, data visualiza-
+      details).                                                               tion, and data analysis so a user can easily work in one system,
+                                                                              but without a discussion for efficiency. Idreos et al. [56] sur-
+(2) Efficient Approaches for Data Visualization                               veyed the techniques which aim to improve efficiency in the
+                                                                              data exploration cycles, but we focus on techniques about
+1 Note that, our pipeline and terminologies used in this paper are slightly
+                                                                              how to construct visualizations efficiently. Bikakis [57] gives
+different than those used in the visualization community. Please refer to     an overview of current systems and techniques for big data
+https://infovis-wiki.net/wiki/Visualization_Pipeline for more details.        visualization, but with a less detailed discussion.
+
+
+123
+Making data visualization more efficient and effective: a survey                                                                              95
+
+
+   For data visualization recommendation, although there
+have been many works [58–61] about recommendation sys-
+tems and works about recommendation for different tasks,
+e.g., QOS-aware web services [62], social software [63],
+E-commerce [64], and there is no survey about data visu-
+alization recommendation, where we survey how different
+systems recommend insightful visualizations for users auto-
+matically.
+
+
+2 Visualization speciﬁcations
+
+2.1 The specification of data visualizations
+
+Generally speaking, data visualization languages consist of
+three parts: data, marks (or visual cues), and the mapping
+between them.
+
+ – Data
+      – Records: the data that need to be visualized.
+      – Transformation: the operations—such as group, bin,
+                                                                    Fig. 2 An overview of data visualization specifications. Data visual-
+        filter, and sort—are used to transform the specified        ization specifications are classified to four types: low-level language,
+        data records.                                               high-level language, GUI-based tools and underspecified Language.
+                                                                    The higher level the data visualization specification is, the easier it is to
+ – Marks (or visual cues)                                           use and the less expressive it is.
+
+      – Type: the visual representation for data records, such
+        as bar, line or point.
+                                                                        Prefuse [65] and Flare [66] are Java-based visualization
+      – Size: the width, height of the visualization.
+                                                                    libraries; they encapsulate visual items as a Java class, which
+      – Legend: the legend information.
+                                                                    have many visual attributes, and the languages map data to
+      – Miscellaneous: other properties, such as the width
+                                                                    these visual attributes by setting predefined functions. Proto-
+        and color of a bar.
+                                                                    vis [67] is a declarative JavaScript-based graphical toolkit; it
+ – Mapping: maps data to corresponding marks.                       uses simple graphical marks (bar, area, line, etc.) with spec-
+                                                                    ified visual attributes. D3 [1] is a development of Protovis
+   GUI-based visual operations are typically translated into        and is more effective in dealing with users’ interaction (e.g.,
+data visualization languages.                                       brushing and linking [69]). Vega [14] and Reactive Vega [68]
+                                                                    are similar to Protovis and D3, but they provide declarative
+2.2 A categorization of data visualization languages                composable interaction grammars.
+
+                                                                    High-level Languages High-level languages [2,3,16,18,36,
+A commonly used strategy to categorize data visualization
+                                                                    70–73] encapsulate the details of visualization construction,
+languages is based on their expressiveness, as shown in the
+                                                                    such as the mapping function, as well as some properties for
+left side of Fig. 2. Apparently, the lower level of a language,
+                                                                    marks such as canvas size, legend, and other properties.
+the more expressive it is. Higher level languages encapsulate
+                                                                       ggplot2 [71] is built on top of Wilkinson’s work in 2005
+some low-level details by providing sensible defaults and
+                                                                    “The Grammar of Graphics [70]”; it is a layered grammar of
+adding more constraints (e.g., Excel [9] provides templates
+                                                                    graphics embedded in R language. Vega-Lite [2] is a higher
+for supported visualizations). Another dimension to under-
+                                                                    development of Vega and Reactive Vega; it also supports
+stand different levels of visualization specification languages
+                                                                    composable interaction design but provides concise gram-
+is through their accessibility (or easy-to-use): the higher level
+                                                                    mars. Recently, Altair [72] made Vega-Lite available to the
+the language, the easier to use, as also shown in Fig. 2.
+                                                                    Python community. Echarts [16,73] is a latest development
+Low-level Languages We refer to low-level languages as              in declarative visualization languages designed to support
+those that the users need to specify all mapping elements [1,       quick visualization creation for non-programmers. VizQL [3]
+14,65–68].                                                          develops from the Polaris system [20] and is the visualization
+
+
+                                                                                                                                    123
+96                                                                                                                                    X. Qin et al.
+
+
+
+
+Fig. 3 Example of low- and high-level visualization languages. The target visualization (➂) is a bar chart showing the passenger_num of different
+destinations. And we can use both low- (➁) and high-level (➀) visualization language to specify ➂
+
+
+specification language of Tableau. ZQL [18,36] of Zenvis-                      Note that, most of the low- and high- level languages listed
+age [18,36] employs a tabular structure language—each row                  in the survey are declarative languages (where the users only
+in the table is a visualization specification.                             need to specify “what” they want) except Prefuse and Flare.
+   Now, let us show the difference between different levels                Prefuse and Flare are procedural languages, because they are
+of visualization languages by an example.                                  Java-based visualization libraries, and users should initialize
+                                                                           panels, add visual elements, etc.
+Example 1 Table 1 is an excerpt of flight delay statistics.
+And Fig. 3 shows high-level (Fig. 3-➀) and low-level
+specifications (Fig. 3-➁) of a bar chart (Fig. 3-➂) about pas-             2.3 GUI-based visual operations
+senger_num with destination in Table 1. Users can specify
+Fig. 3-➂ by Vega-Lite in Fig. 3-➀, and then Vega-Lite is                   Compared with using declarative visualization languages to
+compiled to Vega (Fig. 3-➁), finally users will get the target             specify visualizations as discussed in Sect. 2.2, a more user-
+visualization (Fig. 3-➂).                                                  friendly way of providing a specification is to follow the
+   Note that, in low-level languages, users have to spec-                  “direct manipulation principle” [74], a widely used concept
+ify the mapping function. For example, the “scales” in the                 in the human-computer interaction aspect.
+Vega specification specifies the mapping function of the                      We have listed state-of-the-art GUI-based tools (Tableau [4],
+target visualization. The “xscale” denotes placing the cat-                Qlik [75], Excel [9], Google Sheets [10], Amazon Quick-
+egorical elements (Atlanta, Boston, Chicago, etc.) to the                  sight [13], Microsoft Power BI [5], Google Fusion Tables [76],
+pixel range ([0, 600], specified by “range”:“width”) of X-                 iVisDesigner [77], Lyra [78], Keshif [79], Data Illustra-
+axis averagely. And the “yscale” denotes mapping the data                  tor [80,81]) in Fig. 2. Figure 4 shows an example of visual
+range ([0, 3500000], range of passenger_num) to the pixel                  specification in Tableau using the flight delay data.
+range ([0, 200], specified by “range”:“height”) of Y-axis lin-             Remarks Our main purpose of discussing GUI-based visual
+early. But in high-level language, users only need to specify              operations is to show different ways that users can specify
+the mark type, e.g., bar and do not need to specify the map-               visualizations. Regardless of using declarative languages or
+ping function between data and mark.                        
+                                                                          visual operations to specify visualizations, the common prob-
+
+
+123
+Making data visualization more efficient and effective: a survey                                                                                     97
+
+
+Table 1 An excerpt of flight delay statistics of Chicago O’Hare Interna-   passengers are the carrier, destination, departure delay, arrival delay,
+tional (Jan–Dec, 2015), where scheduled is the scheduled time to take      passenger number of the flight, respectively
+off, carrier, destination, departure delay (min), arrival delay (min),
+A. scheduled            B. carrier           C. destination        D. departure delay (min)           E. arrival delay (min)            F. passengers
+
+01-Jan 00:04            AA                   New York              −5                                 2                                 173
+01-Jan 06:43            MQ                   Atlanta               9                                  2                                 132
+01-Jan 09:30            EV                   Chicago               13                                 17                                127
+01-Jan 00:04            AA                   Boston                22                                 10                                141
+01-Jan 00:04            MQ                   New York              19                                 13                                232
+01-Jan 00:04            UA                   Los Angeles           0                                  −2                                119
+
+
+
+
+                                                                                                                        4                        5
+                       1
+                                            2
+                                                                                                                        6
+
+                                            3
+
+
+
+
+Fig. 4 An example of visual specification in Tableau using the flight      (min)) and AVG(departure delay (min))) of the table. Users can choose
+delay data. ➀ displays the attributes of the loaded data, and users        the filter condition and visual mapping of marks in ➁ and ➂, respec-
+can drag attributes here to ➃. ➃ specifies the column attributes,          tively. Also, users can click in ➄ to specify the chart type. ➅ displays the
+row attributes, aggregation functions, and so on, for the specified        final specified visualizations to users, which is a box-and-whisker plot
+visualization. The visualization of Tableau is in tabular structure.       of average departure delay and average arrival delay with each month
+And the Columns and Rows in ➃ denote the column attributes (i.e.,          and carrier in 2017
+MONTH(scheduled)) and row attributes (i.e., AVG(departure delay
+
+
+
+lems of making the process efficient and smart are the same.               Interactive Data Visualization The rationality behind inter-
+Hence, classifying the applications of different tools is out              active data visualization is that in many cases, data visualiza-
+of the scope of this article, for which please see the slides2             tion is a process of exploration, where the users need to keep
+of Jeff Heer for an introduction of these tools.                           refining the specification (e.g., add/remove/change attributes,
+                                                                           change chart type) of current explored visualization until get-
+                                                                           ting their desired visualizations in the exploration process.
+2
+                                                                              We show two categories of interactive data visualization,
+ https://courses.cs.washington.edu/courses/cse442/17au/lectures/
+CSE442-Tools.pdf.                                                          Polaris and Tableau, using step-by-step query refinement to
+
+
+                                                                                                                                          123
+98                                                                                                                                 X. Qin et al.
+
+
+                       1                                                     Users can type in keywords, then DeepEye recommends
+                                                                             relevant visualizations to users. Once a user chooses one
+                                                                             interested visualization V , she can do a further navigation by
+                                                                             different facets. The facets include chart type, X-axis, Y-axis,
+                                                                             category, bin size, group column, and DeepEye will recom-
+                                                                             mend visualizations which have the corresponding different
+                                                                             facets with V while maintaining the other visualization ele-
+            Facet: bin size                        Facet: category           ments unchangeable once users select one facet to explore.
+        2                                                                    Also, users can choose the similar trend or different trend
+                                                                             facets, and then DeepEye will recommend visualizations
+                                                                             which have similar or different trend with V . Figure 5 shows
+                                                                             a faceted navigation example on Table 1. Similar to DeepEye,
+                                                                             Voyager [41] allows users to explore the visualization space
+                                                                             by recommending visualizations which have the same or one
+                                                                             more other attribute with current explored visualization.
+        Facet: chart type      Facet: category        Facet: bin size
+                                                                             Remark Although GUI-based interactive tools provide sim-
+                                                                             ple interfaces to quickly construct common visualizations,
+                                                                             which is of great importance for non-technical people, there
+                                                                             may be limited chart types in the templates, and it is also
+                                                                             not flexible to change details of visualizations, such as bar
+                                                                             width, and color mapping, etc. Hence, in practice, similar
+                                                                             to high-level visualization languages, GUI-based interactive
+                                                                             tools are typically used for quickly prototyping, or for finding
+Fig. 5 Faceted navigation in DeepEye: visualization ➀ is the root for        useful visualizations. Afterward, low-level languages (e.g.,
+exploration, and the suggested facets for visualization ➀ are bin size and
+category; Once the user chooses the facet bin size, she gets visualization   D3) will be used for fine tuning or reimplementing the desired
+➁. Visualization ➁ is different from ➀ only in the bin size (➀ and ➁ are     visualizations.
+binned by weekday and date, respectively), and the other visualization
+elements (e.g., X-axis, Y-axis, chart type) of ➀ and ➁ are the same.         2.4 Underspecified specifications
+Then, DeepEye suggests 3 facets for ➁: chart type, category, bin size
+
+                                                                             Visualizations are meaningless if they cannot give insights
+                                                                             of the data. However, in many cases, the users do not really
+create multidimensional visualizations. Moreover, DeepEye                    know all aspects of the data at hand, because the data might be
+and Voyager enable facet exploration and help users easily                   large and the data can be frequently updated. Hence, it poses
+navigate the visualization.                                                  a requirement of supporting underspecified specifications.
+(1) Stepwise Query Refinement Polaris [20] and Tableau [4]                      Generally speaking, for underspecified specifications,
+provide chart templates to show multidimensional visu-                       users only provide some “hint”, and it is the task of the
+alizations. Multidimensional visualizations are shown in                     visualization systems to interpret the underspecified input,
+two-dimensional plane organized in a tabular structure                       in (possibly) different ways.
+(Fig. 4). Using tabular structure (e.g., 2 Rows × 1 Col-                        The first type of hint is “reference-based”, where the
+umn in Fig. 4) to display visualizations of different attributes             users provide a reference visualization as a seed and the
+(e.g., AVG(departure delay (min)) and AVG(departure delay                    system suggests visualizations based on the reference. zen-
+(min)) in Fig. 4) or different values of the same attribute is               visage [18,36] returns similar or dissimilar visualizations
+called “small multiples” [82], which is convenient to com-                   (e.g., similar trends in line charts) with a user provided ref-
+pare and analyze different attributes (different values of the               erence visualization.
+same attribute). The “small multiples” are widely used in data                  The second type of hint is “keyword-based”, in a Google
+visualization systems, such as Voyager [83], VizDeck [84],                   style. APT [88] accepts user’s data viewing goals of desired
+Show Me [39], Profiler [85], [86], [87], etc. Users can grad-                columns, for example, “present the departure delay and
+ually drag multiple attributes to the rows, columns, layers                  scheduled relations”. In other words, APT specifies the
+of the tabular visualization, pick the appropriate visualiza-                columns to be visualized and then recommends visualizations
+tion type, mapping of data to visual properties, etc., to build              which satisfy the goals. DeepEye [32] is a recent system that
+desired visualizations step-by-step.                                         accepts keyword inputs as data viewing goals and provides
+(2) Faceted Navigation DeepEye [37] supports faceted nav-                    recommended visualizations. For example, the user may
+igation to help users explore the visualization design space.                input “show me line charts about electricity”, and DeepEye
+
+
+123
+Making data visualization more efficient and effective: a survey                                                                99
+
+
+will recommend line charts which also contain the column              Table 2 gives a summary of the techniques to be discussed
+“electricity” to users. The demo of DeepEye can be found           in this section.
+at http://deepeye.tech. A similar tool3 that supports keyword
+inputs, called “Ask Data”, was recently released by Tableau,       3.1 Exact data visualization
+which allows user to get answers without the need to know
+the structure of the data, such as “what is the average price by   Many data visualization systems [17,21–23] read data from
+variety”. SW [19] accepts users’ window-based constraints          databases. They may also manipulate data by SQL statements
+(e.g., “identify all windows in which the average departure        and then use visualization tools to render the visualizations.
+delay > 50”) about desired visualization windows (a window
+                                                                   Query Translation A natural way to reuse many mature
+is a rectangular region in a visualization).
+                                                                   (DBMS) systems is to translate the visualization queries to
+   The third type of hint is “natural language-based”, which
+                                                                   the queries those systems accept. For example, DeepEye [17,
+considers the context of user inputs and system states in
+                                                                   21], Polaris [20], SeeDB [22,23] get data by issuing SQL
+the data exploration cycle instead of one-shot in “keyword-
+                                                                   queries to the databases. By creating a mapping between the
+based” hint. Eviza [89] and Evizeon [90] are two recent
+                                                                   primitives of visualization language and SQL language, we
+visualization systems which provide natural language inter-
+                                                                   can convert the target visualization language to a SQL query.
+faces for visual analysis cycles. For example, in Evizeon [90],
+the user first types “show me the spike of measles in the          Example 2 The visualization f 1 in Table 3 specified by a ZQL
+UK”, and Evizeon will show the user the spike in the line of       query can be translated to a SQL query Q 1 as shown below.
+measles outbreaks in the UK. Then, the user types “mumps
+over there”, and Evizeon will show the user the mumps out-
+                                                                    Q 1 : SELECT carrier, SUM(passengers)
+breaks in the zone of the spike of measles.                               FROM flight delay
+Discussion (1) We categorize visualization languages orga-                GROUP BY carrier
+                                                                          WHERE destination=“New York”;
+nized as a stack (see Fig. 2), which is different from the
+survey [52] that categorizes visualization languages based
+                                                                       The attributes of X- and Y -axes, i.e., carrier and passen-
+on graphic library, declarative, chart typology, data source,
+                                                                   gers, can be mapped to the projection clause followed the
+presentation medium, and so on. (2) The survey [54] that
+                                                                   keyword SELECT. The Constraints can be mapped to the
+evaluates different exploratory data analysis (EDA) tools
+                                                                   filter condition following the WHERE clause. The Viz, i.e., y
+for different applications is complementary to our survey,
+                                                                   = sum(passengers) means that the SQL query should GROUP
+because we focus on how interactive data visualization
+                                                                   BY carrier and apply sum to passengers.                      
+                                                                                                                                
+tools construct visualizations through iterative interaction
+(i.e., stepwise query refinement, faceted navigation) with
+                                                                   Integrating Visualization Systems with DBMSs Although
+users.
+                                                                   using query translation is natural, there are some disad-
+                                                                   vantages. One main issue is that many functionalities are
+                                                                   repeated, resulting in non-unified optimization techniques
+3 Eﬃcient approaches for data visualization
+                                                                   with different assumptions and performance in server (i.e.,
+                                                                   the database side) and client (i.e., the visualization side),
+In this section, we will discuss efficient approaches for data
+                                                                   leaving the developers confused to choose the suitable opti-
+visualization; it is important because the data visualization
+                                                                   mization techniques. For example, the database engine and
+life-cycle is always iterative (see Fig. 1), with human-in-the-
+                                                                   visualization tool may both support the filter operation; con-
+loop.
+                                                                   sequently, one can filter data records by either issuing a SQL
+    In the following, we will first describe exact data visual-
+                                                                   query to database or by the function filter of JavaScript in
+ization that computes precise visualization as fast as possible
+                                                                   the front end—choosing to filter at database or visualiza-
+(Sect. 3.1). Sometimes, however, providing exact visualiza-
+                                                                   tion tool (e.g., the front end) is difficult. Another main issue
+tions may not always be doable because of the large size
+                                                                   is that decoupled methods are hard to maintain, extend and
+of data and high complexity of queries, approximate data
+                                                                   optimize [92] for interactive visualizations, which requires
+visualization that provides fast, but approximate visualiza-
+                                                                   continuously issuing queries to modify visualizations.
+tions are ideal for this case (Sect. 3.2). Furthermore, instead
+                                                                       Intuitively, a promising way to solve the above prob-
+of only producing one-shot approximate visualizations, pro-
+                                                                   lems is to tightly couple (or integrate) data retrieval and
+gressive data visualization gradually refines the intermediate
+                                                                   rendering together to speedup the process of visualization
+results (Sect. 3.3).
+                                                                   creation. Ermac [91], a Data Visualization Management Sys-
+3 https://www.tableau.com/about/blog/2018/11/ask-data-             tem (DVMS), is a research attempt on this direction. It
+simplifying-analytics-natural-language-98655.                      supports two relations: data and scales, where relation
+
+
+                                                                                                                        123
+100                                                                                                                                     X. Qin et al.
+
+
+Table 2 A summary of efficient data visualization, where we sum-         problem in column Technique and the target for solving the problem in
+marize the widely studied problems in efficient data visualization in    column Target
+column Problem, the corresponding techniques and references for each
+Problem                                      Technique                                                       Target
+
+Exact Data Visualization                     Query Translation [17,20–23]                                    Accelerate Visualization
+                                             Integrating Visualization Systems with                           Exploration Process
+                                               DBMS [91,92]
+                                             Column Stores [22,23,29,85]
+                                             Indexes [93–95]
+                                             Parallel Computation [22,23,31,96]
+                                             Prediction and Prefetching [19,31,34,97,98]
+Approximate Data Visualization               AQP [24,25]                                                     Enable Quick Visualization
+                                                                                                              Creation
+                                             Incremental Sampling [26–28]
+                                             Human Perception [26,99]
+Progressive Data Visualization               Hierarchical Aggregation [31,93,100,101]                        Enable Progressive Visualization
+                                                                                                              Creation
+
+
+Table 3 An ZQL query which returns a bar chart about the                 constraints which the data used to generate the visualization should
+SUM(passengers) of different carriers to “New York”, where Name          satisfied, and Viz specifies the visualization type and aggregation func-
+denotes the visualization name specified by the ZQL query, X and         tion on attribute of Y -axis
+Y denote attributes of the X - and Y -axes, Constraints specifies the
+Name                  X                       Y                         Constraints                                   Viz
+
+f1                    carrier                 passengers                destination = “New York”                      bar. (y = sum (passengers))
+
+
+
+data include the data records to be visualized and ref-                  driven programming, making programming process more
+erences to the rendered visual elements; relation scales                 standardized and code more scalable. The work of [92] also
+denote the mapping from data ranges to visual encoding                   proposes many optimization techniques (e.g., concurrency
+ranges. A visualization in Ermac is represented as a Log-                control and streaming framework) for interactive visualiza-
+ical Visualization Plan (LVP), and LVP is compiled into a                tions in DVMS.
+SQL-like query. The SQL-like query deals with the data
+                                                                         Column Stores In data management, a key performance
+and scales relations, and the query constitutes a Physical
+                                                                         factor is the data layout, e.g., row-based and column-based
+Visualization Plan (PVP), and then PVP can be optimized
+                                                                         layouts, which may have a huge performance difference for
+by the traditional database optimization techniques. During
+                                                                         OLAP applications. In terms of data visualization, the users
+query execution, Ermac uses rendering placement and psy-
+                                                                         are typically interested in only a few columns. Naturally,
+chophysical approximation techniques to reduce latency. It
+                                                                         column-stores may achieve better performance, compared
+also uses visualization features to support automatic lineage-
+                                                                         with row-stores, which have been adopted in SeeDB [22,23],
+based interaction, visualization estimation, recommendation,
+                                                                         Profiler [85], and TDE [29].
+and so forth.
+   A further development [92] of Ermac is proposed to pro-               Indexes Indexes are widely used to improve search perfor-
+vide a SQL-like language, DeVIL, to represent both static                mance by essentially cutting down the number of records/rows
+and interactive visualizations. In DeVIL, Marks and Pixels               in a table that need to be examined. Naturally, they play an
+are two visual relations to express visualizations which are             important role in improving data visualization performance.
+expressed in SQL-like queries. DeVIL models the user inputs              FlashView [94] builds a hierarchical tree-based index to sup-
+as event streams and database relations and enables the inter-           port users’ selections with continuous filtering conditions.
+active visualizations by executing SQL-like queries in joined            The work of [95] builds a tree-based index for the data which
+visualizations and event relations iteratively to update the             is to be queried instead of the whole dataset and gradually
+visualizations and response to user’s inputs. By modeling the            refines the index when more data are queried. imMens [31]
+static and interactive visualizations as declarative database            and Nanocubes [93] build datacubes which precompute
+relations, visualization designers are released from event-              aggregation results for different data slices to reduce query
+                                                                         execution time by accessing the precomputed aggregation
+
+
+123
+Making data visualization more efficient and effective: a survey                                                                 101
+
+
+results instead of the raw data. Hashedcubes [102] also builds      1. Currently explored visualizations [19,31,34,100], or
+datacubes for real-time big data visualization. Hashedcubes         2. Historical data [34,97,98,105,106].
+uses pivot arrays to construct datacubes, while Nanocubes is
+tree-based. And Hashedcubes achieves lower memory usage             (1) Currently Explored Visualizations. XmdvTool [34] clus-
+and lower query time compared with Nanocubes. Gaussian              ters tuples in different granularity to support users’ hierarchi-
+Cubes [30] is a development of Nanocubes which supports             cal navigations. It enables users to continuously explore data
+more visualization analysis task types. For example, Gaus-          in the structured-based brush [107]. Hence, it needs to predict
+sian Cubes precomputes sufficient statistics information in         the next direction of the user and then prefetches and caches
+the datacubes to support model fitting.                             the data in that direction during the idle time. The caching
+   Falcon [103] uses indexing techniques to reduce inter-           system uses the least recently used (LRU) as the replacement
+action time for brushing and linking in visualization. The          policy and the current explored visualization-based prefetch-
+visualization that the user is interacting (i.e., brushing) with    ing strategy is to randomly pick a direction from the position
+is active view, and the other visualizations are passive. For       of the current explored data.
+current active visualization, Falcon builds index for each pas-         Following the above hierarchical navigations, instead of
+sive visualization. The index stores the data which should be       prefetching only one piece of data on the tree hierarchies, it
+highlighted in the passive visualization, and the data are in       is also natural to prefetch different levels’ representation of
+the form of array, where each entry of it stores cumulative         the present data, as used in imMens [31] and [100].
+counts. Thus, Falcon can calculate the data to be highlighted           Another angle for a good prefetching is based on the size
+in the passive visualizations in constant time given the start      of prefetched data (e.g., SW [19]), instead of the direction on
+and end position in the active visualization. Since Falcon only     the hierarchy that the user will explore. More specifically, SW
+maintains index for active visualization, it has much smaller       finds all windows that satisfy users’ constraints inputs (e.g.,
+index than imMens [31], Nanocubes [93], etc.                        “identify all windows in which the average departure delay
+                                                                    > 50”). SW iteratively explores all possible visualization
+Parallel Computation Parallel computation has also been             windows to find “good” (i.e., satisfy users’ constraints inputs)
+widely used for query processing in data visualization sys-         windows. When a window is being explored, SW prefetches
+tems [22,23,31,96]. The aggregation queries on data tiles in        the neighbor windows in all directions, but the size of the data
+imMens [31] are parallelized using the dense index represen-        to be prefetched in each direction should be decided by the
+tation of a data tile. SeeDB [22,23] executes multiple SQL          algorithm. SW first computes whether the prefetched window
+queries of visualization candidates in parallel during visual-      satisfies the constraints by sampling data of the window. If
+ization ranking. Harald et al. [96] provide a multi-threading       the result is true, the prefetching in this direction is stopped,
+architecture for interactive visualization exploration. The         and the prefetched window is to be explored further (the
+architecture maintains a main application thread to capture         exploring process is same as the current window). Otherwise,
+users’ interaction requests and multiple visualization threads      SW continues to prefetch in that direction by increasing the
+for each visualization to process the visualization of this         sampling rate until the data in this direction are all prefetched
+thread. Furthermore, whether the main thread and visual-            or the constraints are satisfied. Note that SW wants to find all
+ization threads are asynchronous or synchronous depends on          “good” windows in the search space, and thus, it must explore
+the types of the users’ interaction requests.                       all possible windows, and by exponentially increasing the
+                                                                    sampling size, SW can terminate the exploration quickly with
+Prediction and Prefetching One important step of data               less prefetching times, thus getting all “good” windows with
+visualization is data exploration—users continuously browse         less time.
+their interested visualizations to get a sense of what to visual-
+ize. Oftentimes, the current explored visualization is usually      (2) Historical Data. Next, we will discuss techniques that
+inspired from the previous one. In other words, users may           leverage historical trajectories [34,97,98,105] for prefetch-
+get the next visualization by changing parameters of cur-           ing.
+rent visualization or zooming in/out to get detailed/overall           When historical data are available, naturally, systems
+information, etc. Evidently, predicting the following data          can do more complicated yet meaningful inference than
+that users may be interested, and then prefetching/caching          randomly picking a direction as discussed above. More
+data which may be used in the next step during cur-                 specifically, XmdvTool [34] proposes three strategies to
+rent exploration can speedup the exploration process, and           prefetch the data based on historical data:
+these techniques have been used in many visualization sys-
+tems [19,31,34,97,98,100,104].                                       – the direction: select the most likely direction based on
+   We categorize the prefetch and prediction technologies to           the users’ previous trajectory tracking,
+two types, based on:                                                 – the focus: select the direction with hot regions, and
+
+
+                                                                                                                          123
+102                                                                                                                        X. Qin et al.
+
+
+ – the vector: select the direction based on the vectors of the
+   movement trajectories of the users, in the form of <start
+   position, width, level>, where start position is the start
+   location and orientation of the movement, width is the
+   moving distance of the movement, level is the aggregation
+   hierarchy of the data explored in the movement. It uses
+   the mean or exponential weighted average of previous
+   trajectory vectors to select the directions.
+
+   Recently, machine learning-based approaches have also           (a)
+been studied. ForeCache [98] partitions data to blocks or
+data tiles in different levels and predicts data tiles to users.
+There are two stages of data prediction:
+
+ – Predicting analysis phases: it predicts the users’ explo-
+   ration phase by a Support Vector Machine (SVM) model,
+                                                                   (b)
+   and the features include position, panning, and zooming
+   information of users’ exploration traces.
+ – Predicting data tiles: it uses the corresponding strategies
+                                                                   Fig. 6 Declarative model and zooming example of Kyrix [108]
+   to recommend prefetched data: ➀ action-based strat-
+   egy using Markov chain which accepts sequences of
+   users’ movement (e.g., {left, left, left}) as a state and a           The tiles of current visualization together with a dynamic
+   move from state to state as a transition (e.g., “right”); ➁           box which encompasses these tiles are sent to the front
+   signature-based strategy which recommends similar data                end, and the box is recalculated when the tiles of current
+   tiles with users’ previous explored data.                             visualization are out of it. Compared to fetching large or
+                                                                         small tiles, Kyrix can adjust the size of dynamic box by
+   Experiments have shown that ForeCache achieves 25%                    different algorithms, providing a way to neutralize the
+higher prediction accuracy than the prediction strategies in             network time and prefetching size. For indexing, Kyrix
+XmdvTool [34].                                                           builds Btree [109] or hash indexes on the tile id of a tuple
+Case Studies using Kyrix and Tableau In the following,                   to support quick fetching.
+we will discuss two case studies using Kyrix, an interactive
+scalable data visualization system, and Tableau, one of the
+most successful visualization tools.                                  Figure 6a shows the declarative model of Kyrix. A canvas
+   Kyrix [108] is an interactive scalable data visualization       (Fig. 6a-➀) in Kyrix is a level of detail of data, and users can
+system. Kyrix provides declarative visualization specifica-        zoom in/out to see more canvas of different levels of details.
+tion interface in front end and effective scalable visualization   A canvas may contain more than one layer (Fig. 6a-➁) (e.g.,
+processing in back-end, where the user zooms in to see             background layer, line layer, etc.), and there should be a ren-
+detailed information and zooms out to overview in scalable         dering function and placement function for the transformed
+visualization.                                                     data (Fig. 6a-➂) of each layer, where the rendering function
+                                                                   defines how to map data to visual objects, and the place-
+1. Visualization Specifications in Front end. There are two        ment function gives the location of the visualized data by the
+   abstractions in the visualization specification language        fetching granularity and indexing strategies. Figure 6b is a
+   of Kyrix: canvas and jump. A canvas contains a static           zoomable crime rate map of USA by Kyrix.
+   visualization, where the data of the visualization are             TDE [29] is a data engine customized for visualization in
+   specified by a SQL query and the transformation and             Tableau 6.0. TDE optimizes the data engine mainly in the
+   rendering function can be specified by existing visualiza-      following perspectives.
+   tion libraries (e.g., D3 [1], Vega [14]). A jump specifies
+   the source and destination canvas and the transition type       1. Column-oriented Storage and Compression. Due to the
+   when panning or zooming.                                           high I/O cost of Tableau’s former database Firebird and
+2. Efficient Approaches for Data Visualization in Back-end.           data of visualizations usually stored in different columns,
+   There are two important improvements in Kyrix: fetch-              column-oriented storage and compression techniques
+   ing granularity and indexing. For fetching granularity,            have been designed to solve this problem in TDE. TDE
+   Kyrix splits raw data to static data tiles of fixed size.          mainly uses dictionary compression strategy, and there
+
+
+123
+Making data visualization more efficient and effective: a survey                                                                                                                                                                                                                                                                                                                                                                                                  103
+
+
+
+
+                                                                                                                                                                                                                                                                                           AVG
+                                                                   Table 4 Summary of approximate data visualization systems, where we summarize the papers and algorithms for approximate data visualization systems in column Paper and Algorithm, respectively,
+   are two compression mechanisms for dictionary com-
+
+
+
+
+                                                                                                                                                                                                                                                                                                      √
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                     √
+
+                                                                                                                                                                                                                                                                                                                                                                                 √
+
+                                                                                                                                                                                                                                                                                                                                                                                                              √
+                                                                                                                                                                                                                                                                                                                                                                                                                                √
+                                                                                                                                                                                                                                                                                                                                 ×
+   pression: heap compression for variable width types and
+   array compression for fixed width types. Then, the com-
+
+
+
+
+                                                                                                                                                                                                                                                                                           SUM
+   pressed columns can be represented by the dictionary
+
+
+
+
+                                                                                                                                                                                                                                                                                                      √
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                     √
+
+                                                                                                                                                                                                                                                                                                                                                                                 √
+
+                                                                                                                                                                                                                                                                                                                                                                                                              √
+                                                                                                                                                                                                                                                                                                                                                                                                                                √
+                                                                                                                                                                                                                                                                                                                                 ×
+   tokens (i.e., the dictionary keys) which reference the dic-
+   tionary values during the query execution.
+2. Operator Reordering. Selection operators and operators
+
+
+
+
+                                                                                                                                                                                                                                                                                           COUNT
+   with single compressed columns are pushed down in the
+   SQL query plan tree.
+
+
+
+
+                                                                                                                                                                                                                                                                                                      √
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                     √
+
+                                                                                                                                                                                                                                                                                                                                                                                 √
+
+                                                                                                                                                                                                                                                                                                                                                                                                              √
+                                                                                                                                                                                                                                                                                                                                                                                                                                √
+                                                                                                                                                                                                                                                                                                                                 ×
+3. Cardinality Reduction. For columns with high cardinality
+   columns, TDE automatically transforms these columns
+
+
+
+
+                                                                                                                                                                                                                                                                                           ORDER BY
+   to higher hierarchies, e.g., transforms column Time with
+   2500 distinct values to column Year with 7 distinct values,
+   then pushes the operators with Time in SQL query plan
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                     √
+
+                                                                                                                                                                                                                                                                                                                                                                                 √
+                                                                                                                                                                                                                                                                                                      ×
+
+                                                                                                                                                                                                                                                                                                                                 ×
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                      ×
+                                                                                                                                                                                                                                                                                                                                                                                                                                         ×
+   tree down and replaces Time with Year.
+4. Other Visualization Support. TDE provides domain
+
+
+
+
+                                                                                                                                                                                                                                                                                           WHERE
+   information (e.g., the cardinality, maximum and mini-
+   mum values of the domain) of columns. This domain
+
+
+
+
+                                                                                                                                                                                                                                                                                                      √
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                     √
+
+                                                                                                                                                                                                                                                                                                                                                                                 √
+
+                                                                                                                                                                                                                                                                                                                                                                                                              √
+                                                                                                                                                                                                                                                                                                                                 ×
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                         ×
+   information can be used to choose the level of detail of a
+   visualization for users. TDE also supports progressive
+
+
+
+
+                                                                                                                                                                                                                                                                     Query Types
+                                                                                                                                                                                                                                                                                           GROUP BY
+   reporting and termination control (i.e., terminate long
+   running visualization queries) when executing visualiza-
+   tion queries.                                                   and the supported visualization and query types of each algorithm in column Visualization Types and Query Types
+
+
+
+
+                                                                                                                                                                                                                                                                                                      √
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                     √
+
+                                                                                                                                                                                                                                                                                                                                                                                 √
+
+                                                                                                                                                                                                                                                                                                                                                                                                              √
+                                                                                                                                                                                                                                                                                                                                 ×
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                         ×
+   The recent effort of Tableau 10’s server data engine is to                                                                                                                                                                                                                              Heatmap
+customize a highly efficient main-memory system Hyper [6–
+8]. Hyper is used as the data engine to power all versions of
+                                                                                                                                                                                                                                                                                                                          √
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                 √
+
+                                                                                                                                                                                                                                                                                                                                                                                                              √
+                                                                                                                                                                                                                                                                                                      ×
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                            ×
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                         ×
+Tableau, such as Tableau Server, Tableau Desktop, Tableau
+Online, and Tableau Public. In particular, Hyper is used
+to support efficient creation, refresh, query extraction, and
+                                                                                                                                                                                                                                                                                           Line
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                     √
+
+                                                                                                                                                                                                                                                                                                                                                                                 √
+
+                                                                                                                                                                                                                                                                                                                                                                                                              √
+                                                                                                                                                                                                                                                                                                      ×
+
+                                                                                                                                                                                                                                                                                                                                 ×
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                         ×
+cross-database joins.
+                                                                                                                                                                                                                                                                     Visualization Types
+
+
+
+
+3.2 Approximate data visualization
+                                                                                                                                                                                                                                                                                           Pie
+                                                                                                                                                                                                                                                                                                      √
+
+
+                                                                                                                                                                                                                                                                                                                                 ×
+
+                                                                                                                                                                                                                                                                                                                                                            ×
+
+                                                                                                                                                                                                                                                                                                                                                                                         ×
+
+                                                                                                                                                                                                                                                                                                                                                                                                                      ×
+When the data volumes grow exponentially, traditional data                                                                                                                                                                                                                                                                                                                                                                               ×
+                                                                                                                                                                                                                                                                                           Bar
+
+
+
+
+processing modules cannot provide fast interactive process-
+                                                                                                                                                                                                                                                                                                      √
+
+                                                                                                                                                                                                                                                                                                                          √
+
+                                                                                                                                                                                                                                                                                                                                                     √
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                              √
+                                                                                                                                                                                                                                                                                                                                                                                                                                √
+                                                                                                                                                                                                                                                                                                                                                                                         ×
+
+
+
+
+ing results. To bridge the gap between data volumes and
+interactivity, many works [24–28,99] speedup data process-
+                                                                                                                                                                                                                                                                                                       Measure-biased Sampling
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                             Incremental Visualization
+
+                                                                                                                                                                                                                                                                                                                                                                                          Incremental Visualization
+
+
+
+
+ing phase by leveraging approximate query processing (AQP)
+                                                                                                                                                                                                                                                                                                                                                                                                                                         Human Perceptual Model
+                                                                                                                                                                                                                                                                                                                                 Optimistic Visualization
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                          with Sampling-based
+
+
+
+
+that provides approximate visualization results.
+                                                                                                                                                                                                                                                                                                      Uniform Sampling &
+
+
+
+
+    We discuss approximate data visualization from three per-
+                                                                                                                                                                                                                                                                                                                                                                                                                      IFocus Algorithm
+                                                                                                                                                                                                                                                                                                                                  Based on AQP
+                                                                                                                                                                                                                                                                                                                                                            Sampling-based
+
+                                                                                                                                                                                                                                                                                                                                                                                         Sampling-based
+
+
+
+
+spectives: AQP-based approaches that leverage techniques
+from AQP; incremental sampling-based approaches that link
+                                                                                                                                                                                                                                                                     Algorithm
+
+
+
+
+incremental query processing to visualization; and human
+                                                                                                                                                                                                                                                                                                                                                                                                                                          AQP
+
+
+
+
+perception-based approaches that capture the cognitive lim-
+itations of human perception. A summary of the contents to
+be discussed is shown in Table 4 and Fig. 7.
+                                                                                                                                                                                                                                                                                                                                                            SampleAction [27]
+                                                                                                                                                                                                                                                                                                      Sample+Seek [24]
+
+
+
+
+AQP-based A straightforward way for generating approx-
+                                                                                                                                                                                                                                                                                                                                                                                         IncVisAge [28]
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                         PFunk-H [99]
+                                                                                                                                                                                                                                                                                                                                 Pangloss [25]
+
+
+
+
+imate visualizations in interactive time is leveraging the
+                                                                                                                                                                                                                                                                                                                                                                                                                      IFocus [26]
+
+
+
+
+techniques of AQP. Using the representative subset of the
+data can provide users with approximate visualizations for
+                                                                                                                                                                                                                                                                     Paper
+
+
+
+
+online interaction by sacrificing the quality. We will review
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        123
+104                                                                                                                           X. Qin et al.
+
+
+                                                                        The key idea of approximate visualization with incremental
+                                                                        sampling is that the system generates an approximate visu-
+                                                                        alization based on representative samples of dataset rapidly.
+                                                                        Then, the system increases the sample size over time to con-
+                                                                        tinuously improve the quality of visualizations. The user
+                                                                        usually can get some initial insights from the approximate
+                                                                        visualizations and decide to terminate if the quality of the
+                                                                        visualization is enough to verify these insights.
+                                                                           SampleAction [27] is a tool for visualizing aggregation
+                                                                        queries on very large datasets. Given a query, SampleAction
+                                                                        rapidly responds to users with partial aggregation results for
+                                                                        each group with error bounds (i.e., a bar chart with confidence
+Fig. 7 A classification of approximate data visualization, where the    bounds) based on fixed samples. As the users are waiting, it
+surveyed works are classified as AQP, incremental sampling, and human   will narrow its error bound and incrementally improve the
+perception methods                                                      visualizations by increasing sampling size in every second.
+                                                                           There may exist significant fluctuations between the
+two works [24,25] that mainly focus on the sampling-based
+                                                                        adjacent incremental approximate visualizations due to the
+AQP techniques.
+                                                                        random sampling in SampleAction [27], which may mis-
+   Sample+Seek [24] is an AQP system for answering visual-
+                                                                        lead users during the incremental approximation process.
+izations generated from aggregation queries in an interactive
+                                                                        Thus, IncVisAge [28] is designed to solve this problem.
+speed, and the visualization results are within an error bound
+                                                                        IncVisAge [28] is a web-based system, which provides
+specified by users. It first presents the concept of distribu-
+                                                                        incremental approximate visualizations, typically support-
+tion precision (e.g., distance between the approximate and
+                                                                        ing trendline and heatmap. And there are no significant
+exact visualizations) that can represent the precision of total
+                                                                        fluctuations compared with SampleAction [27] during the
+distribution across aggregate groups. Thus, users can specify
+                                                                        process of visualization refinement due to the design of
+a distribution precision as an error bound. When sampling,
+                                                                        the ISplit algorithm, thus providing meaningful intermediate
+for those queries with large data volumes, it uses the uni-
+                                                                        visualizations for users. In IncVisAge, a trendline displays
+form sampling to answer the COUNT aggregation queries
+                                                                        aggregation results for all groups, and a segment denotes
+and proposes a measure-biased sampling technique for
+                                                                        multiple successive groups of the trendline together with the
+approximately answering SUM aggregation queries with less
+                                                                        same approximate aggregation value. A trendline is first ini-
+predicates, and the key feature of measure-biased sampling is
+                                                                        tialized as a segment with all groups, and during the iterative
+to select the rows with probability proportional to its value on
+                                                                        process, the ISplit algorithm chooses one segment and splits
+the aggregation attribute. Sample+Seek proposes two index-
+                                                                        the segment into two segments until there is no segment to
+ing techniques to speedup sampling: measure-augmented
+                                                                        split (i.e., all segments have only one group). During each
+inverted index for indexing the categorical dimension to
+                                                                        iteration, the ISplit algorithm calculates the sampling num-
+answer the aggregation queries; and low-frequency group
+                                                                        ber for given δ (failure probability) and  (guarantee of error)
+index for supporting those queries with a conjunction of one
+                                                                        and then chooses the best segment to be split based on the
+or more equi-constraints.
+                                                                        sampled data.
+   Although there exists a significant difference between
+                                                                           Figure 8 illustrates what approximate visualizations might
+approximate and accurate visualizations with a small pos-
+                                                                        be generated by SampleAction and IncVisAge, where sig-
+sibility, users may get frustrated with the visualization tools
+                                                                        nificant fluctuation exists during two adjacent visualizations
+once a big difference happens. Thus, Pangloss [25], a web-
+                                                                        generated by SampleAction, while IncVisAge keeps stable
+based system powered by Sample+Seek [24], is designed to
+                                                                        updating. For example, in Fig. 8-➀, the visualizations gener-
+provide users with approximate visualizations together with
+                                                                        ated by SampleAction at t1 and t2 have very different trends.
+exact visualizations. Pangloss provides users with approxi-
+                                                                        But, IncVisAge only splits one segment to update visual-
+mate visualizations quickly based on the technique of AQP
+                                                                        izations and thus keeps stable updating.
+and then the system still computes the exact results in the
+background if users click the “remember” button for this
+                                                                        Human Perception-based At times, increasing the sample
+visualization. In Pangloss, users can get initial insights from
+                                                                        size does not always improve the quality of the visualiza-
+the approximate results and later verify their observations on
+                                                                        tion. The external reason is that the number of pixels of the
+the precise results.
+                                                                        screen is finite, and the internal reason is that the cognitive
+Incremental Sampling-based Some works [26–28] try to                    limitations of human perception in identifying small details.
+link incremental data query techniques to data visualization.           Therefore, it is possible for approximate visualization sys-
+
+
+123
+Making data visualization more efficient and effective: a survey                                                                     105
+
+
+                                                                      Besides, the above incremental sampling-based progressive
+ 1                                                                    data visualization, there have also been many works [31,
+                                                                      93,100,101] which provide progressive visualizations by
+ 2
+                                                                      hierarchical aggregation. Generally speaking, they build a
+                                                                      hierarchical structure by aggregating the data in different lev-
+                                                                      els, for example, different sizes of bins, different ranges of
+ 3
+                                                                      temporal values, different zones of spatial values. Then, these
+                                                                      hierarchical structures are used to support users’ progressive
+ 4
+                                                                      visualization exploration.
+                                                                      Range-Based Binning imMens [31] provides visualizations
+Fig. 8 A schematic diagram (not generated by real data) showing       of different resolutions by changing bin sizes. The bins of the
+what approximate visualizations might generate by SampleAction and
+IncVisAge as time progresses (i.e., more samples are sampled) [28].   same resolution have equal ranges. Multi-dimensional data
+➀ and ➁ are approximate lines generated by SampleAction and           in imMens are partitioned into data cubes, and cubes are
+IncVisAge, respectively, using the same data, and ➂ and ➃ are         partitioned into tiles of different levels. Users can explore
+approximate heatmaps generated by SampleAction and IncVisAge,         data in different levels and change current explored visual-
+respectively, using the same data
+                                                                      izations’ resolution by zooming in or zooming out, and then,
+                                                                      the system will change the underlying aggregation bin size
+tems to generate approximate results based on representative          correspondingly. imMens bins numeric data by equal ranges,
+samples but with minimal impact on the quality of visual-             which has some limitations. For example, considering an
+ization. Human perception-based approaches stop sampling              examination transcript dataset, binning by equal ranges of
+when there is no obvious difference on human perception               score is not applicable if teachers want to know the top-10,
+between the current approximate visualization and the visu-           top 10 to 20, top 20 to 30 students, etc. Also, users can-
+alization which is to get by further sampling.                        not change the bin size or number of different resolution in
+   IFocus [26], an online sampling algorithm, can generate            imMens.
+an approximate bar chart rapidly and guarantee the pairwise           Range and Content-Based Binning The work of [100]
+ordering of each bar in a bar chart, because the pairwise             provides two tree-structures for hierarchical exploration:
+ordering in bar charts is important human perceptual focuses.         HETree-R (Range-based HETree) and HETree-C (Content-
+IFocus iteratively draws a sample for each active group (all          based HETree). HETree-R is similar with imMens, and the
+groups are active at first) and maintains a confidence interval       leaf nodes of HETree-R denote data points within equal width
+for each active group. Once a confidence interval of a bar has        ranges, while HETree-C has the same number of data points
+no overlap with other bars, meaning the order of this bar is          in all leaf nodes. Thus, the HETree-C can be used in the above
+determined, i.e., this bar is not active any more. The algorithm      examination transcript scenario. Users can explore the data
+terminates until all bars are not active, and the approximate         abstraction or data details by a roll-up or drill-down opera-
+visualization results with ordering guarantee are returned to         tion to reach the upper or next level. It provides incremental
+users.                                                                tree construction algorithms based on user interaction and
+   PFunk-H [99] addresses the approximate visualization               exploration scenarios (top–down or bottom–up). The algo-
+as the human perception problem. The basic idea of this               rithms automatically determine the proper arguments of the
+work is that to combine sampling-based AQP techniques and             tree, i.e., the height of the tree, the range of the leaf, the num-
+human perception limitation together to provide approximate           ber of children, etc. Also, the tree construction algorithms are
+visualization in order to satisfy human perception. PFunk-H           adaptive and can fit to users’ preference selection for param-
+is an online sampling algorithm that provides approximate             eters of tree to support better user experience. Figure 9 is a
+visualizations using perceptual functions from graphical per-         binning example of HETree-R and HETree-C.
+ception. It presents an algorithm that can learn the knowledge
+of human perception error to provide approximate visualiza-
+tions with perceptually indiscernible error. Besides, it can          4 Visualization recommendation
+provide error bound of approximated query results under the
+restriction of perceptual function.                                   Recall that in Fig. 1, the data visualization process is iterative,
+                                                                      and the main pain point of practitioners is that they have to be
+3.3 Progressive data visualization                                    involved in each step to make some modifications. Naturally,
+                                                                      it is highly desirable that there can have some visualization
+Many works [26–28] in approximate data visualization                  recommendation solutions that make the lives of users easier,
+(Sect. 3.2) produce progressive visualization results to users.       by recommending (possibly) good visualizations to them.
+
+
+                                                                                                                             123
+106                                                                                                                                X. Qin et al.
+
+
+                                                                           traditional wisdom—that can be used to prune “bad” visual-
+                                                                           izations.
+
+                                                                            – User-specified constraints. Users can specify interested
+                                                                              visualization elements such as columns or data records.
+                                                                                – SeeDB [22] stipulates that user should specify an
+                                                                                  interested query Q to obtain the target data before
+                                                                                  recommendation.
+                                                                                – In Voyager [41,83,110], users should first specify
+                           (a)                                                    interested variables too.
+                                                                            – Expert provided constraints. Some combinations of vari-
+                                                                              ables, transformations, and visual encodings may not
+                                                                              generate a valid visualization. For example, the mark-
+                                                                              type “pie” cannot combine with the encoding-type
+                                                                              “height”, and the encoding-type “Y-axis” is not suitable
+                                                                              for categorical attributes. These constraints are typically
+                                                                              given by experts.
+                                                                                – Voyager [41,83,110] develops a permitted combina-
+                                                                                  tion table of different data types, encoding types and
+                           (b)                                                    mark types.
+                                                                                – DeepEye [17,21,32,37] defines a set of rules (Table 5)
+Fig. 9 A binning example of HETree-R and HETree-C. Ten points
+(p0–p9) are binned by attribute age. HETree-R bins data by equal age              to generate meaningful visualizations. For example,
+ranges: each leaf is a bin with size 16, and HETree-C bins data by equal          the first transformation rule in Table 5 denotes that
+number of points: each leaf is a bin with 2 points                                if X-axis of a visualization is categorical, and Y-axis
+                                                                                  is numerical, and then the transformation operation
+                                                                                  should be grouping by X-axis, and aggregating on
+   The rest of this section will be organized as follows.
+                                                                                  Y-axis.
+                                                                                – Draco [35] has hard constraints and soft constraints,
+ – Specification-based recommendations. (Section 4.1)
+                                                                                  where hard constraints must be satisfied when gener-
+      – The specification is incomplete, i.e., empty or par-                      ating visualizations (e.g., the encoding-type “shape”
+        tial specification of visualization elements. (Sec-                       is not applicable for numeric values), and soft con-
+        tion 4.1.1)                                                               straints are used to rank visualizations (e.g., it is better
+      – The specification is treated as a reference. (Sec-                        to use the encoding-type X-axis for temporal values).
+        tion 4.1.2)
+ – Behavior-based recommendations. (Section 4.2)                              After generating candidate (or valid) visualizations by
+ – Personalized recommendations. (Section 4.3)                             pruning the entire search space as described above, visualiza-
+                                                                           tion recommendation systems will then recognize meaning-
+                                                                           ful visualizations based on predefined metrics or rules. Some
+Solution Overview Generally speaking, for solving all the                  systems may also rank interesting visualizations or recom-
+above problems, the visualization recommendation systems                   mend top-k visualizations to users. In the rest of this section,
+need to first enumerate all possible visualizations and then               we will discuss these methods to solve the above problems.
+recommend top-ranked visualizations.
+   Note that the search space of all visualizations is huge,
+                                                                           4.1 Specification-based recommendations
+which needs to consider the combination of several factors,
+such as choosing the columns to be visualized, transform-
+                                                                           4.1.1 Incomplete specification
+ing the data (e.g., group or bin), choosing the right visual
+encodings including mark types (e.g., bar, line, point), and
+                                                                           Visualization recommendation systems with empty specifica-
+encoding types for the selected mark chart (e.g., width of bar,
+                                                                           tion require no user inputs, while recommendation systems
+position of point).
+                                                                           with partial specification accept users’ partial visualization
+Pruning Meaningless Visualizations Fortunately, there are                  elements specification inputs for desired visualization. For
+many signals (or constraints)—either from the users or from                example, APT [88] accepts user’s data viewing goals before
+
+
+123
+Making data visualization more efficient and effective: a survey                                                                        107
+
+
+Table 5 Constraints in
+DeepEye (T denotes the data             Transformation Rules
+type, AGG denotes the                   *T(X ) = Categorical, T(Y ) = Numerical → GROUP(X ), *AGG(Y ).
+aggregation function, including         T(X ) = Categorical, T(Y ) = Numerical → GROUP(X ), CNT(Y ).
+AVG (average), SUM (sum),
+CNT (count), and X, Y denote            T(X ) = Numerical, T(Y ) = Numerical → BIN(X ), AGG(Y ).
+attributes for X- and Y- axes,          T(X ) = Numerical, T(Y ) = Numerical → BIN(X ), CNT(Y ).
+respectively). The                      T(X ) = Temporal, T(Y ) = Numerical → GROUP/BIN(X ), AGG(Y ).
+transformation rules define how
+                                        T(X ) = Temporal, T(Y ) = Numerical → GROUP/BIN(X ), CNT(Y ).
+to transform the data when the
+data types of the X- and Y- axes        Sorting Rules
+are given. The sorting rules            T(X ) = Numerical/Temporal → ORDER BY(X ).
+define how to sort the data. And        T(Y ) = Numerical → ORDER BY(Y ).
+the visualization rules define
+how to choose the right                 Visualization Rules
+visualization types for different       T(X ) = Categorical, T(Y ) = Numerical → BAR/PIE.
+data types of X- and Y- axes            T(X ) = Numerical, T(Y ) = Numerical → LINE/BAR.
+                                        T(X ) = Numerical, T(Y ) = Numerical, (X , Y ) correlated → SCATTER.
+                                        T(X ) = Temporal, T(Y ) = Numerical → LINE.
+                                        *T = Type, AGG = {AVG, SUM, CNT}
+
+
+
+recommendation. Users should first choose one interested                  main difference in the rule-based recommendation systems
+column before visualization recommendation in Voyager [41,                is the definition of s. Voyager [41,83,110], Show Me [39],
+83,110]. DeepEye [17,21,32,37] accepts users’ keyword                     Polaris [20], DIVE [117], DeepEye [17,21,32,37], Wang et
+specification, e.g., the user may input “show me line charts              al. [40] develop richer perceptual rules with more data types,
+about electricity”.                                                       mark types, statistical information compared with former
+   The only difference between empty and partial specifica-               works, while Rank-by-feature [38] ranks visualizations by
+tion is that the latter should prune the search space by the              a single statistical metric.
+user-specified constraints when enumerating visualization                 Statistical Rules Rank-by-feature framework [38] is a sta-
+elements to generate visualization candidates. For example,               tistical rule-based recommendation system. It can rank 1D or
+the visualizations which do not contain column c are filtered             2D axis-parallel projection visualizations (histograms, box-
+from the visualization candidates if users specify column                 plots, and scatterplots) to users by different statistical ranking
+c as the interested column in Voyager, and the visualiza-                 metrics. The metrics for 1D ranking (histograms and box-
+tions which are not line charts or do not contain the column              plots) include normality or uniformity of the distribution,
+“electricity” are filtered from the visualization candidates              number of potential outliers or unique values, and size of
+when users type “show me line charts about electricity” in                the biggest gap, and the metrics for 2D ranking (scatterplots)
+DeepEye. And there is no difference when ranking candidate                include correlation coefficient, number of potential outliers,
+visualizations.                                                           uniformity of scatterplots, etc. By discovering these ranked
+   In the remaining part of this section, we describe two                 low-dimensional visualizations, users may find complex rela-
+common methods used to rank the visualization candidates:                 tions, clusters, outliers, and so on.
+rule-based solution and machine learning-based solution.                  Perceptual Rules The Rank-by-feature framework can only
+                                                                          rank between the same visualization type (e.g., histograms,
+                                                                          boxplots) by a single statistical metric, while Voyager [41,83,
+Rule-based visualization ranking                                          110] ranks different visualization types by a perceptual effec-
+                                                                          tiveness score s considering data type, cardinality, human
+Most earlier works (APT [88], SAGE [111], BOZ [112])                      visual preference, and so on. For example, high cardinality
+on visualization recommendations are rule-based, which                    variables should not be mapped to color; visualizations with
+are inspired by the work of [88,113–116]. Rule-based rec-                 less screen space are preferred. s is a weighted sum of these
+ommendation systems rank the visualization candidates by                  factors, and the weight of these factors is manually deter-
+their predefined rules, which are usually human percep-                   mined through tests and experiments. Table 6 shows some
+tual effectiveness metrics, measured as an effectiveness                  perceptual effectiveness ranking rules used in Voyager; for
+score s considering data type, statistical information, human             example, the third row in Table 6 means that if the data types
+visual preference, etc. For example, a pie chart consists                 of X- and Y- axes are temporal and numerical, respectively,
+of many blocks (e.g., > 500) is not a good visualiza-                     then line chart is the best choice, and bar, point, text types
+tion by human perception, because it is too messy. The
+
+
+                                                                                                                                123
+108                                                                                                                                X. Qin et al.
+
+
+Table 6 Ranking rules in Voyager                                          based recommendation systems first collect training data,
+T (X )                T (Y )                 Mark Type                    which comes from crowdsourcing or web, then train a rank-
+                                                                          ing model which takes the input space X as lists of feature
+Categorical           Categorical            point > text                 vectors, and Y the output space consisting of grades (or
+Categorical           Numerical              bar > point > text           ranks). The model learns a function F(·) from the training
+Temporal              Numerical              line > bar > point > text    examples, such that given two input vectors x1 and x2 , it can
+Numerical             Numerical              point > text                 determine which one is better, F(x1 ) or F(x2 ).
+T(X) and T(Y) denote the data type of X- and Y- axes, respectively, and   Learning with Soft Constraints Draco [35] expresses pref-
+Mark Type denotes the permitted ranked mark types for this data type      erences by soft constraints, and the soft constraints (e.g.,
+correspondingly                                                           it is better for temporal values to use the encoding type:
+                                                                          X-axis) are specified by human perceptions. Each soft con-
+                                                                          straint has a weight denoting the penalty when a visualization
+ranked behind line. And the rules together with users’ input              v violates the
+for column preference form the ranking metric in Voyager.                              nsoft constraint. And the overall cost of V is:
+                                                                          cost(v) = i=1      wi ·n i , n i ∈ {0, 1}, where wi is the weight of
+    DeepEye [17,21,32,37] captures human perceptual effec-                the ith constraint, and n i denotes that V violates the ith con-
+tiveness in richer details than Voyager. DeepEye defines                  straint n i times. Draco prefers visualizations with less cost
+three factors to describe the quality of a visualization and              and formulates the problem of learning weights as a learning-
+then develops a partial-order-based solution to rank all the              to-rank [121] problem using RankSVM model [122]. Draco
+valid visualization candidates. The three factors are: ➀ the              gets 1110 ranked visualization pairs from crowdsourcing,
+matching quality between data and chart; ➁ the quality of                 and the ranking principles are from Kim et al. [123] and
+transformations; and ➂ the importance of columns. A visu-                 Saket et al. [124]. Draco is similar to Voyager, but Draco dif-
+alization precedes another if all of the three factors are greater        fers with Voyager in that it learns the weight of constraints
+than another. And based on the partial relation, DeepEye can              by machine learning techniques.
+construct a graph G(V , E), where V denotes the all valid                 Learning with Examples The constraints in Draco are pre-
+visualizations and E denotes the partial orders. Then, Deey-              defined to the system by users or developers, rather than
+Eye ranks all the visualizations in a way similar to topological          learned by machines. In contrast, DeepEye [21,32] develops
+sorting.                                                                  a machine learning-based solution which captures visual-
+    The above two works (Voyager [41,83,110] and Deep-                    ization design knowledge automatically by learning from
+Eye [17,21,32,37]) consider common visualization types,                   examples besides the above rule-based solution.
+while Wang et al. [40] propose an algorithm to automati-                      DeepEye [21,32] captures human perception by learning
+cally pick line graph or scatter plot for time series. Although           from examples and supposes the models learned from for-
+people may use line graphs to visualize time series in most               mer examples can be extended to different domains. DeepEye
+cases, scatter plots are better choices sometimes. For exam-              identifies 12 features: statistical information (cardinality, dis-
+ple, the scatter chart provides a clearer trend than line chart           tinct numbers, max, min, correlation, etc.) and mark type.
+when there are many outliers in time series. The algorithm                DeepEye uses a binary classifier (decision tree [125]) to
+first constructs line graph, scatter plot, and a trend curve by           determine whether a visualization is good or bad, which
+LOESS regression [118], then calculates the visual consis-                is called Visualization Recognition, then use a learning-to-
+tency between the trend curve and the line graph or scatter               rank [121] model (LambdaMART algorithm [126]) to score
+plot, respectively, and picks the visualization type which                all good visualizations, which is called Visualization Rank-
+has bigger visual consistency (i.e., smaller distance) with               ing. DeepEye collects 42 real-world datasets from various
+the trend curve, where the visual consistency is achieved                 domains and then picks 285, 236 visualization comparisons
+by comparing the consistency (i.e., distance) of visualiza-               over these datasets labeled by 100 students.
+tions’ density fields, which can be calculated by KDE [119]                   Figure 10 shows the architecture of DeepEye. A user can
+algorithm. Experiments have shown that the choices of the                 pose a keyword query to VSE (Visualization Search Engine)
+algorithm are consistent with users in most cases.                        module (Fig. 10-➁), and VSE returns ranked visualizations
+                                                                          to users. The VSE first translates the keyword query to multi-
+Machine learning-based visualization ranking                              ple visualization candidates (keyword-to-visualizations) by
+                                                                          querying database (Fig. 10-➂), then discovers good visu-
+With the rapid development of machine learning and deep                   alizations (visualization transformation) and ranks them
+learning, more and more systems [21,32,35,84,120] focus                   (visualization ranking). The crawler (Fig. 10-➃) extracts
+on machine learning-based visualization recommendation.                   training data for visualization transformation and ranking
+Given two visualizations u and v, the systems should deter-               of VSE. In the client (Fig. 10-➀), users can input keyword,
+mine which is better. Typically speaking, machine learning-
+
+
+123
+Making data visualization more efficient and effective: a survey                                                                                                             109
+
+  1
+                                                          2
+      User Makes a Search
+
+            DeepEye
+                                                                 VSE                       3
+
+                                          Keyword
+      Flight delay in
+                                                                 Keyword-                  Data
+                                                              to-Visualizations
+                                                                          Visualization
+                                                                           Candidates
+                                                                                           4
+                                                               Visualization
+       Faceted Navigation
+                                                              Transformation
+                                                                           Good
+         Stacked bar chart   Similar                                   Visualizations
+                             Different
+                                            Ranked                                        Training
+         Pie chart
+                                         Visualizations
+                                                                Visualization               Data
+                             Magic
+                                                                                                         Fig. 12 The architecture of SeeDB [22]. Client (➀) accepts users’ input,
+         Line chart
+                                                                  Ranking                            D
+         Map                                                                                             constructs visualization queries and shows recommended visualizations
+                                                                                                         to users. Server (➁) generates visualization candidates (view generator)
+                                                                                                         and recommends visualizations to users (execution engine)
+Fig. 10 The architecture of DeepEye [21,32]. User can post a keyword
+search in ➀, and ➁ generates visualization candidates by querying ➂,
+then ➁ returns ranked visualizations to user using the model trained by
+data from ➃
+                                                                                                         4.1.2 Reference-based specification
+
+                                                                                                         Some visualization recommendation systems recommend
+  2                                                       3           4
+                                                                                                         visualizations based on reference data or reference visualiza-
+                                                                                                         tions [18,22,36,85]. Typically, the system would recommend
+                                                                                                         visualizations which are similar to or different from the given
+                                                                                                         reference in certain aspects.
+                                                                                                         Deviation-based SeeDB [22] recommends visualizations by
+                                                                                                         deviation with some reference visualizations. Before recom-
+                                                                                                         mendation, the user should specify an interested query Q
+  1                                                                   5
+                                                                                                         to obtain the target data which is called D Q and a refer-
+                                                                                                         ence dataset D R is also needed. Then, SeeDB enumerates
+                                                                                                         different combinations of same variables, transformation,
+                                                                                                         mark types, encoding types on both D Q and D R to get
+                                                                                                         all V (D Q ) and V (D R ), respectively. Finally, SeeDB rec-
+Fig. 11 The architecture of Data2Vis [120]. Data2Vis is built based
+on sequence to sequence model with the encoder–decoder architecture                                      ommends the top-k V (D Q ) which have the largest value
+(➁ and ➃) and the attention mechanism (➂). It takes original datasets                                    S(P[V (D Q )], P[V (D R )]), where S is a distance function,
+(➀) as input and automatically recommends visualizations (➄) by given                                    and P[V (D Q )] and P[V (D R )] are the distribution of V (D Q )
+datasets (➀)                                                                                             and V (D R ), respectively. Figure 12 shows the architecture
+                                                                                                         of SeeDB.
+                                                                                                         Anomaly-based Profiler [85] recommends visualizations
+                                                                                                         which can best distinguish anomalies in the primary visual-
+interact with recommended visualizations, and do faceted
+                                                                                                         ization. The tuples in the primary visualization are classified
+navigation, etc.
+                                                                                                         by some anomaly detection methods: normal points and
+   Data2Vis [120] is an attempt in generating visualizations
+                                                                                                         abnormal points are in different classes, denoted as a column
+using RNN (recurrent neural network [127]). As shown in
+                                                                                                         class. Suppose V isT oCol(V ) is a function which returns a
+Fig. 11, Data2Vis treats visualization design as a sequence
+                                                                                                         column that describes the classes of each tuple in the visual-
+to sequence [128,129] translation problem, where the input
+                                                                                                         ization V , then Profiler recommends the visualization V that
+string is a dataset in JSON format (Fig. 11-➀) and the output
+                                                                                                         minimizes D(V isT oCol(V ), class). D(X , Y ) is a distance
+string is a Vega-Lite [2] visualization specification (Fig. 11-
+                                                                                                         function measuring the independence between X and Y :
+➄). Data2Vis trained a model with a 2-layer RNN encoder
+(Fig. 11-➁) and a 2-layer RNN decoder (Fig. 11-➃), and                                                                                                
+both have 256 LSTM (Long Short-Term Memory [130,131])                                                                                I (X , Y )
+                                                                                                         D(X , Y ) = 1 −                                                     (1)
+cells. The training dataset has 4300 training instances [132].                                                                  max (H (X ), H (Y ))
+Experiments have shown that Data2Vis can generate visu-
+alizations with appropriate mark types (e.g., use scatter for                                            where I (X , Y ) denotes mutual information of X and Y , quan-
+two numeric attributes), transformations (e.g., use means for                                            tifying the reduction of predicting one variable when another
+numeric attributes), selection patterns (e.g., select data by                                            is given, and H (X ), H (Y ) denote entropies of X , Y , respec-
+country, gender), etc.                                                                                   tively.
+
+
+                                                                                                                                                                    123
+110                                                                                                                                        X. Qin et al.
+
+
+               1                                            2                                                                                     3
+
+
+
+
+                                                                                    4                                                             5
+
+
+
+
+Fig. 13 The front end of Zenvisage [18,36]. The user can upload their        also show those visualizations that are similar to the reference one in ➁.
+datasets and select the X-axis, Y-axis, and category for visualizations      The user can specify some system parameters, e.g., similarity functions
+in ➀. After that, Zenvisage first recommends representative (i.e., typical   and aggregation functions, in ➂
+trends) and outlier trends in ➄ according to the settings of ➀. ➃ will
+
+
+Similarity/Distance-based Zenvisage [18,36] tries to find                      1
+other interesting visualizations when the users provide their
+desired trends, patterns, or insights. Users can draw their
+desired trends or patterns as a visualization V , then the system
+recommends visualizations V  by their similarity or dissim-
+ilarity (specified by users) with V , i.e., recommends V  with
+largest or smallest S(V , V  ), where S is a distance func-
+tion. Thus, the definition of the distance function is of great
+importance. The distance functions used by Zenvisage are
+                                                                                2
+Euclidean distance and Dynamic Time Warping [133]. Fig-
+ure 13 depicts the front end of the Zenvisage.
+
+
+4.2 Behavior-based recommendations
+
+Behavior-based recommendation systems capture users’ cur-
+rent behavior as inputs, then infer users’ intended task and
+recommend useful visualizations based on their tasks.
+    HARVEST [134] is a behavior-driven visualization rec-
+ommendation system. It recommends visualizations based on                    Fig. 14 The architecture of HARVEST [120]. The front end is a web-
+                                                                             based user interface (➀). The user can specify the dataset and create
+the tasks of users which are inferred by their behavior. Since               data visualizations on the front end. The back-end (➁) accepts users’
+it is difficult for a user to describe her intent clearly and the            actions, detects patterns, and recommends relevant visualizations by
+task of a user evolves as the process of the exploration, HAR-               users’ task intents, which is inferred by their behavior.
+VEST guesses users’ intent by their behavior. As shown in
+Fig. 14, when the user interacts with HARVEST in the front
+end, it captures user’s action αi and sends it to the back-end.              the constraints on current data and pi indicates user’s task
+There are several common atomic actions studied by HAR-                      intents. HARVEST defines 4 patterns: scan, flip, swap,
+VEST: inspect, filter, and bookmark. The atomic                              and drill-down. Then, HARVEST can recommend visu-
+actions form a complex pattern, which usually indicates spe-                 alizations by the inferred patterns of users. For example, if a
+cific intents. Next, the Action Tracker module (Fig. 14-➁)                   user iteratively inspects hotel price of different regions in
+analyzes and outputs the user’s task context ci and pattern                  a map, HARVEST can detect a scan pattern, which means
+pi based on accepted actions. More concretely, ci denotes                    that users want to compare some attributes between some
+
+
+123
+Making data visualization more efficient and effective: a survey                                                                        111
+
+
+similar objects, thus HARVEST may recommend a bar chart                         (Term Frequency-Inverse Document Frequency). And for
+showing the comparison of hotel price of different regions.                     a given user u and a visualization recommendation can-
+                                                                                didate v, the similarity of u’s and v’s vectors can be
+4.3 Personalized recommendations                                                considered as the ranking score between u and v.
+                                                                             3. Hybrid Filtering. A hybrid method of the above two
+Personalized recommendation systems capture users’ histor-                      methods will bring a host of benefits (e.g., the algorithm
+ical behavior as inputs to recommend personalized interest-                     becomes adaptive when the users’ interest changed).
+ing visualizations.                                                             VizRec uses the weighted sum of the normalized scores
+Linear Model VizDeck [84] provides personalized visual-                         of the above two methods as the hybrid filtering score.
+ization recommendation results by training a linear model for
+each user using their historical behavior. VizDeck provides
+a new interface design which displays top-k recommended                      4.4 A summary
+visualizations to users in a grid. The elements displayed in
+the grid are called vizlets. Users can browse, drop, promote                 Table 7 shows a summary of the supported visualization
+or reorder the vizlets, and the final selected vizlets will be dis-          types, input, and ranking metric of the above visualization
+played on an interactive dashboard. VizDeck can get users’                   recommendation systems.
+visualization preference by their historical behavior during                     Visualization recommendation systems with empty spec-
+the exploration, extract features for these vizlets, and then                ification, such as Draco [35], Data2Vis [120] and Rank-by-
+train a linear model which score vizlets for future recom-                   feature [38], are helpful for users to quickly explore the data
+mendation.                                                                   when the users are not very familiar with data and desired
+Collaborative Filtering Besides training a model for each                    visualizations. Most of the existing recommendation systems
+user, there are many other techniques [135–137] in person-                   require partial specification, because they permit users’ spec-
+alized recommendation systems. For example, collaborative                    ification for desired visualizations as inputs, e.g., keyword
+filtering (CF) [135] is a widely used personalized recommen-                 specification in DeepEye [17,32]. Rule-based solution is in
+dation algorithm. Based on CF, VizRec [138] proposes three                   line with person’s intuitive understanding of visualizations,
+methods for personalized visualization recommendation.                       but it does not make a complete understanding of human per-
+                                                                             ceptions, just focusing on several interested metrics. Machine
+1. Collaborative Filtering. VizRec constructs an m × n                       learning-based solutions need to collect training data, and the
+   matrix A, where A[i][ j] denotes the rating (e.g., 1 to                   results are hard to interpret, but it may well capture human’s
+   7) of the user i on the visualization j in the past. And                  cognitive knowledge about visualization effectiveness. And
+   for a given user u, VizRec first calculates the top-k users               the learning model will become smarter when more training
+   who are the most similar (i.e., their ratings for different               data are collected.
+   visualizations are similar.) with u by Pearson correlation                    Users should specify the reference data or desired pattern
+   coefficient, denoted as u 1 , u 2 , ..., u k . Then, for a visual-        in the reference-based visualization recommendation, which
+   ization candidate v, the rating of u on v is calculated as:               may be difficult for users who are not familiar with the orig-
+                                                                             inal data and want to explore the data with the help of the
+                    
+                                   sim(u, u i )(A[u i ][v] − ruˆ i )         recommendation systems. The advantage is that it is easy to
+    ruv
+                     i=1,2,...,k
+          = rˆu +                                                     (2)   develop such a system, and convenient when users are clear
+                                i=1,2,...,k   sim(u, u i )
+                                                                             about their needs, e.g., find a line chart with desired trend
+   where rˆu and ruˆ i denote the average rating of user u and               with Zenvisage [18,36].
+   u i , respectively.                                                           Behavior-based recommendations can recommend visu-
+2. Content-based Filtering. For the users who are new to                     alizations based on inferred tasks, but are limited to the
+   the system, CF-based recommendation is not applicable.                    predefined behavior patterns, making it not flexible for users’
+   Thus, VizRec also develops a content-based recommen-                      random behavior.
+   dation. VizRec defines many features (e.g., attributes of                     Personalized recommendations perform differently for
+   given datasets and mark types) to characterize users and                  different users, because personalized recommendations are
+   visualizations and uses the frequency of features to con-                 customized for different users by their historical behavior.
+   struct user and visualization profiles. VizRec constructs                     Besides the above works, there is also a preliminary design
+   the profile of a user by her current (together historical                 of a framework [110] which uses a language, CompassQL,
+   for old users) annotations of visualizations. And VizRec                  to describe different ranking metrics. CompassQL is a gen-
+   builds the visualization profile by the aggregation of user               eral framework, aiming to describe the ranking metrics of
+   profiles for this visualization. Then, the user and visu-                 SeeDB [22], Voyager [41,83,110], VizDeck [84], etc. But,
+   alization profiles are transformed to vectors by TF-IDF                   there is no implementation of CompassQL yet.
+
+
+                                                                                                                                 123
+                                                                                                                                                                                                     112
+
+
+
+
+123
+      Table 7 A summary of visualization recommendation systems, where Visualization Types is the supported visualization recommendation types; Input is the input of this recommendation system;
+      Ranking Metric is the main ranking strategy of this recommendation system
+      Category                             Visualization Recommendation System           Visualization Types                                  Input                    Ranking Metric
+                                                                                         Bar         Pie         Line        Scatter
+
+      Specification-based
+                                                                                         √           √           √           √
+      Incomplete Specification             Draco [35]                                                                                         –                        RankSVM Model
+                                                                                         √           √           √           √
+                                           Data2Vis [120]                                                                                     –                        RNN
+                                                                                         √           √           √           √
+                                           APT [88]                                                                                           Keyword                  Perceptual Rules
+                                                                                         √           √           √           √
+                                           SAGE [111]                                                                                         Keyword                  Perceptual Rules
+                                                                                         √           √           √           √
+                                           Voyager [83,110]                                                                                   Columns                  Perceptual Rules
+                                                                                         √                                   √
+                                           Rank-by-feature [38]                                      ×           ×                            –                        Statistical Rules
+                                                                                         √           √           √           √
+                                           Polaris [20]                                                                                       Columns                  Perceptual Rules
+                                                                                         √           √           √           √
+                                           Show Me [39]                                                                                       Columns                  Perceptual Rules
+                                                                                         √           √           √           √
+                                           DeepEye [17,32]                                                                                    Keyword                  LambdaMART Algorithm
+                                                                                                                 √           √
+                                           Wang et al. [40]                              ×           ×                                        Time Series              Perceptual Rules
+                                                                                         √           √           √           √
+      Reference-based Specification        SeeDB [22]                                                                                         Query                    S(P[V (D Q )], P[V (D R )])
+                                                                                         √           √           √           √
+                                           Profiler [85]                                                                                      Visualization            D(V isT oCol(v), class)
+                                                                                         √           √           √           √
+                                           Zenvisage [18,36]                                                                                  Visualization            S(V , V  )
+                                                                                         √           √           √           √
+      Behavior-based                       HARVEST [134]                                                                                      Current Behavior         Task Driven
+                                                                                         √           √           √           √
+      Personalized                         VizDeck [84]                                                                                       Historical Voting        Linear Model
+                                                                                         √                       √           √
+                                           VizRec [138]                                              ×                                        Historical Rating        CF
+                                                                                                                                                                                                     X. Qin et al.
+Making data visualization more efficient and effective: a survey                                                               113
+
+
+5 Other research directions                                        Research Opportunities
+
+In this section, we will discuss other research topics that are     – Detecting biased visualizations. A seemingly good visu-
+also relevant to data management issues, but are not yet well         alization might actually be biased; hence, it requires to
+studied.                                                              detect such visualizations automatically. Many people
+                                                                      have approached this problem from a statistics perspec-
+5.1 Data preparation for data visualization                           tive. However, it is also important to study this problem,
+                                                                      from the angle of dirty data.
+Real-life data are typically dirty, and visualizing dirty data      – Task-aware data cleaning. Intuitively, it is easier to clean
+may mislead users. This phenomenon has been known for                 a dataset if the targeting task is known, such as only a
+a long time as one type of biased visualizations from the             small part of data needs to be cleaned, which is cheaper
+data visualization community. For example, a dataset that             than cleaning the entire dataset in the conventional way.
+is integrated from multiple sources may contain duplicates.
+Naturally, the data being visualized should be cleaned, such       5.2 Data visualization benchmarks
+as value normalization, deduplication, missing value impu-
+tation, and outlier detection. Tableau has integrated Trifacta     Like ImageNet or the classic TPC benchmarks, it is important
+for data preparation over the entire dataset. The following        to develop benchmarks for performance and recommenda-
+studies have been conducted, from both database commu-             tion. The benchmarks should be faithful to the visual analysis
+nity and visualization community, to investigate the impact        tasks, provide reusable traces and data, and in the case of rec-
+of dirty data on data visualization.                               ommendation, have high coverage and quality of its labels.
+                                                                   There is an emerging focus on developing benchmarks for
+ – What-if Analysis for Outliers: Scorpion [139] allows            performance measures [141–143].
+   users to manually pinpoint the outliers from the result
+   of an aggregation query. It then tries to find and remove        – A research work VizNet [144] has presented a large-
+   the predicate that causes such outliers, without affecting         scale corpus of over 31 million datasets compiled from
+   the other non-outliers. The problem was formulated as an           open data repositories and online visualization galleries.
+   influential predicates problem and was solved by using             It provides the necessary common baseline for com-
+   techniques from sensitivity analysis. As a result, Scor-           paring visualization design techniques, and developing
+   pion can automatically move away outliers identified by            benchmark models and algorithms for automating visual
+   users.                                                             analysis.
+ – Evaluating Visualizations with Missing Data: [140] did
+   a crowdsourced study to measure factors influencing               Naturally, more needs to be done.
+   response accuracy, data quality, and confidence in inter-       Research Opportunities
+   pretation for time series data with missing values. In
+   particular, it tries a combination of three imputation meth-     – Categorization of visualizations. For ImageNet, it is easy
+   ods (1) zero-filling, (2) marginal mean, and (3) linear            to set categories, such as “balloon” or “strawberry”,
+   interpolation with four ways of showing the imputed                because the classification task is easier. It is not clear
+   values (i) highlight, (ii) downplay, (iii) annotation, and         about how to define similar categories for visualizations
+   (iv) information removal. The evaluation over two real-            in a conceptual level, such as “trend” or “distribution”.
+   world datasets with 300+ crowd users partially verifies          – Training data. Assuming the categories can be provided,
+   the following hypotheses: (I) Perceived data quality and           there remains a daunting task to label visualizations, and
+   response accuracy will both degrade as the amount of               each visualization may have multiple labels. Afterward,
+   missing data increases. (II) Highlighting methods will             it remains a hard problem on how to use these labeled
+   generate higher perceived data quality than downplaying            data, e.g., using which machine learning or deep learning
+   and information removal methods. (III) Linear interpo-             model to predict a good visualization for a given task.
+   lation will lead to higher perceived confidence and data
+   quality than marginal means or zero-filling as it takes         5.3 Data visualization for database-related
+   into account local trends in dataset. (IV) Imputed values           applications
+   will lead to higher perceived data quality than removed
+   values.                                                         As mentioned earlier in Sect. 1, data visualization also plays
+                                                                   an important role in database-related applications, such as
+                                                                   Excel [9], Google Sheets [10], Oracle Data Visualization
+                                                                   Desktop [11], IBM Db2 [12], Amazon Quicksight [13],
+
+
+                                                                                                                        123
+114                                                                                                                                 X. Qin et al.
+
+
+Microsoft Power BI [5], and many others. Naturally, with                2. Satyanarayan, A., Moritz, D., Wongsuphasawat, K., Heer, J.:
+the rapid development of visualization techniques, there                   Vega-lite: a grammar of interactive graphics. TVCG 23(1), 341–
+                                                                           350 (2016)
+are more opportunities about using data visualization for               3. Hanrahan, P.: Vizql: a language for query, analysis and visualiza-
+database-related applications.                                             tion. In: SIGMOD, p. 721 (2006)
+Research Opportunities                                                  4. Tableau. https://www.tableau.com. Accessed 31 Dec 2018
+                                                                        5. Power bi: Interactive data visualization bi tools. https://powerbi.
+ – Data visualization for data discovery. Data discovery,                  microsoft.com. Accessed 31 Dec 2018
+   the problem of finding interesting datasets for a certain            6. Hyper: A hybrid oltp and olap high performance dbms. https://
+                                                                           hyper-db.de. Accessed 31 Dec 2018
+   application from a data lake with thousands or millions              7. Neumann, T., Mühlbauer, T., Kemper, A.: Fast serializable multi-
+   of data silos, remains a hard problem to solve [145].                   version concurrency control for main-memory database systems.
+   One roadblock is to quickly understand the discovered                   In: SIGMOD, pp. 677–689 (2015)
+   datasets. Practically, browsing each dataset is time-                8. Neumann, T.: Efficiently compiling efficient query plans for mod-
+                                                                           ern hardware. PVLDB 4(9), 539–550 (2011)
+   consuming. Intuitively, data visualization that provides a           9. Microsoft       excel.    https://products.office.com/en-us/excel.
+   high-level understanding can help in this important prob-               Accessed 31 Dec 2018
+   lem.                                                                10. Google sheets: Free online spreadsheets for personal use. https://
+ – Data visualization for data debugging. One problem                      www.google.com/sheets/about/. Accessed 31 Dec 2018
+                                                                       11. Oracle data visualization desktop. https://docs.oracle.com/
+   that was recently raised by the Data Civilizer sys-                     en/middleware/bi/data-visualization-desktop/tutorials.html.
+   tem [146,147] is data debugging, where the output of a                  Accessed 31 Dec 2018
+   data analytics workflow is wrong not because of bugs                12. Ibm db2. https://www.ibm.com/analytics/db2. Accessed 31 Dec
+   in programs, but in the data such as erroneous input                    2018
+                                                                       13. Amazon quicksight: Cloud based business intelligence. https://
+   or wrong parameters. Although [146] has some initial                    aws.amazon.com/quicksight/. Accessed 31 Dec 2018
+   attempt to combine data visualization for data debugging,           14. Vega: A visualization grammar. https://vega.github.io/vega/.
+   the solution for data debugging is far from being mature,               Accessed 31 Dec 2018
+   and evidently, data visualization can help for more effec-          15. Wickham, H.: ggplot2–elegant graphics for data analysis. J Com-
+                                                                           put. Graph. Stat. 19(1), 3–28 (2009)
+   tive data debugging.                                                16. Li, D., Mei, H., Shen, Y., Su, S., Zhang, W., Wang, J., Zu, M.,
+                                                                           Chen, W.: ECharts: A declarative framework for rapid construc-
+                                                                           tion of web-based visualization. Vis. Inform. 2, 136–146 (2018)
+6 Conclusion                                                           17. Luo, Y., Qin, X., Tang, N., Li, G.: DeepEye: towards automatic
+                                                                           data visualization. In: ICDE, pp. 101–112 (2018)
+                                                                       18. Siddiqui, T., Lee, J., Kim, A., Xue, E., Yu, X., Zou, S., Guo,
+Data visualization is a fast growing field with a great many               L., Liu, C., Wang, C., Karahalios, K., Parameswaran, A.G.: Fast-
+new research results and novel systems developed recently.                 forwarding to desired visualizations with zenvisage. In: CIDR
+Research and practitioners from many fields have contributed               (2017)
+to the remarkable success of data visualization, which is              19. Kalinin, A., Cetintemel, U., Zdonik, S.: Interactive data explo-
+                                                                           ration using semantic windows. In: SIGMOD, pp. 505–516 (2014)
+driven by most (if not all) domains and applications.                  20. Stolte, C., Hanrahan, P.: Polaris: a system for query, analysis and
+   This article mainly surveys recent data visualization                   visualization of multi-dimensional relational databases. In: INFO-
+works, from data management perspective. In particular, we                 VIS, pp. 5–14 (2000)
+have comprehensively described the works in visualization              21. Qin, X., Luo, Y., Tang, N., Li, G.: DeepEye: an automatic big data
+                                                                           visualization framework. Big Data Min. Anal. 1(1), 75–82 (2018)
+specifications, efficient methods for data visualization, and          22. Vartak, M., Madden, S., Parameswaran, A., Polyzotis, N.: Seedb:
+visualization recommendation. As mentioned earlier, most                   automatically generating query visualizations. PVLDB 7(13),
+commercial data visualization systems are good at ease-of-                 1581–1584 (2014)
+use in terms of data visualization specifications. However,            23. Vartak, M., Rahman, S., Madden, S., Parameswaran, A.G.,
+                                                                           Polyzotis, N.: SeeDB: efficient data-driven visualization recom-
+many practitioners are still suffering from the efficiency and             mendations to support visual analytics. PVLDB 8(13), 2182–2193
+recommendation issues of these systems. Hence, we also dis-                (2015)
+cuss several open problems that database researchers can               24. Ding, B., Huang, S., Chaudhuri, S., Chakrabarti, K., Wang, C.:
+make significant contribution to advance the field of data                 Sample + seek: approximating aggregates with distribution pre-
+                                                                           cision guarantee. In: SIGMOD, pp. 679–694 (2016)
+visualization.                                                         25. Moritz, D., Fisher, D., Ding, B., Wang, C.: Trust, but verify: opti-
+                                                                           mistic visualizations of approximate queries for exploring big
+Acknowledgements Funding was provided by 973 Program of China              data. In: CHI, pp. 2904–2915 (2017)
+(Grant No. 2015CB358700) and National Natural Science Foundation       26. Kim, A., Blais, E., Parameswaran, A.G., Indyk, P., Madden, S.,
+of China (Grant Nos. 61632016, 61521002, 61661166012).                     Rubinfeld, R.: Rapid sampling for visualizations with ordering
+                                                                           guarantees. PVLDB 8(5), 521–532 (2015)
+References                                                             27. Fisher, D., Popov, I., Drucker, S., Schraefel, M.: Trust me, i’m par-
+                                                                           tially right: incremental visualization lets analysts explore large
+  1. Michael, B., Vadim, O., Jeffrey, H.: D3: Data-driven documents.       datasets faster. In: CHI, pp. 1673–1682 (2012)
+     TVCG 17(12), 2301–9 (2011)
+
+
+123
+Making data visualization more efficient and effective: a survey                                                                                     115
+
+
+ 28. Rahman, S., Aliakbarpour, M., Kong, H.K., Blais, E., Karahalios,         49. Katifori, A., Halatsis, C., Lepouras, G., Vassilakis, C.,
+     K., Parameswaran, A., Rubinfield, R., Rahman, S., Aliakbarpour,              Giannopoulou, E.: Ontology visualization methods’a survey.
+     M., Kong, H.K.: I’ve seen “enough”: incrementally improving                  ACM Comput. Surv. (CSUR) 39(4), 10 (2007)
+     visualizations to support rapid decision making. PVLDB 10(11),           50. Liu, S., Maljovec, D., Wang, B., Bremer, P.-T., Pascucci, V.: Visu-
+     1262–1273 (2017)                                                             alizing high-dimensional data: advances in the past decade. TVCG
+ 29. Wesley, R.M.G., Eldridge, M., Terlecki, P.: An analytic data                 3, 1249–1268 (2017)
+     engine for visualization in tableau. In: SIGMOD, pp. 1185–1194           51. Wohlfart, E., Aigner, W., Bertone, A., Miksch, S.: Comparing
+     (2011)                                                                       information visualization tools focusing on the temporal dimen-
+ 30. Wang, Z., Ferreira, N., Wei, Y., Bhaskar, A.S., Scheidegger, C.:             sions. In: IV, pp. 69–74 (2008)
+     Gaussian cubes: real-time modeling for visual exploration of large       52. Mei, H., Ma, Y., Wei, Y., Chen, W.: The design space of construc-
+     multidimensional datasets. TVCG 23(1), 681–690 (2016)                        tion tools for information visualization: A survey. J. Vis. Lang.
+ 31. Liu, Z., Jiang, B., Heer, J.: imMens: real-time visual querying              Comput. 44, 120–132 (2018)
+     of big data. In: Eurographics Conference on Visualization, pp.           53. Diamond, M., Mattia, A.: Data visualization: an exploratory study
+     421–430 (2013)                                                               into the software tools used by businesses. J. Instr. Pedag. 17, 1–7
+ 32. Luo, Y., Qin, X., Tang, N., Li, G., Wang, X.: DeepEye: creating              (2017)
+     good data visualizations by keyword search. In: SIGMOD, pp.              54. Ghosh, A., Nashaat, M., Miller, J., Quader, S., Marston, C.: A
+     1733–1736 (2018)                                                             comprehensive review of tools for exploratory analysis of tabular
+ 33. Wu, E., Psallidas, F., Miao, Z., Zhang, H., Rettig, L.: Combin-              industrial datasets. Vis. Inform. 2(4), 235–253 (2018)
+     ing design and performance in a data visualization management            55. Keim, D.A., Lee, J.P., Thuraisinghaman, B., Wittenbrink, C.:
+     system. In: CIDR (2017)                                                      Database issues for data visualization: supporting interactive
+ 34. Doshi, P.R., Rundensteiner, E.A., Ward, M.O.: Prefetching for                database exploration. In: Workshop on Database Issues for Data
+     visual data exploration. In: DASFAA, pp. 195–202 (2003)                      Visualization, pp. 12–25 (1995)
+ 35. Moritz, D., Wang, C., Nelson, G.L., Lin, H., Smith, A.M., Howe,          56. Idreos, S., Papaemmanouil, O., Chaudhuri, S.: Overview of data
+     B., Heer, J.: Formalizing visualization design knowledge as con-             exploration techniques. In: SIGMOD, pp. 277–281 (2015)
+     straints: actionable and extensible models in draco. TVCG 25(1),         57. Bikakis, N.: Big data visualization tools. arXiv:1801.08336
+     438–448 (2019)                                                               (2018)
+ 36. Siddiqui, T., Kim, A., Lee, J., Karahalios, K., Parameswaran,            58. Adomavicius, G., Tuzhilin, A.: Toward the next generation of rec-
+     A.G.: Effortless data exploration with zenvisage: an expressive              ommender systems: a survey of the state-of-the-art and possible
+     and interactive visual analytics system. PVLDB 10(4), 457–468                extensions. TKDE 6, 734–749 (2005)
+     (2016)                                                                   59. Burke, R.: Hybrid recommender systems: survey and exper-
+ 37. Qin, X., Luo, Y., Tang, N., Li, G.: DeepEye: visualizing your data           iments. User Model. User-Adapted Interact. 12(4), 331–370
+     by keyword search. In: EDBT Vision (2018)                                    (2002)
+ 38. Seo, J., Shneiderman, B.: A rank-by-feature framework for inter-         60. Sharma, L., Gera, A.: A survey of recommendation system:
+     active exploration of multidimensional data. IV 4(2), 96–113                 research challenges. IJETT 4(5), 1989–1992 (2013)
+     (2005)                                                                   61. Bobadilla, J., Ortega, F., Hernando, A., Gutiérrez, A.: Recom-
+ 39. Mackinlay, J.D., Hanrahan, P., Stolte, C.: Show me: automatic                mender systems survey. Knowl. Based Syst. 46, 109–132 (2013)
+     presentation for visual analysis. TVCG 13(6), 1137–1144 (2007)           62. Christi, J.R., Premkumar, K.: Survey on recommendation and
+ 40. Wang, Y., Han, F., Zhu, L., Deussen, O., Chen, B.: Line graph                visualization techniques for QoS-aware web services. In: ICICES,
+     or scatter plot? Automatic selection of methods for visualizing              pp. 1–6 (2014)
+     trends in time series. TVCG 24(2), 1141–1154 (2018)                      63. Guy, I., Zwerdling, N., Carmel, D., Ronen, I., Uziel, E., Yogev, S.,
+ 41. Wongsuphasawat, K., Moritz, D., Anand, A., Mackinlay, J.D.,                  Ofek-Koifman, S.: Personalized recommendation of social soft-
+     Howe, B., Heer, J.: Voyager: exploratory analysis via faceted                ware items based on social relations. In: RecSys, pp. 53–60 (2009)
+     browsing of visualization recommendations. TVCG 22(1), 649–              64. Wei, K., Huang, J., Fu, S.: A survey of e-commerce recommender
+     658 (2016)                                                                   systems. In: ICSSSM, pp. 1–5 (2007)
+ 42. Kandel, S., Paepcke, A., Hellerstein, J., Heer, J.: Wrangler: inter-     65. Heer, J., Card, S.K., Landay, J.A.: prefuse: a toolkit for interactive
+     active visual specification of data transformation scripts. In: CHI,         information visualization. In: CHI, pp. 421–430 (2005)
+     pp. 3363–3372 (2011)                                                     66. Flare. http://flare.prefuse.org. Accessed 31 Dec 2018
+ 43. Von Landesberger, T., Kuijper, A., Schreck, T., Kohlhammer, J.,          67. Bostock, M., Heer, J.: Protovis: a graphical toolkit for visualiza-
+     van Wijk, J.J., Fekete, J.-D., Fellner, D.W.: Visual analysis of large       tion. TVCG 15(6), 1121–8 (2009)
+     graphs: state-of-the-art and future research challenges. Comput.         68. Satyanarayan, A., Russell, R., Hoffswell, J., Heer, J.: Reactive
+     Graph. Forum 30, 1719–1749 (2011)                                            vega: a streaming dataflow architecture for declarative interactive
+ 44. Herman, I., Melançon, G., Marshall, M.S.: Graph visualization                visualization. TVCG 22(1), 659–668 (2015)
+     and navigation in information visualization: a survey. TVCG 6(1),        69. Khan, M., Khan, S.S.: Data and information visualization meth-
+     24–43 (2000)                                                                 ods, and interactive mechanisms: a survey. Int. J. Comput. Appl.
+ 45. Beck, F., Burch, M., Diehl, S., Weiskopf, D.: A taxonomy and                 34(1), 1–14 (2011)
+     survey of dynamic graph visualization. Comput. Graph. Forum              70. Wilkinson, L.: The Grammar of Graphics. Springer, Berlin (2005)
+     36(1), 133–159 (2017)                                                    71. Wickham, H.: A layered grammar of graphics. J. Comput. Graph.
+ 46. Bikakis, N., Sellis, T.: Exploration and visualization in the web            Stat. 19(1), 3–28 (2010)
+     of big linked data: a survey of the state of the art. arXiv preprint     72. VanderPlas, J., Granger, B.E., Heer, J., Moritz, D., Wongsupha-
+     arXiv:1601.08059 (2016)                                                      sawat, K., Satyanarayan, A., Lees, E., Timofeev, I., Welsh, B.,
+ 47. Marie, N., Gandon, F.: Survey of linked data based exploration               Sievert, S.: Altair: interactive statistical visualizations for python.
+     systems. In: IESD (2014)                                                     https://altair-viz.github.io. Accessed 31 Dec 2018
+ 48. Dadzie, A.-S., Pietriga, E.: Visualisation of linked data-reprise.       73. Echarts. http://echarts.baidu.com. Accessed 31 Dec 2018
+     Semant. Web 8(1), 1–21 (2017)                                            74. Shneiderman, B.: Direct manipulation: a step beyond program-
+                                                                                  ming languages. IEEE Comput. 16(8), 57–69 (1983)
+
+
+
+                                                                                                                                            123
+116                                                                                                                                     X. Qin et al.
+
+
+75. Qlik: Data analytics for modern business intelligence. https://         97. Chan, S.-M., Xiao, L., Gerth, J., Hanrahan. P.: Maintaining inter-
+    www.qlik.com/us. Accessed 31 Dec 2018                                       activity while exploring massive time series. In: VAST, pp. 59–66
+76. Gonzalez, H., Halevy, A.Y., Jensen, C.S., Langen, A., Madha-                (2008)
+    van, J., Shapley, R., Shen, W., Goldberg-Kidon, J.: Google fusion       98. Battle, L., Chang, R., Stonebraker, M.: Dynamic prefetching of
+    tables: web-centered data management and collaboration. In: SIG-            data tiles for interactive visualization. In: SIGMOD, pp. 1363–
+    MOD, pp. 1061–1066 (2010)                                                   1375 (2016)
+77. Ren, D., Höllerer, T., Yuan, X.: iVisDesigner: expressive interac-      99. Alabi, D., Wu, E.: PFunk-H: approximate query processing using
+    tive design of information visualizations. TVCG 20(12), 2092–               perceptual models. In: HILDA@SIGMOD, pp. 10–16 (2016)
+    2101 (2014)                                                            100. Bikakis, N., Papastefanatos, G., Skourla, M., Sellis, T.: A hier-
+78. Satyanarayan, A., Heer, J.: Lyra: An interactive visualization              archical aggregation framework for efficient multilevel visual
+    design environment. https://idl.cs.washington.edu/projects/lyra/.           exploration and analysis. Semant. Web 8(1), 139–179 (2017)
+    Accessed 31 Dec 2018                                                   101. Elmqvist, N., Fekete, J.D.: Hierarchical aggregation for informa-
+79. Yalçın, M.A., Elmqvist, N., Bederson, B.B.: Keshif: Rapid and               tion visualization: overview, techniques, and design guidelines.
+    expressive tabular data exploration for novices. TVCG 24(8),                TVCG 16(3), 439–454 (2010)
+    2339–2352 (2018)                                                       102. Pahins, C.A., Stephens, S.A., Scheidegger, C., Comba, J.L.:
+80. Liu, Z., Thompson, J., Wilson, A., Dontcheva, M., Delorey, J.,              Hashedcubes: simple, low memory, real-time visual exploration
+    Grigg, S., Kerr, B., Stasko, J.: Data illustrator. http://www.zcliu.        of big data. TVCG 23(1), 671–680 (2016)
+    org/di/. Accessed 31 Dec 2018                                          103. Moritz, D., Howe, B., Heer, J.: Falcon: balancing interactive
+81. Liu, Z., Thompson, J., Wilson, A., Dontcheva, M., Delorey, J.,              latency and resolution sensitivity for scalable linked visualiza-
+    Grigg, S., Kerr, B., Stasko, J.T.: Data illustrator: Augmenting vec-        tions. In: CHI, p. 694 (2019)
+    tor design tools with lazy data binding for expressive visualization   104. Tauheed, F., Heinis, T., Shrmann, F., Markram, H., Ailamaki, A.:
+    authoring. In: CHI, p. 123 (2018)                                           SCOUT: prefetching for latent feature following queries. PVLDB
+82. Warren, L.: The visual display of quantitative information. Yale            5(11), 1531–1542 (2012)
+    J. Biol. Med. 44(4), 400–400 (1986)                                    105. Yesilmurat, S.: Retrospective adaptive prefetching for interactive
+83. Wongsuphasawat, K., Qu, Z., Moritz, D., Chang, R., Ouk, F.,                 web gis applications. Geoinformatica 16(3), 435–466 (2012)
+    Anand, A., Mackinlay, J.D., Howe, B., Heer, J.: Voyager 2: aug-        106. Dong, H.L., Kim, J.S., Kim, S.D., Kim, K.C., Yoosung, K., Park,
+    menting visual analysis with partial view specifications. In: CHI,          J.: Adaptation of a neighbor selection markov chain for prefetch-
+    pp. 2648–2659 (2017)                                                        ing tiled web GIS data. In: ADVIS, pp. 213–222 (2002)
+84. Key, A., Howe, B., Perry, D., Aragon, C.R.: Vizdeck: self-             107. Fua, Y.H., Ward, M.O., Rundensteiner, E.A.: Structure-based
+    organizing dashboards for visual analytics. In: SIGMOD, pp.                 brushes: a mechanism for navigating hierarchically organized data
+    681–684 (2012)                                                              and information spaces. TVCG 6(2), 150–159 (2000)
+85. Kandel, S., Parikh, R., Paepcke, A., Hellerstein, J.M., Heer, J.:      108. Tao, W., Liu, X., Demiralp, Ç., Chang, R., Stonebraker, M.: Kyrix:
+    Profiler: integrated statistical analysis and visualization for data        Interactive visual data exploration at scale. In: CIDR (2019)
+    quality assessment. In: AVI, pp. 547–554 (2012)                        109. Broy, M., Denert, E., Bayer, R., McCreight, E.: Organization and
+86. Elzen, S.V.D., van Wijk, J.J.: Small multiples, large singles: a            maintenance of large ordered indexes. In: Broy, M., Denert, E.
+    new approach for visual data exploration. Comput. Graph. Forum              (eds.) Software Pioneers. Springer, Berlin, Heidelberg (2002)
+    32(3pt2), 191–200 (2013)                                               110. Wongsuphasawat, K., Moritz, D., Anand, A., Mackinlay, J.D.,
+87. Wilkinson, L., Anand, A., Grossman, R.: Graph-theoretic                     Howe, B., Heer, J.: Towards a general-purpose query language
+    scagnostics. In: IEEE Symposium on Information Visualization,               for visualization recommendation. In: HILDA@SIGMOD, pp.
+    2005. IEEE, Minneapolis, MN, USA (2005)                                     4–9 (2016)
+88. Mackinlay, J.: Automating the design of graphical presentations of     111. Roth, S.F., Kolojejchick, J., Mattis, J., Goldstein, J.: Interactive
+    relational information. ACM Trans. Graph. 5(2), 110–141 (1986)              graphic design using automatic presentation knowledge. In: CHI,
+89. Setlur, V., Battersby, S.E., Tory, M., Gossweiler, R., Chang, A.X.:         p. 207 (1994)
+    Eviza: A natural language interface for visual analysis. In: UIST,     112. Casner, S.M.: Task-analytic approach to the automated design of
+    pp. 365–377 (2016)                                                          graphic presentations. ACM Trans. Graph. 10(2), 111–151 (1991)
+90. Hoque, E., Setlur, V., Tory, M., Dykeman, I.: Applying pragmatics      113. Bertin, J.: Semiology of graphics - diagrams, net-
+    principles for interaction with visual analytics. TVCG 24(1), 309–          works,       maps.      ESRI.      ISBN:       978-1-58948-261-6.
+    318 (2017)                                                                  http://esripress.esri.com/display/index.cfm?fuseaction
+91. Wu, E., Battle, L., Madden, S.R.: The case for data visualiza-              =display&websiteID=190&moduleID=0 (2010)
+    tion management systems: vision paper. PVLDB 7(10), 903–906            114. Cleveland, W.S., McGill, R.: Graphical perception: theory, exper-
+    (2014)                                                                      imentation, and application to the development of graphical
+92. Wu, E., Psallidas, F., Miao, Z., Zhang, H., Rettig, L., Wu, Y., Sel-        methods. ASA 79(387), 531–554 (1984)
+    lam, T.: Combining design and performance in a data visualization      115. Shepard, R.N.: Toward a universal law of generalization for psy-
+    management system. In: CIDR (2017)                                          chological science. Science 242(4880), 1317–1323 (1988)
+93. Lins, L., Klosowski, J.T., Scheidegger, C.: Nanocubes for real-        116. Lewandowsky, Stephan, Spence, Ian: Discriminating strata in
+    time exploration of spatiotemporal datasets. TVCG 19(12), 2456–             scatterplots. ASA 84(407), 682–688 (1989)
+    2465 (2013)                                                            117. Hu, K.Z., Orghian, D., Hidalgo, C.A.: DIVE: a mixed-initiative
+94. Pang, Z., Wu, S., Chen, G., Chen, K., Shou, L.: FlashView: an               system supporting integrated data exploration workflows. In:
+    interactive visual explorer for raw data. PVLDB 10(12), 1869–               HILDA@SIGMOD, pp. 5:1–5:7 (2018)
+    1872 (2017)                                                            118. Cleveland, W.S.: Robust locally weighted regression and smooth-
+95. Zoumpatianos, K., Idreos, S., Palpanas, T.: Indexing for interac-           ing scatterplots. ASA 74(368), 829–836 (1979)
+    tive exploration of big data series. In: SIGMOD, pp. 1555–1566         119. Silverman, B.W.: Density estimation for statistics and data anal-
+    (2014)                                                                      ysis. Springer, pp. 1–158 (1986). https://doi.org/10.1007/978-1-
+96. Piringer, H., Tominski, C., Muigg, P., Berger, W.: A multi-                 4899-3324-9
+    threading architecture to support interactive visual exploration.
+    TVCG 15(6), 1113–1120 (2009)
+
+
+123
+Making data visualization more efficient and effective: a survey                                                                                 117
+
+
+120. Dibia, V., Demiralp, Ç.: Data2Vis: Automatic generation of data        137. Soboroff, I., Nicholas, C.: Combining content and collaboration
+     visualizations using sequence to sequence recurrent neural net-             in text filtering. In: IJCAI, pp. 86–91 (1999)
+     works. CoRR, abs/1804.03126 (2018)                                     138. Mutlu, B., Veas, E., Trattner, C.: VizRec: recommending person-
+121. Burges, C., Shaked, T., Renshaw, E., Lazier, A., Deeds, M., Hamil-          alized visualizations. TIIS 6(4), 31 (2016)
+     ton, N., Hullender, G.: Learning to rank using gradient descent.       139. Wu, E., Madden, S.R.: Scorpion: explaining away outliers in
+     In: Proceedings of the 22nd International Conference on Machine             aggregate queries. In: PVLDB, pp. 553–564 (2013)
+     Learning, pp. 89–96 (2005)                                             140. Song, H., Szafir, D.A.: Where’s my data? Evaluating visualiza-
+122. Herbrich, R., Graepel, T., Obermayer, K.: Support vector learning           tions with missing data. IEEE Trans. Vis. Comput. Graph. 25(1),
+     for ordinal regression. In: ICANN, vol. 1, pp. 97–102 (2002)                914–924 (2019)
+123. Kim, Y., Heer, J.: Assessing effects of task and data distribution     141. Battle, L., Angelini, M., Binnig, C., Catarci, T., Eichmann,
+     on the effectiveness of visual encodings. Comput. Graph. Forum              P., Fekete, J., Santucci, G., Sedlmair, M., Willett, W.: Eval-
+     37(3), 157–167 (2018)                                                       uating visual data analysis systems: a discussion report. In:
+124. Saket, B., Endert, A., Demiralp, C.: Task-based effectiveness of            HILDA@SIGMOD, pp. 4:1–4:6 (2018)
+     basic visualizations. TVCG PP(99), 1–1 (2017)                          142. Battle, L., Chang, R., Heer, J., Stonebraker, M.: Position state-
+125. Quinlan, J.R.: Induction of decision trees. Mach. Learn. 1(1), 81–          ment: the case for a visualization performance benchmark. In:
+     106 (1986)                                                                  DSIA, pp. 1–5 (2017)
+126. Wu, Q., Burges, C.J., Svore, K.M., Gao, J.: Ranking, boosting, and     143. Jiang, L., Rahman, P., Nandi, A.: Evaluating interactive data
+     model adaptation. Technical report, Microsoft Research (2008)               systems: workloads, metrics, and guidelines. In: SIGMOD, pp.
+127. Epelbaum, T.: Deep learning: technical introduction. CoRR,                  1637–1644 (2018)
+     arXiv:1709.01412 (2017)                                                144. Hu, K.Z., Gaikwad, S.N.S., Hulsebos, M., Bakker, M.A.,
+128. Sutskever, I., Vinyals, O., Le, Q.V.: Sequence to sequence learning         Zgraggen, E., Hidalgo, C.A., Kraska, T., Li, G., Satyanarayan, A.,
+     with neural networks. NIPS 4, 3104–3112 (2014)                              Demiralp, Ç.: Viznet: Towards A large-scale visualization learn-
+129. Bahdanau, D., Cho, K., Bengio, Y.: Neural machine translation by            ing and benchmarking repository. In: CHI, pp. 662 (2019)
+     jointly learning to align and translate. Comput. Sci. arXiv preprint   145. Valizadegan, H., Jin, R., Zhang, R., Mao, J.: Learning to rank by
+     arXiv:1409.0473 (2014)                                                      optimizing NDCG measure. In: NIPS, pp. 1883–1891 (2009)
+130. Sundermeyer, M., Schlüter, R., Ney, H.: LSTM neural networks           146. Rezig, E.K., Cao, L., Stonebraker, M., Simonini, G., Tao, W.,
+     for language modeling. In: Interspeech, pp. 601–608 (2012)                  Madden, S., Ouzzani, M., Tang, N., Elmagarmid, A.K.: Data civ-
+131. Hochreiter, S., Schmidhuber, J.: Long short-term memory. Neural             ilizer 2.0: a holistic framework for data preparation and analytics.
+     Comput. 9(8), 1735–1780 (1997)                                              PVLDB 12(12), 1954–1957 (2019)
+132. Poco, J., Heer, J.: Reverse-engineering visualizations: recovering     147. Rezig, E.K., Cao, L., Simonini, G., Schoemans, M., Madden, S.,
+     visual encodings from chart images. Comput Graph Forum 36(3),               Ouzzani, M., Tang, N., Stonebraker, M.: Dagger: a data (not code)
+     353–363                                                                     debugger. In: CIDR (2020)
+133. Sakoe, H., Chiba, S.: Dynamic programming algorithm optimiza-
+     tion for spoken word recognition. IEEE Trans. Acoust. Speech
+     Signal Process. 26(1), 159–165 (1990)
+                                                                            Publisher’s Note Springer Nature remains neutral with regard to juris-
+134. Gotz, D., Wen, Z.: Behavior-driven visualization recommenda-
+                                                                            dictional claims in published maps and institutional affiliations.
+     tion. In: IUI, pp. 315–324 (2009)
+135. Schafer, J.B., Konstan, J., Riedl, J.: Recommender systems in e-
+     commerce. In: World Automation Congress, pp. 158–166 (1999)
+136. Liu, R.R., Jia, C.X., Zhou, T., Sun, D., Wang, B.H.: Personal
+     recommendation via modified collaborative filtering. Physica A
+     Stat. Mech. Appl. 388(4), 462–468 (2012)
+
+
+
+
+                                                                                                                                        123
+

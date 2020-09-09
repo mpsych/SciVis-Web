@@ -1,0 +1,265 @@
+                                 Proceedings of the Ninth International AAAI Conference on Web and Social Media
+
+
+
+
+                              Interactive Visual Graph Analytics on the Web
+
+                           Nesreen K. Ahmed                                                 Ryan A. Rossi
+                              Purdue University                                              Purdue University
+                            nkahmed@purdue.edu                                              rrossi@purdue.edu
+
+
+
+
+                            Abstract                                        G RAPH V IS is web-based working directly from the browser.
+                                                                            Furthermore, another key difference is that G RAPH V IS
+     We present a web-based network visual analytics plat-                  is designed to be consistent with the way humans learn
+     form called G RAPH V IS that combines interactive visu-
+                                                                            via immediate-feedback upon every user interaction (e.g.,
+     alizations with analytic techniques to reveal important
+     patterns and insights for sense making, reasoning, and                 change of a slider for filtering) (Ahlberg, Williamson, and
+     decision-making. The platform is designed with sim-                    Shneiderman 1992; Thomas and Cook 2005; Rossi and
+     plicity in mind and allows users to visualize and ex-                  Ahmed 2015a). Thus, users have rapid, incremental, and re-
+     plore networks in seconds with a simple drag-and-drop                  versible control over all graph queries with immediate and
+     of a graph file into the web browser. G RAPH V IS is                   continuous visual feedback.
+     fast and flexible, web-based, requires no installation,                   While G RAPH V IS serves as a flexible web-based plat-
+     while supporting a wide range of graph formats as well                 form for visual interactive graph mining, it also has a num-
+     as state-of-the-art visualization and analytic techniques.             ber of features that differentiate it from other offline visu-
+     In particular, the multi-level network analysis engine                 alization tools. We summarize a few of the important and
+     of G RAPH V IS gives rise to a variety of new possibil-
+     ities for exploring, analyzing, and understanding com-
+                                                                            differentiating features below1 .
+     plex networks interactively in real-time. Finally, we also             • Drag-and-drop graph file(s) to quickly visualize and inter-
+     highlight other key aspects including filtering, querying,               actively explore networks in seconds.
+     ranking, manipulating, exporting, partitioning (commu-
+     nity/role discovery), as well as tools for dynamic net-                • Support for a wide variety of graph formats such as edge-
+     work analysis and visualization, interactive graph gen-                  lists (txt, csv, tsv, mtx, etc), XML-based formats (gexf,
+     erators (including two new block model approaches),                      graphml), and a variety of others (gml, json, net/pajek).
+     and a variety of multi-level network analysis and statis-
+                                                                            • Online profile and system to help manage your data, set-
+     tical techniques.
+                                                                              tings, visualizations, etc.
+                                                                               1
+                        Introduction                                             Note that while some of the features below seemingly over-
+                                                                            lap with those found in other visualization platforms, the key dif-
+Network analysis and graph mining play a prominent role                     ference is the simplicity and degree of interactivity provided, as
+in providing insights and studying phenomena across vari-                   the features in G RAPH V IS are designed for rapid interactive visual
+ous domains, including social, behavioral, biological, trans-               feedback after each human interaction/event.
+portation, entertainment, and financial domains. This pa-
+per presents a web-based network visual analytics platform
+called G RAPH V IS (http://graphvis.com) that integrates pow-
+erful statistical analysis, graph mining, and machine learn-
+ing techniques with interactive visualization to aid in the dis-
+covery of important patterns and insights for sense making,
+reasoning, and decision-making.
+   G RAPH V IS is a visual analytics tool for network data,
+designed for rapid interactive visual exploration and graph
+mining (Figure 1). Starting from a simple drag-and-drop
+of a graph file into the browser, users can move from data
+to insights within seconds. Unlike other network visual-
+ization software (such as Gephi (Bastian et al. 2009) and
+Tulip (Auber 2004)) that requires installation and updates,
+Copyright c 2015, Association for the Advancement of Artificial
+Intelligence (www.aaai.org). All rights reserved.                                        Figure 1: Screenshot of G RAPH V IS
+
+
+
+                                                                      566
+• Export visualizations as high-quality images (SVG, PNG)
+  as well as (transformed/filtered) graph data, attributes, etc
+  (Figure 2).
+• All macro and microscopic graph properties and statis-
+  tics (triangles, graphlets, kcore, etc.) are automatically up-
+  dated in an efficient manner after each graph manipula-
+  tion is performed such as inserting and deleting nodes and
+  links.
+• Mouseover nodes to analyze their microscopic properties
+  (e.g., betweenness, PageRank, number of triangles).
+• Real-time visual graph filtering and querying capabilities
+  including chaining multiple filters as well as exporting the
+  resulting data for other tasks.
+• To aid the analytic process, both nodes and edges may be
+  colored and sized according to a variety of network prop-
+  erties (k-core number, eccentricity, etc) or customized by
+  the user.
+• Subgraphs may be selected by brushing over interesting
+  regions of the network visually (i.e., click-and-drag while
+  holding shift). Multiple selections from different regions
+  of the graph are also supported.
+• Brushed nodes, edges, and subgraphs may be deleted (by                        Figure 2: Exported SVG image from G RAPH V IS
+  pressing ‘D’), or manually adjusted by clicking on a se-
+  lected node and dragging to the desired location.
+                                                                         Interactive Multi-level Visual Graph Analytics
+• Interactive graph generation including three newly pro-
+  posed block model approaches that capture community                    Visual analytic tools need to allow for interacting and rea-
+  structure.                                                             soning across multiple simultaneous scales of data represen-
+                                                                         tations (Ebert et al. 2014). Thus, we developed G RAPH V IS
+• Nodes, edges, and subgraph patterns (cliques, stars,
+                                                                         with a multi-scale visual analytics engine to support (visual)
+  chains, cycles, as well as probabilistic patterns via block
+                                                                         interactive network exploratory analysis at both the global
+  models, etc) are also easily added with a simple click to
+                                                                         macro-level as well as the local microscopic level. Visual
+  allow for easy exploration, hypothesis testing (e.g., what
+                                                                         graph mining and machine learning techniques lie at the
+  if scenarios, as well as simulations to understand the im-
+                                                                         heart of G RAPH V IS and provide the analysts with a set of
+  pact of insertions/deletion on the local and global net-
+                                                                         powerful tools to discover key insights and reveal impor-
+  work), or simply to quickly generate a benchmark net-
+                                                                         tant structural patterns interactively in real-time. Such an
+  work for testing correctness of an algorithm.
+                                                                         approach is vital for interactively exploring big data in real-
+• Tools for dynamic network analysis and visualization.                  time by summarizing its patterns, statistics (binning, distri-
+• Powerful graph mining and learning techniques are devel-               butions, etc), as well as spotting anomalies. Statistical tech-
+  oped including interactive visual role discovery as well as            niques are used to find interesting nodes, allowing the user
+  advanced network analysis methods such as triangle-core                to sort through the top-k most interesting nodes for further
+  decomposition.                                                         investigation.
+                                                                            Every update, insertion, or deletion of a node, edge, or
+• Node information may also be updated easily via double-                subgraph is immediately reflected in the visualization win-
+  clicking the node.                                                     dow. Furthermore, the visualization and analytics are also
+• Nearly all visualizations are interactive and support                  updated immediately upon any parameter change via sliders
+  brushing, linking, zooming, panning, tooltips, etc.                    or other interface controls. This allows to quickly test a hy-
+• Multiple visual representations of the graph data are sup-             pothesis as well as investigate the impact of certain actions
+  ported, including the multi-level graph properties (e.g., in-          on the network structure and its properties/statistics. For in-
+  teractive scatter plot matrix, and other statistical plots).           stance, suppose we use betweenness to filter the graph, as we
+                                                                         adjust the slider, the analyst receives visual feedback imme-
+• Network may also be searched via textual query (e.g.,                  diately at each change in the slider (in contrast to adjusting
+  node name).                                                            the slider to the desired value, then receiving feedback on
+• There are many other features including full customiza-                the selection2 .
+  tion of the visualization (color, size, opacity, background,
+                                                                            2
+  fonts, etc), text annotation, graph layouts, collision detec-               This type of visual network analysis is also extremely useful
+  tion, fish eye, and many others.                                       for learning and education, since students can quickly grasp the be-
+                                                                         havior of the statistical techniques through interactive exploration.
+
+
+
+
+                                                                   567
+                                                                         Links may also be analyzed more closely using a similar
+                                                                      approach. A few important link measures are available in-
+                                                                      cluding triangle-core numbers, number of triangles incident
+                                                                      to an edge, as well as a variety of other measures.
+
+                                                                      Graph Partitioning Methods
+                                                                      G RAPH V IS provides a diverse collection of visual interac-
+                                                                      tive graph partitioning methods. For example, community
+                                                                      detection, role discovery (Rossi and Ahmed 2015b), and
+                                                                      graph coloring. All graph partitioning methods are designed
+                                                                      to be efficient taking at most linear time in the number of
+                                                                      edges to compute.
+
+                                                                      Distributions of Measures
+                                                                      Node and link summarization techniques (e.g., bin-
+                                                                      ning/histograms, statistical distributions) are used to obtain
+                                                                      fast, meaningful and useful data representations. For exam-
+                                                                      ple, we leverage binning methods to interactively compute
+                                                                      and maintain the frequency distribution of some graph prop-
+Figure 3: Node profile tools highlight important properties           erties (e.g., degree distribution) upon any update, insertion,
+including microscopic and neighborhood information                    or deletion of a node, edge, or subgraph. Furthermore, we
+                                                                      also interactively plot the cumulative distribution function
+                                                                      (CDF) and the complementary CDF, which are easily com-
+Macro-level Interactive Graph Analysis                                puted from the frequency distribution. These are known to
+At the macroscopic level, we use a variety of key network             be important for networks, capturing interesting structural
+properties. A few of these include max/mean degree, total             properties (e.g., heavy-tailed distributions). Furthermore, we
+triangles, global clustering, max k-core number, diameter,            also utilize sampling (Ahmed et al. 2014) as well as fast
+mean distance, approx. chromatic number, number of com-               ranking algorithms for displaying top-k nodes, links, and
+munities/roles, and max triangle-core number. To help guide           subgraphs to the user for further exploration. In addition to
+the interactive exploration, we display many of the important         distributions, the macro-level measures are also useful for
+macro properties that help characterize the global structure          big graph data and vital to the multi-level strategy offered
+of the network in the visualization window.                           by G RAPH V IS.
+   Moreover, statistical aggregates (mean, max, mode, sum,
+var) are used to summarize the global structure and behavior                     Interactive Graph Generation
+of the network.                                                       Graph generators are useful for simulations, testing algo-
+                                                                      rithms, assumptions, benchmarks, etc (Barabási and Cran-
+Micro-level Interactive Node & Edge Analysis                          dall 2003). The interactive graph generators developed in
+To facilitate the discovery process, G RAPH V IS provides
+interactive exploration at the microscopic level, e.g., us-
+ing edge and node degree, eccentricity, k-core number, and
+triangle-core number. In addition, many important social
+network analysis measures are used in the interactive visual
+analytics including betweenness, number of triangles, clus-
+tering coefficient, path lengths, PageRank, and many others.
+   These node and edge properties are displayed in visual
+form and can be explored/manipulated directly by the user in
+a free-flowing manner (e.g., using brushing, linking, zoom-
+ing, mouseover, filtering, etc). For instance, the neighbor-
+hood of a node can be highlighted as well as its micro-level
+statistics and properties (Figure 3).
+   Multiple visual representations of the graph data are also
+provided. For example, G RAPH V IS leverages an interactive
+scatter plot matrix for analysis of the correlation between
+pairs of node statistics (Figure 4). We also support brush-
+ing to allow users to highlight interesting nodes (and links)         Figure 4: Microscopic network properties may be interac-
+across the various measures. Furthermore, semantic zoom-              tively analyzed using scatter plot matrices. G RAPH V IS sup-
+ing can be used to drill-down in order to understand the dif-         ports interactive techniques such as brushing, linking, high-
+ferences between individual nodes and links.                          lighting, as well as semantic zooming.
+
+
+
+                                                                568
+this work are broadly categorized into
+1) Model-based synthetic graph generation and visualiza-
+  tion, using standard models such as Erdős-Rényi, Chung-
+  Lu (CL) (Aiello, Chung, and Lu 2001), and preferential
+  attachment (PA) (Barabási and Crandall 2003).
+2) Pattern-based synthetic graph generation and visual-
+  ization, using subgraph patterns such as nodes, edges,
+  cliques, stars, cycles, and chains.
+3) Hybrid synthetic graph generation and visualization that
+  allows users to generate graphs using a standard model
+  (such as Erdős-Rényi) in addition to adding certain pat-
+  terns to the generated graph (e.g., cliques, and stars).
+
+
+
+                                                                       Figure 6: Interactive visual exploration of the Enron email
+                                                                       communication dynamics. Using a window of approx. six
+                                                                       hours, we immediately see many of the major players in-
+                                                                       volved in the Enron scandal.
+
+
+                                                                       interactive visual exploration and graph mining. Further-
+                                                                       more, it integrates macro and microscopic statistical tech-
+                                                                       niques as well as graph mining and machine learning with
+         (a) Block PA               (b) Block Chung-Lu                 interactive visualization to aid in the discovery of impor-
+                                                                       tant patterns and insights for sense making, reasoning, and
+Figure 5: Networks generated from the proposed Block-PA                decision-making.
+(BPA) and Block-CL (BCL) models.
+                                                                                                 References
+   For capturing community-structure, we proposed three                Ahlberg, C.; Williamson, C.; and Shneiderman, B. 1992. Dynamic
+additional block model approaches that combine multiple                queries for information exploration: An implementation and evalu-
+one-stage probabilistic models such as Chung-Lu, Erdős-               ation. In Proc. of SIGCHI, 619–626.
+Rényi, or preferential attachment by probabilistically creat-         Ahmed, N. K.; Duffield, N.; Neville, J.; and Kompella, R. 2014.
+ing inter-community edges. See Figure 5 for an illustration.           Graph sample and hold: A framework for big-graph analytics. In
+Notably, these block-model approaches may also be used as              SIGKDD, 1–10.
+patterns allowing the user to interactively experiment with            Aiello, W.; Chung, F.; and Lu, L. 2001. A random graph model for
+adding various patterns to already existing networks in the            power law graphs. Exp. Math. 10(1):53–66.
+visualization window.                                                  Auber, D. 2004. Tulip – a huge graph visualization framework. In
+                                                                       Graph Drawing Software. Springer. 105–126.
+          Dynamic Network Exploration                                  Barabási, A. L., and Crandall, R. E. 2003. Linked: The new science
+                                                                       of networks. Amer. J. of Physics 71(4):409–410.
+Dynamic networks arise in many settings (e.g, email com-               Bastian, M.; Heymann, S.; Jacomy, M.; et al. 2009. Gephi: an open
+munications). To understand the evolution and dynamic pat-             source software for exploring and manipulating networks. ICWSM
+terns in networks, G RAPH V IS provides tools to interactively         8:361–362.
+analyze the evolution of the graph over time (Figure 6). In            Ebert, D.; Gaither, K.; Jang, Y.; and Lasher-Trapp, S. 2014. Cross-
+particular, users can filter temporal networks by date and             scale, multi-scale, and multi-source data visualization and analysis
+time. Additionally, the time scale can be selected (via brush-         issues and opportunities. In Scientific Visualization. Spr. 353–360.
+ing) and adapted based on the application or data proper-              Rossi, R. A., and Ahmed, N. K. 2015a. The network data repos-
+ties. This controls the range of time being visualized. Using          itory with interactive graph analytics and visualization. In Pro-
+these tools, analysts can begin to understand the dynamics             ceedings of the Twenty-Ninth AAAI Conference on Artificial Intel-
+and trends present in the network (e.g., seasonality, spike,           ligence.
+trends).                                                               Rossi, R. A., and Ahmed, N. K. 2015b. Role discovery in networks.
+                                                                       TKDE 27(4):1112–1131.
+                        Conclusion                                     Thomas, J. J., and Cook, K. A. 2005. Illuminating the Path: the
+                                                                       research and development agenda for visual analytics. IEEE Com-
+This paper introduced a web-based interactive visual analyt-           puter Society.
+ics platform for graph and network data. Our work is based
+on a multi-level visual analytics engine, designed for rapid
+
+
+
+                                                                 569
+

@@ -1,0 +1,736 @@
+      Cartography and Geographic Information Science
+
+
+
+
+      ISSN: 1523-0406 (Print) 1545-0465 (Online) Journal homepage: https://www.tandfonline.com/loi/tcag20
+
+
+
+
+Web-based 4D visualization of marine geo-data
+using WebGL
+
+Bernd Resch, Ralf Wohlfahrt & Christoph Wosniok
+
+To cite this article: Bernd Resch, Ralf Wohlfahrt & Christoph Wosniok (2014) Web-based 4D
+visualization of marine geo-data using WebGL, Cartography and Geographic Information Science,
+41:3, 235-247, DOI: 10.1080/15230406.2014.901901
+
+To link to this article: https://doi.org/10.1080/15230406.2014.901901
+
+
+
+
+       © 2014 The Author(s). Published by Taylor &
+       Francis.
+
+
+       Published online: 25 Mar 2014.
+
+
+
+       Submit your article to this journal
+
+
+
+       Article views: 6130
+
+
+
+       View related articles
+
+
+
+       View Crossmark data
+
+
+
+       Citing articles: 22 View citing articles
+
+
+
+
+                      Full Terms & Conditions of access and use can be found at
+             https://www.tandfonline.com/action/journalInformation?journalCode=tcag20
+Cartography and Geographic Information Science, 2014
+Vol. 41, No. 3, 235–247, http://dx.doi.org/10.1080/15230406.2014.901901
+
+
+
+
+                              Web-based 4D visualization of marine geo-data using WebGL
+                                           Bernd Rescha,b,c,d*, Ralf Wohlfahrte and Christoph Wosniokf
+    a
+      Institute of Geography–GIScience, University of Heidelberg, Berliner Strasse 48, 69120 Heidelberg, Germany; bDepartment of
+  GIScience, University of Salzburg, Salzburg, Austria; cCenter for Geographic Analysis, Harvard University, Cambridge, MA, USA;
+   d
+     SENSEable City Lab, MIT, Cambridge, MA, USA; eInstitute for Geoinformatics and Remote Sensing, University of Osnabrueck,
+                Osnabrueck, Germany; fFederal Waterways Engineering and Research Institute (BAW), Hamburg, Germany
+                                               (Received 30 September 2013; accepted 30 December 2013)
+
+        For marine logistics and maintenance of extensive and expensive marine engineering projects in the coastal zone, it is
+        essential that institutions provide the public with relevant information in an easily understandable yet comprehensive
+        manner over the web. A perennial challenge, however, has been the development of spatio-temporal (four-dimensional
+        (4D)) geo-visualization algorithms to enable the integration of time-varying geo-information in map-based visualizations on
+        the Internet. In this paper, we address the challenge of visualizing marine spatial data in web-based applications through a
+        4D visualization concept, focusing on usability criteria, performance parameters, the required implementation effort, and
+        delivering a breath of spatial information that supports decision-making on multiple levels. We used Web Graphic Library
+        (WebGL) to validate our concept through a prototypical implementation. In our technology evaluation, WebGL proved
+        highly suitable for the development of interactive, responsive, efﬁcient, and mobile web-based Geographic Information
+        applications, including 2D, 3D, and 4D (spatiotemporal) content. During our research, we identiﬁed a number of open
+        research questions, including mapping graphic variables to thematic expressivity, representation of the time dimension in
+        4D systems, generic temporal generalization, and integration of (pseudo-)photorealistic illustrations in web-based geo-
+        visualization systems.
+        Keywords: web-based 4D visualization; WebGL; time series; marine geo-data; usability
+
+
+Introduction                                                                              Information (GI) sector, spreading the concept of Internet-
+Planning for coastal development – for example, for build-                                based, map-centered information systems. Yet, many
+ing infrastructure, creating recreational areas, protecting                               research challenges remain, including ﬁnding the optimal
+the coastal zone from storms, etc. – requires careful plan-                               information density, not covering the orientation data in the
+ning and involving the public as well as planners in the                                  background with other information layers, and using the
+decisions to be made (Few, Brown, and Tompkins 2007).                                     “right” graphic variables to display (Bertin 1974). A spe-
+This also presents a challenge for geoinformatics research                                ciﬁc issue is the integration of time-varying geo-informa-
+                                                                                          tion into map-based visualization systems on the web.
+to develop visual simulations of the projects’ operations
+                                                                                              As a result, users of web-based geo-visualization sys-
+and for institutions running simulation models to present
+                                                                                          tems often encounter difﬁculties in interacting with the
+their results to the public in a comprehensive and easily
+                                                                                          systems and data presentation that is far from optimal.
+understandable manner (Kulawiak et al. 2010).
+                                                                                          Systems that are not well designed are not user friendly,
+    Because these simulations usually have three spatial
+and one temporal dimension, four-dimensional (4D) map-                                    especially for people who do not have much experience in
+ping of geospatial data on the web can signiﬁcantly con-                                  using map-based tools. On the other hand, too much
+tribute to solving the challenge of informing decision                                    simpliﬁcation might lead to a high level of abstraction in
+makers as well as the public about development in coastal                                 conveying complex spatiotemporal geographic processes.
+areas. In this context, the need for 4D web-based                                         The more abstract the visualization, the more disconnected
+Geographic Information Systems (WebGIS) is rising and                                     from the physical world the visualization is, and the more
+methods for 4D geo-data visualization are being developed                                 effort is required to interpret the information presented in
+for web-based geo-applications (Feng et al. 2011).                                        the digital environment.
+However, 4D representation of time-varying phenomena                                          In this paper, we address the need to present marine
+in geo-visualization tools has not yet been thoroughly stu-                               geo-data in web-based applications to nonexpert users by
+died. This is surprising as the fast rise of Google Earth since                           developing a web-based 4D visualization concept (see the
+its release in 2005 has revolutionized the Geographic                                     use case description later in the paper). The concept we
+
+*Corresponding author. Email: bernd.resch@geog.uni-heidelberg.de
+
+© 2014 The Author(s). Published by Taylor & Francis.
+This is an Open Access article distributed under the terms of the Creative Commons Attribution License (http://creativecommons.org/licenses/by/3.0), which permits
+unrestricted use, distribution, and reproduction in any medium, provided the original work is properly cited. The moral rights of the named author(s) have been asserted.
+236                                                        B. Resch et al.
+
+developed integrates usability-related criteria, performance       widely explored and their impact of perception has been
+parameters, the necessary implementation effort, and the           investigated for two dimensions (e.g., Garlandini and
+requirement of conveying enough information to support             Fabrikant et al. 2009), 3D/4D cases have not been thor-
+decision-making on multiple levels. In the validation of           oughly investigated. One reason for this might be that
+the concept through a prototypical implementation, we              Google Earth is mainly used to view quasi-static content
+used the Web Graphic Library (WebGL) (Khronos Group                such as satellite imagery, which captures a variety of
+2013), which scored best in our technology evaluation.             points of interest (PoI), or 3D city models.
+     It shall be mentioned that the presented approach                 The multidisciplinary ﬁeld of visual analytics conducts
+focuses mostly on explorative research rather than on an           research on visual representations and interaction techni-
+empirical evaluation of existing methods and principles.           ques, data representations and techniques for the presenta-
+This is due to the fact that spatiotemporal visualization of       tion, and publication of analytical results (Thomas and
+marine geo-processes is not a thoroughly developed                 Cook 2006), which strongly relates the presented research
+research area and thus not broadly represented in current          to this ﬁeld. Concepts for web-based geo-applications
+literature – particularly usability is still an underestimated     including 3D data representation have been examined in
+aspect in GI research.                                             various research projects using different technology
+     The research presented in this paper focuses on spa-          approaches. Shan (1998) developed a 3D WebGIS based
+tiotemporal visualization of geographic processes rather           on the Virtual Reality Modeling Language (VRML). Ming
+than on the thematic analysis of marine geo-data. In               (2008) extended this concept by the use of the X3D
+brief, our research aims to answer the following questions:        language. Compared with previous 2D WebGIS develop-
+                                                                   ments, a livelier environment facilitating a better under-
+   ● What are the requirements for representing marine             standing of the landscape was created. However, the
+     geo-data in 4D on the web?                                    complexity of VRML, the low compatibility with other
+   ● Which usability criteria need to be particularly con-         programming languages, and the need for a plug-in to
+     sidered with web-based 4D visualization of spatial            display content in a browser made it virtually unusable.
+     data?                                                         The successor to VRML, X3D, provides several interfaces
+   ● Which existing components are best suited as                  for accessing other resources. However, its visualization
+     underlying technologies for such a concept?                   capabilities for large data volumes are deﬁcient as there is
+   ● How can the developed web-based 4D geo-visuali-               no graphics processing unit (GPU) support (Ming 2008).
+     zation concept be validated through a prototypical                Another approach based on VRML was developed by
+     realization?                                                  Zhu, Tan, and Chan (2003). They focused on terrain
+                                                                   modeling in VRML using simple longitude/latitude coor-
+The paper is structured as follows: This introduction is           dinates combined with elevation values. The authors pre-
+followed by a description of related work in the area of           sent a web-based visualization method for 3D terrain. The
+web-based three-dimensional (3D) and 4D visualizations,            3D terrain model was constructed from a 2D contour data
+including a clear identiﬁcation of research gaps. Then, we         ﬁle of the Singapore terrain and integrated with a hybrid
+present our methodology for visualizing spatiotemporal mar-        2D–3D user interface. From this contour data, a Digital
+ine geo-data in web-based environments (including a                Elevation Model (DEM) was created in VRML, which has
+description of a study case and the deﬁnition of usability         built-in visualization mechanisms. Every point is categor-
+criteria, cognitive aspects, and design considerations), fol-      ized by its position, from which the elevation values for
+lowed by a description of the validation through a prototy-        the DEM are calculated. The data need to be preprocessed
+pical implementation (including a thorough evaluation of           for visualization with such methods as Level of Detail
+existing base technologies). Finally, we discuss our approach      before they can be presented in the Singapore Terrain
+in terms of advantages, limitations, and future research ave-      Explorer. The explorer makes it possible for users to
+nues, and end the paper with a number of key conclusions.          view GI by virtually ﬂying through the terrain.
+                                                                       In 2011, Hering et al. published a 3D campus informa-
+                                                                   tion system using WebGL. In this application, users can
+Related work                                                       move freely around the virtual campus of the University of
+Three-dimensional visualization of multi-temporal geo-             Koblenz, interact with objects, and retrieve information
+data is increasingly in the focus of academic research as          about buildings, persons, and objects. The application
+it has considerable advantages compared with two-dimen-            uses a highly detailed topographic polygon model created
+sional (2D) approaches in effectively conveying spatial            with the Blender 3D graphics software (Blender
+content (Jobst and Germanichs 2007). We are experien-              Foundation, Amsterdam, Netherlands). The main drawback
+cing an increased utilization of 3D representations of             of this approach is that the polygon model would need to be
+spatial structures and processes. However, while carto-            simpliﬁed and exported by a specially developed tool in
+graphic principles and variables (Bertin 1974) have been           order to be used in WebGL, thus limiting genericness.
+                                  Cartography and Geographic Information Science                                         237
+
+    Interaction in a 3D world became a distinct possibility    terrain where the user can move around freely. Because
+in 2009 with the creation of OpenStreetMap                     this application was built in WebGL, the simulation runs
+(OpenStreetMap Foundation, Sutton Coldﬁeld, UK) and            in most of today’s web browsers.
+Shuttle Radar Topography Mission (US Department of the             Like the other two projects already mentioned, Cesium
+Interior and US Geological Survey, Washington, DC,             (Analytical Graphics, Inc 2013) is a web-based software
+USA) using the 3D viewer XNavigator (Heidelberg                displaying geo-data on a virtual globe. It is based on
+University, Heidelberg, Germany) to display free geo-          WebGL and therefore it can be used across browsers and
+data (Zipf 2011). The application displays a terrain           platforms. Two of the most remarkable features of Cesium
+model, 3D buildings (over 20 million), and 3D visualiza-       are of its ability to represent data from such web services
+tion of PoI. The base data were acquired from a 3D             as the Open Geospatial Consortium’s Web Map Service or
+geospatial data infrastructure (SDI) and donations. The        OpenStreetMap, and to draw vector data stored in Esri
+geo-data are transmitted by a Web 3D Service to the client     Shapeﬁle format. One of the features of this application –
+and displayed in a virtual globe in the XNavigator. The        which has bearing on the research described in this paper
+application is implemented as a Java plug-in for web           – is the possibility of visualizing data in a temporal series.
+browsers that needs to be separately installed, which
+does not comply with our requirement of native browser
+support.                                                       Concept for 4D visualization of marine geo-data
+    Another 3D web-based geo-visualization system
+                                                               This section presents the developed concept for visualiz-
+implemented in WebGL was developed by Feng et al.
+                                                               ing spatiotemporal marine geo-data in a web-based envir-
+(2011). The authors examine the change of geographic
+                                                               onment. First, we set the scene for our research by
+information system (GIS) applications from client–server
+                                                               describing the speciﬁc requirements of a deﬁned use case
+models to browser–server architectures. The developed
+                                                               and by describing the data used for the development of our
+browser–server system consists of a web server, a terrain
+                                                               application. Following this, we discuss the most important
+server, an image server, and a model server. The web
+                                                               cognitive aspects in 4D geo-visualization. Then, we pre-
+server constitutes the user interface of the website; the
+                                                               sent a thorough analysis of usability criteria that need to
+terrain server supplies preprocessed DEM data. The
+                                                               be considered, and end the section with speciﬁc design
+image server provides tiled remote sensing images which
+                                                               considerations for the development of web-based 4D
+serve as terrain texture; the model server supplies 3D
+                                                               applications integrating spatiotemporal geo-data.
+models of buildings and other objects. To visualize the
+terrain and image server data, they are handed over to, and
+rendered by, the WebGL engine. However, due to its
+complex server structure, the applicability of this approach   Marine geo-data visualization use case
+in practice is limited.                                        Marine logistics and ecologic protection are oftentimes
+    Next came the OpenWebGlobe project (Loesch,                subject to heterogeneous concerns of different interest
+Christen, and Beniker 2012), which made a virtual globe        groups. Thus, building and restructuring projects in
+in WebGL available to the open source community. Users         coastal areas needs to be based on solid scientiﬁc founda-
+need the OpenWebGlobe Software Development Kit to              tions. It is for this purpose that the Federal Waterways
+create their own customized globe by inserting new data        Engineering and Research Institute of Germany (BAW)
+from different data sources such as tiled orthophotos,         periodically develops status reports about the physical
+maps, and elevation layers. This application can simulta-      state of German estuaries. Further, surveys are conducted
+neously display multiple layers from different data            on engineering projects such as the construction of harbors
+sources. In addition, external PoI objects can be inte-        and dikes or the deepening of fairways to decision makers.
+grated, and the user can retrieve more information by          It shall be noted that members of the BAW (simulation
+clicking on them. Three-dimensional objects such as cities     experts, marine modelers, GIS professionals, and a num-
+or buildings and point clouds can also be represented. All     ber of nonexperts) accompanied the development of the
+of these different layers can be turned on and off accord-     use case.
+ing to the user’s needs. The main disadvantage is that the         The interest of citizens, media, and decision makers in
+system only supports a small number of ﬁle formats.            such projects is high; and simulating the impact of these
+    Another open source Earth simulation tool was devel-       projects on the environment is thus essential. Due to their
+oped as part of the WebGL Earth project (Klokan                inherent complexity, simulations require careful prepara-
+Technologies 2013). This tool enables the visualization        tion and documentation before they can be interpreted and
+of many different data sources such as maps from               fully understood by nonexperts. This complexity arises, in
+OpenStreetMap or Bing, satellite imagery, and aerial           large part, from the fact that the input data for modeling
+photography. Furthermore, users can integrate their own        and the results of modeling usually have three spatial
+data. These datasets are displayed on top of a virtual         dimensions and one temporal.
+238                                                        B. Resch et al.
+
+     For a web-based visualization system designed for the         Cognitive aspects in 4D geo-visualization
+public, the presentation aspect is of particular importance        Many cognitive processes such as understanding the con-
+so as to ensure that the amount of information shown to            tent of a map are largely automatic (Jobst and Germanichs
+the users at any given time, and its complexity, are               2007). Yet, viewing, comprehending, and interacting with
+reduced. For instance, the user does not need to see the           a 4D map requires considerable cognitive and perceptive
+development history of a single measurement point and              capabilities. Depending on how profoundly these capabil-
+the associated parameter settings, just the outcome. For           ities have been previously “learned” by a person, differ-
+2D water-level data, this would mean that a zoomable               ences in time consumption and efﬁciency in understanding
+diagram and statistic values to explore time series would          a map can be observed. The learning effect – and thus the
+be appropriate to get an overview and to recognize spikes          efﬁciency in viewing a map – can be optimized by the use
+of storm surges among the normal ﬂood heights. In a 3D             of dual coding methods. These comprise the variation of
+dataset, a virtual “ﬂight” through the data is highly moti-        graphical variables such as color, shape or intensity, and
+vating. However, even nonexperts need to get the chance            more. In effect, the understanding of spatiotemporal pro-
+to understand the data presented, which requires the data          cesses can be fostered by conveying facts such as sus-
+to be equipped with adequate metadata.                             pended sediment transport, salt concentration or temporal
+     Currently, the only web-based platform available for          tidal variations via multiple channels. Our method of
+public use is a web browser. While simulation software is          realizing this concept is described later.
+complex and oftentimes expensive, and therefore unsuitable              An aspect, which needs to be thoroughly considered in
+for nonexperts, a browser is an omnipresent, easy-to-use           the context of web-based 4D visualizations is that the efﬁ-
+tool. Consequently, our approach focuses on browser-based          ciency of human information processing is drastically
+visualization for public use, where users are able to explore      reduced if too much visual information with too many sti-
+water levels and other marine geo-data sources in 2D, 3D,          muli is presented at once. Information overﬂow prevents
+and 4D. Simple and intuitive controls (familiar to the pub-        new knowledge creation in the human brain because any
+lic, e.g., through the use of such well-known applications as      new input cannot be processed before the next stimulus
+Google Earth) make large, multi-dimensional datasets com-          arrives (Kluwe and Schulze 1994). As the brain discards
+prehensible and help to understand complex correlations.           unprocessed information, it is vitally important to include
+     The data used for the validation of our concept have          map semiotics in the design process, especially for prag-
+been obtained from “Long-term Analysis of                          matics, and also semantics and syntactics. This particularly
+Morphosedimentary Processes within the German Bight                applies when designing 3D environments which are
+with Integrated Modeling” (AufMod), a research and                 cognitively signiﬁcantly more demanding than 2D
+development project conducted to analyze morpho-                   environments.
+dynamics and sediment ﬂux in the German Bight using                     Perception and cognition of 3D maps (readability and
+different numerical modeling systems (Milbradt 2012).              interpretation of spatial content) can be regarded as a
+The project yielded consistent and complete bathymetric            psychological bridge between highly simpliﬁed abstracted
+datasets of the area over 30 years, which have been                two-dimensional maps and reality. Even though 2D maps
+created using extensive data-analysis methods.                     may be sufﬁcient for conveying simple matters, offering
+Additionally, hydrodynamic simulations produced a set              geometrically correct topographic representations, they
+of vector datasets (points) concerning, for instance, sedi-        drastically simplify reality and thus do not give credit to
+ment ﬂux within the German Bight. The simulation was               the highly complex capabilities of human spatial cognition
+performed on the physical grid which acted as the refer-           (Resch et al. 2013).
+ence system for the simulation, regulating the granularity,             There is an essential drawback to using 3D for vir-
+that is, nodes, edges, or the center of a cell.                    tually displaying real-world scenes in that they are by
+     For the use case presented in this paper we used time-        deﬁnition, distorted by such factors as spherical perspec-
+series data collected at nodes. The water level was used as        tive, topographic irregularities, hidden objects, scale-
+our ﬁrst visualization parameter because it is the central         dependent feature presentation, or geometric inconsisten-
+element for hydrodynamic modeling. We extracted 13                 cies arising from the use of different Spatial Reference
+hours of data with a 20 minute measurement interval (9             Systems. Despite these shortcomings, 3D cartographic
+January, 11:20 a.m. to 10 January, 12:00 a.m. midnight) to         representations are better for representing spatiotemporal
+reﬂect the behavior of a complete tidal wave within the            phenomena than 2D representations.
+German Bight. Each dataset had a Gauss–Krueger
+encoded spatial reference, the bathymetric depth, a ﬂag
+for a dry or a wet state, and the water level itself. For each
+of the 39 time steps there are 41,347 computational nodes          Usability in web-based geo-visualization
+spread over the German Bight, which sums up to about               The design of web-based geo-data visualization has not
+1.6 million different computational nodes.                         yet been standardized. Each implementation is done in a
+                                   Cartography and Geographic Information Science                                        239
+
+different way in terms of usability, functionality, interac-    Bight and its bathymetry through the use of a 4D web-
+tion possibilities, map size, and symbologies. This hetero-     based geo-visualization application.
+geneity is partly due to developers’ unique designs and             Context: (d) This parameter deﬁnes the usage context
+partly to lack of consistent guidelines for implementing        as composed of the physical context (physical environ-
+web-based mapping applications.                                 ment, degree of mobility, etc.); the technical context (type
+    Currently, most developers focus on technology and          of device, device capabilities, used software, etc.); and the
+the functionality of geo-visualization applications rather      social context (distractors, interaction with other persons,
+than on users and their needs. This technology-centered         public or private, etc.).
+approach assumes that mature and progressive technology             (p) In our 4D geo-visualization use case, participants
+can compensate for deﬁcient usability (Aditya and Kraak         typically use a desktop computer and access information
+2005). Consequently, future users are mostly not included       with a professional or a private interest and share the data
+in the design and development process. Two main reasons         or information accordingly.
+for this are high cost and time required to research all            Learnability: (d) Learnability indicates how easy it is
+possible users (Watanabe, Yonemura, and Asano 2009).            for users to perform given tasks the ﬁrst time they use an
+    Only a few surveys have been carried out that focus on      application.
+web-mapping applications and their requirements (Nivala,            (p) For the 4D geo-visualization use case presented in
+Brewster, and Sarjakoski 2008); this is particularly true for   this paper it was decided to aim for an intuitive interface
+web-based 4D geo-visualization applications. As a result,       in order to make the application user friendly. This is
+experience in assessing the speciﬁc aspects of such appli-      crucial as the main purpose of our application is to provide
+cations is lacking and no consistent guidelines exist.          easy access to information. Learnability is not a problem
+Usability is critically important for map-based visualiza-      in this study as the typical user accesses the application
+tion applications – even more so than for other web             several times per month and has considerable experience
+applications – because of the considerable cognitive effort     in using the tools. This notwithstanding, clear and com-
+required to use the applications correctly and to under-        prehensive help dialog is crucial to enhancing the learning
+stand complex processes in 4D.                                  experience with the application. Among other things, ﬁnd-
+    Usability is an indication of how simply and intui-         ing the optimal trade-off between a comprehensive textual
+tively user interfaces can be interacted with (Nielsen          introduction (too much textual information can potentially
+1993). The ISO 9241-11 standard deﬁnes usability as the         overburden the user and result in fading interest) and
+“extent to which a product can be used by speciﬁed users        conveying as much information as possible. Such a
+to achieve speciﬁed goals with effectiveness, efﬁciency         trade-off can be achieved by using illustrations enriched
+and satisfaction in a speciﬁed context of use”                  with short textual hints on how to use the application
+(International Organization for Standardization 2006).          highlighting essential core functions. Additionally, the
+Nielsen’s (1993) original deﬁnition included three more         design (including the presentation of the core functional-
+aspects as a subpart of system acceptability: learnability,     ity) of the 4D interface needs to be optimized. Practical
+memorability, and errors.                                       aspects supporting this optimization are presented later in
+    In the following paragraphs we describe (1) each para-      this paper.
+meter in general terms (d) and (2) how the parameter ﬁts            Efﬁciency and Effectiveness: (d) These parameters
+in our web-based 4D visualization concept (p).                  state how quickly (in terms of time and effort), and to
+    Users: (d) This parameter describes users or user           what degree (how effectively), users can perform a given
+groups in terms of pre-knowledge, experience, usage con-        task once they have attained proﬁciency in using the
+text (physical, technical, and social), age, etc.               application.
+    (p) A standard user of the 4D visualization concept             (p) Our web-based geo-visualization use case gives the
+presented here should be able to understand and explore         user enough time to comprehend the application and its
+the depicted data and information in a web browser. Our         functionality. The application is intended to be used sev-
+application is thus intended for a broad range of users         eral times per month, which means that the design of the
+interested in coastal processes. This could, for instance,      user interface can be more complex than that of other
+be a resident interested in the heights of the last storm       applications that are not used as frequently. This said,
+surge, a company developing offshore wind parks, or a           the interface and particularly the map have to adhere to
+decision maker who wants to gain insights in the data           common design guidelines with regard to optimized infor-
+which their decisions are based on.                             mation density (scale-independence, adapted to digital
+    Goals: (d) This parameter deﬁnes which tasks a user         screens, suitable number of features, zoom-level based
+performs using an application and which goals should be         data sub-selection, etc.), consistent color schemes, mini-
+achieved.                                                       mal eye movement in performing standard tasks, and
+    (p) The goal of the use case deﬁned was to assess the       minimum number of clicks to reach a certain goal. The
+spatiotemporal variations of the water level in the German      optimization of the performance of web-based
+240                                                         B. Resch et al.
+
+applications is highly desirable. It is for this reason that we     into account to optimize the practicality and applicability
+use a caching mechanism in the 4D visualization applica-            of the concept of displaying 4D geo-data on the web.
+tion described here which preloads map data in areas                    Representing spatiotemporal, environmental phenom-
+around the currently viewed location (in all directions).           ena by interactive 4D applications is a prevailing chal-
+This results in smooth navigation on the map without                lenge. However, with an optimized design of the user
+waiting for the next set of data to load. The same applies          interphase (Jobst and Germanichs 2007), map-based appli-
+to high-performance rendering of time-series data.                  cations can offer new and more dynamic ways of present-
+     Memorability: (d) Memorability deﬁnes how easy it is           ing geospatial information. Consequently, we resolved that
+for users to reestablish their proﬁciency when they reuse           our application would have dynamic interaction, scale-
+an application after not having used it for a certain period.       based data sub-selection, graphical presentation of geo-
+     (p) The criterion of memorability is of lesser impor-          graphic features, and on-demand data visualization in a
+tance for web-based geo-applications because the typical            4D web-based environment.
+user as deﬁned above accesses such applications several                 Another central design decision for the presented
+times a month. They usually also have some experience in            research was to aim for innovative and intuitive ways to
+using web-based applications. Thus while the learning               cartographically illustrate spatiotemporal phenomena as
+curve for 4D geo-visualization applications may not be              dynamic processes. Thus, the spatiotemporal development
+steep per se, memorability is without doubt enhanced                of marine phenomena (salt concentration, sediment trans-
+when an easy-to-use and intuitive interface is used,                port, nutrient ﬂows, tide gauges, etc.) is presented in three
+which involves such parameters as effectiveness, efﬁ-               spatial dimensions – including 3D navigation – to foster
+ciency, and satisfaction when portraying 4D geo-data on             understanding of the natural phenomenon. This type of
+the web.                                                            process illustration requires the integration of three spatial
+     Errors: (d) This parameter indicates how many errors           dimensions with the visualization of a temporal develop-
+users make and how these errors affect the usage of an              ment. Because salt concentration or sediment transport are
+application, that is, how users recover from these errors.          not equally distributed over the vertical water column, the
+     (p) The application is designed to prevent the user            visualization of the temporal development is important for
+from making mistakes; it does not even allow them to                estimating the ecologic impact of salt water along estu-
+make errors in the input or control. This is because if             aries or where sediment could be dredged or deposited. In
+many errors occur in an application, the user quickly               our research, point data sets for water-level measurements
+loses interest in working with the application. Also,               are represented as circles varying in size, while bathyme-
+when an error occurs, the user must be able to resolve              try is visualized using isolines. Using these symbologies
+the problem independently.                                          together with color coding according to the legend, we
+     Satisfaction: (d) This parameter describes users’ sub-         tried to comply with the dual coding approach mentioned
+jective experience with the application.                            above. Like this, made it easier for the user to comprehend
+     (p) Our application is designed to be easy to use and          temporal developments in a spatial 3D context and thus
+enable users to achieve their goals in a reasonable amount          understand the spatiotemporal process.
+of time. Hence, users’ satisfaction is an important prerequi-
+site for our application, furthering the goal of frequent use.
+To achieve the best possible user satisfaction, the interface       Validation – prototypical implementation
+of our application was designed based on well-established
+                                                                    The concept of 4D visualization presented in this paper
+map-design guidelines (dual coding, data generalization,
+                                                                    was validated through a prototypical implementation. This
+consistent color schemes, etc.) and such web-application
+                                                                    section contains a description of the scientiﬁc-technology
+design strategies as pre-caching, movable windows, hide-
+                                                                    evaluation and its architecture, the interface design, and
+able overlays, familiar navigation, and simple controls.
+                                                                    the realization of the client-based visualization component
+     More detailed information about the criteria can be
+                                                                    using WebGL.
+found in the ISO 9241-11 standard (International
+Organization for Standardization 2006) and in Nielsen
+(1993). While we considered the parameters in question
+during the design phase of our 4D application, they have            Technology evaluation
+not been validated in a user study because such validation          We decided to use WebGL as the processing and visuali-
+was beyond the scope of our research.                               zation technology for our prototype. This decision was
+                                                                    taken after a thorough technology evaluation, which we
+                                                                    conducted by considering the following criteria:
+Design considerations
+Apart from the usability criteria described in the previous             ● Web browser support: Is the technology natively
+subsection, several additional design decisions were taken                supported in standard web browsers or are
+                                    Cartography and Geographic Information Science                                        241
+
+       additional plug-ins required. This is an essential         that combines JavaScript with OpenGL, integrated into
+       parameter if our technology is to be widely                the HTML canvas element).
+       applicable.                                                    Table 1 summarizes the results of our technology
+   ●   Up-to-dateness: Maintenance, comprehensive docu-           evaluation which is not laid out here in great detail due
+       mentation, and development of the software to han-         to limitations to the length of the paper. We found that
+       dle future challenges are all features necessary for       compared with all the other technologies considered,
+       wide adoption and secure use.                              WebGL meets the above requirements best (in comparison
+   ●   Implementation complexity: This covers the effort          with Java 3D, Silverlight, Stage3D, and Unity). The great-
+       required to implement an application using a parti-        est advantage WebGL has is that it runs natively in the
+       cular technology and installation of additional plug-      web browser without additional plug-ins. Because of this
+       ins and software components.                               spatial analysis tasks can be performed directly in the
+   ●   Performance: Seamless operation of the technology          browser using parallel computation techniques executed
+       on a standard PC, preferably with GPU-processing           by a GPU instead of a traditional central processing unit,
+       support.                                                   which operates in serial data handling mode. Thus, in
+   ●   Portability: Support for the most common browser           terms of performance, WebGL (Khronos Group 2013) is
+       technologies and operating systems.                        eminently suitable for the development of efﬁcient, inter-
+   ●   Data integration capabilities: Ability to connect to       active, responsive, and mobile web-based GI applications
+       and parse data sources that have different origins         (2D, 3D, and 4D) and animated content. The complexity
+       and formats.                                               of WebGL is higher than that of Silverlight and Stage3D,
+   ●   Support for spatial coordinates: Ability of handling       both of which relying on speciﬁc and proprietary devel-
+       geographic coordinates including coordinate trans-         opment environments and programming languages
+       formation and simple overlays either in native func-       (Silverlight and ActionScript, respectively) that require
+       tionality or in external libraries.                        an additional learning effort. Besides, ActionScript is con-
+   ●   3D rendering: Simplicity and native support for 3D         tinuously losing importance for web-based applications.
+       geometries and scenes.                                     WebGL handles geographic coordinates quite well, albeit
+   ●   Costs and available licenses: Preferably, the soft-        slightly less so than Java 3D (GeoTools API, OSGeo’s
+       ware should be freely available to users to guarantee      Proj4J library, etc.) and Silverlight (ESRI ArcGIS Server
+       broad applicability.                                       API and external libraries). However, WebGL’s Three.JS
+                                                                  framework and other libraries give the technology an edge
+In our evaluation, we considered the following technolo-          over Stage3D, which does not offer native coordinate
+gies: Java 3D (a platform-independent object-oriented             integration nor a suitable and easy-to-use ActionScript
+programming language that can be integrated into web              library.
+browsers via Java Applet technology); Silverlight (a                  As a result from our technology evaluation, the ﬁnal
+Microsoft .NET-based framework for the development of             architecture of the proposed application consists of three
+interactive user interfaces); Stage 3D (an application pro-       components: the client, the server, and the database. The
+gramming interface (API) for the Adobe Flash Player 11            web server is based on an Apache 2.0 engine with PHP
+and Adobe AIR 3 that allows access to hardware accel-             5.2 running on a SUSE Linux Enterprise Server. We use a
+eration facilities); Unity Web Player (a game engine for          PostgreSQL 8.3.2 database with the PostGIS 1.5.4 spatial
+the development of 3D applications for different hardware         extension. The application is hosted on a web server and
+platforms); and WebGL (a cross-platform web standard              the client can retrieve data through a WebGL-capable web
+                                                                  browser.
+Table 1. Evaluation results for web-based visualization techno-
+logies (+…well-suitable; O…conditionally suitable; −…insufﬁ-      Interface design
+ciently suitable).
+                                                                  While developing the interface we took into account the
+                   Java 3D Silverlight Stage3D Unity WebGL        core components of usability and various web-design
+                                                                  principles. The intent was to help users to achieve their
+Web browser          O         O         O        O       +
+Up-to-dateness       +         +         +        +       +       goals with maximum efﬁciency and enable intuitive use of
+Complexity           +         O         O        +       +       the application. While implementing the objective of
+Performance          O         +         O        +       +       usability, we considered the following web-design princi-
+Portability          +         +         O        O       +       ples: “make it direct”, “keep it lightweight”, “stay on the
+Data integration     +         +         +        +       +       page”, “provide an invitation”, “use transitions”, and
+Geo-coordinates      +         +         −        O       O
+3D visualization     +         +         +        +       +       “react immediately” (Scott and Neil 2009).
+Costs/License        +         +         +        O       +           Data are displayed in the web-browser window with-
+                                                                  out menu bars, tables of content, or complex toolbars. A
+242                                                          B. Resch et al.
+
+
+
+
+Figure 1.   The user interface for displaying marine geo-data in 4D.
+
+
+simple navigation bar – loosely based on Google Earth’s                    If the user clicks on a measurement point, all available
+navigation – is on the left of the window and a few                    water-level datasets for this particular station are displayed
+essential tools for data representation are on the right.              in a graph. With an integrated, intuitive “play bar” (see
+Among the tools included are a dataset selector, a time                white box in Figure 3), the user can step through the
+slider for 4D time-series visualization, a data import but-            available time-series datasets and follow the rising (or
+ton for integrating external data sources, and a button for            ebbing) tide in the North Sea, for instance.
+switching between 2D and 3D visualization. The tools can                   We also implemented a 3D view of the scene by
+be hidden and are movable so that they do not impede the               integrating a height map interpolated in Portable
+viewing of the data. Figure 1 shows the interface of the               Networks Graphics format in a terrain shader to convey
+application.                                                           a quasi-realistic landscape impression. The height map is
+                                                                       used as a displacement map on a plane in order to
+                                                                       represent depth of the seaﬂoor in three dimensions. To
+Geo-data and time-series visualization                                 emphasize the differences in height between the indivi-
+The visualization of spatial data has been implemented in              dual measurements, the z-coordinates are stretched by the
+WebGL in combination with the Three.js framework                       factor of 1000 and shown in different colors (see
+(Three.js 2013). WebGL has direct access to the comput-                Figure 3) – compare the dual coding approach mentioned
+ing unit of the graphics card and is therefore suitable for            above.
+displaying a large number of data points. Three.js makes it
+easier for developers to create a scene as they can rely on
+such tools as cameras, shaders, and lights to draw lines,              Discussion and outlook
+spheres, particles, or a plane and some other tools for the
+                                                                       This section discusses the presented approach and the
+representation of the data. Various settings such as appear-
+                                                                       produced results, points out its limitations and pin-points
+ance, ﬁeld of view for the scene or even the color, texture
+                                                                       future research avenues that need to be tackled in the area
+or size of objects can be easily adjusted.
+                                                                       of web-based 4D visualization.
+    The initial view displays a coastline polygon in 2D to
+help the user with navigation in space. The actual spatial data
+that are presented in the application comprise bathymetry
+line data, dot-shaped water-level measurements, and inter-             Advantages of multi-temporal geo-data in web-based
+polated bathymetry data such as a 3D plane. Figure 2 shows             environments
+the visualization of (a) bathymetry data in 2D; and (b) a time         The distinct advantages of web-based geo-data visualiza-
+series for a measurement point – after the user has clicked            tion are threefold. First, users do not need expert knowl-
+onto a speciﬁc measurement point. The temporal develop-                edge to use GIS tools as only simple web interfaces are
+ment of a parameter can either be displayed in a space-time            provided. Second, users do not need to buy expensive and
+animation (both in two and three spatial dimensions) or in a           resource-consuming analysis and visualization software as
+time-series graph as shown in Figure 2(b).                             our 4D visualization application works with free and
+                                  Cartography and Geographic Information Science                                        243
+
+
+
+
+Figure 2. (a) 2D display of bathymetry data. (b) 2D display of water-level measurements and time-series diagram for a single
+measurement station.
+
+
+
+standard software that can be downloaded from the                WebGL implementation, etc. However, we expect that
+Internet. Third, marine geo-data can be made accessible          WebGL support in terms of graphics cards and browsers
+to a far broader spectrum of users by displaying them to         will continue to improve.
+the web, ranging from private persons who want to know               One central issue with our particular application, but
+about pollutant concentration in close-by water bodies to        also with web-based geo-applications in general, is hand-
+professionals working in the marine sector and political         ling large data volumes. Just like with every browser-
+decision-takers.                                                 based application, not only loading and processing, but
+                                                                 rendering large numbers of spatial datasets remains to be
+                                                                 challenging. We implemented a caching mechanism to
+Limitations                                                      minimize the preprocessing effort in the browser, but an
+The limitations are mostly due to a lack of fully developed      intelligent visualization method (generalization, integra-
+technologies to support WebGL, including the necessity of        tion of visibility and occlusion analysis, or scale-based
+a graphics-card supporting WebGL, a browser with a               data sub-selection) was not developed.
+244                                                         B. Resch et al.
+
+
+
+
+Figure 3. Display of the bathymetry as a 3D time series. The colored lines show shallow (shown in red) and deep (in blue) bathymetric
+lines near the Sylt Island.
+
+
+     Furthermore, the our application in its present form is         in any web application), ﬁnding an optimized and easily
+not capable of substituting current modeling and visuali-            comprehensible color scheme, or ﬁnding the appropriate
+zation software as used in the ﬁeld of marine data analy-            trade-off between functionality and simplicity of use.
+tics. Several issues need to be resolved, including the fact
+that complex numerical modeling systems are run on high-
+end supercomputers, producing massive data volumes, or               Future research avenues in map-based 4D Visualization
+integrating data via standardized service-based infrastruc-          on the web
+tures (Resch 2013). As WebGL applications actively use a             A fundamental challenge for future research in the area of
+computer’s graphics card, the performance depends on                 map-based 4D visualization on the Internet is to identify
+local conditions, limiting the ability for processing and            reliable expressive relationships between thematic data
+displaying data points.                                              structures and graphical depiction. Even though a number
+     The design of our system focuses on casual web users,           of possible graphical variations have been identiﬁed for
+but it is not restricted to them; experts can use it as well. A      4D map design, a true mapping of these combinations of
+typical task performed by our application is the compar-             graphical variables to thematic expressivity is still missing.
+ison of numerical results with real-world measurements.              The visual variables for the original 2D context (cp. Bertin
+Like this, the functionality of the modeling core and the            1974) are a subset of all thinkable and technically modiﬁ-
+parameter settings can be validated. In turn, a visualization        able graphical variables, that is, the combinations that
+of the model results can support this validation process.            allow reliable mappings from data to visual depiction.
+However, experts require additional analysis tools to per-           However, previous research initiatives often mix these
+form spatial calculations similar to those performed by              concepts, which in the end dilutes both. Particularly in
+WebGIS applications. Such tools possibly be integrated               3D web-based computer screen environments (as applic-
+under consideration of performance issues, but this has not          able for the concept presented in this paper), size, color,
+been done in the presented research.                                 texture, and lighting effects need to interact to convey the
+     Experts need to know the results of a marine modeling           illusion of spatial depth. This is due to the profound
+process for further analysis of simulation results. There are        inverse optics problem as it is also encountered in tradi-
+several approaches to document and disseminate descrip-              tional 2D maps (Reimer 2011) that severely limits to the
+tions of model results. Their integration into the SDI can           expressive capabilities of many graphical modiﬁcations to
+however be difﬁcult as the SDI metadata standards may                actually achieve dual coding (Dransch 1997), that is,
+not be applicable to model description (Wosniok and                  simultaneous variations of graphical variables like color,
+Lehfeldt 2013). This aspect deserves further research.               shape, intensity, or the z-value extrusion.
+     Finally, we identiﬁed a number of limitations, includ-               Another essential future research question, which
+ing different behavior in different web browsers (just like          arose in the course of our research, is how to represent
+                                   Cartography and Geographic Information Science                                       245
+
+time in 4D visualizations. While previous approaches have       view on a real-world situation. This makes communicating
+represented time as a compressed time axis, current con-        the actual real-world processes easier to understand and
+cepts – including ours presented in this paper – mostly         interpret. However, no generic methods and easy-to-use
+rely on temporal animations as a time series of static          base technologies currently exist for web-based environ-
+maps, where each map represents a single time slice as a        ments, which makes the implementation of pseudo-realis-
+sequence of states. Another popular representation is to        tic visualizations extremely laborious.
+indicate movements in single static maps, for instance, by          Further open questions include the deﬁnition of gra-
+using arrows, ﬂow lines, or movement patterns (Sagl et al.      phical variables for web-based 3D and 4D visualizations;
+2012). In this area, it will be essential to ﬁnd out more       optimized, dynamic coloring strategies (cp. “dual coding”
+about the cognitive and perceptive processes that deter-        as mentioned earlier); and the development of guidelines
+mine how humans actually perceive time in 4D processes          for enhanced user experience design (Resch and Zimmer
+and which opportunities web-based environments offer            2013) in 3D/4D cartographic applications.
+(transparency, dynamic placement of time slice maps,
+fading effects, motion, etc.). This in turn will also decide
+which ways can be found for alternative representations of      Conclusion
+the time dimension.                                             Ecologic protection, energy production, transportation, or
+     A related issue is how we can foster the user’s under-     tourism constitute competing interests in European coastal
+standing of the temporal context in dynamic 4D maps. In         zones. Thus, with the comprehensible interest from differ-
+other words, new methods are required to optimize a             ent stakeholders, scientiﬁc foundations are required for all
+viewer’s perception of a spatiotemporal development. In         large-scale interferences changing the current state of
+case of the presented research in the area of marine geo-       coastal areas. This also calls for geoinformatics-based
+data, this could potentially be achieved by small 2D maps,      solutions as data analysis and simulation results need to
+which are lined up as a screen overlay. Another method          be presented to the broad public in an easily understand-
+could be the integration of diagrams (histograms, statis-       able, yet comprehensive manner.
+tics, etc.) to display dynamic developments, as presented           Integrating time-varying geo-information into map-
+in our approach. However, even though these methods are         based visualization systems on the Internet continues to
+only applicable in web-based and computer screen envir-         be a methodological and technological challenge.
+onments (and not in traditional maps), they might be            Consequently, users of web-based geo-visualization sys-
+considered non-innovative methods that rely on current          tems often suffer from a lack of well-known interaction
+state of the art and do not introduce a new paradigm of         capabilities or from non-optimal data presentation. On the
+representing the temporal dimension.                            one hand, this means that systems that are not thoroughly
+     A common but highly relevant question is to ﬁnd            designed are often not easily usable for people without
+methods for deﬁning optimized temporal generalization.          much experience in using map-based tools. On the other
+In previous approaches, temporal generalization has only        hand, too much simpliﬁcation might result in a too high
+been optimized on a per-application basis as the temporal       level of abstraction in conveying a complex spatiotem-
+granularity strongly depends on the displayed data, the         poral geographic process, which results in a perception of
+actual application, and the goals or tasks the user wants       the process that is much disconnected from the physical
+to achieve. For example, weekly aggregation might be            world, that is, the transfer effort to interpret information
+suitable to identify the effect of sedimentary deposition       from the virtual environment becomes overly large.
+in a basin, but a 1-min aggregation interval might be               In this paper, we addressed the research questions
+necessary for detecting ﬂood water events for an early-         (presented in the introduction) in the area of requirements
+warning system. This problem seems to be of generic             for efﬁcient and effective 4D visualization of spatial data
+nature and needs to be parameterized to be solvable. For        on the Internet. These include the deﬁnition of usability
+web-based applications, we can imagine dynamic scaling          criteria, an evaluation of applicable base technology, and a
+techniques for temporal generalization – evolving from          prototypical realization of the concept that we developed
+methods that already exist for spatial generalization.          to portray spatial data in web-based applications. The
+     Finally, the related issue of the inﬂuence of the visua-   prototype application takes into account usability-related
+lization complexity on the user, varying from simple            criteria, performance parameters, implementation effort
+abstraction to (pseudo-)photorealistic representation of        required, and the need to convey variety of information
+the spatiotemporal phenomenon, has not been extensively         to support decision-making on multiple levels. We solved
+studied. Most users of 4D interfaces ﬁnd a pseudo-photo-        the latter by displaying time-series diagrams of environ-
+realistic illustration of natural phenomena that is closely     mental parameters. To validate the concept we used the
+related to the objects’ physical appearance more helpful        WebGL (Khronos Group 2013). The major advancements
+because it conveys a more realistic and comprehensible          of the presented research are the clear and use case driven
+246                                                              B. Resch et al.
+
+deﬁnition of usability criteria, the scientiﬁc evaluation of                 applied computing. Worldcomp 2011, Las Vegas, NV, July
+base technologies, and the focus on speciﬁc requirements                     18–21.
+                                                                         International Organization for Standardization. 2006. Part 11
+for displaying a variety of marine geo-data.
+                                                                             Guidance on Usability: ISO 9241 Ergonomics of Human-
+    During our research, we identiﬁed a number of                            system Interaction. Geneva: International Organization for
+research questions that need to be investigated in the                       Standardization.
+near future, including the mapping of graphical variables                Jobst, M., and T. Germanichs. 2007. “The Employment of 3D in
+to thematic expressivity, representation of the time dimen-                  Cartography – An Overview.” In Multimedia Cartography,
+                                                                             edited by W. Cartwright, M. P. Peterson, and G. Gartner,
+sion in 4D systems, optimized and generic temporal gen-
+                                                                             217–228. Heidelberg: Springer.
+eralization, and the possibility of integrating and creating             Khronos Group. 2013. “WebGL – OpenGL ES 2.0 for the Web.”
+(pseudo-)photorealistic illustrations in web-based geo-                      Accessed December 16, 2013. http://www.khronos.org/
+visualization systems.                                                       webgl
+                                                                         Klokan Technologies. 2013. “WebGL Earth - open source 3D
+                                                                             digital globe written in JavaScript.” Accessed December 18,
+                                                                             2013. http://www.webglearth.org
+Acknowledgments                                                          Kluwe, R. H., and P. Schulze. 1994. “Gestaltungsgrundsätze für
+The authors would like to thank all involved research groups at              komplexe Informationsdarstellung. Ergonomische Studien,
+Harvard University’s Center for Geographical Analysis, at the                Report no. 37.” Bundesamt für Wehrtechnik und
+University of Heidelberg and at the University of Osnabrueck for             Beschaffung, Koblenz.
+offering their valuable thoughts. Furthermore, a special thanks goes     Kulawiak, M., A. Prospathopoulos, L. Perivoliotis, M. Luba, S.
+to the BAW employees who voluntarily helped in the conception,               Kioroglou, and A. Stepnowski. 2010. “Interactive Visualization
+evaluation, and improvement of our research. This research has               of Marine Pollution Monitoring and Forecasting Data Via a
+been supported by the Klaus Tschira Stiftung gGmbH. Finally, the             Web-Based GIS.” Computers & Geosciences 36: 1069–1080.
+authors would like to thank Michael Bauer from GEOkomm                       doi:10.1016/j.cageo.2010.02.008.
+Verband der GEOInformationswirtschaft Berlin/Brandenburg e.V.            Loesch, B., M. Christen, and S. Beniker. 2012. “Openwebglobe
+for his support in conceiving the research questions and deﬁning the         – An Open Source SDK for Creating Large-Scale Virtual
+use case.                                                                    Globes on a WebGL Basis”. International archives of the
+                                                                             photogrammetry, remote sensing and spatial information
+                                                                             sciences, XXII ISPRS Congress, Vol. XXXIX-B4/2012,
+                                                                             Melbourne, August 25–September 1, 195–200.
+References                                                               Milbradt, P. 2012. “Analysis of the Morphodynamics of the
+Aditya, T., and M. J. Kraak. 2005. “Reengineering the Geoportal:             German North Seas Coast on the Basis of a Functional
+    Applying HCI and Geovisualization Disciplines.” In                       Seabed Model.” In Proceedings of the 10th International
+    Proceedings of the 11th EC-GI & GIS Workshop, Alghero,                   Conference on Hydroscience and Engineering (ICHE-
+    July 2005.                                                               2012), Orlando, FL, November 4–7.
+Analytical Graphics, Inc. 2013. “Cesium – WebGL Virtual Globe            Ming, W. 2008. “A 3D Web GIS System Based on VRML and
+    and Map Engine.” Accessed December 15, 2013. http://                     X3D.” In Proceedings of 2nd International Conference of
+    cesiumjs.org                                                             Genetic and Evolutionarty Computing, WGEC ‘08, Hubei,
+Bertin, J. (1974) Sémiologie Graphique. Paris: Editions                      September 25–26, 197–200.
+    Gauthier-Villars. German Translation: Jensch, G., Schade,            Nielsen, J. 1993. Usability Engineering. San Francisco, CA:
+    D., Scharfe, W. (1974) Graphische Semiologie.Diagramme                   Morgan Kaufmann.
+    – Netze - Karten. Berlin: Walter de Gruyter.                         Nivala, A. M., S. Brewster, and L. T. Sarjakoski. 2008.
+Dransch, D. 1997. “Medienpsychologische Aspekte Beim                         “Usability Evaluation of Web Mapping Sites.” The
+    Einsatz Von Multimedia in GIS.” In Kartograﬁsche                         Cartographic Journal 45 (2): 129–138.
+    Schriften, Band 2, edited by Deutsche Gesellschaft für               Reimer, A. 2011. “Squaring the Circle? Bivariate Colour Maps
+    Kartographie (DGfK), 26–30. Bonn: Kirschbaum Verlag.                     and Jacques Bertin’s Concept of Disassociation.” In
+Feng, L., C. Wang, C. Li, and Z. Li. 2011. “A Research for 3D                Proceedings of the International Cartographic Conference
+    WebGIS Based on WebGL.” Proceedings of the                               ICC, Paris, July 3–8.
+    International Conference on Computer Science and                     Resch, B. 2013. “People as Sensors and Collective Sensing -
+    Network Technology, Harbin, December 24–26, 348–351.                     Contextual Observations Complementing Geo-Sensor
+Few, R., K. Brown, and E. L. Tompkins. 2007. “Public                         Network Measurements.” In Advances in Location-Based
+    Participation and Climate Change Adaptation: Avoiding the                Services, edited by J. Krisp, 391–406. Berlin: Springer.
+    Illusion of Inclusion.” Climate Policy 7 (1): 46–59.                 Resch, B., F. Hillen, A. Reimer, and W. Spitzer. 2013. “Towards
+Garlandini, S., and S. I. Fabrikant. 2009. “Evaluating the                   4D Cartography – Four-Dimensional Dynamic Maps for
+    Effectiveness and Efﬁciency of Visual Variables for                      Understanding Spatio-Temporal Correlations in Lightning
+    Geographic Information Visualization.” In COSIT 2009,                    Events.” The Cartographic Journal, 50 (3), international
+    LNCS 5756, edited by K. Stewart Hornsby and N. Li,                       cartographic conference 2013, Dresden. Special Issue
+    195–211. Berlin: Springer.                                               August 2013, 266–275.
+Hering, N., M. Rünz, L. Sarnecki, and L. Priese. 2011.                   Resch, B., and B. Zimmer. 2013. “User Experience Design in
+    “3DCIS: A Real-Time Browser-Rendered 3D Campus                           Professional Map-Based Geo-Portals.” ISPRS International
+    Information System Based on Webgl.” The 2011 world                       Journal of Geo-Information 2 (4): 1015–1037. doi:10.3390/
+    congress in computer science, computer engineering and                   ijgi2041015.
+                                    Cartography and Geographic Information Science                                           247
+
+Sagl, G., B. Resch, B. Hawelka, and E. Beinat. 2012. “From        Three.js. 2013. “JavaScript 3D Library.” Accessed September
+    Social Sensor Data to Collective Human Behaviour Patterns:        27, 2013. http://threejs.org
+    Analysing and Visualising Spatio-Temporal Dynamics in         Watanabe, M., S. Yonemura, and Y. Asano. 2009. “Investigation of
+    Selected     Environments.”      In    Gi_Forum      2012:        Web Usability Based on the Dialogue Principles.” In Human
+    Geovisualization, Society and Learning, edited by T. Jekel,       Centered Design, Lecture Notes in Computer Science 5619.
+    A. Car, J. Strobl, and G. Griesebner, 54–63. Berlin: VDE          edited by M. Kurosu, 825–832. Berlin: Springer.
+    VERLAG GmbH.                                                  Wosniok, C., and R. Lehfeldt. 2013. “A Metadata-Driven
+Scott, B., and T. Neil. 2009. Designing Web Interfaces:               Management System for Numerical Modeling.” In
+    Principles and Patterns for Rich Interactions. Sebastopol,        Proceedings of OCEANS ’13 MTS/IEEE, San Diego, CA,
+    CA: O’Reilly Media.                                               September 23–26.
+Shan, J. 1998. “Visualizing 3-D Geographical Data with VRML.”     Zhu, C., E. C. Tan, and K. Y. Chan. 2003. “3D Terrain
+    Proceedings of the Computer Graphics International 98,            Visualization for Web GIS.” In Proceedings of the Map
+    Hannover, June 22–24, 108–110.                                    Asia 2003 Conference, Kuala Lumpur, October 13–15.
+Thomas, J. J., and K. A. Cook. 2006. “A Visual Analytics          Zipf, A. 2011. “Crowdsourced GI - Beginn Einer Neuen Ära
+    Agenda.” IEEE Computer Graphics and Applications 26               Freier Geodaten?” Proceedings of the FOSSGIS 2011
+    (1): 10–13. doi:10.1109/MCG.2006.5.                               Conference, Heidelberg, April 5–7.
+

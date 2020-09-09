@@ -1,0 +1,776 @@
+J Vis (2019) 22:1161–1176
+https://doi.org/10.1007/s12650-019-00595-0
+
+ R E G UL A R P A P E R
+
+
+
+
+Weimin Yang • Yubo Tao • Hai Lin
+
+Voxer—a platform for creating, customizing,
+and sharing scientific visualizations
+
+
+Received: 7 July 2019 / Accepted: 4 August 2019 / Published online: 3 September 2019
+ The Visualization Society of Japan 2019
+
+
+Abstract Scientific visualizations offer domain experts the ability to explore data visually and interactively
+to gain insights from data. Most visualization systems focus on functionality and scalability. However, we
+believe that with the advent of faster rendering techniques and higher-speed networks, accessibility for
+every device should also be a goal for scientific visualizations. In this paper, we propose a novel scientific
+visualization system, Voxer, which provides ubiquitous visualizations by decoupling user interfaces from
+system space. In Voxer, we encapsulate the data processing and rendering functionality as a web service and
+design a module-based user interface for domain experts to create and customize different visualization
+pipelines in response to their specific requirements. These configured visualizations can be shared with the
+public through embedding visualizations on the web and interactively rendering on the server. Use cases and
+benchmarks are used to demonstrate how our system can help domain experts easily create and customize
+visualizations and improve visualizations accessibility.
+
+Keywords Scientific visualization  Visualization system  Web application  Web service  Accessibility
+
+
+1 Introduction
+
+Scientific visualization is an important tool in many scientific and engineering domains, used to help domain
+experts visually and interactively explore and gain insights from their data. A close relationship with nature
+also allows scientific visualization to be an effective medium for use in education and popular science.
+Consider the cases of a student who wants to explore the structure of the human tooth or an enthusiast who is
+browsing the storm data published by a storm prediction center. For them, interactive 3D visualizations can
+provide a better understanding of the data than static images or videos could ever do.
+    Many visualization systems have been developed to help domain experts create and customize scientific
+visualizations. However, such systems feature tight coupling between the backend computing and the
+frontend interaction. This leads to the limitation that only one device or one user can have access to the
+interactive visualization at once, and it is inconvenient and cumbersome for other devices to access results.
+
+Electronic supplementary material The online version of this article (https://doi.org/10.1007/s12650-019-00595-0) contains
+supplementary material, which is available to authorized users.
+
+W. Yang  Y. Tao (&)  H. Lin (&)
+State Key Lab of CAD&CG, Zhejiang University, Hangzhou, China
+E-mail: taoyubo@cad.zju.edu.cn
+H. Lin
+E-mail: lin@cad.zju.edu.cn
+W. Yang
+E-mail: ukabuer@live.com
+1162                                                                                                W. Yang et al.
+
+
+Furthermore, datasets are growing in resolution, and it is becoming impossible to visualize them using
+devices without the resources necessary for data processing and rendering on a massive scale.
+    Web technologies are growing in popularity, thanks in part to their universal and platform-agnostic
+properties, and many information and scientific visualization systems have been developed and deployed on
+the web. As faster rendering techniques such as SparseLeap (Hadwiger et al. 2018) and higher-speed
+networks like 5G become more available, it is increasingly possible to deliver interactive 3D visualizations
+to everyone and on every device through the use of web technologies, which can help improve visualizations
+accessibility.
+    The prolific use of parallel architectures and sophisticated rendering algorithms in GPUs is leading to a
+steep learning curve for scientific visualization. It is hard to provide flexible customization for visualizations
+pipeline and generate all visualizations desired, especially for domain experts, who are likely to have little
+experience with computer graphics or high-performance computing.
+    In this paper, we propose a novel scientific visualization system, called Voxer, which decouples the
+visualization interaction from the rendering system by employing a browser–server (B/S) architecture.
+Voxer provides data processing and rendering functionality as a web service, along with a module-based
+interface for configuring visualization pipelines. It conceals the underlying implementation architecture,
+offering domain experts the ability to easily create and customize their own pipelines while the modules in
+the user interface can be conveniently extended. The configured visualizations can be shared with the public
+by embedding them into web pages and interactively rendering them on the server, which makes the
+visualizations accessible to any device with a web browser. The B/S architecture also benefits the system’s
+scalability, which would no longer be dependent on the clients’ limited resources, also allowing servers to
+scale and algorithms to upgrade without disturbing the end users.
+    Our system offers two main contributions, as follows:
+• We propose a novel workflow for ubiquitous scientific visualizations, where domain experts can create
+  and customize visualizations on the web and then conveniently share the configured visualizations with
+  the public as elements embedded into web pages that are rendered interactively on the server.
+• We introduce a module-based user interface design for the web that allows domain experts to easily
+  create and customize visualization pipelines while maintaining flexibility. Furthermore, our module
+  design supports the visualization and analysis of multivariate and time-varying datasets.
+
+
+2 Background
+
+Many scientific visualizations systems have been developed for various applications, ranging from bio-
+medicine to nuclear reactor simulation. Among these, ParaView (Ayachit 2015) and VisIt (Childs et al.
+2012) are commonly used by domain experts due to their wide functionality. And by employing a client–
+server design, they are no longer restricted by the limitations of client resources, allowing them to process
+large datasets.
+    Although these systems can perform complicated analysis and visualization tasks, they suffer from their
+low accessibility in two ways. First, to share an interactive visualization with colleagues and peers, the
+audience must install the application and load the configuration designed by the initial researcher. If a
+desktop application is used, this process may be inconvenient and cumbersome. As noted above, if a
+visualization is being provided to the public with an educational purpose, potential users may not be domain
+experts and may even be children with an interest in the subject. In this kind of context, it is impractical to
+share interactive visualizations created using traditional desktop software. On the other hand, low-level
+interfaces, such as those using ray-casting parameters, have a steep learning curve for domain experts, who
+are likely to have little experience with computer graphics. In recent years, the rise of parallel technologies
+like GPUs and computing clusters has also limited the correct and effective configurability of visualization
+pipelines and application settings. We believe that the solution to problems of accessibility can help build
+bridges between scientific visualizations and the public and facilitate the usability of those visualizations.
+    In information visualization, web technologies are commonly used to process and present data, which
+enables everyone to explore the visualization in a convenient way. Users simply need to open a web browser
+and visit a web page. Relying upon the unified specifications of the web and the help of information
+visualization libraries like D3.js (Bostock et al. 2015), developers can easily create interactive visualizations
+Voxer: a platform for scientific visualizations                                                             1163
+
+
+with JavaScript and the Document Object Model (DOM). Every device with a web browser, even mobile
+devices, can gain access to interactive visualizations created by these means.
+    Some scientific visualization work has also explored web-based possibilities. Visualizer and LightViz
+use the ParaViewWeb API (Jourdain et al. 2011) and enable exploratory visualization by sending requests to
+a remote ParaView process. Tamm and Slusallek used XML3D backed by a cluster to enable real-time ray
+tracing in browsers without the need for a plugin (Tamm and Slusallek 2016). Although these efforts have
+improved the overall accessibility of scientific visualization, their backend structures mainly serve one user
+rather than concurrent users on a large scale. VTK.js (Kitware 2017) is a browser-based library for scientific
+visualization, which only requires WebGL for volume rendering. However, its browser-only properties
+restrict VTK.js to its clients’ resources. Tapestry (Raji et al. 2018), which is our main inspiration, comes
+closer to our goal. Tapestry encapsulates scientific visualizations as microservice by rendering volume data
+on the scalable server side, allowing 3D visualizations to be added to existing web pages in the form of
+interactive images, which are rendered by the microservice. When users interact with the image, parameters
+like camera settings are sent to the server, which produces a new image to replace the old one on the page. In
+its design, Tapestry focuses on the scale of its audience. However, it is more likely the service of rendering
+and there is no convenient way to customize the underlying visualization pipelines.
+    Voxer is inspired and influenced by many previous systems. Using a browser–server architecture,
+Voxer’s performance is not restricted by client resources. It features a build-in user interface for visual-
+ization configuration, which also integrates an ability to share visualizations with the public. Then, the
+shared visualizations can be embedded into existing web pages. All the data processing and rendering tasks
+are performed remotely by a scalable web service.
+    To build an easy-to-use tool for visualization configuration, Vorren (Meyer-Spradow et al. 2009) and
+Inviwo (Sunden et al. 2015) provided a module-based user interface. Their modular design obeys the data
+flow model, which provides an intuitive means of describing the visualization pipeline. However, because
+they are traditional desktop software, they are constrained by the limits of clients’ hardware. Likewise, their
+modular design exposes too much detail of the implementation (e.g., RayCasting, OpenGL, and
+ProxyGeometry), which leads to problems for domain experts as they set up proper pipelines and param-
+eters. In this paper, we also provide a module-based user interface for visualization configuration; however,
+our design hides the implementation details and focuses on providing users with an intuitive means to
+customize the pipeline.
+    There are many mature volume-rendering implementations, using either GPUs or CPUs, in the com-
+munity, and these feature optimizations for many-core processors. In this work, we use a fast CPU-based
+renderer, OSPRay (Wald et al. 2017), to perform rendering. In addition, to show our system’s extensibility,
+we also integrate Visualization Toolkit (VTK) (Schroeder et al. 2004), a GPU-based visualization frame-
+work, into our system. For servers that are equipped with GPUs, the service can use VTK to perform
+rendering tasks, and users will not need to be aware of any change in the underlying implementation.
+
+
+3 System design
+
+Voxer is a system design for ubiquitous scientific visualization that prioritizes functionality, scalability, and
+accessibility, but it is also a proof-of-concept implementation. In Voxer, using a B/S architecture, web
+browsers can take responsibility for presentation and interaction, and data processing and rendering tasks
+can be encapsulated as a web service and performed by remote servers, so the visualization service can serve
+more users accessing the visualization on devices from desktop computers to telephones. The system
+architecture of Voxer is shown in Fig. 1.
+    In response to the variety of demands for visualization, Voxer provides two different types of the user
+interface: a configuration view for domain experts and an embedded view for the public. The configuration
+view is a module-based user interface intended for researchers to create and customize visualization
+pipelines, which can then be saved to the server for later modification or sharing. With the embedded view,
+configured visualizations can be shared to the public through embedding interactive visualizations into web
+pages. More details are given in Sects. 3.1 and 3.2.
+    To fetch data through the network, web browsers can send commands to remote servers using a JSON-
+based grammar designed specifically for volume rendering with the support for time-varying and multi-
+variate volume data. When a specific command is received, the server side performs corresponding
+1164                                                                                                      W. Yang et al.
+
+
+
+                       Client Side
+                                        Web Page                            Web Page
+                                Configuration View                 Embedded View xxxxxxxxxxxx
+                                                                                   xxxxxxxxxxxx
+                                                                                   xxxxxxxxxxxx
+                                                                                   xxxxxxxxxxxx
+                                                                                   xxxxxxxxxxxx
+                                                                  xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+                                                                  xxxxxxxxxxxxxxx
+                                                                                  Embedded View
+                                                                  xxxxxxxxxxxxxx
+                                                                  xxxxxxxxxxxxxx
+                                                                  xxxxxxxxxxxxxx
+                                                                  xxxxxxxxxxxxxx
+
+
+
+                                            Binary images         Binary images
+                                            or JSON data          or JSON data
+
+
+                                                            Internet
+
+                             Commands                                                       Requests
+
+                                                     Docker Swarm Manager
+
+
+
+
+                            Node               Node             Node              Node
+                            HTTP &            HTTP &           HTTP &          HTTP &
+                           WebSocket         WebSocket        WebSocket       WebSocket
+                             Server            Server           Server          Server
+                                                                                                  ...
+                          pro cessing        pro cessing      pro cessing     pro cessing
+                               &                  &                &               &
+                           rendering          rendering        rendering       rendering
+
+                             data               data             data            data
+                          management         management       management      management
+
+                           co ntainer        co ntainer       co ntainer      co ntainer
+
+
+                       Server Side
+
+Fig. 1 Voxer’s system architecture. The user interface in the browser contains a module-based configuration view for
+customizing pipelines and an interactive view that can be embedded into web pages. The web service provided by remote
+servers runs as a Docker container and can be deployed to multiple nodes on a cluster managed by the Docker Swarm Manager
+
+processing tasks and responds with binary images or JSON data. The design of the command grammar is
+shown in Sect. 3.3.
+   For our web service, the rendering of volume data is done using OSPRay, a fast CPU-based renderer,
+with an optional GPU renderer for use when the servers are equipped with GPUs. Furthermore, the service is
+packaged as a Docker (Hykes et al. 2013) image, which can be deployed conveniently to any environment
+with Docker installed without any concern regrading software dependencies. Benefiting from the Docker
+ecology, the web service can be deployed to multiple server nodes in a cluster and can be managed by the
+Docker Swarm Manager, which exposes a unified network entry point to the outside and perform load
+balancing internally. The details are given in Sect. 3.4.
+
+3.1 Configuration view
+
+The configuration view is provided to domain experts to create and customize visualization pipelines. This
+view also integrates visualization-sharing ability.
+   The configuration is based on a collection of pre-designed modules that can be connected in the
+workspace section to describe the data flow in the pipeline. When the user drags the module from the
+Voxer: a platform for scientific visualizations                                                                               1165
+
+
+
+
+Fig. 2 The web interface of Voxer. a module list panel, where users can drag modules to the workspace section to create
+nodes; b pipeline workspace, where users can configure visualization pipelines according to their requirements; c parameter
+panel, each node’s parameters are user-customizable. d menu panel, where the pipeline can be saved to the server or imported,
+and users can modify server configuration, such as the address; e configured volume visualization embedded into the Wikipedia
+page on the human skull; and f same page on mobile
+
+
+Table 1 Data modules in the configuration view
+
+Name                                   Inputs                          Outputs                           Parameters
+Dataset                                –                               Variable(s)a                      Source, (timestep)
+TransferFunction                       –                               tf                                Opacity and color points
+Volume                                 tf, dataset                     Volume                            Spacing, tf
+Isosurface                             Volume                          Geometry                          Isovalue
+Sphere                                 –                               Geometry                          Radius, Position
+a
+ For a scalar field, the Dataset node will have one output port named ‘‘default.’’ For a multivariate field, each variable will have
+a port with its name as the port name in the Dataset node, as shown in Fig. 5b, d
+
+module list and drops it into the workspace, modules are instanced with their default parameters, which then
+are customizable in the parameter panel. The design of the user interface is presented in Fig. 2. Over the
+remainder of the paper, when describing the user interface, we refer to the instanced modules as nodes. Each
+node has several input and output ports, and each port has a fixed data type. Ports can have different
+connection requirements and we use different visual style to render them as in Fig. 3a. To describe the data
+flow through the pipeline, users should connect output ports with input ports that have the same data type.
+    In the module design, different levels of abstraction relate to different levels of flexibility. To minify the
+configuration overhead, we hide the underlying implementation detail to provide users with an intuitive way
+to set up the pipeline. We divide the modules into three categories: data modules, data processing modules,
+and visualization modules.
+    Data modules are the core of the pipeline, and they correspond to data entities in volume visualization.
+We have modules for datasets, transfer function, volume, and some geometries. Table 1 provides a list of
+data modules with their ports and parameters.
+    By contrast with existing systems, we make the transfer function into an individual module mainly to
+allow a transfer function to be shared among different volumes. When a TransferFunction node is selected,
+we can adjust its control points in the parameter panel. Due to the need to connect with multiple Volume
+nodes, when configuring the TransferFunction node, users cannot see the histogram of the volume data in
+the parameter panel, which would be helpful for configuration. To solve the problem, we also provide users
+1166                                                                                                                W. Yang et al.
+
+
+
+
+Fig. 3 a We use different styles for ports in our node design to distinguish their properties: (i) Square ports are required to have
+one and only one connection, (ii) ports with a dashed border are optional, and (iii) round ports can have multiple connections.
+b The transfer function is provided in the parameter panel of the Volume node with a histogram as the background
+
+with the ability to configure transfer function in the parameter panel of Volume node, where the volume
+data’s histogram will be shown as the background of transfer function as in Fig. 3b, and all modifications
+here can be synced to its parent TransferFunction node in real time.
+    Data processing modules consist of operations that can be applied to data modules, such as dataset
+clipping, volume rendering, and image processing. Current data processing modules supported are listed in
+Table 2. It allows data processing modules to be extended easily by implementing algorithms in the server.
+    Visualizations modules can be 3D renderings (e.g., direct volume rendering, animation, and isosurface
+rendering) or static images (e.g., slice). Visualization modules supported in Voxer are listed in Table 3. When it
+has valid input data, the visualization node fetches the corresponding result from the server and displays it
+directly in the node. The pipeline is reactive, so any changes to the connections and parameters trigger the
+update of visualization nodes.
+    The specification of modules is defined using JSON and stored as a file on the server side, fetched by
+browsers when users visit the web page. Listing 1 defines the Volume module. In this way, the web cache
+strategy can provide a seamless experience to users when the application updates. For example, to add or
+update modules, developers simply modify this file and implement corresponding algorithms on the server
+side. Then, when users approach the configuration view, the modified specification file is downloaded by the
+browser with all updates. No extra operation is required to be performed by the end users.
+
+
+
+
+    After configuration, the pipeline can be saved to the server, and it can be loaded and modified from a
+different client. With the saved pipeline, sharing the visualizations with the public using the embedded view
+is simple by embedding visualizations into web pages.
+Voxer: a platform for scientific visualizations                                                                 1167
+
+
+Table 2 Data processing modules in the configuration view
+
+Name                           Inputs                       Outputs        Parameters
+Differ                         First, second (dataset)      Dataset        –
+Transform                      Dataset                      Dataset        x, y, z
+Clip                           Dataset                      Dataset        Upper, lower positions of the clipping box
+VolumeRender                   Volume, geometries           Image          Height, width, camera
+MultiVolumeRender              Volumes, geometries          Image          Height, width, camera
+SliceRender                    Volume                       Image          Axis, offset
+ImageScale                     Image                        Image          Width, height
+
+
+Table 3 Visualization modules in the configuration view
+
+Name                                     Inputs                       Outputs                             Parameters
+Rendering                                Image                        –                                   –
+Animation                                Image                        –                                   –
+Image                                    Image                        –                                   –
+
+
+3.2 Embedded view
+
+Because the pipeline configuration is stored on the server side, visualization inside a specific pipeline can be
+obtained from the server. Within the configured pipeline, the visualization views can be shared with others
+by instancing them individually in normal web pages. As with the module design, these embedded views can
+be interactive 3D renderings, animations, and static images.
+    The data processing and rendering tasks in embedded views are performed by the server, using the
+corresponding pipeline that is saved in it. Leveraging the embedded views, it is possible to embed scientific
+visualization into web pages designed for mobile devices, as the visualizations do not have stringent
+hardware requirements. After scientific visualizations are embedded into web pages, they can be accessed by
+anyone and by multiple users concurrently.
+    When the web page loads, the embedded views appear the same as in the configuration view because
+they use exactly the same pipeline. However, as users interact with the embedded volume visualization, the
+pipeline is temporarily modified, such as, by dragging of 3D renderings, which changes the camera settings.
+These interactions will modify the parameters in the pipeline, but the changes are only available for the
+current session of the web page and will not affect the configuration stored on the server. When the user
+closes or refreshes the page, the changes cease to exist.
+
+3.3 Communication command grammar
+
+Because the configuration work is done on the client side, we design a JSON-based grammar for the web to
+communicate with the server. This grammar is a JSON object (a key-value map) with two outmost keys:
+‘‘command’’ and ‘‘params.’’ The ‘‘command’’ key has a value of a string type, which can be either ‘‘render’’
+or ‘‘save.’’ When ‘‘render’’ is the ‘‘command’’ value, the server renders an image using parameters encoded
+in the ‘‘params’’ part. For the value ‘‘save,’’ the server saves the ‘‘params’’ key for later sharing and
+modification.
+    The ‘‘params’’ key consists of all parameters needed to generate a visualization. These are generated in
+the pipeline and preserve the topology of connected nodes in the configuration view. The value of ‘‘params’’
+key is also a key-value map with two keys, ‘‘volumes’’ and ‘‘renderer.’’ The ‘‘volumes’’ part is of the array
+type, and each element in the array describes the corresponding Volume node using a unique ID, a transfer
+function setting, the dataset used, and other parameters, such as spacing.
+    The dataset of a volume that is used is encoded with the key ‘‘dataset,’’ which is able to represent
+different types of datasets. In the server, a set of datasets is stored beforehand. For time-varying datasets,
+each timestep is stored as an individual dataset file, and in the JSON command sent to the server, the
+timestep value is also included, so that the server can pick up the right timestep for the time-varying dataset.
+For multivariate datasets, each variable is stored as an individual dataset file, and the variable name is
+included when the request is sent from the web. For derived datasets, such as clipped datasets, we will
+encode the parameters of the clipping operation into the ‘‘dataset’’ part and encode the information of
+clipped dataset in a nested ‘‘dataset’’ part, as shown in Listing 2.
+1168                                                                                                  W. Yang et al.
+
+
+    We encode the volume configurations in a separate array part and generate a unique ID for them mainly
+to reduce the duplication, because it is possible to render a volume with derived geometries such as
+isosurfaces, and if we allow nested parameters for volume parameters again in the isosurface’s parameters,
+the encoded JSON may become large. Therefore, by separating volume configurations from the ‘‘renderer’’
+part, we can refer to them using their unique IDs.
+    The ‘‘renderer’’ part encodes camera settings, geometries, image size, and the array of volumes that are
+to be rendered using direct volume rendering (DVR). By wrapping volume configurations in an array, our
+service can handle multivariate volume rendering. Listing 2 gives the ‘‘params’’ part for a ‘‘render’’
+command.
+
+
+
+
+   In the configuration view, when an animation is played for a time-varying dataset, a series of rendering
+requests is sent to the server, and the timestep value in the requests is automatically updated. With a series of
+images rendered by the server using continuous timesteps, an animation can be created in the web page. In
+the embedded view, developers can specify timestep values themselves, using the JavaScript APIs we
+provide. Developers can create animations as well, by sending continuous requests with different timesteps.
+
+3.4 Scalable visualization web service
+
+Voxer’s web service is responsible for managing, processing, and rendering data. All volume data are stored
+on the server side, and users are given the ability to upload volume data from the configuration view. During
+the initialization of the server program, a configuration file that contains basic information related to the
+datasets is needed. To support time-varying volume and multivariate data, we specify timesteps and variate
+attributes of datasets in this file as well. Listing 3 shows the configuration of the data for hurricane ‘‘Isabel,’’
+which is time-varying and multivariate. The ‘‘[step]’’ part in the path ‘‘/path/to/volumes/Isabel/Pf/
+Pf[step].bin’’ is replaced by a specific timestep when the dataset is loaded.
+Voxer: a platform for scientific visualizations                                                            1169
+
+
+
+
+    Because embedded views can have a large number of users, a scalable service is essential. The primary
+concern here is the number of requests the service that can handle per second. OSPRay, a fast CPU-based
+volume renderer, is able to provide fully interactive frame rates for 3D visualizations in a B/S architecture
+(Raji et al. 2017). In this paper, we also integrate VTK, a GPU-based visualization framework, to support
+the rendering of multivariate volumes. For servers equipped with GPUs, a MultiVolumeRendering module
+can be unlocked in the configuration view, which provides the same interface as other modules, and users
+will not be aware of the change in the underlying implementation.
+    The paralleling of tasks benefits the scalability of the web service. In this paper, we use containerization
+technologies to encapsulate the server programs as Docker containers to deploy and manage software.
+A Docker container is an abstraction at the application layer, which packages code and dependencies
+together to provide a portable, lightweight environment for maintaining applications. By isolating software
+from its environment, containerized software always runs the same regardless of infrastructure (Hykes et al.
+2013). Using containerization technology, our server program can be deployed to any environment with
+Docker without worrying about software dependencies.
+    Thanks to the Docker ecology, we can deploy our service in a cluster of physical nodes as a Docker
+Swarm and conveniently scale the servers. With the build-in Docker Swarm Manager, we can adjust the
+number of nodes on the cluster and provide a unified network entry point. The Docker Swarm Manager
+includes an ingress load balancer (Kanuparthy et al. 2012), and when a network request comes through the
+entry point, the load balancer dispatches it to a suitable internal container.
+    Using B/S architecture, we can improve algorithms of the web service without affecting end users. As
+long as no upgrade breaks existing interfaces, users need to take no action. This helps in extending platform
+functionality.
+
+
+4 Implementation
+
+4.1 Module-based configuration
+
+The user interface in Voxer uses standard modern web technologies, including HTML, CSS, and JavaScript.
+The configuration view, wherein users build pipelines using modules, can involve plenty of interactions and
+states. We use React.js (Walke et al. 2013), a popular library for building user interfaces on the web, to
+construct the configuration view due to its convenience for managing user interactions and DOM changes.
+    In our implementation, we maintain a value object in the outmost scope, which contains the parameter
+values for all nodes and can be accessed by every node. At the same time, each node maintains a connection
+object that records all its connections with other nodes. Thus, we can trace data flow using connection
+objects and collect all the parameters in the pipeline from the value object. We create the value object
+globally, making it possible to modify one node’s parameters when interacting with other nodes, for
+example, to modify the camera settings of the VolumeRender node when rotating the 3D rendering.
+    Visualization nodes are responsible for communicating with servers. To achieve lower latency in the 3D
+rendering nodes, we use the WebSocket protocol to connect with servers and request rendered images.
+WebSocket provides full-duplex communication channels over a single TCP connection, which makes it
+possible to conduct a two-way ongoing conversation and real-time data transfer between the client and the
+server (Fette and Melnikov 2011). When a 3D rendering node is created in the pipeline, it connects with the
+server using WebSocket. The first time it receives a valid configuration from its input ports, and the node
+sends a command and the collected parameters to the server for the visualization result. During
+1170                                                                                             W. Yang et al.
+
+
+configuration, when the value object or the connection object is changed, React informs us, and the
+visualization nodes send a new command to update the result.
+    In the 3D rendering, animation, and image nodes, the responded data are rendered images, encoded using
+the JPEG format. 3D renderings are in fact a series of static images, so to achieve interactivity, we add event
+listeners to the DOM of the images and create a virtual camera. When users perform drag operations on the
+DOM, the movement is transformed to camera changes and finally applied to the camera settings, which are
+stored in the global value object mentioned above. These changes trigger updates to the visualization nodes,
+which will fetch new images from the server, which replace the old one. By sending multiple commands
+with different timesteps, animation for time-varying datasets can be generated. In the animation node, a
+button is used to control playback, so when users pause the play, they can interact with the rendered image
+as in the 3D rendering node.
+    The level-of-detail technology has proved its usefulness in time-critical renderings (Li and Shen 2002).
+For Voxer, to obtain higher frame rates, when the user adjusts node parameters, such as by modifying
+transfer function and dragging in the 3D rendering (rotating), the command sent by the visualization node is
+for a lower-resolution result (64 9 64 for images). When the interaction stops, a new command will be sent
+for a higher resolution (512 9 512). We adjust the rate of requests by setting a timer and a counter, five
+interactions in 100 ms only produce one request to the server.
+
+4.2 Visualization embedding
+
+In the menu panel for the configuration view, domain experts can save the pipeline to the server by encoding
+the global value object and all connection objects in JSON and wrapping it in a ‘‘save’’ command. When the
+‘‘save’’ command is received, the server creates a unique ID for the pipeline and stores the JSON locally.
+The unique ID is sent back to the user for later modification and sharing.
+
+
+
+
+   With the unique ID as the keyword, anyone can access to the visualization in the pipeline by sending a
+querying HTTP request to the server. Related parameters are responded in the JSON format, and we can add
+corresponding 3D renderings and static images individually to existing web pages. We create a script for
+developers to create embedded views in normal web pages using the unique ID. Listing 4 presents an
+example of this.
+
+
+
+
+    In the embedded view, data processing and rendering are also performed by the web service. For these
+embedded visualization views, we use the HTTP protocol to send rendering instead of WebSocket to send
+rendering requests. In contrast to the configuration view, whose users are mainly privileged users, the
+embedded view can serve a large number of users concurrently, so we use the HTTP protocol because it has
+a lower cost than WebSocket. Although the embedded view does not allow users to change the underlying
+pipeline, they can modify limited parameters (including camera settings and image resolution). Wrapping
+modified parameters in the request URL can be enough for the demand for the embedded view. Listing 5
+gives some examples of request URLs.
+    In the embedded view, the level-of-detail and throttling tasks are also performed to reduce overhead, as
+in the configuration view.
+Voxer: a platform for scientific visualizations                                                          1171
+
+
+4.3 Data processing and volume rendering
+
+On the server side, all volume data defined in the configuration file is loaded into memory and managed by a
+DatasetManager. For the multivariate volume, the dataset for each variable is cached using a key in the form
+of ‘‘datasetName-variableName’’ (e.g., ‘‘Heptane-prs’’ for the pressure field of the heptane dataset). For the
+time-varying volume, each timestep is cached using the key ‘‘datasetName-timestep’’ (e.g., ‘‘Isabel-Tcf-13’’
+for the temperature field of Isabel’s timestep 13). In addition, the data processing modules in the config-
+uration view can produce new datasets, and we will also cache them in memory with derived keys to ensure
+that data processing operation is not necessary each time. For example, when a differed dataset is created,
+the DatasetManager caches it in memory with a string like ‘‘differ-Isabel-Tcf-13-Isabel-Tcf-14’’ as the
+cache key.
+    The configuration and embedded views share rendering methods in the server program. However, for
+HTTP requests from the embedded view, URL parameters have higher priority than local ones. After
+rendering, these parameters are discarded, which enables temporary modification to the pipeline.
+    In Voxer, data processing modules can be extended easily. Each corresponds to a C?? function on the
+server side, whose parameters and return value are the same as the module’s parameters, input and output
+ports.
+    To add a new data processing module, developers must implement the appropriate function using C??
+and register the function, using its name, in the command parser responsible for parsing the JSON command
+sent from a web page. In this way, when receiving a request that contains the use of this new module, the
+command parser can choose the right function to process the data. Developers can update existing functions
+with faster algorithms, and end users will not be aware of the change, so long as the function interface
+continues to be the same.
+    Visualization modules are implemented on the frontend using HTML, CSS, and JavaScript. Benefiting
+from the web ecology, developers can use frameworks such as D3.js and Three.js to conveniently create
+diagrams.
+    The data modules are less likely to be changed because existing modules can satisfy most use cases.
+Unlike other modules, changes in data modules can lead to a significant impact on the rendering procedure,
+which can result in more changes to the code.
+    Whenever a new module is added or modified, developers must update the specification of the module in
+the specification file, as is indicated in Listing 1, so that users can use it in the configuration view.
+
+
+5 Case study
+
+In this section, we use a series of configured pipelines to indicate the flexibility and ease of use of our
+configuration view. We also provide two embedded views from real web pages to demonstrate use cases.
+Finally, we show Voxer’s performance by giving a benchmark for the system’s response time.
+
+5.1 Configurations
+
+5.1.1 Clipped volume rendering
+
+In Fig. 5a, we show a visualization pipeline for the dataset of a human tooth with a spatial resolution
+128 9 128 9 160, with only six modules, including the data processing module ‘‘clipping.’’ Connecting the
+Clipping node with the Dataset node and adjusting the clipping box in the parameter panel, we create a
+visualization of a clipped human tooth. With an appropriate transfer function, the structure of the tooth root
+is clearly shown. This visualization could be embedded into the Wikipedia page for the human tooth to
+allow visitors to have a clearer understanding of it.
+
+5.1.2 Time-varying volume analysis
+
+In the pipeline shown in Fig. 5b, we applied the differ operation to two timesteps of the time-varying dataset
+for Hurricane Isabel to analyze its movement accompanying pressure changes. In this pipeline, we used two
+Dataset nodes, where each Dataset node selects the same data source for Isabel but chooses different
+timesteps. Then, we connected the Pf ports of the two nodes to the Differ node, which represents the
+1172                                                                                                              W. Yang et al.
+
+
+
+
+Fig. 4 Parameters for the differing pipeline. a parameters for one of the Dataset nodes and b the transfer function setting of the
+differed volume
+
+pressure variable. Figure 4 shows the parameters for one of the Dataset node and the transfer function used
+in the pipeline. The formula ðA  B þ 255Þ=2 was used to generate the differed dataset.
+
+5.1.3 Isosurface-mixed volume visualization
+
+The VolumeRendering node has an optional port ‘‘geometries,’’ which accepts geometries such as isosur-
+faces and spheres. In Fig. 5c, through the creation of an Isosurface node and connecting it to the Vol-
+umeRendering node, we created an isosurface-mixed volume visualization. In this example, we used a
+‘‘marmoset_neurons’’ data (Klacansky 2019) with a resolution of 1024 9 1024 9 314. By connecting the
+Volume node to the Isosurface node, an isosurface can be rendered as well, whose isovalue can be adjusted
+in the node’s parameter panel. In this pipeline, the nuclei of neurons were rendered as isosurfaces, and other
+parts were rendered using DVR. The isosurfaces highlighted the nuclei in 3D space, which was helpful for
+identifying neurons.
+
+5.1.4 Multivariate volume rendering
+
+With the MultiVolumeRendering module, volumes with different transfer functions can be rendered
+together, which is useful for analyzing multivariate volume data. In the pipeline of Fig. 5d, the temperature
+and pressure datasets for the deep water impact data (Patchett and Gisler 2017) were rendered together. We
+assigned different TransferFunction nodes to each Volume node and then connected them to the Mul-
+tiVolumeRendering node. With two transfer functions designed for this case, the changes in color below the
+water indicated changes in pressure. Above the water, temperature distributions were clearly visible.
+
+5.2 Embedded views in web pages
+
+First, we exhibit the Wikipedia page for the human tooth with an embedded view of a tooth visualization as
+an example. The modified page, which contains an interactive 3D rendering of the tooth, is shown in Fig. 6.
+The rendering clearly shows the internal structure. By interacting with the visualization and exploring it in
+3D, users can develop a better understanding of the human tooth. In Fig. 6b, we also present the page as seen
+with a mobile device, where again the visualization can be interacted with touch gestures.
+    We also embedded an interactive animation of Hurricane Isabel in a page of the NOAA/NOW Storm
+Prediction Center Web site. Researchers and enthusiasts could watch the animation by clicking the play
+button and view the movement of the hurricane. The animation could be paused at any timestep, and while it
+was paused, users could adjust the view and perspective. The animation could be played after changes to the
+camera settings as well.
+
+5.3 Performance
+
+In embedded views, which can be provided to the public to serve large audiences, rendering requests are sent
+using the HTTP protocol with modified parameters wrapped in the URL. Therefore, traditional HTTP
+testing methods can be used to benchmark Voxer’s performance.
+    In our test, Voxer’s web service ran in four Ubuntu containers hosted on four virtual machines of the
+Tencent Cloud. Each virtual machine was equipped with four cores (3.2 GHz Intel(TM) Xeon Skylake
+6146), an 8-GB memory, and a network with speed up to 16 Mbps. The four containers formed a Docker
+Swarm and were managed by the Docker Swarm Manager, which performed load balance internally. We
+Voxer: a platform for scientific visualizations                                                                        1173
+
+
+
+
+Fig. 5 Different visualization pipelines in the configuration view: a volume visualization of a clipped human tooth, b time-
+varying volume analysis by differing two timesteps, c isosurface-mixed volume visualization, and d multivariate volume
+visualization
+1174                                                                                                         W. Yang et al.
+
+
+
+
+Fig. 6 a Embedded view of tooth volume data in a Wikipedia page for the human tooth (modified locally). Users can interact
+with the visualization using a mouse. b The same page as seen with a mobile device. Users can interact using touch gestures.
+c An interactive animation of the Hurricane Isabel embedded on the NOAA/NOW Storm Prediction Center (modified locally)
+
+
+Table 4 The rendering and response time for different datasets
+
+Dataset                                     Image resolution              Rendering time (ms)               Total time (ms)
+Tooth (128 9 128 9 160)                     64 9 64                         10                                29
+                                            128 9 128                       55                                83
+                                            256 9 256                      188                               232
+                                            512 9 512                      628                               804
+Vismale (128 9 256 9 256)                   64 9 64                         14                                38
+                                            128 9 128                      106                               144
+                                            256 9 256                      379                               439
+                                            512 9 512                     1384                              1590
+Isabel (500 9 500 9 100)                    64 9 64                         10                                30
+                                            128 9 128                       62                                95
+                                            256 9 256                      192                               252
+                                            512 9 512                      700                               855
+Heptane (302 9 302 9 302)                   64 9 64                         17                                37
+                                            128 9 128                      119                               146
+                                            256 9 256                      353                               400
+                                            512 9 512                     1182                              1297
+Neurons (1024 9 1024 9 314)                 64 9 64                         18                                40
+                                            128 9 128                      118                               154
+                                            256 9 256                      350                               436
+                                            512 9 512                     1177                              1320
+
+
+sent requests from a local machine to the remote service hosted in the Tencent Cloud machines, whose
+physical location was approximately 200 kilometers away.
+    The response time for rendering requests has a great impact on the usability of the system. We used the
+Apache benchmark tool ab to benchmark the response time for different rendering requests while recording
+the rendering time in the server. The results were measured using an average of ten rounds of the same test.
+For each round, ten concurrent requests were sent to four virtual machines on the Tencent Cloud and the
+average time is calculated.
+    The results for different datasets and image sizes are given in Table 4. For images with a 64 9 64
+resolution, the total time spent could support fully interactive frame rates. Therefore, the level-of-detail
+technique allowed our decoupled architecture to provide interactive visualizations. However, the rendering
+time increased with increasing image resolution, which would lead to longer waiting times for users who
+want higher-quality results. In our test, we only used four machines and 16 cores, but by increasing the
+nodes and cores in the cluster, the rendering time could be effectively reduced (Raji et al. 2017).
+    Table 4 shows the total time that consists of rendering time and transferring time. Transferring time is
+dependent on the quality of the network and physical distance between the user and the server. To serve a
+larger number of users, content delivery network (CDN) techniques, which deploy services in different
+locations and dispatch users’ requests to the closest server, can be used to reduce latency. As shown in the
+Voxer: a platform for scientific visualizations                                                                        1175
+
+
+benchmark result, for large datasets such as neurons (1024 9 1024 9 314), the rendering time spent is not
+very different from smaller datasets such as heptane (302 9 302 9 302). This is because different volume
+visualizations have different transfer functions and camera settings, which can also have large impacts on
+rendering.
+   When OSPRay was used as the rendering backend, the CPUs were almost 100% occupied during
+rendering in the test. As the test showed, a machine with four Intel Xeon Skylake 6146 (3.2 GHz) cores can
+provide an interactive frame rate. When VTK was used, the GPU did most of the rendering work. In our
+experiment, we used one NVDIA GeForce RTX 2070 for the rendering, which provided a fully interactive
+frame rate.
+
+
+6 Conclusion and future work
+
+In this paper, we proposed a system leveraging a B/S architecture to provide ubiquitous scientific visual-
+izations. A novel workflow was demonstrated to better support the configuration and sharing of visual-
+izations by encapsulating data processing and rendering functionality as a web service, creating pipelines in
+the configuration view and sharing visualizations using embedded views. In the configuration view, with a
+module-based interface, domain experts can easily and conveniently create and customize visualization
+pipelines. With a few lines of code, the embedded view can be added to any web page, making scientific
+visualization accessible to most devices, regardless of their computing resources.
+    Employing containerization technologies, the web service of Voxer can serve multiple users concur-
+rently while providing fully interactive frame rates. Benefiting from the decoupled architecture, servers can
+be scaled, and faster algorithms can be used without disturbing end users, who will be unaware of the
+changes to the underlying implementation.
+    The Voxer system, developed as proof of concept, still has many limitations. In the future, we will add
+the transfer function into embedded views to achieve a more flexible exploration interface for the public.
+Further, high-dimensional transfer function would be supported for data classification and exploration more
+effectively. We have not yet provided a light module in the configuration view to adjust the lighting, and
+only basic lighting is being used on the server. Because we have OSPRay and VTK as the rendering
+backend, the ability to render is limited to some degree by third-party libraries if we want to provide the
+same visual effect and a consistent interface in the configuration view for the use of different rendering
+backends. In the future, we will provide more shading functionalities, and we plan to integrate our own
+renderer to provide more controls over the rendering. In scientific visualization, apart from volume visu-
+alization, the visualization of vector and tensor fields can also be implemented using our architecture. And
+we would also like to provide the ability to process large datasets. In this paper, we use a task-parallel
+approach to improve scalability, and through data-parallel approaches and techniques like MPI (Yu et al.
+2004), interactive visualizations of large datasets become possible (Wald et al. 2017). Furthermore, addi-
+tional tests can be performed in different cluster environments to benchmark the system’s scalability.
+
+Acknowledgements This work was supported by the National Key Research & Development Program of China
+(2017YFB0202203), National Natural Science Foundation of China (61672452, 61890954 and 61972343), and NSFC-
+Guangdong Joint Fund (U1611263).
+
+
+
+
+References
+
+Ayachit U (2015) The paraview guide: a parallel visualization application. Kitware, Inc, Clifton Park
+Bostock M et al (2015) D3.js data-driven documents. http://d3js.org. Accessed 24 Aug 2019
+Childs H, Brugger E, Whitlock B, Meredith J, Ahern S, Pugmire D, Biagas K, Miller M, Harrison C, Weber G et al (2012)
+     Visit: an end-user tool for visualizing and analyzing very large data. High performance visualization-enabling extreme-
+     scale scientific insight. Insight pp 357–372
+Fette I, Melnikov A (2011) The websocket protocol. Tech. rep
+Hadwiger M, Al-Awami AK, Beyer J, Agus M, Pfister H (2018) Sparseleap: efficient empty space skipping for large-scale
+     volume rendering. IEEE Trans Vis Comput Gr 24(1):974–983
+Hykes S et al (2013) Docker: enterprise application container platform. https://www.docker.com/. Accessed 24 Aug 2019
+Jourdain S, Ayachit U, Geveci B (2011) Paraviewweb, a web framework for 3d visualization and data processing. Int J Comput
+     Inf Syst Ind Manag Appl 3(1):870–877
+1176                                                                                                         W. Yang et al.
+
+
+Kanuparthy P, Matthews W, Dovrolis C (2012) Dns-based ingress load balancing: an experimental evaluation. Computer
+     Science
+Kitware: Vtk.js. https://github.com/Kitware/vtk-js. Accessed 24 Aug 2019
+Klacansky P (2019) Open scivis datasets. URL https://klacansky.com/open-scivis-datasets/. Accessed 24 Aug 2019
+Li X, Shen HW (2002) Time-critical multiresolution volume rendering using 3d texture mapping hardware. In: Proceedings of
+     the 2002 IEEE symposium on volume visualization and graphics, IEEE Press, pp 29–36
+Meyer-Spradow J, Ropinski T, Mensmann J, Hinrichs K (2009) Voreen: a rapid-prototyping environment for ray-casting-based
+     volume visualizations. IEEE Comput Gr Appl 29(6):6–13
+Patchett J, Gisler G (2017) Deep water impact ensemble data set. Tech. rep
+Raji M, Hota A, Hobson T, Huang J (2018) Scientific visualization as a microservice. IEEE Trans Vis Comput Gr. https://doi.
+     org/10.1109/TVCG.2018.2879672
+Raji M, Hota A, Huang J (2017) Scalable web-embedded volume rendering. In: 2017 IEEE 7th symposium on large data
+     analysis and visualization (LDAV), IEEE, pp 45–54
+Schroeder WJ, Lorensen B, Martin K (2004) The visualization toolkit: an object-oriented approach to 3D graphics. Kitware,
+     Clifton Park
+Sunden E, Steneteg P, Kottravel S, Jonsson D, Englund R, Falk M, Ropinski T (2015) Inviwo-an extensible, multi-purpose
+     visualization framework. In: 2015 IEEE scientific visualization conference (SciVis), IEEE, pp 163–164
+Tamm G, Slusallek P (2016) Web-enabled server-based and distributed real-time ray-tracing. In: Proceedings of the 16th
+     Eurographics symposium on parallel graphics and visualization, Eurographics Association, pp 55–68
+Wald I, Johnson GP, Amstutz J, Brownlee C, Knoll A, Jeffers J, Günther J, Navrátil P (2017) Ospray-a cpu ray tracing
+     framework for scientific visualization. IEEE Trans Vis Comput Gr 23(1):931–940
+Walke J et al (2013) React: A javascript library for building user interfaces. https://reactjs.org/. Accessed 24 Aug 2019
+Yu H, Ma KL, Welling J (2004) A parallel visualization pipeline for terascale earthquake simulations. In: SC’04: Proceedings
+     of the 2004 ACM/IEEE conference on supercomputing, IEEE, pp 49–49
+
+
+Publisher’s Note Springer Nature remains neutral with regard to jurisdictional claims in published maps and institutional
+affiliations.
+

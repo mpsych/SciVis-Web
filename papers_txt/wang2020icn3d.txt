@@ -1,0 +1,298 @@
+                                                                                                         Bioinformatics, 36(1), 2020, 131–135
+                                                                                                           doi: 10.1093/bioinformatics/btz502
+                                                                                          Advance Access Publication Date: 20 June 2019
+                                                                                                                         Original Paper
+
+
+
+
+Structural bioinformatics
+
+
+
+
+                                                                                                                                                             Downloaded from https://academic.oup.com/bioinformatics/article-abstract/36/1/131/5520951 by Univ Massachusetts Healey Library user on 31 May 2020
+iCn3D, a web-based 3D viewer for sharing
+1D/2D/3D representations of biomolecular
+structures
+Jiyao Wang1,*, Philippe Youkharibache1,2, Dachuan Zhang1,
+Christopher J. Lanczycki1, Renata C. Geer1, Thomas Madej1,2,
+Lon Phan1, Minghong Ward1, Shennan Lu1, Gabriele H. Marchler1,
+Yanli Wang1, Stephen H. Bryant1, Lewis Y. Geer1 and
+Aron Marchler-Bauer1
+1
+ National Center for Biotechnology Information, National Library of Medicine and 2National Cancer Institute,
+National Institutes of Health, Bethesda, MD 20894, USA
+*To whom correspondence should be addressed.
+Associate Editor: Alfonso Valencia
+Received on December 19, 2018; revised on May 3, 2019; editorial decision on June 9, 2019; accepted on June 13, 2019
+
+
+Abstract
+Motivation: Build a web-based 3D molecular structure viewer focusing on interactive structural
+analysis.
+Results: iCn3D (I-see-in-3D) can simultaneously show 3D structure, 2D molecular contacts and 1D
+protein and nucleotide sequences through an integrated sequence/annotation browser. Pre-
+defined and arbitrary molecular features can be selected in any of the 1D/2D/3D windows as sets of
+residues and these selections are synchronized dynamically in all displays. Biological annotations
+such as protein domains, single nucleotide variations, etc. can be shown as tracks in the 1D se-
+quence/annotation browser. These customized displays can be shared with colleagues or publish-
+ers via a simple URL. iCn3D can display structure–structure alignments obtained from NCBI’s
+VASTþ service. It can also display the alignment of a sequence with a structure as identified by
+BLAST, and thus relate 3D structure to a large fraction of all known proteins. iCn3D can also display
+electron density maps or electron microscopy (EM) density maps, and export files for 3D printing.
+The following example URL exemplifies some of the 1D/2D/3D representations: https://www.ncbi.
+nlm.nih.gov/Structure/icn3d/full.html?mmdbid¼1TUP&showanno¼1&show2d¼1&showsets¼1.
+Availability and implementation: iCn3D is freely available to the public. Its source code is available
+at https://github.com/ncbi/icn3d.
+Contact: wangjiy@mail.nih.gov
+Supplementary information: Supplementary data are available at Bioinformatics online.
+
+
+
+1 Introduction                                                                         Cn3D (Wang et al., 2000), which all require the installation of a
+With the widespread availability of powerful personal computers                        dedicated application. Interactive visualization of large molecular
+and mobile devices, the visualization of biomolecular 3D structure                     structures can now be achieved via web-based 3D viewers such as
+(Kozlikova et al., 2017; Sali et al., 2015) is no longer restricted to                 NGL (Rose et al., 2018; Rose and Hildebrand, 2015), LiteMol
+stand-alone 3D viewer applications such as Chimera (Goddard                            (Sehnal et al., 2017) or Aquaria (O’Donoghue et al., 2015). Besides
+et al., 2018b; Pettersen et al., 2004), PyMol (Schrödinger, 2015) or                  3D visualization, 3D viewers also work as analysis tools to relate
+
+Published by Oxford University Press 2019. This work is written by US Government employees and is in the public domain in the US.                     131
+132                                                                                                                                       J.Wang et al.
+
+
+Table 1. Feature comparison of some 3D viewers
+
+Name        Web-based        1D sequence      2D diagram       Annotation   Aligna      Share link    EM density map       3D printing     Virtual reality
+
+iCn3D                                                                                                               
+LiteMol                     Webb             Webb             Webb                                   
+NGL                         Webb                              Webb
+                                                             
+
+
+
+
+                                                                                                                                                             Downloaded from https://academic.oup.com/bioinformatics/article-abstract/36/1/131/5520951 by Univ Massachusetts Healey Library user on 31 May 2020
+Aquaria
+Chimera                                                                                                                                
+PyMol                                                         
+Cn3D                                         Webb                         
+
+  a
+   Align a protein sequence with unknown structure to a 3D structure.
+  b
+   The feature is only available in a web page embedded with the viewer.
+
+
+structures to functions and annotations. Table 1 summarizes fea-                    iCn3D has made it easy to save a custom display and share it
+tures of some WebGL-based and stand-alone 3D viewers. A more                    with others. Instead of saving the state of all atoms, iCn3D saves a
+complete list of 3D viewers can be found at https://en.wikipedia.org/           command for each step. Like most 3D viewers, iCn3D can save a
+wiki/List_of_molecular_graphics_systems, among many other listings.             state file containing the command history. This state file can be used
+    Previously, NCBI has developed and maintained ‘Cn3D’ (Wang                  to reproduce the custom display. Since iCn3D is web-based, it fur-
+et al., 2000), a stand-alone application written in Cþþ. Taking ad-             ther simplified the state file and concatenated commands in a single
+vantage of advanced web technology, we have developed WebGL-                    sharable link using the option ‘Share Link’ in the File menu. The
+based 3D viewer iCn3D, which covers many of the features provided               Share Link can be shortened, e.g. to https://icn3d.page.link/
+by Cn3D, such as sequence displays in sync with the 3D structure                2rZWsy1LZmtTS3kBA, as shown above.
+displays. iCn3D also introduces novel features as suggested in                      To save a custom display, it is recommended to save the image using
+‘Twelve Elements of Visualization and Analysis’ (Youkharibache,                 the option ‘Save File > iCn3D PNG Image’ in the File menu. This PNG
+2017). As described below, these features mainly include:                       image is of high quality, has a transparent background, and contains
+                                                                                the sharable link at the end of the file. It can be imported to reproduce
+1. ‘Share Link’ URLs to share visual displays of interest over the
+                                                                                the display using the option ‘Open File > iCn3D PNG Image’ in the
+   internet, with all the underlying annotations and user-provided
+                                                                                File menu. Thus, this saved iCn3D PNG Image contains both the static
+   labels;
+                                                                                image display and the commands to reproduce the dynamic display.
+2. selection behavior synchronized between displays of 3D struc-
+   ture, 2D interaction schematic, 1D sequence and a menu of (pre-
+   )defined sets, many of which are defined automatically during an
+                                                                                2.2 Synchronized selection among 3D structure, 2D
+   interactive session to track user selections;                                interactions, defined sets and 1D sequences and
+3. annotations such as the location of non-synonymous single                    annotations
+   nucleotide polymorphisms (SNPs) that have been automatically                 2D or 1D representations often convey information that is difficult
+   extracted and mapped to 3D structures from NCBI dbSNP                        to spot or highlight in complex 3D representations (Goodsell and
+   database (Sherry et al., 2001), protein domains, functional sites,           Jenkinson, 2018; Heinrich et al., 2014; Munzner, 2014). To this
+   molecular contacts, disulfide bonds and custom annotations                   end, iCn3D visualizes macromolecular complexes in 3D, 2D and
+   that can be defined interactively or through file/text based mech-           1D, and synchronizes the selection among the various representa-
+   anisms, and can be displayed as ‘custom tracks’ in the sequence/             tions. The Share Link https://icn3d.page.link/2rZWsy1LZmt
+   annotation browser;                                                          TS3kBA shows, in a single page, the 3D display (Fig. 1A), 2D inter-
+4. visualization of sequence–structure alignment; and                           action schematic (Fig. 1B bottom), 1D sequences (Fig. 1D) and prede-
+5. visualization of structure–structure alignment and corresponding             fined sets including individual molecules/chains and custom
+   superposition.                                                               sets (Fig. 1B top). At the moment, iCn3D cannot show 2D topology
+                                                                                diagrams. It provides two alternative displays instead. The first display
+                                                                                is a new style called ‘Schematic’ for proteins and nucleotides. This style
+2 Results                                                                       shows the residues with circular 2D labels and connects the residues
+2.1 Share link                                                                  with 3D cylinders, as a combination of both 2D and 3D visualization
+The ‘Share Link’ feature in iCn3D generates a URL that captures the             styles. The second display is the 2D interaction schematic as shown in
+commands used to customize the display of a structure. The URL                  the bottom of Figure 1B. This display shows each protein/nucleotide/
+can then be shared with others, enabling them to reproduce the                  chemical as a node and shows interactions between them as lines.
+same display. For example, Figure 1A shows a custom display of                  iCn3D presents 1D sequence in two different ways. Figure 1D shows
+tumor suppressor P53 interacting with DNA (PDB ID 1TUP).                        the detailed sequence. Figure 1C shows the summary of the sequence
+iCn3D highlights key residues involved in the interaction: arginine             and displays individual residue positions as vertical bars.
+175, 248–249, 273 and 282 and glycine 245 (Cho et al., 1994). The                    To simplify 3D views, iCn3D can display a selected subset only,
+residue Arg 248 at chain B inserts into the major groove of the DNA             using the option ‘View Only Selection’ in the View menu. Figure 1A
+double-helix. Other highlighted residues are also involved in pro-              shows only the chain B interacting with DNA chains E and F while
+tein–DNA interactions or protein–protein interactions. Mutations                the protein chains A and C are not shown. Aside from displaying/
+of these key residues may affect the interaction of P53 with DNAs               hiding selections, iCn3D can also highlight selected sets of molecules
+and are associated with cancer (Vogelstein et al., 2000). These muta-           and/or residues, or apply specific display style and/or color settings
+tions are shown on ClinVar (variants associated with clinical diseases)         to a selection. The overall ‘Selection’ mode, which can be toggled
+(Landrum et al., 2018) and SNP sequence annotation tracks (Fig. 1D).            with a switch next to the Help menu, is very handy for command-
+iCn3D                                                                                                                                                     133
+
+
+
+
+                                                                                                                                                                  Downloaded from https://academic.oup.com/bioinformatics/article-abstract/36/1/131/5520951 by Univ Massachusetts Healey Library user on 31 May 2020
+Fig. 1. iCn3D visualizing the structure of tumor suppressor P53 complexed with DNA (PDB code 1TUP). This display can be reproduced in a live browser window
+with the shortened sharable link: https://icn3d.page.link/2rZWsy1LZmtTS3kBA. (a) ‘iCn3D PNG Image’ saved using the option ‘Save File’ in the File menu. (b)
+A list of defined sets including chains and custom sets (top), and a 2D schematic of the molecules involved in the complex structure (bottom). (c) Summary view
+of sequences and annotations with residues represented as vertical bars. (d) Detailed view of sequences and annotations
+
+
+based operations, determining whether future commands will apply                  from various NCBI databases: SNPs [from dbSNP (Sherry et al.,
+only to the current selection or to the whole structure that has been             2001)], ClinVar [annotated SNPs from ClinVar (Landrum et al.,
+loaded. iCn3D supports picking. Users can choose a selection option               2018)], Conserved Domains [from CDD (Marchler-Bauer et al.,
+in ‘Select on 3D’ in the Select menu, hold the ‘Alt’ key, and select an           2017)], 3D Domains [from MMDB (Madej et al., 2014)],
+Atom, Residue, Strand/Helix or Chain in the 3D display (Fig. 1A).                 Functional Sites (from CDD), Interactions (from MMDB) and
+Users can also click on the sets in ‘Defined Sets’ (Fig. 1B top) to select        Disulfide Bonds (from MMDB). Like many genome browsers
+a set; click on the nodes or lines in 2D interaction schematic (Fig. 1B           (Agarwala et al., 2018; Kent et al., 2002; Tang et al., 2018), iCn3D
+bottom) to select a molecule or residues contacting that molecule;                lists annotations as tracks. Instead of using multiple level of zooming
+click on a title of a track in ‘Sequences and Annotations’ (Fig. 1C and           in and zooming out, iCn3D uses two levels of views: a ‘Summary’
+D) to select an annotation; or click-and-drag on the sequence display             view with all residues fit in the available window (Fig. 1C) and a
+                                                                                  ‘Details’ view with the sequence shown as individual residues
+to select a range of residues. An ‘Advanced’ selection option using
+                                                                                  (Fig. 1D). As shown in Figure 1D, Residues R248 and R273 appear
+detailed specifications is also available in the Select menu.
+                                                                                  on several tracks: domain P53, ClinVar, SNP, DNA binding site,
+    The selections in the 3D, 2D and 1D displays are synchronized.
+                                                                                  Interacting with nucleotide chains and the custom track ‘Custom
+As shown in Figure 1A, the key residues involved in the interaction
+                                                                                  Key Sites’. The comparison among these annotations show that
+of P53 with DNA are highlighted. This set is selected in ‘Defined
+                                                                                  R248 and R273 are directly interacting with DNA, and that their
+Sets’ (Fig. 1B top), highlighted in the node B in 2D interaction sche-
+                                                                                  mutations have been characterized as pathogenic, as shown in the
+matic (Fig. 1B bottom) and highlighted in the sequence (Fig. 1D).
+                                                                                  tooltip of residues on the ClinVar or SNP track.
+Meanwhile, only the sequence of chain B is shown in the ‘Sequences
+                                                                                       Users may have their own annotations and may want to
+and Annotations’ window to simplify the user interface.                           compare them with other annotations. iCn3D has several ways
+                                                                                  to add custom tracks, via NCBI Accession, FASTA sequence,
+2.3 Annotations and custom tracks                                                 BED File, Custom text or Current Selection. Figure 1D shows the
+Annotations are useful in the analysis of sequence–structure–func-                custom track ‘Custom Key Sites’ added with the option of ‘Current
+tion relationships. iCn3D provides several annotations originating                Selection’.
+134                                                                                                                                            J.Wang et al.
+
+
+
+
+                                                                                                                                                                  Downloaded from https://academic.oup.com/bioinformatics/article-abstract/36/1/131/5520951 by Univ Massachusetts Healey Library user on 31 May 2020
+Fig. 2. iCn3D visualizing the sequence alignment of protein accession NP_001108451.1 with structure accession 1TSR_A (chain A of 3D structure 1TSR). The align-
+ment is shown in the box around ‘Protein 1TSR_A’ in the sequence window. (Share Link: https://www.ncbi.nlm.nih.gov/Structure/icn3d/full.html?
+from¼icn3d&blast_rep_id¼1TSR_A&query_id¼NP_001108451.1)
+
+
+
+
+Fig. 3. iCn3D visualizing the structure superposition and corresponding alignments between human oxy and deoxyhemoglobin (PDB ID 1HHO and 4N7N), as
+computed by VASTþ. (Share Link: https://icn3d.page.link/wPoW56e8QnzVfuZw6)
+
+
+
+2.4 Visualization of sequence–structure alignment                                 structures. Alternatively, iCn3D can show a sequence alignment of a
+Proteins with experimentally determined 3D structures represent                   query protein (e.g. accession NP_001108451.1) to a structure-
+only a small fraction of all known protein sequences. To relate 3D                derived sequence (e.g. accession 1TSR_A), together with the 3D
+structure information to other proteins with similar sequences,                   coordinates and annotations available for that structure (Fig. 2).
+homology models are often built for these proteins with unknown                   The sequence alignment is highlighted in a box with three lines: the
+iCn3D                                                                                                                                                     135
+
+
+structure-derive sequence (e.g. ‘Protein 1TSR_A’), alignment details          for this article was provided by the Intramural Research Program of the
+including matching residues (e.g. ‘BLAST E: 1.5e-84’) and the se-             National Library of Medicine at the National Institutes of Health/DHHS.
+quence (e.g. ‘Query: NP_001108451.1’). The 3D structure 1TSR_A                Conflict of Interest: none declared.
+in Figure 2 was colored by sequence conservation, which is calcu-
+lated based on the BLOSUM62 matrix as used by BLAST (Altschul
+et al., 1997, 2005). Red and blue colors indicate conservative and            References
+
+
+
+
+                                                                                                                                                                  Downloaded from https://academic.oup.com/bioinformatics/article-abstract/36/1/131/5520951 by Univ Massachusetts Healey Library user on 31 May 2020
+non-conservative substitutions, respectively. The 3D information              Agarwala,R. et al. (2018) Database resources of the National Center for
+and the annotations of the structure may provide useful hints with              Biotechnology Information. Nucleic Acids Res., 46, D8–D13.
+respect to the structure and function of the query protein.                   Altschul,S.F. et al. (1997) Gapped BLAST and PSI-BLAST: a new generation
+    Users have two ways to align sequence to structure. First, click            of protein database search programs. Nucleic Acids Res., 25, 3389–3402.
+the ‘Align > Sequence to Structure’ option in the File menu and in-           Altschul,S.F. et al. (2005) Protein database searches using compositionally
+put both a sequence ID and a structure ID. Second, click ‘Add                   adjusted substitution matrices. FEBS J., 272, 5101–5109.
+                                                                              Cho,Y. et al. (1994) Crystal structure of a p53 tumor suppressor-DNA
+Track’ in the Sequences and Annotations window next to the chain
+                                                                                complex: understanding tumorigenic mutations. Science, 265, 346–355.
+‘1TSR_A’ and choose ‘NCBI gi/Accession’.
+                                                                              Goddard,T.D. et al. (2018a) Molecular Visualization on the Holodeck. J. Mol.
+                                                                                Biol., 430, 3982–3996.
+2.5 Visualization of structure–structure alignment                            Goddard,T.D. et al. (2018b) UCSF ChimeraX: meeting modern challenges in
+iCn3D enables users to visualize structural alignments and superpo-             visualization and analysis. Protein Sci., 27, 14–25.
+sitions for similar protein complexes. Structure alignments are pre-          Goodsell,D.S. and Jenkinson,J. (2018) Molecular illustration in research and
+calculated by NCBI’s VASTþ service (Madej et al., 2014). As shown               education: past, present, and future. J. Mol. Biol., 430, 3969–3981.
+                                                                              Heinrich,J. et al. (2014) On the Use of 1D, 2D, and 3D Visualisation for
+in Figure 3, the 3D structure of oxy-hemoglobin (1HHO) is aligned
+                                                                                Molecular Graphics. In: 2014 Ieee Vis International Workshop on 3dvis
+with that of deoxy-hemoglobin (4N7N). All matching chains are
+                                                                                (3dvis), pp. 55–60.
+superposed. Users can alternate between these two structures
+                                                                              Kent,W.J. et al. (2002) The human genome browser at UCSC. Genome Res.,
+by pressing the key ‘a’. The aligned residues are colored in red for            12, 996–1006.
+identical residues or blue for non-identical residues. In the 2D inter-       Kozlikova,B. et al. (2017) Visualization of biomolecular structures: state of
+actions window (Fig. 3 middle), pairs of aligned protein molecules              the art revisited. Comput. Graph Forum., 36, 178–204.
+have the same number in red, e.g. both nodes 1HHO_A_1 and                     Landrum,M.J. et al. (2018) ClinVar: improving access to variant interpreta-
+4N7N_C are labeled with the number 3 colored in red.                            tions and supporting evidence. Nucleic Acids Res., 46, D1062–D1067.
+                                                                              Madej,T. et al. (2014) MMDB and VASTþ: tracking structural similarities be-
+                                                                                tween macromolecular complexes. Nucleic Acids Res., 42, D297–303.
+3 Discussion                                                                  Marchler-Bauer,A. et al. (2017) CDD/SPARCLE: functional classification of
+                                                                                proteins via subfamily domain architectures. Nucleic Acids Res., 45,
+Third-party annotations, such as mutations from ClinVar or dbSNP,               D200–D203.
+functional sites, interaction interfaces, structural or conserved             Mons,B. et al. (2017) Cloudy, increasingly FAIR; revisiting the FAIR data guiding
+domains, and their simultaneous visualization in 1D/2D/3D can pro-              principles for the European Open Science Cloud. Inf. Serv. Use, 37, 49–56.
+vide useful and compelling evidence relating sequence, structure and          Munzner,T. (2014) Visualization Analysis and Design. A K Peters
+function. More detailed genome level annotations could be linked to             Visualization Series. CRC Press, Taylor & Francis Group, Boca Raton,
+the structures in the future. For example, protein sequences could be           London, New York.
+shown together with chromosome, gene, intron and exon in a gen-               O’Donoghue,S.I. et al. (2015) Aquaria: simplifying discovery and insight from
+                                                                                protein structures. Nat. Methods, 12, 98–99.
+ome browser such as https://www.ncbi.nlm.nih.gov/genome/gdv/
+                                                                              Olson,A.J. (2018) Perspectives on structural molecular biology visualization:
+browser/?context¼gene&acc¼7157.
+                                                                                from past to present. J. Mol. Biol., 430, 3997–4012.
+    iCn3D follows the FAIR (Findable, Accessible, Interoperable
+                                                                              Pettersen,E.F. et al. (2004) UCSF chimera - A visualization system for explora-
+and Reusable) guiding principles (Mons et al., 2017; Wilkinson                  tory research and analysis. J. Comput. Chem., 25, 1605–1612.
+et al., 2017). The JavaScript code of iCn3D is componentized to be            Rose,A.S. et al. (2018) NGL Viewer: web-based molecular graphics for large
+reusable. The annotations in iCn3D could also be retrieved by other             complexes. Bioinformatics, 34, 3755–3758.
+tools. In the future, iCn3D may adopt emerging 3D technologies                Rose,A.S. and Hildebrand,P.W. (2015) NGL Viewer: a web application for
+such as virtual reality (Goddard et al., 2018a, b; Olson, 2018).                molecular visualization. Nucleic Acids Res., 43, W576–579.
+                                                                              Sali,A. et al. (2015) Outcome of the first wwPDB hybrid/integrative methods
+                                                                                task force workshop. Structure, 23, 1156–1167.
+Acknowledgements                                                              Schrödinger,LLC. (2015) The PyMOL Molecular Graphics System. Version
+                                                                                2.0. https://www.schrodinger.com/citations.
+We would like to thank Dr Terry S. Yoo and Dr David T. Chen for their help-
+                                                                              Sehnal,D. et al. (2017) LiteMol suite: interactive web-based visualization of
+ful discussions on generating models for 3D printing. Dr Alexander S. Rose
+                                                                                large-scale macromolecular structure data. Nat. Methods, 14, 1121–1122.
+provided valuable suggestions on reading MMTF files and implementing im-
+                                                                              Sherry,S.T. et al. (2001) dbSNP: the NCBI database of genetic variation.
+postor methods. Chris Maloney helped to set up the building script using
+                                                                                Nucleic Acids Res., 29, 308–311.
+gulp. We also thank Qiangling Li, Spencer Bliven, Eli Draizen, Jose Duarte,
+                                                                              Tang,B.X. et al. (2018) Delta: a new web-based 3D genome visualization and
+Keiichiro Oto and Tim Schaefer for their hackathon on the 2D interaction
+                                                                                analysis platform. Bioinformatics, 34, 1409–1410.
+schematic during the 2016 ISMB meeting.
+                                                                              Vogelstein,B. et al. (2000) Surfing the p53 network. Nature, 408, 307–310.
+                                                                              Wang,Y. et al. (2000) Cn3D: sequence and structure views for Entrez. Trends
+                                                                                Biochem. Sci., 25, 300–302.
+Funding                                                                       Wilkinson,M.D. et al. (2017) Interoperability and FAIRness through a novel
+This work was supported by the Intramural Research Program of the               combination of Web technologies. Peerj Comput. Sci.
+National Library of Medicine at the National Institutes of Health/DHHS.       Youkharibache,P. (2017) Twelve elements of visualization and analysis for
+Comments, suggestions and questions are welcome and should be directed to:      tertiary and quaternary structure of biological molecules. bioRxiv 153528,
+info@ncbi.nlm.nih.gov. Funding to pay the Open Access publication charges       doi: 10.1101/153528.
+

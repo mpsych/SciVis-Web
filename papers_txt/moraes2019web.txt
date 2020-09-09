@@ -1,0 +1,420 @@
+  Web-based Interactive Visualization of Medical Images in a Distributed
+                                 System
+
+                               Thiago Moraes1 , Paulo Amorim1 , Jorge Silva1 and Helio Pedrini2
+       1 Division    of 3D Technologies, Center for Information Technology Renato Archer, 13069-901, Campinas, SP, Brazil
+                          2 Institute of Computing, University of Campinas, 13083-852, Campinas, SP, Brazil
+
+
+
+
+Keywords:            Remote Medical System, Web-based Interactive Visualization, Medical Images, Data Rendering.
+
+Abstract:            Medical images play a crucial role in the diagnosis and treatment of diseases, since they allow the visualization
+                     of patient’s anatomy in a non-invasive way. With the advances of acquisition equipments, medical images
+                     have become increasingly detailed. On the other hand, they have required more computational infrastructure
+                     in terms of processing and memory capabilities, which may not be available in hospitals and clinics with
+                     limited resources. Therefore, a convenient mechanism for providing a more effective health service is through
+                     a remote access system. In this paper, we describe and analyze a distributed system for Web-based interactive
+                     visualization of medical volumes.
+
+
+
+1      INTRODUCTION                                                                          image segmentation, surgery simulation, virtual and
+                                                                                             augmented reality, telemedicine, computer-aided di-
+Data visualization (Pandey et al., 2014, Telea, 2014,                                        agnosis, among others.
+Murray, 2017) is an active research field with appli-                                            Advances in Web technologies have made it pos-
+cations in several domains of knowledge, for instance,                                       sible to develop collaborative visualization of med-
+medicine, biology, remote sensing, meteorology, en-                                          ical data on the Internet, improving healthcare ser-
+tertainment, among others.                                                                   vices. Despite the availability of hardware and soft-
+    The increasing amount of acquired data has be-                                           ware support, there are still some challenges in Web-
+come a challenge for the traditional visualization pro-                                      based medical data visualization.
+cess performed locally on a client machine, since it                                             In this work, we present and analyze a remote sys-
+relies on computationally expensive resources to ma-                                         tem for medical data visualization on the Web. From
+nipulate and display data volumes. Thus, the client                                          requests sent to a server, users are able to manipu-
+machine must have sufficient processing and storage                                          late and visualize large volumes of data quickly and
+capacity.                                                                                    directly in the Web browsing environment. Several
+    On the other hand, remote data visualization (En-                                        benefits are offered to users from the proposed sys-
+gel et al., 2000, Evesque et al., 2002, Wessels et al.,                                      tem. Web browser-based rendering requires no spe-
+2011, Blazona and Mihajlovic, 2007, Marion and                                               cial programs to be installed on the client machine.
+Jomier, 2012) allows costly operations to be per-                                                As main contributions of the paper, the server is
+formed on a server with high processing and storage                                          responsible for performing the operations requested
+capacity, resources for providing multi-user collabo-                                        by the users, which dispenses the client machine from
+ration, security mechanisms, as well as efficient ver-                                       expensive requirements in terms of memory and pro-
+sion control of applications.                                                                cessing. In addition, viewing results become available
+    The high amount of data produced in the med-                                             from any device with Internet access. The server ma-
+ical field requires the use of efficient image analy-                                        chine is a distributed system in order to provide capa-
+sis techniques (Amorim et al., 2018b, Amorim et al.,                                         bilities of performance, expansibility and reliability.
+2013,Moraes et al., 2018,Amorim et al., 2018a,Faza-                                          The proposed solution uses only open and free pack-
+naro et al., 2016, Ward et al., 2015, Prince and Links,                                      ages.
+2014), which usually involve the intervention of spe-                                            This text is organized as follows. Section 2 briefly
+cialists to allow greater control of the application.                                        presents concepts and approaches related to the topic
+Examples of interactive medical applications include                                         under investigation. Section 3 describes the method-
+
+
+346
+Moraes, T., Amorim, P., Silva, J. and Pedrini, H.
+Web-based Interactive Visualization of Medical Images in a Distributed System.
+DOI: 10.5220/0007626103460353
+In Proceedings of the 14th International Joint Conference on Computer Vision, Imaging and Computer Graphics Theory and Applications (VISIGRAPP 2019), pages 346-353
+ISBN: 978-989-758-354-4
+Copyright c 2019 by SCITEPRESS – Science and Technology Publications, Lda. All rights reserved
+                                                    Web-based Interactive Visualization of Medical Images in a Distributed System
+
+
+
+
+ology proposed to develop a remote medical data vi-             In the PubSub model, subscribers signalize to the bro-
+sualization system on the Web. Experimental results             ker as interested in a particular event. The publisher
+are presented and evaluated in Section 4. Concluding            sends messages (events) to the broker, which is re-
+remarks and directions for future work are outlined in          sponsible for delivering the message to the subscriber
+Section 5.                                                      registered in the event. Redis (Carlson, 2013, Redis-
+                                                                Lab, 2018) is an open source in-memory database that
+                                                                can be used as broker, since it implements the Pub-
+                                                                Sub model. Redis allows the broker to be distributed
+2    BACKGROUND                                                 across multiple nodes.
+                                                                    Some initiatives to develop data visualization sys-
+Medical volume rendering consists of a set of tech-
+                                                                tems on the Web have been made available in the liter-
+niques for displaying a two-dimensional (2D) of a
+                                                                ature (Kokelj et al., 2018, Rego and Koes, 2015, Kas-
+three-dimensional data set, acquired by a medical
+                                                                par et al., 2013,Sherif et al., 2015,Marion and Jomier,
+scanner such as Magnetic Resonance Imaging (MRI)
+                                                                2012, Mahmoudi et al., 2010, Mwalongo et al., 2015).
+and Computed Tomography (CT).
+    The advances and diffusion of the Internet have
+leveraged the interest in developing tools for analy-
+sis and processing of medical images in an Internet             3     REMOTE SYSTEM FOR
+browser.                                                              MEDICAL DATA
+    Virtual      Reality      Modeling       Language
+(VRML) (VRML, 2012) was one of the first                              VISUALIZATION
+proposals for modeling virtual reality in Web envi-
+ronments, allowing users connected to the Internet              In this section, we describe the developed remote
+to interactively view data volumes and transmit                 medical data visualization system on the Web. Fig-
+files. However, VRML has not become a Web                       ure 1 illustrates the main components of the proposed
+standard supported by the majority of the browsers,             remote system for medical data visualization. The
+so it is necessary to install a plugin in the browser.          system is composed of three different modules:
+Current leading browsers have adopted two important
+                                                                 • Web Server: where the HTTP (Hypertext Trans-
+standards: WebGL and WebSocket.
+                                                                   fer Protocol) (Fielding et al., 1999) and Web-
+    WebGL (WebGL, 2017) is the OpenGL ES stan-
+                                                                   Socket (Fette and Melnikov, 2011) requests are
+dard for browsers. It allows the creation of OpenGL
+                                                                   received from the clients. The Flask frame-
+contexts in browser windows and programming with
+                                                                   work (Ronacher, 2018) is used to generate
+the Javascript language to create three-dimensional
+                                                                   and send HTML (HyperText Markup Language)
+interactive environments.
+                                                                   pages to the client from HTTP requests. Flask-
+    WebSocket (Fette and Melnikov, 2011) is a net-                 SockeIO (Grinberg, 2018) is responsible for re-
+work protocol that allows two-way communication                    ceiving and responding to WebSocket requests.
+between client and server. Unlike Hypertext Transfer
+Protocol (HTTP), communication between both ma-                  • Redis Server: Redis (Carlson, 2013, RedisLab,
+chines (client and server) remains active, which facil-            2018) is an in-memory database that can be used
+itates the transmission and development of content in              as broker since it implements the PubSub model.
+real time.                                                         Redis allows the broker to be distributed across
+    Distributed systems (Tanenbaum and Van Steen,                  multiple nodes, that is, more than one Redis server
+2007) refers to an architecture in which computing                 can be used.
+nodes in a network communicate via messages to co-               • Processing Server: one or more processing nodes.
+ordinate themselves in order to achieve a common                   It was implemented in Python programming lan-
+goal. An interesting feature of this system is that fail-          guage.
+ure of a node should not affect the entire system.
+    Visualization Toolkit (Schroeder et al., 2004,                  All these modules may reside either on the same
+VTK, 2018) and Three.js (Dirksen, 2013) are some                machine or on different machines interconnected by a
+examples of libraries used to create and visualize data         data network. Redis performs load balancing to avoid
+in a Web browser.                                               processing overhead on only one of the processing
+    Publisher-Subscribe (PubSub) (Ion et al., 2010) is          servers. The client is a Web browser implemented in
+an asynchronous message passing model, where pub-               HTML and Javascript languages.
+lishers and subscribers exchange messages without                   In this architecture, the processing servers sub-
+knowledge of each other. Messages are called events.            scribe to the broker (Redis server) to receive events.
+
+
+                                                                                                                            347
+GRAPP 2019 - 14th International Conference on Computer Graphics Theory and Applications
+
+
+
+
+                             Remote System
+                                                                                              Processing Server 0
+
+                                                                                                 GDCM               NumPy
+ Client (browser)             Web Server
+ HTML + Javascript + WebGL    HTTP and WebSocket                                     Redis
+           Slices                                                                    Client
+
+                                                                                                                      MMAP
+                                   Flask                                                          VTK
+                                                              Redis Server
+            3D Canvas
+
+
+                                                                 DICOM
+                                                                                                        ...
+         3D Surface                                               ﬁles
+                                                                                              Processing Server n
+
+                              Flask-SocketIO                                                                        NumPy
+                                                                                                 GDCM
+
+             3D Canvas
+                                                                                     Redis
+                                                                                     Client
+
+                                                                                                                      MMAP
+                                                                                                  VTK
+
+
+
+
+       Figure 1: Diagram that illustrates the main stages of the proposed remote system for medical data visualization.
+
+Examples of events include: 3D reconstruction, seg-                 by the Web server, which sends these images to one of
+mentation, mesh generation, and mesh rendering. The                 the processing servers through a Redis event. When
+Web server receives client requests (via HTTP or                    the event arrives at the processing server, it retrieves
+WebSocket) and then sends an event to Redis with the                the images from the Redis server and removes those
+data received from the client.                                      Redis images. From then on, all processing in these
+    Redis stores the data in memory (or disk, if the                images is performed on that same processing server.
+data is too large) and contacts one of the processing               This is done to avoid leaving the images stored on the
+servers registered in that event. The processing server             Redis server.
+accesses event data and performs processing. Af-                         On the processing server, the GDCM li-
+ter performing the processing, the processing server                brary (GDCM, 2018) is used to rebuild the im-
+sends a Redis event with the resulting data. The Web                ages on a volume. The resulting volume is con-
+server subscribes to an event to receive these results.             verted to a volumetric array using the numeric li-
+After receiving the results of the processing, the Web              brary Numpy (Oliphant, 2007) in conjunction with
+server sends them to the client.                                    the VTK (Visualization Toolkit) library (Schroeder
+    Events in Redis are identified by a name (string).              et al., 2004,VTK, 2018). The volumetric array is then
+In order for the processing server to receive events                written to a disk file. The file is mapped to mem-
+related to the images in its possession, it subscribes              ory via MMAP (Memory Map) (MMAP, 2018) using
+to dynamically generated events. The same occurs                    Numpy. Thus, only the portions of the data required
+with the Web server. This is necessary to not oc-                   for processing are kept in main memory and not the
+cur from the Web server sending the result to other                 entire volume, which reduces the amount of memory
+client than the one that requested the result. This                 required in the processing server.
+event name is generated by concatenating the oper-                       After the data preparation (both two-dimensional
+ation to be performed with the image identifier. For                and three-dimensional data) for visualization purpose,
+instance, the segmentation operation for image 42                   all the processing of subsequent steps is performed in
+may have the event name segment_image_00042,                        the distributed system, where the client needs only to
+whereas the Web server expects the result with the                  request data from the system and interpret them. All
+event result_segmentation_image_00042.                              the available steps are listed as follows:
+    The workflow of the methodology starts when the                  1. 3D Image Slice Visualization Tool: this stage aims
+client sends medical images (for instance, Computed                     to allow the visualization of the slices in the ax-
+Tomography, Magnetic Resonance Imaging, Micro-                          ial, sagittal and coronal orientations. It starts with
+tomography) in the format DICOM (ACR/NEMA,                              the request, by the client, using the HTTP pro-
+2018) to the distributed system via HTTP.                               tocol, of a given slice and orientation of interest.
+    In the distributed system, the images are received                  The Web server receives the request and sends an
+
+
+348
+                                                    Web-based Interactive Visualization of Medical Images in a Distributed System
+
+
+
+
+   event to Redis. The processing server with the                   Web server, which sends the camera data to the
+   corresponding image receives the event with the                  processing server, via an event. The processing
+   required data. The processing server retrieves the               server renders the entire surface offscreen (Paul,
+   slice of interest in the file containing the volumet-            1997), according to the information sent by the
+   ric array. Slice retrieval is done through file access           client. The result is an image, which is sent to the
+   with Numpy and MMAP. The processing server                       Web server via an event. The Web server sends
+   sends an event to Redis with the desired slice. The              the client via WebSocket. The client then renders
+   Web server subscribes to the corresponding event                 this image as plane texture with same dimensions
+   to receive the image. After receiving the image, it              as the renderer.
+   sends the image to the client. In possession of the
+   image, the client renders it on the browser screen.
+   Rendering is done by mapping the image in a                  4     RESULTS
+   plane as a texture. WebGL (WebGL, 2017) is used
+   for rendering through JavaScript three.js (Cabello,          This section presents the results obtained with the im-
+   2018) library.                                               plementation of the proposed methodology. Three
+2. Segmentation Tool: segmentation is done through              server-side machines were used: (i) 1 server with Re-
+   the double thresholding technique. In this ap-               dis, (ii) 1 Web server with the proposed system and
+   proach, voxels are selected with gray levels be-             one of the processing nodes, (iii) 1 processing node.
+   tween Tmin and Tmax . The values of Tmin and Tmax                On the client side, browsers were Mozilla Fire-
+   are parameters controlled by the user through a              fox (Desktop), Chrome (Android, Mobile) and Safari
+   graphical interface on the client. Tmin and Tmax are         (iOS, Mobile). The only requirements on the client
+   sent to the distributed system via HTTP. The Web             side are the availability of WebGL, WebSocket and
+   server receives the request with the segmentation            Javascript.
+   data and sends an event. This event is received by               Figure 2 illustrates the view of slices in the axial,
+   the processing server with the corresponding im-             coronal and sagittal orientations. Below each slice,
+   age to be segmented. It segments the images and              there are sliders to change the slice to be displayed.
+   sends the response through an event to the Web               In the lower right corner, it is possible to observe the
+   server. It sends a representation of this segmenta-          segmentation tool based on thresholding. The thresh-
+   tion to the client via HTTP, which is a mask (in             old values are changed by dragging the sliders or typ-
+   green color) superimposed on the voxels of the               ing the values directly. In the slices, it is possible to
+   slice that are within the range of the threshold.            notice the mask (in green) superimposed on the slice
+3. Mesh Generation Tool: after segmentation, the                indicating the segmentation.
+   user can generate the three-dimensional surface,                 Figure 3 shows the visualization of a three-
+   which is produced by the processing server us-               dimensional surface. The visualization is done in two
+   ing the marching cubes algorithm (Lorensen and               parts: the rendering of the simplified mesh, which is
+   Cline, 1987), implemented in the VTK library. A              performed on the client, and the complete rendering,
+   simplified version, containing fewer polygons of             which is performed by the server. Simplified ren-
+   the three-dimensional surface, is also generated.            dering is performed while the user interacts with the
+   The simplified surface is created using the deci-            mesh. Figure 3a illustrates this rendering. Figure 3b
+   mation algorithm (Garland and Heckbert, 1997),               shows the result of rendering the complete surface,
+   implemented in the VTK library. The process-                 which is performed after the user interaction.
+   ing server sends the simplified surface to the Web               The proposed architecture proved to be very flex-
+   server, which sends it to the client using the Web-          ible by allowing the tool to be used on different mo-
+   Socket protocol.                                             bile systems, such as Android and iOS. This makes
+4. 3D Triangle Meshes Visualization Tool: with the              it possible to use the system in non-desktop environ-
+   simplified surface, the client renders it using We-          ments, which could occur during a doctor’s visit to a
+   bGL. Rendering of the simplified version oc-                 patient’s bed. Figure 4 illustrates the surface render-
+   curs during user interaction with the visualiza-             ing interface on Android 6.0 and iOS 10.3 systems.
+   tion. After the interaction, the client sends a mes-
+   sage requesting the rendering of the entire three-
+   dimensional surface. This request is made using
+   WebSocket and contains camera information (po-
+   sition, focus, and vector up that indicates the top
+   side of the camera). This request arrives at the
+
+
+                                                                                                                            349
+GRAPP 2019 - 14th International Conference on Computer Graphics Theory and Applications
+
+
+
+
+             Figure 2: System interface used to visualize the slices in the axial, coronal and sagittal orientations.
+
+
+
+
+                     (a) simplified surface                                           (b) complete surface
+                                        Figure 3: Surface rendering on a Web browser.
+
+
+
+
+350
+                                                   Web-based Interactive Visualization of Medical Images in a Distributed System
+
+
+
+
+                            (a) Android                                             (b) iOS
+                Figure 4: Result of surface rendering on a smartphone Android version 6.0 and iOS 10.3.
+
+
+
+5    CONCLUSIONS AND FUTURE                                    ACKNOWLEDGMENTS
+     WORK
+                                                               The authors thank FAPESP (grants #2014/12236-1
+The distributed system for medical image visualiza-            and #2017/12646-3), CNPq (grant #305169/2015-7)
+tion via Web was implemented and proved to be very             and CAPES for the financial support.
+useful. This makes it possible to centralize the pro-
+cessing and offer such computing resources to hospi-
+tals and clinics that do not have much computational
+power.                                                         REFERENCES
+    The possibility of accessing the system via mobile
+browser will allow access to the rendering system on           ACR/NEMA, D. (2018). Digital Imaging and Communica-
+smartphones, which may be useful for physicians and                tions in Medicine. http://dicom.nema.org/.
+dentists when a desktop computer is not available.             Amorim, P., Moraes, T., Silva, J., and Pedrini, H. (2013).
+    Directions for future work include improvements                An Out-of-Core Volume Rendering Architecture. In
+                                                                   IV ECCOMAS Thematic Conference on Computa-
+in triangle mesh generation, automated tools for cor-              tional Vision and Medical Image Processing, pages
+recting mesh problems (such as holes and face normal               173–179, Funchal, Portugal. Taylor & Francis Group,
+reversals), and other segmentation tools, for instance,            CRC Press/Balkema.
+watershed and region growing. We also intend to in-            Amorim, P., Moraes, T., Silva, J., and Pedrini, H. (2015).
+corporate the developed system into the open-source                InVesalius: An Interactive Rendering Framework for
+InVesalius (InVesalius, 2018, Amorim et al., 2015).                Health Care Support. In 11th International Sympo-
+                                                                   sium on Visual Computing, volume LNCS 9474, pages
+                                                                   45–54, Las Vegas, NV, USA. Springer-Verlag.
+                                                               Amorim, P., Moraes, T., Silva, J., and Pedrini, H. (2018a).
+                                                                   3D Adaptive Histogram Equalization Method for
+                                                                   Medical Volumes. In 13th International Conference
+
+
+                                                                                                                           351
+GRAPP 2019 - 14th International Conference on Computer Graphics Theory and Applications
+
+
+
+
+      on Computer Vision Theory and Applications, pages            Lorensen, W. E. and Cline, H. E. (1987). Marching
+      363–370, Funchal, Madeira, Portugal.                              Cubes: A High Resolution 3D Surface Construction
+Amorim, P., Moraes, T., Silva, J., and Pedrini, H. (2018b).             Algorithm. In 14th Annual Conference on Computer
+      Out-of-Core Rendering of Large Volumetric Data Sets               Graphics and Interactive Techniques, pages 163–169,
+      at Multiple Levels of Detail. In Multi-Modality Imag-             New York, NY, USA.
+      ing, pages 191–215. Springer International Publish-          Mahmoudi, S. E., Akhondi-Asl, A., Rahmani, R., Faghih-
+      ing.                                                              Roohi, S., Taimouri, V., Sabouri, A., and Soltanian-
+Blazona, B. and Mihajlovic, Z. (2007). Visualization Ser-               Zadeh, H. (2010). Web-based Interactive 2D/3D Med-
+      vice Based on Web Services. Journal of Commputing                 ical Image Processing and Visualization Software.
+      and Information Technology, 4:339–345.                            Computer Methods and Programs in Biomedicine,
+Cabello, R. (2018). three.js - JavaScript 3D Library.                   98(2):172–182.
+      http://mrdoob.github.com/three.js/.                          Marion, C. and Jomier, J. (2012). Real-Time Collaborative
+Carlson, J. L. (2013). Redis in Action. Manning Publica-                Scientific WebGL Visualization with WebSocket. In
+      tions Co., Greenwich, CT, USA.                                    17th International Conference on 3D Web Technology,
+Dirksen, J. (2013). Learning Three.js: The JavaScript 3D                pages 47–50, Los Angeles, CA, USA.
+      Library for WebGL. Packt Publishing Ltd.                     MMAP          (2018).                      Memory-Mapped
+Engel, K., Ertl, T., Hastreiter, P., Tomandl, B., and Eber-             I/O.                  http://www.kernel.org/doc/man-
+      hardt, K. (2000). Combining Local and Remote Visu-                pages/online/pages/man2/mmap.2.html.
+      alization Techniques for Interactive Volume Render-          Moraes, T., Amorim, P., Silva, J., and Pedrini, H. (2018).
+      ing in Medical Applications. In Conference on Vi-                 3D Lanczos Interpolation for Medical Volumes. In
+      sualization, pages 449–452. IEEE Computer Society                 15th International Symposium on Computer Methods
+      Press.                                                            in Biomechanics and Biomedical Engineering, pages
+Evesque, F., Gerlach, S., and Hersch, R. (2002). Building               1–10, Lisbon, Portugal.
+      3D Anatomical Scenes on the Web. Journal of Visu-            Murray, S. (2017). Interactive Data Visualization for the
+      alization and Computer Animation, 13(1):43–52.                    Web: An Introduction to Designing with. O’Reilly
+Fazanaro, D., Amorim, P., Moraes, T., Silva, J., and Pedrini,           Media, Inc.
+      H. (2016). NURBS Parameterization for Medical Sur-           Mwalongo, F., Krone, M., Becher, M., Reina, G., and Ertl,
+      face Reconstruction. Applied Mathematics, 7(2):137–               T. (2015). Remote Visualization of Dynamic Molecu-
+      144.                                                              lar Data using WebGL. In 20th International Confer-
+Fette, I. and Melnikov, A. (2011). The WebSocket Protocol.              ence on 3D Web Technology, pages 115–122.
+      RFC 6455 (Proposed Standard).                                Oliphant, T. E. (2007). Python for Scientific Computing.
+Fielding, R., Gettys, J., Mogul, J., Frystyk, H., Masinter,             Computing in Science & Engineering, 9(3):10–20.
+      L., Leach, P., and Berners-Lee, T. (1999). Hypertext         Pandey, A. V., Manivannan, A., Nov, O., Satterthwaite,
+      Transfer Protocol – HTTP/1.1. RFC 2616 (Draft Stan-               M., and Bertini, E. (2014). The Persuasive Power of
+      dard). http://www.ietf.org/rfc/rfc2616.txt.                       Data Visualization. IEEE Transactions on Visualiza-
+Garland, M. and Heckbert, P. S. (1997). Surface Simpli-                 tion and Computer Graphics, 20(12):2211–2220.
+      fication Using Quadric Error Metrics. In 24th An-            Paul, B. (1997). OpenGL/Mesa Off-Screen Rendering.
+      nual Conference on Computer Graphics and Interac-                 In ACM SIGGRAPH Conference, Los Angeles, CA,
+      tive Techniques, pages 209–216, Los Angeles, CA,                  USA.
+      USA.
+                                                                   Prince, J. and Links, J. (2014). Medical Imaging Signals
+GDCM (2018).                Grassroots DICOM Library.
+                                                                        and Systems. Pearson Education.
+      http://sourceforge.net/projects/gdcm/.
+Grinberg, M. (2018). Flask SocketIO. https://flask-                RedisLab (2018). Redis. https://redis.io/.
+      socketio.readthedocs.io/en/latest/.                          Rego, N. and Koes, D. (2015). 3Dmol.js: Molecular Visu-
+InVesalius (2018). Open Source Software for Reconstruc-                 alization with WebGL. Bioinformatics, 31(8):1322–
+      tion of Computed Tomography and Magnetic Reso-                    1324.
+      nance Images. http://www.cti.gov.br/invesalius/.             Ronacher, A. (2018). Flask. http://flask.pocoo.org/.
+Ion, M., Russello, G., and Crispo, B. (2010). Sup-                 Schroeder, W., Martin, K., Martin, K. W., and Lorensen, B.
+      porting Publication and Subscription Confidentiality              (2004). The Visualization Toolkit. Prentice Hall PTR.
+      in Pub/Sub Networks. In International Conference             Sherif, T., Kassis, N., Rousseau, M.-T., Adalat, R., and
+      on Security and Privacy in Communication Systems,                 Evans, A. (2015). Brainbrowser: Distributed, Web-
+      pages 272–289, Singapore, Singapore. Springer.                    based Neurological Data Visualization. Frontiers in
+Kaspar, M., Parsad, N., and Silverstein, J. (2013). An Opti-            Neuroinformatic, 8:1–10.
+      mized Web-based Approach for Collaborative Stereo-           Tanenbaum, A. S. and Van Steen, M. (2007). Distributed
+      scopic Medical Visualization. Journal of the Ameri-               Systems: Principles and Paradigms. Prentice-Hall.
+      can Medical Informatics Association, 20(3):535–543.
+                                                                   Telea, A. C. (2014). Data Visualization: Principles and
+Kokelj, Z., Bohaka, C., and Marolt, M. (2018). A web-                   Practice. CRC Press.
+      based virtual reality environment for medical visual-
+      ization. In 41st International Convention on Informa-        VRML (2012).        Virtual Reality Modeling Language.
+      tion and Communication Technology, Electronics and                http://www.vrml.org/.
+      Microelectronics, pages 0299–0302.                           VTK (2018). Visualization Toolkit. http://www.vtk.org/.
+
+
+352
+                                                      Web-based Interactive Visualization of Medical Images in a Distributed System
+
+
+
+
+Ward, M. O., Grinstein, G., and Keim, D. (2015). Interac-
+    tive Data Visualization: Foundations, Techniques, and
+    Applications. AK Peters/CRC Press.
+WebGL (2017).          OpenGL ES 2.0 for the Web.
+    http://www.khronos.org/webgl/.
+Wessels, A., Purvis, M., Jackson, J., and Rahman, S. (2011).
+    Remote Data Visualization through WebSockets. In
+    Eighth International Conference on Information Tech-
+    nology: New Generations, pages 1050–1051.
+
+
+
+
+                                                                                                                              353
+

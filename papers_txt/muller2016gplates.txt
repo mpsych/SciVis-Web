@@ -1,0 +1,738 @@
+                                                          RESEARCH ARTICLE
+
+
+                                                          The GPlates Portal: Cloud-Based Interactive
+                                                          3D Visualization of Global Geophysical and
+                                                          Geological Data in a Web Browser
+                                                          R. Dietmar Müller1*, Xiaodong Qin1, David T. Sandwell2, Adriana Dutkiewicz1, Simon
+                                                          E. Williams1, Nicolas Flament1, Stefan Maus3, Maria Seton1
+                                                          1 EarthByte Group, School of Geosciences, The University of Sydney, Sydney, NSW 2006, Australia,
+                                                          2 Scripps Institution of Oceanography, La Jolla, California, 92093, United States of America, 3 CIRES,
+                                                          University of Colorado at Boulder, Boulder, Colorado, 80309, United States of America
+
+                                                          * dietmar.muller@sydney.edu.au
+
+
+
+
+                                                          Abstract
+                                                          The pace of scientific discovery is being transformed by the availability of ‘big data’ and
+    OPEN ACCESS                                           open access, open source software tools. These innovations open up new avenues for how
+Citation: Müller RD, Qin X, Sandwell DT, Dutkiewicz       scientists communicate and share data and ideas with each other and with the general pub-
+A, Williams SE, Flament N, et al. (2016) The GPlates      lic. Here, we describe our efforts to bring to life our studies of the Earth system, both at pres-
+Portal: Cloud-Based Interactive 3D Visualization of       ent day and through deep geological time. The GPlates Portal (portal.gplates.org) is a
+Global Geophysical and Geological Data in a Web
+Browser. PLoS ONE 11(3): e0150883. doi:10.1371/
+                                                          gateway to a series of virtual globes based on the Cesium Javascript library. The portal
+journal.pone.0150883                                      allows fast interactive visualization of global geophysical and geological data sets, draped
+Editor: Juan A. Añel, Universidade de Vigo, SPAIN
+                                                          over digital terrain models. The globes use WebGL for hardware-accelerated graphics and
+                                                          are cross-platform and cross-browser compatible with complete camera control. The globes
+Received: December 6, 2015
+                                                          include a visualization of a high-resolution global digital elevation model and the vertical gra-
+Accepted: February 19, 2016                               dient of the global gravity field, highlighting small-scale seafloor fabric such as abyssal hills,
+Published: March 9, 2016                                  fracture zones and seamounts in unprecedented detail. The portal also features globes por-
+Copyright: © 2016 Müller et al. This is an open           traying seafloor geology and a global data set of marine magnetic anomaly identifications.
+access article distributed under the terms of the         The portal is specifically designed to visualize models of the Earth through geological time.
+Creative Commons Attribution License, which permits       These space-time globes include tectonic reconstructions of the Earth’s gravity and mag-
+unrestricted use, distribution, and reproduction in any
+medium, provided the original author and source are
+                                                          netic fields, and several models of long-wavelength surface dynamic topography through
+credited.                                                 time, including the interactive plotting of vertical motion histories at selected locations. The
+Data Availability Statement: The data displayed on
+                                                          globes put the on-the-fly visualization of massive data sets at the fingertips of end-users to
+the virtual globes are all published and freely           stimulate teaching and learning and novel avenues of inquiry.
+available, but at a number of different internet sites.
+Links to all relevant sites can be found on the web
+pages for the individual virtual globes on the GPlates
+Portal at http://portal.gplates.org/. Summary: Gravity
+grid, http://topex.ucsd.edu/grav_outreach/, Owner:
+Scripps Institution of Oceanography, Contact: David       Introduction
+Sandwell, dsandwell@ucsd.edu; Magnetic grid, http://
+                                                          Geoscience relies heavily on the visualization of geospatial data, helping us to make fundamen-
+geomag.org/models/emag2.html, Owner: National
+Oceanic and Atmospheric Administration of the U.S.
+                                                          tal new inferences about the Earth around us, and how it has evolved. More than 100 years ago,
+Department of Commerce, Contact: Stefan Maus,             Alfred Wegener [1] proposed the theory of continental drift by establishing previously unrec-
+stefan.maus@colorado.edu; SRTL15 Plus                     ognised associations between geological and fossil data from widely dispersed continents, and
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                                          1 / 17
+                                                                                           Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+topography, http://topex.ucsd.edu/www_html/srtm30_      fitting together the bathymetric outlines of these continents defined within maps of the Earth.
+plus.html, Owner: Scripps Institution of                Today, scientists have vast quantities of data at their disposal to pursue new theories of the
+Oceanography, Contact: David Sandwell,
+                                                        Earth system—the Earth’s surface is continuously monitored by satellites, geological sampling
+dsandwell@ucsd.edu; Seafloor lithology grid, http://
+www.earthbyte.org/seafloor-lithology-of-the-ocean-      from land and sea is being assembled into community databases, geophysical imaging probes
+basins/, Owner: The University of Sydney, Contact:      present-day deep Earth structure, and supercomputing resources power dynamic simulations
+Adriana Dutkiewicz, adriana.dutkiewicz@sydney.edu.      of the physical processes shaping the world around us, over timescales up to hundreds of mil-
+au; Plate reconstructions used to reconstruct the       lions of years. These advances also create new problems to solve—how can scientists efficiently
+gravity and magnetic grids, http://www.earthbyte.org/
+                                                        share and communicate these data sets with each other, and with non-specialists, to maximise
+global-continental-and-ocean-basin-reconstructions-
+since-200-ma/, Owner: The University of Sydney,
+                                                        the public benefit of the large efforts undertaken in creating these data sets?
+Contact: Dietmar Müller, dietmar.muller@sydney.edu.         Virtual globes have changed the way we interact with spatial data, largely due to the popu-
+au; Dynamic topography grids, http://www.earthbyte.     larity of Google Earth [2] and NASA World Wind [3]. Following the broad uptake of these
+org/a-review-of-observations-and-models-of-             technologies by scientists and end-users, alternative technologies for virtual globes have been
+dynamic-topography-2013/, Owner: The University of      developed that are faster for displaying of very large data sets (e.g., for detailed 3D textured city
+Sydney, Contact: Nicolas Flament, nicolas.
+                                                        models [4]), work well on hand-held devices, and can function entirely within a web-browser.
+flament@sydney.edu.au; Magnetic anomaly
+identifications, http://www.soest.hawaii.edu/PT/        These alternative technologies also provide powerful additional functionality, for instance use
+GSFML/ML/index.html, Owner: Numerous authors of         of custom imagery and terrain models with greater user-control of vertical exaggeration; a ded-
+papers listed on web site above, Contact: Maria         icated infrastructure for displaying time-dependent data sets; and the ability to produce custom
+Seton, maria.seton@sydney.edu.au.                       user-interfaces, specifically designed to showcase the results of a particular study or project.
+Funding: This project was supported by the              These and other requirements have prompted the development of the Cesium software library
+AuScope National Collaborative Research                 (cesiumjs.org).
+Infrastructure and a Big Data Knowledge Discovery           Here, we describe novel developments in the use of Cesium virtual globes to enable web-
+project (SIEF project RP 04-174), Australian
+                                                        based visualization and knowledge discovery for a range of applications in the geosciences. We
+Research Council grant FT130101564 (MS),
+Australian Research Council grant FL0992245
+                                                        have created tools that allow end-users to interact with data sets that describe the Earth as it is
+(RDM), Science Industry Endowment Fund grant RP         now, based on remote sensing data, marine geophysical data and a novel approach of mapping
+04-174 RDM, and an ARC Laureate Fellowship              seafloor lithology. In addition, our virtual globes allow the user to visualize Earth’s plate tec-
+(FL0992245) and the Auscope National Collaborative      tonic evolution through data-driven reconstructions of supercontinent dispersal and global
+Research Infrastructure. The authors also               numerical models describing how mantle convection has shaped the Earth’s surface through
+acknowledge support by the Nectar Cloud and the
+                                                        time. We discuss the technical details required to implement these tools, and illustrate how
+Australian National Data Service (ANDS).
+                                                        they can help to increase public engagement with geoscience, and promote cross-disciplinary
+Competing Interests: The authors have declared          research by making geospatial data sets more accessible to a wide audience within the scientific
+that no competing interests exist.
+                                                        community.
+
+
+                                                        Technical Background
+                                                        System Architecture
+                                                        Cesium is an open-source JavaScript library built on the Web Graphics Library (WebGL) for
+                                                        interactive visualization of 3D globes and 2D maps in a web browser. WebGL is a web stan-
+                                                        dard, designed and maintained by the Khronos Group (www.khronos.org), for low-level 3D
+                                                        graphics Application Programming Interface (API) based on OpenGL ES 2.0 –a standard API
+                                                        for 2D and 3D graphics on embedded systems [5]. The web browsers implement WebGL API
+                                                        as a Document Object Model (DOM) interface in HTML5 [6] Canvas elements, which allows
+                                                        JavaScript programs to utilize Graphics Processing Unit (GPU) for 3D graphics hardware
+                                                        acceleration. WebGL support is widely available in modern browsers, such as Google Chrome,
+                                                        Mozilla Firefox, Safari, and others. As a virtual globe and map engine, Cesium utilizes a
+                                                        WebGL API to provide fast, cross-platform, cross-browser and plugin-free 3D rendering func-
+                                                        tionality, which makes it ideal for the development of interactive 3D global geophysical and
+                                                        geological data visualization web applications.
+                                                           The GPlates Portal (portal.gplates.org) is designed with a three-layered architecture consist-
+                                                        ing of presentation, logic and data layers. The layer is a logical concept of component groups,
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                                2 / 17
+                                                                                 Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+
+                                         Fig 1. The GPlates Portal’s multilayered architecture. A three-layered architecture consists of
+                                         presentation, logic and data layers. The presentation layer includes the Graphical User Interface (GUI) and
+                                         the main canvas for 3D rendering. The logic layer contains a number of web services written in Python and
+                                         deployed in Django Web Framework [7]. The data layer focuses on the storage and retrieval of data.
+                                         doi:10.1371/journal.pone.0150883.g001
+
+                                         which divides a large system into different areas of functionality so that the complexity of the
+                                         system can be minimized and each layer can be designed and implemented separately and effi-
+                                         ciently. This multilayer architecture also provides the highest level of encapsulation and isola-
+                                         tion, which decouples the system and reduces the ripple effect of changes to the system. Fig 1
+                                         illustrates the multilayered system architecture of the GPlates Portal.
+                                             The presentation layer includes the Graphical User Interface (GUI) and the main canvas for
+                                         3D rendering. The GUI is developed with HTML5, JavaScript and Cascade Style Sheet (CSS)
+                                         and can be used to control the main canvas and display additional information. The jQuery
+                                         JavaScript library is used to help with the client-side scripting and the Cesium library is used to
+                                         draw the 3D virtual globe and maps on an HTML5 Canvas.
+                                             The logic layer contains a number of web services written in Python and deployed in Django
+                                         Web Framework [7]. The Apache HTTP Server is used to handle the HTTP protocol between
+                                         the Django Web Framework and clients. The HTTP requests are dispatched to corresponding
+                                         web services by the Django Web Framework and the HTTP responses are delivered back to cli-
+                                         ents through the same stack.
+                                             The data layer focuses on the storage and retrieval of data. A set of data source adapters is
+                                         created to decouple the web services from the data storage details. The data source adapters read
+                                         a Data Source Description (DSD) file in JSON format to retrieve and feed data back to web ser-
+                                         vices. The web services only interact with an abstract interface of data source adapters, so any
+                                         changes to the data storage are completely transparent to the web service. This decoupling
+                                         allows us to change the data storage details without affecting the web services. Currently, our
+                                         data sources include files on local volumes, tables in a PostGIS [8] database, objects in Amazon
+                                         Simple Storage Service (S3) [9] and some external data sources hosted by collaborators.
+
+
+                                         Benefits of the “Software as a Service” model
+                                            Easy access. Users can start using the applications without having to go through a software
+                                         installation process. The applications can be easily accessed, especially for users who have to
+                                         face the strict software installation policy often imposed by IT department of some
+                                         corporations.
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                        3 / 17
+                                                                           Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+                                             Automatic upgrade and maintenance. Because the software applications are centrally
+                                         hosted, they can be easily upgraded by the service providers. All users use the same version of a
+                                         software, which makes collaboration between users easier because there are no problems with
+                                         software version mismatches. Bug fixes can be delivered quickly and easily. Users do not have
+                                         to wait for the next release to get the bugs fixed.
+                                             Connectivity and resources sharing. In the Internet era, it is important that resources are
+                                         connected and shared. The resources, such as computation, storage and software functionality,
+                                         can be utilized more efficiently in a connected environment and users can collaborate more
+                                         efficiently because data are connected and shared.
+                                             Platform independence. Users only need an Internet connection and a web browser to
+                                         access the GPlates Portal. There is no significant platform restriction. The Cesium web applica-
+                                         tions harness modern technology to give users an interactive 3D experience. Users can rotate
+                                         the globe, adjust the angle of view, change the height scale, and zoom into the very details of
+                                         high resolution raster and terrain. Some portal applications are able to calculate data at a speci-
+                                         fied time/age according to the user input.
+                                             Cloud Hosting. The GPlates Portal is hosted in the cloud. Cloud hosting provides the fol-
+                                         lowing advantages, compared with traditional on-premises installation:
+                                         1. Scalability and flexibility. The traffic to our web services is highly variable. Spikes in the
+                                            number of page requests coincide with the publication of datasets associated with high-
+                                            impact journal articles, when the articles attract wide-spread media attention and general
+                                            public interest. In light of the variable usage, it is important for the system to adjust its
+                                            capability on-demand. The Cloud’s Auto Scaling service allows us to scale the system’s
+                                            capacity up or down automatically according to the conditions. This auto scaling ability is
+                                            important to ensure the quality of our web services without incurring a substantial infra-
+                                            structure cost.
+                                         2. Lower cost and pay as you go. Using cloud hosting keeps the cost of hardware purchase
+                                            and maintenance to a minimum. Furthermore, unneeded virtual machines in the Cloud
+                                            can be terminated at any time, thus eliminating the issues related to disposal of computer
+                                            hardware.
+                                         3. Launch virtual machine at designated locations. There is an obvious pattern in the distribu-
+                                            tion of user locations, which are mostly within Australasia, Europe and the USA. The Cloud
+                                            allows us to launch virtual machines in these designated regions to improve the speed of
+                                            network access.
+
+
+
+
+                                         Free Software for Globe Design
+                                         One of the basic principles of the scientific method is that research results should be reproduc-
+                                         ible and independently verifiable [10] and one of the key components of reproducibility is
+                                         open software. Free software is used in the development of the GPlates Portal, which gives
+                                         readers easy access to the tools required to repeat the method described in this paper. The 3D
+                                         rendering engine, Cesium Version 1.7.1 (http://cesiumjs.org/downloads.html), is released
+                                         under the Apache 2.0 license. The reconstruction engine, GPlates/PyGPlates Version 1.5
+                                         (http://gplates.org/download.html), is released under GPLv2. The auxiliary Python programs
+                                         in S1 Archive are released under GPLv2 in accordance with GPlates. The matplotlib Python
+                                         library version 1.5.1 (http://matplotlib.org/1.5.1/index.html) is released under the Python Soft-
+                                         ware Foundation (PSF) license.
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                4 / 17
+                                                                                    Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+
+Fig 2. Workflow for designing a virtual globe. The details involved in this workflow are summarized in S1 Text.
+doi:10.1371/journal.pone.0150883.g002
+
+                                              Virtual Globe Design and Construction
+                                              Introduction
+                                              Virtual globe design and construction consists of 4 major steps (Fig 2): (1) preparing imagery
+                                              tiles, (2) preparing terrain tiles, (3) serving imagery and terrain tiles over the internet, and (4)
+                                              building the application. The detailed methodology involved in design and construction,
+                                              including python scripts, is available in S1 Text and supplementary python scripts are archived
+                                              in S1 Archive.
+
+                                              Design and functionality of individual virtual globes
+                                              In the following sections we describe a series of virtual globes that we have created as part of
+                                              the GPlates Portal. Each globe is a companion to a published scientific research article. Indeed,
+                                              each globe can be regarded as a powerful supplementary resource to these studies, allowing
+                                              anyone with a web browser to visualize and interact with large data sets, reconstructions, and
+                                              geodynamic simulation output that can only be partly represented within the limitations of a
+                                              journal article.
+
+                                              High-resolution topography and bathymetry
+                                              There are many Earth processes that can only be understood by mapping the topography of the
+                                              deep oceans at high resolution. These include small-scale features such as abyssal hills, small
+                                              seamounts (< 1 km tall), fractures that form on the outer walls of deep ocean trenches, and the
+                                              erosional incisions on the seaward slopes of the continental margins. A new global grid of land
+                                              topography and ocean bathymetry called SRTM15_PLUS (15 arc second resolution) was
+                                              recently developed [11] following the methods of the SRTM30_PLUS grid [12]. The land topog-
+                                              raphy is based on the SRTM3 mapping by the space shuttle in 2000 [13]. This is augmented by
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                         5 / 17
+                                                                            Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+                                          high-latitude data from ASTER stereo topography and a combination of CryoSAT-2 and Ice-
+                                          SAT altimetry data for the ice caps of Greenland and Antarctica. The new aspect of the grid is
+                                          the global bathymetry which is based on publically available depth soundings from a wide array
+                                          of sources combined with the latest global bathymetric prediction from the global marine grav-
+                                          ity grid discussed above [14]. In particular, high-resolution (100–200 m) multibeam echo
+                                          sounder data from oceanographic institutions around the world [e.g., Lamont, Scripps, Woods
+                                          Hole, JAMSTEC, GEOMAR, IFREMER, etc.] cover about 11% of the area of the oceans at 15
+                                          arcsecond resolution (~500 m). The older single-beam soundings from a global compilation
+                                          maintained at the US National Geophysical Data Center provide 1 km spatial resolution over an
+                                          additional 6% of the seafloor. Depths on the remaining 83% of the seafloor are interpolated
+                                          from the global gravity grid [15]. This wide variety of data was assembled using the remove/
+                                          restore method to bootstrap from the SRTM15_PLUS compilation. The assembly made exten-
+                                          sive use of Generic Mapping Tools [16] for gridding as well as masking land/ocean areas. The
+                                          SRTM15_PLUS grid will form the basis for the next version of Google Earth and is publicly
+                                          available at ftp://topex.ucsd.edu/pub/srtm15_plus/.
+                                              While all of the source data are publicly available and have been analyzed, the global assem-
+                                          bly provides a new perspective on several types of ocean features. First, the spatial variations in
+                                          abyssal hill fabric, not well resolved at 30 arc seconds, are now visible along most of the seafloor
+                                          spreading ridge axes as well as some well surveyed areas with thin sediment cover. The ampli-
+                                          tude and orientation of this abyssal fabric provides a window into the past spreading rate and
+                                          direction. Significant new multibeam coverage from JAMSTEC in the Western Pacific provides
+                                          remarkable resolution of the Izu-Bonin and Mariana trenches, Philippine Sea and Parece Vela
+                                          Basin (Fig 3). A recent compilation of multibeam bathymetry from Geoscience Australia
+                                          (http://www.ga.gov.au/scientific-topics/marine/bathymetry) provides vastly improved
+
+
+
+
+Fig 3. SRTM15 PLUS Cesium globe northward view of the region around the Mariana Arc and Trench. Recently added multibeam bathymetry data
+have substantially increased resolution of small-scale features in this region.
+doi:10.1371/journal.pone.0150883.g003
+
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                 6 / 17
+                                                                                 Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+                                             resolution of the continental margins and continental rise around Australia. New multibeam-
+                                             based grids from GEOMAR reveal the detailed structure of the Central Chile Trench and outer
+                                             trench wall.
+
+                                             Seafloor lithology
+                                             The world’s ocean floor is draped by a vast blanket of sediments, which forms the largest geo-
+                                             logical deposit and the largest carbon sink on Earth (Fig 4). The composition of these sedi-
+                                             ments is highly variable and includes remains of plankton that have settled through the ocean
+                                             column, terrigenous particles derived from continents and chemical precipitates that have
+                                             formed in situ on the seafloor. The distribution of these sediments is critical for understanding
+                                             how Earth has responded and continues to respond to environmental changes, the behavior of
+                                             ocean currents, the occurrence of metal deposits and the assessment of geohazards. The recent
+                                             publication of the first digital map of seafloor sediments based on the analysis and classification
+                                             of nearly 15,000 surface sediment samples [17], provides a long overdue update on a highly
+                                             generalized hand-drawn map of global seafloor sediments that dates back to 1974 [18] and fea-
+                                             tures in virtually every textbook of marine geology and oceanography. The digital map was cre-
+                                             ated using a bespoke machine-learning algorithm [17] and allows the joint analysis of these
+                                             categorical data with oceanographic data that are freely available, for instance, through the
+                                             National Oceanic and Atmospheric Administration (NOAA) (www.nodc.noaa.gov/OC5/
+                                             WOD/pr_wod.html). Being open-access, the digital map is a valuable research resource for
+
+
+
+
+Fig 4. Cesium globe view of seafloor sediment types draped over a digital elevation model with an overlay of major rivers (blue lines). Several
+features of interest are highlighted.
+doi:10.1371/journal.pone.0150883.g004
+
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                         7 / 17
+                                                                           Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+                                         geologists, oceanographers and climatologists, and it has by far the highest viewing rate of the
+                                         portal’s virtual globes at an average of ~500 views per day since August 2015. In its 3D visuali-
+                                         zation format that also features an optional overlay of world’s major rivers, it is a powerful and
+                                         exciting teaching tool for all levels. As seafloor lithology is draped over a digital terrain map,
+                                         the globe allows the viewer to explore how the distribution of different sediment types varies
+                                         between ocean basins and with latitude, forming the basis for making connections with a vari-
+                                         ety of processes that govern the distribution of either biogenic or lithogenous sediments. For
+                                         instance, the globe can be used to explore how the type of seafloor sediment depends on prox-
+                                         imity to mid-ocean ridges, volcanic plateaus, different types of continental margins (tectoni-
+                                         cally passive or active), major river mouths and different climatic zones.
+
+                                         Vertical gravity gradient
+                                         Gravity models are powerful tools for mapping the structure of the ocean floor, especially in the
+                                         deep ocean basins where the topography remains unmapped by ships or is buried by thick sedi-
+                                         ments. A recently published global marine gravity model [14], which is twice as accurate as pre-
+                                         vious models, has here been combined with the continental gravity model EGM2008 [19] to
+                                         produce a global model for the free-air gravity field. The digital free-air gravity model was used
+                                         to compute the vertical gravity gradient, which enhances small-scale gravity anomalies, related
+                                         to tectonic structures such as small seamounts and faults, horst and graben structures at the sea-
+                                         bed or buried underneath the seafloor. The vertical gravity gradient is particularly useful for
+                                         visualizing deep structures associated with continental margins and sedimentary basins, where
+                                         seismic imaging data are sparse and expensive to obtain. The vertical gravity gradient dataset
+                                         was used to create the first of the GPlates Portal virtual Cesium globes in October 2014; it has
+                                         since been viewed nearly 100,000 times (31st January 2016). While thousands of meters of water
+                                         obscure our view of the array of geological features characterizing the seabed and buried sub-
+                                         seafloor geology, the marine portion of this globe reveals many previously unknown seafloor
+                                         and sub-seafloor structures, including an extinct mid-ocean ridge from the Jurassic Period in
+                                         the Gulf of Mexico (now buried by up to 8 km of sediments) and a huge ancient rift scar in the
+                                         South Atlantic Ocean formed by a deep-seated “hotspot” leading to a cracking of the ocean floor
+                                         [14]. By providing a seamless view of the combined marine and continental gravity field, this
+                                         Cesium globe allows the user to follow structures from the deep ocean basins to continental
+                                         slopes and shelves to the continents themselves. Such structures may include oceanic fracture
+                                         zones, many of which have an origin in tectonic lineaments in the continental crust which
+                                         existed before continental breakup [20], as well as meteorite impact structures (Fig 5).
+
+                                         Global magnetic anomalies
+                                         Ferrous minerals in the crust and upper mantle give rise to magnetic anomalies. The strength
+                                         and shape of these anomalies reflects the mineralogy and thickness of geological formations.
+                                         Since minerals become non-magnetic above their Curie temperature, magnetization has a lim-
+                                         ited depth extent, which depends on the local temperature gradient of the lithosphere. Mag-
+                                         netic anomalies therefore provide insight into subsurface structure, composition and heat flow
+                                         in the Earth's crust. Anomalies trending parallel to the isochrons (lines of equal age) in the
+                                         oceans reveal the formation (seafloor spreading) and destruction (subduction zones) of oceanic
+                                         crust, the formation of continental crust by accretion of various terranes to cratonic areas and
+                                         large-scale volcanism on continents and in the oceans.
+                                             Magnetic anomaly data have been collected by ships, aircraft, and low-orbiting satellites for
+                                         more than half a century, providing global coverage of the Earth. The Earth Magnetic Anomaly
+                                         Grid in 2 arc minute resolution (EMAG2) is the result of an international collaboration based
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                8 / 17
+                                                                                  Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+
+Fig 5. Cesium globe southeastward view of the Gulf of Mexico and the Yucatan Peninsula where the vertical gravity gradient grid, overlain by a
+digital elevation model, reveals the buried circular structure related to the Chicxulub Impact Crater (CIC) that led to the extinction of the dinosaurs
+and many other species, straddling the coastline of the Yucatan Peninsula [21]. Impact-generated multi-ring gravity anomalies can be used to compute
+the impact’s size and other characteristics [21]. The image also reveals the buried extinct Jurassic mid-ocean ridge (MOR) of the Gulf of Mexico [14].
+doi:10.1371/journal.pone.0150883.g005
+
+
+                                              on contributions from over one hundred data providers worldwide [22]. The input data con-
+                                              sisted of both 2D grids and 1D profile data from ship and airborne measurements. These were
+                                              processed, line levelled and merged at 4 km altitude using least squares collocation. Two ver-
+                                              sions of the EMAG2 grid were produced. One with conventional isotropic gridding and one
+                                              with anisotropic (directional) gridding over the oceans, in which the anomalies were “stretched
+                                              out” in the direction of the local isochrons as given by the oceanic crustal age model [23]. A
+                                              comparison of EMAG2 with and without directional gridding is shown in Fig 6. Finally, contri-
+                                              butions with spatial wavelengths larger than 330 km were replaced with the CHAMP satellite
+                                              magnetic anomaly model MF6 [24].
+
+
+                                              Global magnetic anomaly identifications
+                                              Marine magnetic anomaly identifications are one of the primary building-blocks of global plate
+                                              reconstructions, used to determine the age of the oceanic crust and to understand past sea-
+                                              floor-spreading processes. These magnetic anomaly identifications, often called “magnetic
+                                              picks”, are a spatio-temporal representation of interpreted marine magnetic anomalies
+                                              described above against a geomagnetic reversal timescale. In the past, most global and regional
+                                              compilations have been presented as a series of maps with no accompanying digital data. An
+                                              open-source, community-driven infrastructure containing over 96,000 published magnetic
+                                              anomaly identifications was recently established [25]. The repository contains consistently
+                                              described and well-documented data points that have undergone internal quality-control.
+                                              While all the data have been made accessible to the public via a dedicated website (www.soest.
+                                              hawaii.edu/PT/GSFML), the repository lacks a visualization tool for expert and non-expert
+                                              users to view and interrogate the data. These data can be visualized in the Cesium globe at the
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                         9 / 17
+                                                                                 Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+
+                                         Fig 6. Identical view illustrating the difference between the EMAG2 version with directional gridding
+                                         (top) and with isotropic gridding (bottom). The observer location is south of New Zealand looking
+                                         westward at the Southern Ocean, with Antarctica on the southern side and Australia on northern side in each
+                                         image.
+                                         doi:10.1371/journal.pone.0150883.g006
+
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                     10 / 17
+                                                                                   Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+
+Fig 7. Cesium globe of the magnetic anomaly identification data [25] focussed on the South Atlantic. Colored circles represent individual magnetic
+anomaly identifications color-coded by magnetic chron name. Seafloor-spreading between Africa and South America is represented by the magnetic
+anomaly picks in the South Atlantic, between Africa and Antarctica along the Southwest Indian Ridge, between South America and Antarctica in the Weddell
+Sea and several episodes of back-arc basin opening in the Scotia Sea.
+doi:10.1371/journal.pone.0150883.g007
+
+                                              present day (Fig 7), color-coded by magnetic chron end, which allows users to get a sense of
+                                              global data coverage, to further understand the parts of the global plate motion model that are
+                                              underpinned by a robust set of magnetic anomaly identifications, and to explore seafloor-
+                                              spreading regimes. In the future, tools to interrogate the data attributes will be made available.
+
+                                              Gravity and magnetic grid reconstruction through geological time
+                                              Since geophysical signatures of the oceans and continents contain information about past plate
+                                              configurations, a natural step is to reconstruct these data using models for past plate configura-
+                                              tions, both to validate existing models and explore alternative scenarios. The GPlates desktop
+                                              software provides functionality to perform high-resolution raster reconstructions [26]. Differ-
+                                              ent portions of geo-referenced images or gridded geophysical data are assigned to tectonic
+                                              plates linked to a global rotation model that describes how all major plates have moved relative
+                                              to each other, and relative to the Earth’s spin axis, since 200 million years ago [27]. The work-
+                                              flow is straightforward for experienced GPlates users, but barriers exist to the wide use of such
+                                              technologies—users need to download and install GPlates software, access and store large vol-
+                                              umes of high-resolution image data, and follow tutorials describing how to use the data and
+                                              software together.
+                                                 The GPlates Portal currently contains globes in which the free-air gravity grid [14] (Fig 8)
+                                              as well as the magnetic anomaly grid EMAG-2 [22] can be reconstructed back through
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                         11 / 17
+                                                                                Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+
+Fig 8. Cesium globe illustrating a reconstruction of the combined marine and continental gravity grid at 100 million years ago, centered on the
+western Gondwana continents, including South America on the left and Africa on the right.
+doi:10.1371/journal.pone.0150883.g008
+
+
+                                            geological time on separate Cesium globes. High-resolution image data are linked to a plate tec-
+                                            tonic reconstruction using GPlates desktop software, then exported and tiled as a time-depen-
+                                            dent raster sequence. A set of controls added to the Cesium globe interface enables the
+                                            sequence to be played backwards and forwards through geological time. These globes allow
+                                            users to explore how now widely separated tectonic structures, as expressed in their gravity and
+                                            magnetic anomaly signatures, were once juxtaposed when the supercontinent Pangea existed
+                                            200 million years ago.
+
+                                            Surface dynamic topography through time
+                                            Convective motions within the Earth’s mantle result in deformation of its surface that is often
+                                            referred to as “dynamic topography”. We recently developed a method to use global tectonic
+                                            reconstructions as boundary conditions of mantle flow models [28], which allows us to model
+                                            the evolution of long-wavelength dynamic topography deeper in geological time than other
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                    12 / 17
+                                                                                        Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+                                                 methods [29]. We derive air-loaded dynamic topography h at the Earth’s surface resulting
+                                                 from mantle flow deeper than 350 km. The calculations use either free-slip or no-slip boundary
+                                                 conditions, and the reader is referred to the publications associated with the models available
+                                                 on the GPlates Portal for further details of each calculation of dynamic topography.
+                                                    The results of our global models show that the interplay between the motion of tectonic
+                                                 plates and the changing shape of the Earth due to large-scale mantle convection results in
+                                                 topography variations of less than ±2 km, evolving over a time scale of ~ 10 Myr. Results are
+                                                 presented in the reference frame of the mantle (Fig 9A), which captures the evolution of global
+                                                 dynamic topography, as well as in the reference frame of tectonic plates (Fig 9B), to ease direct
+
+
+
+
+Fig 9. A. 2D-map view of global dynamic topography in the mantle frame of reference at 80 Ma for case 1 of ref. 31. Reconstructed coastlines are shown in
+black, subduction zones in blue (triangles indicate dip direction), mid-ocean ridges and transform faults in red, deforming areas in grey, and surface velocities
+as white vectors. B. 2D-map view of global dynamic topography in the plate frame of reference at 80 Ma, with present-day coastlines in black. C. Evolution of
+dynamic topography along the East Brazil Rift System (dark-red rectangle in B).
+doi:10.1371/journal.pone.0150883.g009
+
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                                 13 / 17
+                                                                          Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+                                         comparison with geological observations [30, 31]. In the plate frame of reference, the evolution
+                                         of dynamic topography at a given point can be plotted (Fig 9C) and downloaded in csv format.
+                                         Current models extend back to 230 Ma and do not include active mantle upwellings [31, 32].
+                                         However, we are currently working on models which extend further back in geological time
+                                         and include active mantle upwellings, and they will eventually be added to the GPlates Portal.
+
+                                         Discussion
+                                         Complementary roles of web-based versus desktop virtual globes
+                                         The difficulties in developing interactive browser-based tools to substitute a given desktop
+                                         application used to be prohibitive until recently, certainly for scientists outside of major
+                                         national research institutions. However, now a new generation of open-source tools is facilitat-
+                                         ing a “virtual globe revolution” by allowing researchers anywhere to participate in the construc-
+                                         tion of online virtual globes. The GPlates Portal is an example of this revolution and represents
+                                         a new way to visualize and share geophysical and geological data. Compared to traditional
+                                         desktop software applications, the main advantage of the GPlates Portal web applications is the
+                                         software distribution model Software as a Service (SaaS). In the SaaS model, the software appli-
+                                         cations are hosted by service providers and made available to users via the Internet and the
+                                         access to services is usually controlled by user subscriptions.
+                                            Web-based applications such as the GPlates Portal still have limitations compared to more
+                                         traditional applications. For example, the GPlates desktop software contains a range of tools
+                                         for ‘power-users’ to perform complex tasks such as interactively modifying reconstructions,
+                                         visualizing evolving plate boundaries geometries and plate kinematic indicators. Applications
+                                         within the GPlates Portal are deliberately free of such complications, and are designed to com-
+                                         plement desktop applications rather than replace them—they provide a more streamlined,
+                                         user-friendly interface to explore the same data sets and reconstruction models used in desktop
+                                         applications. Traditionally, scientists have shared plate reconstructions through animations, or
+                                         more recently through video-sharing sites such as Youtube (www.youtube.com/channel/
+                                         UCa41IQEhmmuXmz9J6iMfsnA). Such animations are inherently limited since they are not
+                                         interactive—GPlates portal applications perform a similar function to such animations, but are
+                                         vastly more powerful, providing an immersive environment for users to interact with scientific
+                                         datasets.
+
+                                         Future Extensions
+                                         The GPlates Portal has been designed as a gateway to a knowledge and service hub for geolo-
+                                         gists and geophysicists interested in understanding Earth’s surface and crustal structure and
+                                         Earth evolution through geological time. Any researchers investigating spatial data sets can uti-
+                                         lise the technologies described here to generate their own virtual globes of raster, vector or
+                                         point data, overlain over a digital terrain model, based on the open software underpinning
+                                         globe design. Our experience shows that raster data are best suited for fast interactive globe
+                                         visualization, while large volumes of vector or point data overlays tend to make interactive
+                                         globe manipulation more sluggish. Future opportunities for extension of virtual globe func-
+                                         tionality include allowing users to submit their own data to create customized Cesium applica-
+                                         tions. Customized Cesium applications may be created automatically based on the data
+                                         provided by users. In this way, even users with little knowledge about web application develop-
+                                         ment can publish and visualize their data interactively in the Cloud. Future functionality will
+                                         also include making big data mining workflows accessible as services on the Cloud. Finally, the
+                                         establishment of RESTful web services will migrate some functionality of the desktop GPlates
+                                         software [33] into the Cloud. The portal already includes a prototype for a paleomapmaker,
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                              14 / 17
+                                                                               Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+                                         designed to allow users to export publication-quality figures using datasets and reconstructions
+                                         contained within the portal data store or uploaded directly by users.
+
+                                         Conclusions
+                                         The GPlates Portal provides a series of virtual globes that put fast interactive visualization of
+                                         global geophysical and geological data sets and paleomap-making into the hands of public end-
+                                         users. The portal has been visited nearly 300,000 times since its inception in October 2015, as
+                                         tracked by google analytics, and the globes have been featured in numerous media articles
+                                         around the world. They have helped illustrate online articles on published research papers by
+                                         media either providing links to a given virtual globe or by embedding a globe in their own web
+                                         page. In this way the globes have started playing a significant role in helping to communicate
+                                         research to the public. Their popularity demonstrates the demand for fast visualization of
+                                         global spatial big data, both for the present-day as well as through geological time. The cloud-
+                                         based Cesium globes offer many future opportunities for providing additional functionality,
+                                         especially on-the-fly big data analytics.
+
+                                         Supporting Information
+                                         S1 Archive. Supplementary Python Scripts. These scripts include color mapping to raster
+                                         data, applying histogram equilization to raster data, applying shading to raster data, splitting a
+                                         large grid into a set of smaller grids, and generating terrain tiles from an elevation grid.
+                                         (ZIP)
+                                         S1 Text. Virtual Globe Design Methodology. This includes the preparation of imagery tiles,
+                                         terrain tiles, serving imagery and terrain tiles via URL, and building portal applications.
+                                         (PDF)
+
+
+                                         Acknowledgments
+                                         This project was supported by the AuScope National Collaborative Research Infrastructure
+                                         and a Big Data Knowledge Discovery project (SIEF project RP 04–174), Australian Research
+                                         Council grant FT130101564 (MS) and an ARC Laureate Fellowship (FL0992245) and the
+                                         Auscope National Collaborative Research Infrastructure. The authors also acknowledge sup-
+                                         port by the Nectar Cloud and the Australian National Data Service (ANDS).
+
+                                         Author Contributions
+                                         Conceived and designed the experiments: RDM XQ DTS AD SEW NF SM MS. Performed the
+                                         experiments: RDM XQ DTS AD SEW NF SM MS. Analyzed the data: RDM XQ DTS AD SEW
+                                         NF SM MS. Contributed reagents/materials/analysis tools: XQ SEW. Wrote the paper: RDM
+                                         XQ DTS AD SEW NF SM MS.
+
+                                         References
+                                          1.   Wegener A. The origin of continents and oceans. London: Methuen and Co; 1924.
+                                          2.   Yu L, Gong P. Google Earth as a virtual globe tool for Earth science applications at the global scale:
+                                               progress and perspectives. International Journal of Remote Sensing. 2012; 33(12):3966–86.
+                                          3.   Bel DG, Kuehne F, Maxwel C, Kim R, Kasraie K, Gaskins T, et al., editors. NASA World Wind: Open-
+                                               source GIS for mission operations. Aerospace Conference, 2007 IEEE; 2007: IEEE.
+                                          4.   Prandi F, Devigili F, Soave M, Di Staso U, De Amicis R. 3D web visualization of huge CityGML models.
+                                               ISPRS-International Archives of the Photogrammetry, Remote Sensing and Spatial Information Sci-
+                                               ences. 2015; 1:601–5.
+
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                         15 / 17
+                                                                               Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+                                          5.   Munshi A, Ginsburg D, Shreiner D. OpenGL ES 2.0 programming guide: Pearson Education; 2008.
+                                          6.   Pilgrim M. HTML5: up and running: O'Reilly Media, Inc.; 2010.
+                                          7.   Holovaty A, Kaplan-Moss J. The definitive guide to Django: Web development done right: Apress;
+                                               2009.
+                                          8.   Obe R, Hsu L. PostGIS in action: Manning Publications Co.; 2011.
+                                          9.   Palankar MR, Iamnitchi A, Ripeanu M, Garfinkel S, editors. Amazon S3 for science grids: a viable solu-
+                                               tion? Proceedings of the 2008 international workshop on Data-aware distributed computing; 2008:
+                                               ACM.
+                                         10.   Añel JA. The importance of reviewing the code. Communications of the ACM. 2011; 54(5):40–1.
+                                         11.   Olson C, Becker J, Sandwell D, editors. A new global bathymetry map at 15 arcsecond resolution for
+                                               resolving seafloor fabric: SRTM15_PLUS. AGU Fall Meeting Abstracts; 2014.
+                                         12.   Becker J, Sandwell D, Smith W, Braud J, Binder B, Depner J, et al. Global bathymetry and elevation
+                                               data at 30 arc seconds resolution: SRTM30_PLUS. Marine Geodesy. 2009; 32(4):355–71.
+                                         13.   Farr TG, Rosen PA, Caro E, Crippen R, Duren R, Hensley S, et al. The shuttle radar topography mis-
+                                               sion. Reviews of Geophysics. 2007; 45(2).
+                                         14.   Sandwell DT, Müller RD, Smith WH, Garcia E, Francis R. New global marine gravity model from Cryo-
+                                               Sat-2 and Jason-1 reveals buried tectonic structure. Science. 2014; 346(6205):65–7. doi: 10.1126/
+                                               science.1258213 PMID: 25278606
+                                         15.   Smith WH, Sandwell DT. Global sea floor topography from satellite altimetry and ship depth soundings.
+                                               Science. 1997; 277(5334):1956–62.
+                                         16.   Wessel P, Smith WH, Scharroo R, Luis J, Wobbe F. Generic mapping tools: improved version released.
+                                               Eos, Transactions American Geophysical Union. 2013; 94(45):409–10.
+                                         17.   Dutkiewicz A, Müller RD, O’Callaghan S, Jónasson H. Census of seafloor sediments in the world’s
+                                               ocean. Geology. 2015; 43(9):795–8.
+                                         18.   Berger WH. Deep-sea sedimentation. In: Burk CA, Drake CD, editors. The Geology of Continental Mar-
+                                               gins. New York: Springer-Verlag; 1974. p. 213–41.
+                                         19.   Pavlis NK, Holmes SA, Kenyon SC, Factor JK. An earth gravitational model to degree 2160: EGM2008.
+                                               EGU General Assembly. 2008:13–8.
+                                         20.   Scrutton R. Passive continental margins: a review of observations and mechanisms. In: Scrutton R, edi-
+                                               tor. Dynamics of Passive Pargins. Washington, D.C.: American Geophysical Union; 1982. p. 5–11.
+                                         21.   Sharpton VL, Burke K, Camargo-Zanoguera A, Hall SA, Lee DS, Marin LE, et al. Chicxulub multiring
+                                               impact basin: Size and other characteristics derived from gravity analysis. Science. 1993; 261
+                                               (5128):1564–7. PMID: 17798115
+                                         22.   Maus S, Barckhausen U, Berkenbosch H, Bournas N, Brozena J, Childers V, et al. EMAG2: A 2-arc
+                                               min resolution Earth Magnetic Anomaly Grid compiled from satellite, airborne, and marine magnetic
+                                               measurements. Geochemistry, Geophysics, Geosystems. 2009; 10(8):Q08005.
+                                         23.   Müller RD, Sdrolias M, Gaina C, Roest WR. Age, spreading rates and spreading asymmetry of the
+                                               world's ocean crust. Geochemistry, Geophysics, Geosystems. 2008; 9(4):Q04006, doi: 10.1029/
+                                               2007GC001743
+                                         24.   Maus S, Yin F, Lühr H, Manoj C, Rother M, Rauberg J, et al. Resolution of direction of oceanic magnetic
+                                               lineations by the sixth-generation lithospheric magnetic field model from CHAMP satellite magnetic
+                                               measurements. Geochemistry, Geophysics, Geosystems. 2008; 9(7).
+                                         25.   Seton M, Whittaker JM, Wessel P, Müller RD, DeMets C, Merkouriev S, et al. Community infrastructure
+                                               and repository for marine magnetic identifications. Geochemistry, Geophysics, Geosystems. 2014; 15
+                                               (4):1629–41.
+                                         26.   Cannon J, Lau E, Müller R. Plate tectonic raster reconstruction in GPlates. Solid Earth. 2014; 5(2):741–
+                                               55.
+                                         27.   Seton M, Müller RD, Zahirovic S, Gaina C, Torsvik TH, Shephard GE, et al. Global continental and
+                                               ocean basin reconstructions since 200 Ma. Earth-Science Reviews. 2012; 113(3–4):212–70.
+                                         28.   Bower DJ, Gurnis M, Flament N. Assimilating lithosphere and slab history in 4-D Earth models. Physics
+                                               of the Earth and Planetary Interiors. 2015; 238:8–22.
+                                         29.   Flament N, Gurnis M, Müller RD. A review of observations and models of dynamic topography. Litho-
+                                               sphere. 2013; 5(2):189–210.
+                                         30.   Moucha R, Forte AM. Changes in African topography driven by mantle convection. Nature Geoscience.
+                                               2011; 4(10):707–12.
+                                         31.   Flament N, Gurnis M, Müller RD, Bower DJ, Husson L. Influence of subduction history on South Ameri-
+                                               can topography. Earth and Planetary Science Letters. 2015; 430:9–18.
+
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                       16 / 17
+                                                                               Cloud-Based Interactive 3D Visualization of Geodata in a Web Browser
+
+
+
+                                         32.   Flament N, Gurnis M, Williams S, Seton M, Skogseid J, Heine C, et al. Topographic asymmetry of the
+                                               South Atlantic from global models of mantle flow and lithospheric stretching. Earth and Planetary Sci-
+                                               ence Letters. 2014; 387:107–19.
+                                         33.   Williams SE, Müller RD, Landgrebe TCW, Whittaker JM. An open-source software environment for
+                                               visualizing and refining plate tectonic reconstructions using high-resolution geological and geophysical
+                                               data sets. GSA Today. 2012; 22(4/5):4–9.
+
+
+
+
+PLOS ONE | DOI:10.1371/journal.pone.0150883 March 9, 2016                                                                                       17 / 17
+

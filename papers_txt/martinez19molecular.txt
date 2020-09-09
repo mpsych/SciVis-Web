@@ -1,0 +1,516 @@
+Dear author,
+
+Please note that changes made in the online proofing system will
+be added to the article before publication but are not reflected in
+this PDF.
+
+We also ask that this file not be used for submitting corrections.
+      Please cite this article in press as: Martinez et al., Molecular Graphics: Bridging Structural Biologists and Computer Scientists, Structure (2019), https://
+      doi.org/10.1016/j.str.2019.09.001
+
+     Structure
+
+     Perspective
+
+     Molecular Graphics: Bridging Structural
+     Biologists and Computer Scientists
+     Xavier Martinez,1 Michael Krone,2 Naif Alharbi,3 Alexander Rose,4 Robert S. Laramee,3 Sean O’Donoghue,5,6,7
+     Marc Baaden,1 and Matthieu Chavent8,*
+Q1   1Laboratoire  de Biochimie Théorique, CNRS, UPR9080, Institut de Biologie Physico-Chimique, Paris, France
+     2Big                                                         € bingen, Tu
+           Data Visual Analytics in Life Sciences, University of Tu          €bingen, Germany
+     3Department of Computer Science, Swansea University, Swansea, Wales
+     4RCSB Protein Data Bank, San Diego Supercomputer Center, University of California, San Diego, USA
+     5Garvan Institute of Medical Research, Sydney, Australia
+     6University of New South Wales (UNSW), Sydney, Australia
+     7CSIRO Data61, Sydney, Australia
+     8Institut de Pharmacologie et de Biologie Structurale IPBS, Université de Toulouse, CNRS, UPS, Toulouse, France
+
+     *Correspondence: matthieu.chavent@ipbs.fr
+     https://doi.org/10.1016/j.str.2019.09.001
+
+
+     Visualization of molecular structures is one of the most common tasks carried out by structural biolo-
+     gists, typically using software, such as Chimera, COOT, PyMOL, or VMD. In this Perspective article,
+     we outline how past developments in computer graphics and data visualization have expanded the un-
+     derstanding of biomolecular function, and we summarize recent advances that promise to further trans-
+     form structural biology. We also highlight how progress in molecular graphics has been impeded by
+     communication barriers between two communities: the computer scientists driving these advances,
+     and the structural and computational biologists who stand to benefit. By pointing to canonical papers
+     and explaining technical progress underlying new graphical developments in simple terms, we aim to
+     improve communication between these communities; this, in turn, would help shape future developments
+     in molecular graphics.
+
+
+     Molecular graphics tools and methods have been actively devel-                   A Brief History of Molecular Graphics
+     oped for over 50 years, always tightly linked to advances in com-                Here we present a brief history of molecular graphics, for inter-
+     puter hardware (Levinthal, 1966). Early on, key developments in                  ested readers a more extensive review was recently published
+     molecular graphics attracted interest from a broad range of sci-                 (Olson, 2018). Some key moments in molecular graphics are
+     entists—hence, some were published in journals, such as Sci-                     summarized in Figure 1, together with recent review articles.
+     ence (Langridge et al., 1981). At present, however, the field has                The earliest molecular graphics were hand drawings and phys-
+     fragmented into two main communities: advances in computer                       ical models (Richardson and Richardson, 2013); as these began
+     graphics are almost always reported in publications aimed at                     to be replaced by computer graphics, a key initial focus was on
+     computer scientists, while applications of computer graphics                     inventing novel visual representations that help in understanding
+     that uncover new biological insights are reported in journals                    biomolecular function by emphasizing important structural fea-
+     aimed at structural biologists. Two key issues caused by this                    tures. Two striking examples were: (1) the ribbon representation
+     fragmentation are that publications are often difficult to access                developed by Jane Richardson (1977) and (2) the molecular sur-
+     for scientists outside of their respective subfields, and interac-               face representation developed by Michael Connolly (1983a).
+     tions between the two communities is low as they rarely attend                   Such developments profoundly transformed the practice of
+     the same meetings. As a result of these issues, many structural                  structural biology, leading to the launch of the Journal of Molec-
+     biologists are unaware of recent advances in molecular graphics                  ular Graphics in 1983, first giving the field its own dedicated jour-
+     methods; conversely, computer scientists working in molecular                    nal. Since then, a large number of molecular graphics tools have
+     graphics are not always aware of, or focused on, the most impor-                 been developed. The reviews from Goddard and Ferrin (2007),
+     tant visualization challenges raised by cutting edge experimental                O’Donoghue et al. (2010), and Johnson and Hertig (2014) discuss
+     methods.                                                                         available tools and help identify the best visualization methods
+        This Perspective article aims to help address some of the                     for addressing specific biological questions.
+     above issues. We begin by briefly reviewing highlights in the his-                  In recent years, structural biology has become increasingly in-
+     tory of molecular graphics. We then outline how some of the core                 terconnected with many other kinds of data (Im et al., 2016), and
+     computational visualization methods currently used in molecular                  the visualization challenges have moved from the static views of
+     graphics tools can be used to improve understanding of biomol-                   single molecules toward dynamic views of much larger scales,
+     ecular structures. Finally, we highlight emerging challenges in                  such as whole viruses, subcellular organelles, or even entire cells
+     structural biology and how they may be addressed by advances                     (see also Goodsell et al., 2018). These challenges have inspired
+     in computer graphics and by new software platforms (e.g.,                        intense research within the computer graphics community,
+     augmented reality).                                                              aimed at creating solutions that take better advantage of current
+
+                                                                                                   Structure 27, November 5, 2019 ª 2019 Elsevier Ltd. 1
+
+                                                                            STFODE 4117
+  Please cite this article in press as: Martinez et al., Molecular Graphics: Bridging Structural Biologists and Computer Scientists, Structure (2019), https://
+  doi.org/10.1016/j.str.2019.09.001
+
+                                                                                                                                                        Structure
+
+                                                                                                                       Perspective
+
+
+
+
+Figure 1. A Brief History of Molecular Graphics
+List of surveys indicating their time span, number of cited references per year, total number of references, and the ratio of papers coming from the structural
+biology and computer graphics and visualization fields, respectively. If an article refers to both types of references for the same year, the cell is divided in two rows
+of different color. Blue refers to articles oriented toward a more general (structural biology) audience, while red depicts more technical articles generally published
+in journals and conferences from the computer graphics community. Figures around the diagram present milestones for molecular visualizations: from hand
+drawings of myoglobin by Martin Geis (Illustration, Irving Geis. Used with permission from the Howard Hughes Medical Institute; www.hhmi.org. All rights
+reserved) and the ribbons diagram designed by Jane Richardson to more sophisticated representations, such as molecular surfaces. This surface was first
+processed as a static image. During the early 1990s to the 2000s, with the advent of molecular viewers, it was possible to display all these representations
+interactively (here, a scene rendered with VMD). From mid-2000s, technical developments performed in computer graphics labs are changing the way of
+visualizing molecular structures by better rendering molecular shapes. Now, it is possible to interactively construct and visualize crowded and large systems,
+opening the way for mesoscale models (spanning thousands of Angstroms and containing millions of molecules) with a nearly atomic resolution.
+
+
+
+graphic processor unit (GPU) capabilities (Chavent et al., 2011),                        Many of the above developments in computer graphics have
+as well as new analysis and immersive approaches (Hirst et al.,                       been first created as research prototypes, rather than usable im-
+2014). These recent developments are summarized in three                              plementations, and have been reported in computer science
+recent state-of-the-art reviews of molecular graphics, each                           publications. As a result, while some advances are incorporated
+describing technical developments that can help structural biol-                      in widely used molecular graphics tools (e.g., VMD, Krone et al.,
+ogists choose the best algorithms for a dedicated purpose. The                        2012; Stone et al., 2016; or Chimera, Goddard et al., 2018), un-
+review by Kozlikova et al, (2017) details algorithms that can be                      fortunately—as already noted 10 years ago (Goddard and Ferrin,
+used to render from small molecules to large macromolecular                           2007)—many developments remain unused by the structural
+assemblies, such as microtubules. Two other reviews (Krone                            biology community. This is evident from the very small fraction
+et al., 2016; Simões et al., 2017) focus on detection and visuali-                   of computer graphics papers cited in recent reviews published
+zation of cavities on protein surfaces.                                               for structural biologists (Figure 1).
+
+2 Structure 27, November 5, 2019
+
+                                                                     STFODE 4117
+       Please cite this article in press as: Martinez et al., Molecular Graphics: Bridging Structural Biologists and Computer Scientists, Structure (2019), https://
+       doi.org/10.1016/j.str.2019.09.001
+
+     Structure
+
+     Perspective
+                                                                                                                  Figure 2. Lighting Effects and Surface
+                                                                                                                  Rendering
+                                                                                                                  (A) Basic Blinn-Phong (BP) rendering.
+                                                                                                                  (B) Addition of ambient occlusion (AO) lighting
+                                                                                                                  to BP.
+                                                                                                                  (C) Non-photorealistic rendering (flat colors and
+                                                                                                                  outlines) with AO. (A–C) Figures rendered with Mol*,
+                                                                                                                  3D visualization available at https://molstar.org/
+                                                                                                                  demos/lighting/.
+                                                                                                                  (D) Photorealistic rendering.
+                                                                                                                  (E) Highlighting a molecular path by focusing lights
+                                                                                                                  on the path and clipping the surface along the path.
+                                                                                                                  (F) Molecular surface abstraction and addition of
+                                                                                                                  markers on the surface.
+                                                                                                                  (G) QuickSurf rendering of a viral capsid. (A–D
+                                                                                                                  and F) Ribonuclease with a d(ACGA) molecule
+                                                                                                                  (PDB: 1M07).
+
+
+
+
+       Thus, one of our goals here is to present some of the key                       (examples and tutorial: https://www.ks.uiuc.edu/Research/vmd/
+     computational methods commonly used for molecular graphics,                       minitutorials/tachyonao/) (Humphrey et al., 1996) (Figure 2G),
+     and highlight how these methods can help address emerging                         PyMOL (the PyMOL program can be downloaded at: https://
+     challenges in structural biology. In the Supplemental Information                 pymol.org/2/, brief tutorial: https://pymol.org/dokuwiki/doku.
+     we present some further, more recent, methods not yet imple-                      php?id=media:ambient_occlusion.) and, more recently, Chi-
+     mented in broadly accessible molecular viewers.                                   meraX (Goddard et al., 2018).
+                                                                                          Ray tracing is a method for more realistically simulating lighting
+   Lighting and Shading Effects to Improve 3D Structure                                by computing the paths that photons would travel from each light
+   Perception                                                                          source to the view point, accounting for reflections (an easy-to-
+   As with almost any complex 3D object, rendering molecular                           use ray-tracer available in the web browser can be tested at the
+   structures in 2D (e.g., on a computer screen or on paper) requires                  address: http://lighttracer.org; see Supplemental Information on
+   making compromises, distortions, and omissions. To compen-                          how to use it for molecular surfaces). This produces photorealis-
+   sate, a variety of visual effects are used to better communicate                    tic rendering (Figure 2D), but usually requires significant
+   the true 3D shape. Some of the most common visual effects                           computing power. Ray tracing is often used in creating high-
+   relate to lighting and shading; for molecular graphics, these ef-                   quality static images for artwork and cover images. This method
+   fects can help users better understand the overall spatial organi-                  can be useful when rendering molecules for virtual reality (VR)
+   zation of complex biomolecules (Figure 2).                                          and augmented reality (AR), because realistic rendering makes
+       Currently, most molecular graphics tools use an approxima-                      it easier for users to immerse themselves in these environments.
+   tion of physically based lighting called the Blinn-Phong model                      Recently, VMD has included CPU-based (https://www.ospray.
+   (Blinn, 1977; Phong, 1975). This models light reflection from a                     org) and GPU-based (https://developer.nvidia.com/optix) ray-
+   3D surface using three terms (see Figure S1): (1) an ambient                        tracing methods that can interactively display large, dynamic
+   term that equally brightens all objects in the scene, thus                          molecular systems (up to tens of millions of atoms; Stone
+   modeling uniform, global illumination; (2) a diffuse term that                      et al., 2016).
+   models reflection from specific light sources on rough surfaces,                       Another group of methods, called non-photorealistic render-
+   thus selectively brightening and darkening parts of the surface;                    ings, aim to highlight selected features while hiding others.
+   and (3) a specular term that models reflections from specific light                 One of these methods, known as cel-shading (‘‘cel’’ for celluloid)
+   sources on shiny surfaces, producing specular highlights.                           or toon-shading, reduces shadows and adds thick outlines to
+   Together, these terms give a fairly realistic lighting model for                    highlight the molecular silhouette, thus creating a flattened,
+   smooth 3D objects (Figure 2A); however, one key limitation of                       cartoon-like rendering. Cel-shading is used by David Goodsell
+   the model is that it cannot convey shadows cast between ob-                         in many of his well-known renderings of crowded biomolecular
+   jects. To overcome this limitation, a range of computational stra-                  landscapes (Goodsell et al., 2018). For molecular graphics,
+   tegies have been developed (Table S1)—some can efficiently                          non-photorealistic rendering can often be effective in combina-
+   compute shadows for large molecular systems (Krone                                  tion with AO (see also cel-shading + AO examples in the Mole-
+   et al., 2017).                                                                      cule of the Month by D. Goodsell: https://pdb101.rcsb.org/
+       To further enhance 3D structure, the above methods can be                       motm/motm-by-date) (Tarini et al., 2006) (Figure 2C). Readers
+   combined with Ambient Occlusion (AO), a shading effect that                         can also check online the differences between standard lighting
+   darkens buried (or occluded) regions of a structure—mostly cav-                     (with and without AO) and non-photorealistic rendering on
+   ities and crevices—to approximate non-directional (i.e., global or                  different molecules at https://molstar.org/demos/lighting/.
+   ambient) lighting (Figure 2B). For static 3D molecules, AO has                         Lighting can also be used to elucidate specific aspects of bio-
+Q2 been available for more than 10 years via the QuteMol (http://                      molecular structure: e.g., Lindow et al. (2011) described a
+   qutemol.sourceforge.net) viewer (Tarini et al., 2006). AO is                        compelling way of using lighting to highlight tunnels and chan-
+   also available in popular molecular graphics tools, such as VMD                     nels in large molecules (Figure 2E). Table S1 provides a list of
+
+                                                                                                                            Structure 27, November 5, 2019 3
+
+                                                                             STFODE 4117
+       Please cite this article in press as: Martinez et al., Molecular Graphics: Bridging Structural Biologists and Computer Scientists, Structure (2019), https://
+       doi.org/10.1016/j.str.2019.09.001
+
+                                                                                                                                                      Structure
+
+                                                                                                                         Perspective
+
+                                                                                              simplify the representation but keep the overall shape
+                                                                                              (Figure 2F). By adding markers on the surface, important areas,
+                                                                                              such as ligand binding pocket, are highlighted. To interactively
+                                                                                              visualize large systems, such as virus capsids, a smooth
+                                                                                              Gaussian Density Surface can be used. Krone et al. (2012) pro-
+                                                                                              posed a fast GPU implementation available in the molecular
+                                                                                              viewer VMD, the so-called Quicksurf. This representation re-
+                                                                                              duces surface details to avoid cluttering the display while accel-
+                                                                                              erating the surface rendering (Figure 2G). Beyond molecular sur-
+                                                                                              face representations, computer graphics researches advance
+                                                                                              on volume rendering to visualize density maps from X-ray crys-
+     Figure 3. Dynamics and Flexibility                                                       tallography or from cryoelectron microscopy. For interested
+     (A) Blurr effect to render the local flexibility of residues (UnityMol rendering).       readers, recent algorithms on volume rendering as well as appli-
+     (B) At a larger scale, it is possible to render flexibility for larger area by using a   cation cases are available in Supplemental Information.
+     sausage plot (VMD rendering).
+     (C) Large rotational and directional movements can be depicted by arrows and
+     arcs (based on Bryden et al., 2012).                                                     Conveying Dynamics and Flexibility: From Atoms to
+                                                                                              Proteins
+                                                                                              Biomolecules are intrinsically dynamic and flexible, leading to
+     state-of-the-art methods for efficiently implementing the lighting                       positional uncertainty. Even if molecular dynamic properties
+     and shading effects presented in this section.                                           can be measured (Kay, 2016), and modeled in molecular simula-
+                                                                                              tions (Bottaro and Lindorff-Larsen, 2018), a clear visualization of
+   Molecular Surface Rendering to Highlight Biomolecular                                      such dynamical properties is still a challenge—especially if
+   Properties                                                                                 rendered on a static image.
+   To better convey 3D shape, a commonly used strategy in molec-                                 At near-atomic scales, it is possible to convey fuzziness and
+   ular graphics is to simplify the representation; instead of showing                        flexibility using a blurring effect (Figure 3A). Schmidt-Ehrenberg
+Q3 each atom as a van der Waals (vdW) sphere (Figures 2A–2D),                                 et al. (2002) create such an effect by using volume-rendering
+   only the overall molecular surface is shown. A recent review                               techniques. Although it works well for small molecules, this
+   exhaustively described available methods for calculating these                             approach cannot be adapted for larger molecular systems
+   surfaces (Kozlikova et al., 2017). Below, we present key methods                           because it may introduce too much ambiguity. Alternatively, a
+   and how they can be used to highlight specific biomolecular                                given graphical representation can be made thicker when posi-
+   properties.                                                                                tional uncertainty is observed and thinner when the location is
+      One of the most commonly used molecular surface methods,                                well defined. This is typically applied on the protein backbone us-
+   described by Connolly (1983a, 1983b), is defined by rolling a                              ing the well-known sausage plot representation combined with
+   spherical probe approximately the size of a water molecule.                                color clues (Figure 3B). This representation can be performed us-
+   Probes not in contact with atoms remove material, leaving inac-                            ing molecular viewers such as MOLMOL (https://sourceforge.
+   cessible gaps filled. Thus, the result is often called the Solvent                         net/p/molmol/wiki/Home/) (Koradi et al., 1996) or PyMOL (called
+   Excluded Surface (SES). Thanks to recent developments with                                 the ‘‘putty’’ representation: https://pymolwiki.org/index.php/
+   GPU-based calculation, SES can now often be generated inter-                               Cartoon). This type of approach was recently updated by Schulz
+   actively (Krone et al., 2009; Lindow et al., 2010) (more details on                        et al. (2018) to map positional and structural uncertainties to the
+   recent SES algorithms in Table S2). Replacing the spherical wa-                            cartoon representation of a protein using geometric distortion
+   ter probe by a larger ligand to carve out the surface, Lindow et al.                       and transparency. To display short motions of a group of atoms
+   (2014) proposed the Ligand Excluded Surface, which may better                              Dabdoub et al. (2015) drew pathlines and ribbons connecting the
+   describe the surface of a protein accessible to a specific ligand                          different positions over time representing the motion of the
+   as well as helping to focus on cavities more suited for this ligand.                       atoms rather than their coordinates.
+      Constructing the SES with a rolling ball can lead to artifacts                             These approaches cannot clearly highlight correlated motions
+   such as self-intersecting surfaces and sharp points and edges                              of distant groups of atoms which are important to understand
+   (Bates et al., 2008; Vorobjev and Hermans, 1997), which can                                allosteric effects taking place in proteins. Fioravante et al.
+   result in inaccurate calculation of molecular properties that                              (2013) have proposed addressing this issue via rendering
+   depend on the surface having a well-defined inside and outside                             methods that display motional correlations in proteins. For larger
+   or a smooth boundary (Geng et al., 2007). Several smooth sur-                              directional movements of proteins, such as domains motions
+   faces have been developed. The more recent Molecular Skin                                  observed in Normal Mode Analysis, Bryden et al. (2012) auto-
+   Surface developed by Edelsbrunner (1999) is not yet as com-                                matically grouped the atoms based on velocity and simplified
+   mon, but has attractive mathematical definition that guarantees                            the motion by displaying arcs and arrows assigned to the identi-
+   smooth surfaces and supports fast computation on both CPUs                                 fied groups (Figure 3C).
+   and GPUs (Chavent et al., 2008; Lindow et al., 2010) (see
+   Figure 1, 2008). It does use a shrinkage parameter that is not                             Multiscale Visualization: Bridging the Different Scales
+   directly tied to the size of the solvent molecule. Cipriano and                            up to the Entire Cell
+   Gleicher (2007) presented the Molecular Surface Abstraction,                               Driven by advances in experimental methods (Cheng, 2018) in
+   which is based on SES but smooths areas of high frequency to                               computational modeling (Im et al., 2016), and in integrative
+
+     4 Structure 27, November 5, 2019
+
+                                                                             STFODE 4117
+  Please cite this article in press as: Martinez et al., Molecular Graphics: Bridging Structural Biologists and Computer Scientists, Structure (2019), https://
+  doi.org/10.1016/j.str.2019.09.001
+
+Structure
+
+Perspective
+
+                                                                                      Beyond the Stand-Alone Molecular Viewer: New
+                                                                                      Software Platforms
+                                                                                      Recent advances in web technology are driving rapid develop-
+                                                                                      ments in web-based molecular graphics tools, as outlined in
+                                                                                      several recent reviews (Mwalongo et al., 2016; Yuan et al.,
+                                                                                      2017), which are available on desktop computers, tablets, and
+                                                                                      smartphones alike. One of the main drivers has been the WebGL
+                                                                                      API, which gives native support for GPU hardware-acceleration
+                                                                                      for molecular graphics web-apps, such as NGL Viewer (Rose
+                                                                                      and Hildebrand, 2015), LiteMol (Sehnal et al., 2017), and Jolecule
+                                                                                      (https://jolecule.appspot.com), which are compatible with use
+                                                                                      on smartphones and tablets. This new generation of graphics
+                                                                                      web-apps are being deployed on different projects, such as
+                                                                                      the worldwide PDB (on each of its three websites; rcsb.org,
+                                                                                      pdbe.org, and pdbj.org) (Berman et al., 2012), SwissModel
+Figure 4. Multiscale Visualization                                                    (Schwede, 2003), and Aquaria (O’Donoghue et al., 2015), re-
+(A) Continuous transformation to pass from a precise molecular surface (on the        sources used to facilitate access to millions of 3D structures
+left side of the molecule) to a simplified surface representation (center), then to
+a vdW representation, as a function of the user’s point of view.                      and models. Currently, however, most web-based molecular
+(B) Abstractions of DNA origami.                                                      graphics tools do not yet offer the full range of functionalities
+(C) Illustrative representation of cell models. Purple, nuclear surface;              available with more established, stand-alone tools (e.g.,
+blue, mitochondria; yellow, microtubules. The cell surface is outlined and
+                                                                                      Chimera, VMD, etc.). This may soon change, driven by open-
+semi-transparent. Image from the Allen Cell Explorer: https://www.
+allencell.org.                                                                        source, collaborative projects such as the recently launched
+                                                                                      Mol* initiative (https://molstar.org), aimed at developing a com-
+                                                                                      mon framework for web molecular graphics.
+approaches (Sali et al., 2015), the size and complexity of                               Another alternative is to re-use software platforms that already
+molecular systems amenable to structural biology is rapidly                           contain implemented and efficient graphical functions for molecu-
+increasing. This, in turn, is creating new visualization                              lar graphics purpose. Several projects use the Unity (https://unity.
+challenges.                                                                           com/) 3D game engine for molecular graphics: UnityMol (http://
+   Inspired by David Goodsell’s pioneering depictions of                              www.baaden.ibpc.fr/umol/) (Lv et al., 2013) to display protein
+biomolecular landscapes (Goodsell et al., 2018), several                              structures, the mesoscale viewer cellVIEW (https://www.cg.
+recent initiatives in computer graphics have taken on the                             tuwien.ac.at/cellview/) (Le Muzic et al., 2015), and MolecularRift
+challenge of constructing such models (Klein et al., 2018)                            (https://github.com/Magnusnorrby/MolecularRift) (Norrby et al.,
+(Figure 1, 2018). These models can be useful for research                             2015), a tool for drug design using VR. Molecular graphics is also
+(Iwasa, 2015; Johnson et al., 2015) as well as communication                          increasingly being used within professional animation software
+(Iwasa, 2010).                                                                        platforms. BioBlender (http://www.bioblender.org) (Andrei et al.,
+   To facilitate navigation in such complex and crowded land-                         2012), ePMV (http://epmv.scripps.edu) (Johnson et al., 2011),
+scapes, a range of multiscale molecular visualization techniques                      and Pyrite (https://durrantlab.pitt.edu/pyrite/) (Rajendiran and Dur-
+have been developed; these are described in a recent survey                           rant, 2018), use the 3D creation suite Blender (https://www.
+from Miao et al. (2019). A key method is to automatically adapt                       blender.org.) to perform high-quality rendering of molecular struc-
+the level of molecular detail, depending on the proximity of the                      tures and molecular dynamics simulations data. One can also cite
+camera. Parulek et al. (2014) proposed a continuous and visual                        Molecular Maya (Molecular Maya: https://clarafi.com/tools/
+abstraction to pass from a precise protein surface to a simple                        mmaya/, Autodesk Maya: https://www.autodesk.com/products/
+vdW representation as a function of the distance between the                          maya/overview), a plugin for the commercial 3D modeling tool
+scene and the user’s point of view (Figure 4A). A similar approach                    Autodesk Maya to render and animate molecular structures.
+was used to represent DNA origami structures at different scales                         AR and VR devices (e.g., Oculus Rift, Hololens) are becoming
+(Miao et al., 2018) (Figure 4B). Such seamless transformations                        increasingly affordable, which now allows researchers using
+can also be applied to pass efficiently from one protein depiction                    them to display molecular systems (Hirst et al., 2014; O’Connor
+to another for illustrative purposes (van der Zwan et al., 2011)                      et al., 2018). VR is indeed especially useful to render, manipulate,
+(Figure 1, 2011).                                                                     and explore molecular structures from small molecules (Norrby
+   These developments pave the way toward systems that                                et al., 2015) to large systems (Stone et al., 2016) up to the cellular
+enable interactive exploration of molecular-scale models of                           level (Johnston et al., 2018). Although VR and AR are now routinely
+entire cells (Mindek et al., 2018; Singla et al., 2018) (Figure 4C).                  used by a single user, technological developments to allow close
+These new visual approaches will not only be used for rendering                       collaboration of several users in VR/AR are still subjects of ongoing
+molecular systems on a screen but will be especially useful if                        research (Arthur et al., 1998; Chastine et al., 2005).
+applied with new technological advances such as VR (Davison
+et al., 2019). Indeed, the future of molecular graphics will no                       Find Your Nearest Computer Graphics Researcher
+longer be limited to computer screens but will adapt to users’ vi-                    Because of limited space, we unfortunately cannot discuss
+sual practices through tablets, smartphones, and virtual/AR                           further how computer graphics can support structural biology.
+driven by web technologies.                                                           We hope to have convinced you that improving the rendering
+
+                                                                                                                       Structure 27, November 5, 2019 5
+
+                                                                            STFODE 4117
+       Please cite this article in press as: Martinez et al., Molecular Graphics: Bridging Structural Biologists and Computer Scientists, Structure (2019), https://
+       doi.org/10.1016/j.str.2019.09.001
+
+                                                                                                                                                            Structure
+
+                                                                                                                           Perspective
+
+     of molecular structures is not only a matter of esthetics but really                 Bottaro, S., and Lindorff-Larsen, K. (2018). Biophysical experiments and bio-
+                                                                                          molecular simulations: a perfect match? Science 361, 355–360.
+     helps understanding of molecular functions. For people wanting
+     to start improving their rendering, in addition to consulting the                    Bryden, A., Phillips, G.N., Jr., and Gleicher, M. (2012). Automated illustration of
+     links and references available in this article, we encourage                         molecular flexibility. IEEE Trans. Vis. Comput. Graph. 18, 132–145.
+     them to read Mura et al. (2010) for an introduction to biomole-                      Chastine, J.W., Brooks, J.C., Zhu, Y., Owen, G.S., Harrison, R.W., and Weber,
+     cular graphics, and Jenkinson (2018) for an overview on modal-                       I.T. (2005). AMMP-Vis––a collaborative virtual environment for molecular
+                                                                                          modeling. VRST 8, https://doi.org/10.1145/1101616.1101620.
+     ities to communicate molecular science. In a more general
+     context, Bang Wong’s ‘‘Data visualization Points of View’’                           Chavent, M., Lévy, B., Krone, M., Bidmon, K., Nominé, J.-P., Ertl, T., and Baa-
+     (http://blogs.nature.com/methagora/2013/07/data-                                     den, M. (2011). GPU-powered tools boost molecular visualization. Brief. Bioin-
+                                                                                          formatics 12, 689–701.
+     visualization-points-of-view.html) is also a good resource to
+     easily guide the readers to understand scientific data visualiza-                    Chavent, M., Lévy, B., and Maigret, B. (2008). MetaMol: high-quality visualiza-
+                                                                                          tion of molecular skin surface. J. Mol. Graph. Model. 27, 209–216.
+     tion and design scientific figures.
+        We believe that increased adoption of some of these promising                     Cheng, Y. (2018). Single-particle cryo-EM-How did it get here and where will it
+                                                                                          go. Science 361, 876–880.
+     methods has significant potential to advance structural biology
+     by improving how structural biologists see and think about their                     Cipriano, G., and Gleicher, M. (2007). Molecular surface abstraction. IEEE
+     data. By covering references to state-of-the-art surveys written                     Trans. Vis. Comput. Graph. 13, 1608–1615.
+     by well-recognized teams in the field, this perspective may further                  Connolly, M.L. (1983a). Solvent-accessible surfaces of proteins and nucleic-
+     provide an entry point to contact computer graphics researchers                      acids. Science 221, 709–713.
+     to implement new rendering techniques that will definitely benefit                   Connolly, M.L. (1983b). Analytical molecular-surface calculation. J. Appl.
+     structural biology. To further help realizing this goal, we would                    Crystallogr. 16, 548–558.
+     also encourage readers to consider participating in scientific
+                                                                                          Dabdoub, S.M., Rumpf, R.W., Shindhelm, A.D., and Ray, W.C. (2015). Mo-
+     events that bring structural biologists together with researchers                    Flow: visualizing conformational changes in molecules as molecular flow im-
+     working on computer graphics: meetings, such as VIZBI (Visual-                       proves understanding. BMC Proc. 9, S5.
+     izing Biological Data, https://vizbi.org), BioVis (http://biovis.net),               Davison, T., Samavati, F., and Jacob, C. (2019). LifeBrush: painting, simu-
+     and MolVA (Molecular Graphics and Visual Analysis of Molecular                       lating, and visualizing dense biomolecular environments. Comput. Graph.
+     Data, http://decibel.fi.muni.cz/xbyska/molva/).                                     82, 232–242.
+
+                                                                                          Edelsbrunner, H. (1999). Deformable smooth surface design. Discrete Com-
+                                                                                          put. Geom. 21, 87–115.
+     SUPPLEMENTAL INFORMATION
+                                                                                          Fioravante, M., Shook, A., Thorpe, I., and Rheingans, P. (2013). Visualizing
+     Supplemental Information can be found online at https://doi.org/10.1016/j.str.       motional correlations in molecular dynamics using geometric deformations.
+     2019.09.001.                                                                         Comput. Graph. Forum 32, 311–320.
+
+                                                                                          Geng, W., Yu, S., and Wei, G. (2007). Treatment of charge singularities in im-
+     ACKNOWLEDGMENTS                                                                      plicit solvent models. J. Chem. Phys. 127, 114106.
+
+                                                                                          Goddard, T.D., and Ferrin, T.E. (2007). Visualization software for molecular as-
+     M.C. acknowledges support from CNRS-MITI grants PEPS MPI 2018 and                    semblies. Curr. Opin. Struct. Biol. 17, 587–595.
+Q4   ‘‘Modélisation du vivant’’ 2019. N.A. was partially funded by the Ministry of Ed-
+     ucation of Saudi Arabia, the Saudi Cultural Bureau in London. S.O’D. gratefully      Goddard, T.D., Huang, C.C., Meng, E.C., Pettersen, E.F., Couch, G.S., Morris,
+     acknowledges support from Tour de Cure Limited (Australia) for the project           J.H., and Ferrin, T.E. (2018). UCSF ChimeraX: meeting modern challenges in
+     ‘‘Visualizing cancer mechanisms in VR.’’ R.S.L. thanks the Department of             visualization and analysis. Protein Sci. 27, 14–25.
+     Computer Science at Swansea University. All the authors would like to thank
+     the anonymous reviewers for their constructive feedback.                             Goodsell, D.S., Franzen, M.A., and Herman, T. (2018). From atoms to cells: us-
+                                                                                          ing mesoscale landscapes to construct visual narratives. J. Mol. Biol. 430,
+                                                                                          3954–3968.
+     AUTHOR CONTRIBUTIONS
+                                                                                          Hirst, J.D., Glowacki, D.R., and Baaden, M. (2014). Molecular simulations and
+                                                                                          visualization: introduction and overview. Faraday Discuss. 169, 9–22.
+     The manuscript was written through contributions of all authors.
+                                                                                          Humphrey, W., Dalke, A., and Schulten, K. (1996). VMD: visual molecular dy-
+                                                                                          namics. J. Mol. Graph. 14, 27–28.
+     REFERENCES
+                                                                                          Im, W., Liang, J., Olson, A., Zhou, H.-X., Vajda, S., and Vakser, I.A. (2016).
+                                                                                          Challenges in structural approaches to cell modeling. J. Mol. Biol. 428,
+     Andrei, R.M., Callieri, M., Zini, M.F., Loni, T., Maraziti, G., Pan, M.C., and       2943–2964.
+     Zoppè, M. (2012). Intuitive representation of surface properties of biomole-
+     cules using BioBlender. BMC Bioinformatics 13 (Suppl 4 ), S16.                       Iwasa, J.H. (2015). Bringing macromolecular machinery to life using 3D anima-
+                                                                                          tion. Curr. Opin. Struct. Biol. 31, 84–88.
+     Arthur, K., Preston, T., Taylor, R., Brooks, F., Whitton, M., Wright, W.., 1998.
+     Designing and building the PIT: a head-tracked stereo workspace for two              Iwasa, J.H. (2010). Animating the model figure. Trends Cell Biol. 20, 699–704.
+     users. https://doi.org/10.5555/897917.
+                                                                                          Jenkinson, J. (2018). Molecular biology meets the learning sciences: visualiza-
+     Bates, P.W., Wei, G.W., and Zhao, S. (2008). Minimal molecular surfaces and          tions in education and outreach. J. Mol. Biol. 430, 4013–4027.
+     their applications. J. Comput. Chem. 29, 380–391.
+                                                                                          Johnson, G.T., Autin, L., Al-Alusi, M., Goodsell, D.S., Sanner, M.F., and Olson,
+     Berman, H.M., Kleywegt, G.J., Nakamura, H., and Markley, J.L. (2012). The            A.J. (2015). cellPACK: a virtual mesoscope to model and visualize structural
+     protein data bank at 40: reflecting on the past to prepare for the future. Struc-    systems biology. Nat. Methods 12, 85–91.
+     ture 20, 391–396.
+                                                                                          Johnson, G.T., Autin, L., Goodsell, D.S., Sanner, M.F., and Olson, A.J. (2011).
+     Blinn, J.F. (1977). Models of light reflection for computer synthesized pictures.    ePMV embeds molecular modeling into professional animation software envi-
+     SIGGRAPH, 192–198, https://doi.org/10.1145/563858.563893.                            ronments. Structure 19, 293–303.
+
+     6 Structure 27, November 5, 2019
+
+                                                                          STFODE 4117
+  Please cite this article in press as: Martinez et al., Molecular Graphics: Bridging Structural Biologists and Computer Scientists, Structure (2019), https://
+  doi.org/10.1016/j.str.2019.09.001
+
+Structure
+
+Perspective
+Johnson, G.T., and Hertig, S. (2014). A guide to the visual analysis and commu-           Olson, A.J. (2010). Visualization of macromolecular structures. Nat. Methods
+nication of biomolecular structural data. Nat. Rev. Mol. Cell Biol. 15, 690–698.          7, S42–S55.
+
+Johnston, A.P.R., Rae, J., Ariotti, N., Bailey, B., Lilja, A., Webb, R., Ferguson,        O’Donoghue, S.I., Sabir, K.S., Kalemanov, M., Stolte, C., Wellmann, B., Ho, V.,
+C., Maher, S., Davis, T.P., Webb, R.I., et al. (2018). Journey to the centre of the       Roos, M., Perdigão, N., Buske, F.A., Heinrich, J., et al. (2015). Aquaria: simpli-
+cell: virtual reality immersion into scientific data. Traffic 19, 105–110.                fying discovery and insight from protein structures. Nat. Methods 12, 98–99.
+
+Kay, L.E. (2016). New views of functionally dynamic proteins by solution NMR              Olson, A.J. (2018). Perspectives on structural molecular biology visualization:
+spectroscopy. J. Mol. Biol. 428, 323–331.                                                 from past to present. J. Mol. Biol. 430, 3997–4012.
+
+Klein, T., Autin, L., Kozlikova, B., Goodsell, D.S., Olson, A.J., Groller, M.E., and      O’Connor, M., Deeks, H.M., Dawn, E., Metatla, O., Roudaut, A., Sutton, M.,
+Viola, I. (2018). Instant construction and visualization of crowded biological en-        Thomas, L.M., Glowacki, B.R., Sage, R., Tew, P., et al. (2018). Sampling mo-
+vironments. IEEE Trans. Vis. Comput. Graph. 24, 862–872.                                  lecular conformations and dynamics in a multiuser virtual reality framework.
+                                                                                          Sci. Adv. 4, 1–9.
+Koradi, R., Billeter, M., and Wuthrich, K. (1996). MOLMOL: a program for display
+and analysis of macromolecular structures. J. Mol. Graph. 14, 51–55, 29-32.               Parulek, J., Jönsson, D., Ropinski, T., Bruckner, S., Ynnerman, A., and Viola, I.
+                                                                                          (2014). Continuous levels-of-detail and visual abstraction for seamless molec-
+Kozlikova, B., Krone, M., Falk, M., Lindow, N., Baaden, M., Baum, D., Viola, I., Par-     ular visualization. Comput. Graph. Forum 33, 276–287.
+ulek, J., and Hege, H.-C. (2017). Visualization of biomolecular structures––state of
+the art revisited. Comput. Graph. Forum. https://doi.org/10.1111/cgf.13072.               Phong, B.T. (1975). Illumination for computer generated pictures. Commun.
+                                                                                          ACM 18, 311–317.
+Krone, M., Bidmon, K., and Ertl, T. (2009). Interactive visualization of molecular
+surface dynamics. IEEE Trans. Vis. Comput. Graph. 15, 1391–1398.                          Rajendiran, N., and Durrant, J.D. (2018). Pyrite: a blender plugin for visualizing
+                                                                                          molecular dynamics simulations using industry-standard rendering tech-
+Krone, M., Kozlikova, B., Lindow, N., Baaden, M., Baum, D., Parulek, J., Hege,            niques. J. Comput. Chem. 39, 748–755.
+H.-C., and Viola, I. (2016). Visual analysis of biomolecular cavities––state of the
+art. Comput. Graph. Forum. https://doi.org/10.1111/cgf.12928/pdf.                         Richardson, J.S. (1977). beta-Sheet topology and the relatedness of proteins.
+                                                                                          Nature 268, 495–500.
+Krone, M., Reina, G., Zahn, S., Tremel, T., Bahnmuller, C., and Ertl, T. (2017).
+Implicit sphere shadow maps. PacificVis. https://doi.org/10.1109/PACIFIC-                 Richardson, J.S., and Richardson, D.C. (2013). Doing molecular biophysics:
+VIS.2017.8031605.                                                                         finding, naming, and picturing signal within complexity. Annu. Rev. Biophys.
+                                                                                          42, 1–28.
+Krone, M., Stone, J.E., Ertl, T., and Schulten, K. (2012). Fast visualization of
+                                                                                          Rose, A.S., and Hildebrand, P.W. (2015). NGL Viewer: a web application for
+Gaussian density surfaces for molecular dynamics and particle system trajec-
+                                                                                          molecular visualization. Nucleic Acids Res. 43, W576–W579.
+tories. EuroVis Short Papers. https://doi.org/10.2312/PE/EuroVisShort/Euro-
+VisShort2012/067-071.                                                                     Sali, A., Berman, H.M., Schwede, T., Trewhella, J., Kleywegt, G., Burley, S.K.,
+                                                                                          Markley, J., Nakamura, H., Adams, P., Bonvin, A.M.J.J., et al. (2015). Outcome
+Langridge, R., Ferrin, T.E., Kuntz, I.D., and Connolly, M.L. (1981). Real-time co-
+                                                                                          of the first wwPDB hybrid/integrative methods task force workshop. Structure
+lor graphics in studies of molecular interactions. Science 211, 661–666.
+                                                                                          23, 1156–1167.
+Le Muzic, M., Autin, L., Parulek, J., and Viola, I. (2015). cellVIEW––a tool for          Schmidt-Ehrenberg, J., Baum, D., and Hege, H.-C. (2002). Visualizing dynamic
+illustrative and multi-scale rendering of large biomolecular datasets. Euro-              molecular conformations. IEEE Vis. 235–242.
+graphics Workshop Vis. Comput. Biomed. 2015, 61–70.
+                                                                                          Schulz, C., Schatz, K., Krone, M., Braun, M., Ertl, T., and Weiskopf, D. (2018).
+Levinthal, C. (1966). Molecular model-building by computer. Sci. Am. 214, 42–52.          Uncertainty visualization for secondary structures of proteins. PacificVis.
+                                                                                          https://doi.org/10.1109/PacificVis.2018.00020.
+Lindow, N., Baum, D., and Hege, H.-C. (2014). Ligand excluded surface: a new
+type of molecular surface. IEEE Trans. Vis. Comput. Graph. 20, 2486–2495.                 Schwede, T. (2003). SWISS-MODEL: an automated protein homology-
+                                                                                          modeling server. Nucleic Acids Res. 31, 3381–3385.
+Lindow, N., Baum, D., and Hege, H.-C. (2011). Voronoi-based extraction and
+visualization of molecular paths. IEEE Trans. Vis. Comput. Graph. 17, 2025–2034.          Sehnal, D., Deshpande, M., Vareková, R.S., Mir, S., Berka, K., Midlik, A.,
+                                                                                          Pravda, L., Velankar, S., and Koca, J. (2017). LiteMol suite: interactive web-
+Lindow, N., Baum, D., Prohaska, S., and Hege, H.C. (2010). Accelerated visu-              based visualization of large-scale macromolecular structure data. Nat.
+alization of dynamic molecular surfaces. Comput. Graph. Forum 29, 943–952.                Methods 14, 1121–1122.
+Lv, Z., Tek, A., Da Silva, F., Empereur-mot, C., Chavent, M., and Baaden, M.              Simões, T., Lopes, D., Dias, S., Fernandes, F., Pereira, J., Jorge, J., Bajaj, C.,
+(2013). Game on, science––how video game technology may help biologists                   and Gomes, A. (2017). Geometric detection algorithms for cavities on protein
+tackle visualization challenges. PLoS One 8, e57990.                                      surfaces in molecular graphics: a survey. Comput. Graph. Forum 36, 643–683.
+Miao, H., De Llano, E., Isenberg, T., Groller, M.E., Barisic, I., and Viola, I. (2018).   Singla, J., McClary, K.M., White, K.L., Alber, F., Sali, A., and Stevens, R.C.
+DimSUM––dimension and scale unifying map for visual abstraction of DNA                    (2018). Opportunities and challenges in building a spatiotemporal multi-scale
+origami structures. Comput. Graph. Forum 37, 403–413.                                     model of the human pancreatic b Cell. Cell 173, 11–19.
+Miao, H., Klein, T., Kouril, D., Mindek, P., Schatz, K., Groller, M.E., Kozlikova,       Stone, J.E., Sener, M., Vandivort, K.L., Barragan, A., Singharoy, A., Teo, I., Ri-
+B., Isenberg, T., and Viola, I. (2019). Multiscale molecular visualization. J. Mol.       beiro, J.V., Isralewitz, B., Liu, B., Goh, B.C., et al. (2016). Atomic detail visual-
+Biol. 431, 1049–1070.                                                                     ization of photosynthetic membranes with GPU-accelerated ray tracing. Par-
+                                                                                          allel. Comput. 55, 17–27.
+Mindek, P., Kouril, D., Sorger, J., Toloudis, D., Lyons, B., Johnson, G., Groller,
+M.E., and Viola, I. (2018). Visualization multi-pipeline for communicating                Tarini, M., Cignoni, P., and Montani, C. (2006). Ambient occlusion and edge
+biology. IEEE Trans. Vis. Comput. Graph. 24, 883–892.                                     cueing to enhance real time molecular visualization. IEEE Trans. Vis. Comput.
+                                                                                          Graph. 12, 1237–1244.
+Mura, C., McCrimmon, C.M., Vertrees, J., and Sawaya, M.R. (2010). An intro-
+duction to biomolecular graphics. PLoS Comput. Biol. 6, e1000918.                         van der Zwan, M., Lueks, W., Bekker, H., and Isenberg, T. (2011). Illustrative
+                                                                                          molecular visualization with continuous abstraction. Comput. Graph. Forum
+Mwalongo, F., Krone, M., Reina, G., and Ertl, T. (2016). State-of-the-art report          30, 683–690.
+in web-based visualization. Comput. Graph. Forum 35, 553–575.
+                                                                                          Vorobjev, Y.N., and Hermans, J. (1997). SIMS: computation of a smooth
+Norrby, M., Grebner, C., Eriksson, J., and Boström, J. (2015). Molecular rift: vir-      invariant molecular surface. Biophys. J. 73, 722–732.
+tual reality for drug designers. J. Chem. Inf. Model. 55, 2475–2484.
+                                                                                          Yuan, S., Chan, H.C.S., and Hu, Z. (2017). Implementing WebGL and HTML5 in
+O’Donoghue, S.I., Goodsell, D.S., Frangakis, A.S., Jossinet, F., Laskowski,               macromolecular visualization and modern computer-aided drug design.
+R.A., Nilges, M., Saibil, H.R., Schafferhans, A., Wade, R.C., Westhof, E., and            Trends Biotechnol. 35, 559–571.
+
+                                                                                                                                  Structure 27, November 5, 2019 7
+
+                                                                               STFODE 4117
+

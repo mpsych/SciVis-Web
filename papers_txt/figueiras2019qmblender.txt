@@ -1,0 +1,657 @@
+                                                                Journal of Computational Science 35 (2019) 44–56
+
+
+
+                                                                 Contents lists available at ScienceDirect
+
+
+                                                     Journal of Computational Science
+                                                    journal homepage: www.elsevier.com/locate/jocs
+
+
+
+
+QMBlender: Particle-based visualization of 3D quantum wave
+function dynamics
+Edgar Figueiras a , David Olivieri a,∗ , Angel Paredes b , Humberto Michinel b
+a
+    Computer Science Department, School of Informatics (ESEI), Universidade de Vigo. As Lagoas s/n, Ourense ES-32004, Spain
+b
+    Applied Physics Department, School of Aeronautic and Space Engineering, Universidade de Vigo. As Lagoas s/n, Ourense ES-32004, Spain
+
+
+
+
+a r t i c l e           i n f o                            a b s t r a c t
+
+Article history:                                          Simulated three-dimensional quantum wave functions (or probability density distributions, in general),
+Received 20 November 2018                                 (x, t), are often represented graphically as smooth isocontours or with 2-dimensional cross-sectional
+Received in revised form 21 May 2019                      plots. As such, neither the full wave dynamics nor the true stochastic interpretation are captured ade-
+Accepted 6 June 2019
+                                                          quately in a single representation. Moreover, the dynamics are often provided as videos, so that posterior
+Available online 25 June 2019
+                                                          interaction with the solution by other researchers is not possible. Here, we describe a software tool,
+                                                          called QMBlender, that produces 3D models of (x, t) at each time as a collection of Monte Carlo sampled
+Keywords:
+                                                          coordinates represented by graphics primitives, or particles. QMBlender is a plugin to the popular open
+Scientiﬁc visualization
+Schrödinger equation
+                                                          source Blender editor, which takes advantage of all its 3D editing, I/O, materials/lighting, and rendering
+Beam propagation method                                   capabilities. The resulting 3D models allow for posterior web-based interactive exploration, which we
+Open source                                               describe and argue could be a new paradigm for communicating and sharing results of numerical simu-
+Blender                                                   lations. QMBlender can also be executed in a batch pipeline for producing 3D models, without the need
+Computer graphics visualization                           for using the Blender GUI. We also implemented the particle sampling and visualization method using
+Simulation output analysis                                the VTK library for a side-by-side comparison with QMBlender. Here algorithms, implementation details,
+Physics visualization                                     comparison with other similar systems, and examples from simulation of the Schrodinger equation are
+                                                          provided to show the utility of this software tool.
+                                                                                                                           © 2019 Elsevier B.V. All rights reserved.
+
+
+
+
+1. Introduction                                                                              practitioners often represent 3D density distributions from sim-
+                                                                                             ulations with isocontours. While aesthetically appealing (or at
+    Probability distributions are an often used representation of                            least deemed good-enough), such representations suffer from var-
+many-body and statistical phenomena in physical systems. Govern-                             ious shortfalls. First, they fail to simultaneously capture the full
+ing equations, such as the Boltzmann and Fokker-Planck equations                             breadth of the underlying phenomena (e.g. inner 3D layers are often
+[37] of classical physics, and the Schrödinger equation [12] of quan-                        shrouded by the outer isosurface). Also, the method for construct-
+tum physics describe a wide spectrum of collective microscopic                               ing the isosurface acts as a smoothing ﬁlter that loses essential high
+behaviour, that give rise to macroscopic wave dynamics. Such equa-                           frequency information in the evolving distributions. Even more
+tions describe the evolution of probability distributions from some                          importantly, the isosurface representation can be misleading, since
+initial state, subject to a set of boundary conditions or external                           the concept of density must be inferred.
+potentials, to some ﬁnal state. The governing partial differential                              Here we describe a solution to the problem of representing sim-
+equations are solved numerically over a grid to evolve these distri-                         ulated 3D wave functions, (x) (or PDFs), as a density cloud of
+bution functions in time. Because the evolution of such systems is                           primitive graphics objects (i.e. icospheres, or 3D particles). This is
+often complex, adequate visualization tools are important to gain                            done by ﬁrst interpolating (x, t), solved numerically on a 3D grid
+an understanding the dynamics of the underlying phenomena.                                   for each t, and then employing a Monte Carlo sampling of (x)
+    However, most general purpose and widely-used graphical soft-                            to produce a collection of N point coordinates throughout the 3D
+ware libraries/tools do not provide speciﬁc features for adequately                          space. In this way, the density of spatial coordinate points is a true
+visualizing probability distribution functions (PDF), or quantum                             representation of the amplitude of (x). To each of these coordi-
+wave functions, particularly in three-dimensions (3D). Instead,                              nates, a 3D graphical primitive (e.g., icospheres or other graphic
+                                                                                             data objects) is assigned, so that visually the distribution appears
+                                                                                             as a large collection of 3D particles, possessing material and light
+    ∗ Corresponding author.                                                                  properties. This is unlike traditional particle clouds (where ran-
+
+https://doi.org/10.1016/j.jocs.2019.06.001
+1877-7503/© 2019 Elsevier B.V. All rights reserved.
+                                             E. Figueiras et al. / Journal of Computational Science 35 (2019) 44–56                                    45
+
+
+dom samples are used to identify objects), or in ﬁeld/ﬂuid solvers                 dynamics. Section 3 describes the QMBlender algorithms, mod-
+where the same n particles are pushed by force ﬁelds and then                      ules, and comparisons with an implementation of our algorithms in
+used to construct graphical objects. In our method, new particles                  VTK. Section 4, shows the capability of QMBlender through several
+are instantiated at each time, and distributed randomly according                  examples using simulations of the nonlinear Schrodinger equation
+to the distribution (x), at that time instant.                                    [10]. Finally, we describe how interactive 3D models can be viewed
+    The QMBlender software tool: We implemented our software                       online, and how the automated workﬂow could be used by other
+as a plugin (also called an add-on) module, called QMBlender, to the               researchers in related computational sciences.
+popular open-source editor/rendering tool, Blender [5]. This plu-
+gin is freely available and integrates directly into Blender, taking
+advantage of all its 3D editing, I/O, materials/lighting, and rendering            2. Background
+capabilities. In this tool, the wave function (x) is rendered using
+a large number of highly efﬁcient graphic object primitives, called                    The ﬁeld of scientiﬁc visualization has evolved continuously
+Blender particles, that visually represent the probability density. Not            over the last few decades. In part, this is due to the expo-
+only are the Blender particles memory efﬁcient, but they can take                  nential increase of computational power, memory scaling, and
+advantage of the underlying Blender rendering capabilities to visu-                programmability of graphic processors, but also by advances
+ally appear in a variety of forms such as smoke or liquid, or colored              in visualization algorithms and software APIs and libraries. The
+points. Here, we show that the Blender particle data structure has                 impact for science to be able to model, visualize, and interact with
+signiﬁcant memory performance advantages when compared to                          large complex systems has provided unprecedented insight. An
+other tools, such as those based on the VTK library.                               excellent review of scientiﬁc visualization is given in [21], follow-
+    Interactive 3D models: An important distinction between                        ing the taxonomy of scientiﬁc visualization established in [16]. Also,
+representing the 3D wavefunctions using QMBlender and more tra-                    several excellent reviews and textbooks [40] describe modern sci-
+ditional techniques is the ability to export full 3D models at each                entiﬁc visualization methods [41,13]. Standard techniques for high
+timepoint of the simulation. The resulting 3D models and proper-                   level visualization programming are discussed in [39] for the Visu-
+ties can be exported for posterior interactive exploration, so that                alization Toolkit (VTK) and a modern treatment of the mathematics
+the viewing angle can be changed during the simulation. As a proof                 of graphics algorithms and primitives are found in [28]. There is a
+of principle, a web-based visualization application based on the                   large body of literature related to information visualization, per-
+webGL standard is described here. We argue that sharing such                       ception, and interaction; a recent literature survey on this subject
+online 3D models could become a new paradigm for communi-                          that can be found in [36].
+cating the results of numerical simulations amongst researchers in                     3D Graphic Libraries and environments for Scientiﬁc
+the computational science ﬁeld.                                                    Computing: For the science practitioner needing to produce visu-
+    Automated Workﬂow: The QMBlender software can also be                          alizations from numerical simulations, the graphical library is often
+used in a batch workﬂow (or pipeline), that can be executed                        integrated within their computational platform of choice, (e.g.,
+directly from the command line to produce 3D graphics, without                     Matlab [23] or Mathematica [42]). In high-level languages such
+the need to work within the graphical Blender environment. This                    as Python, C++, Java, etc. several popular libraries such as VTK,
+is done by using a scene template (saved with a specialized for-                   Paraview, Vis5D, MayaVi3d, OpenGL, and Matplotlib (and related
+mat called.blend), which is a ﬁle that saves all the relevant models               tools, as well as many others) can be imported or programmed for
+and parameters of a Blender session. Given a saved scene template                  producing highly customized scientiﬁc visualizations.
+(e.g., sence template.blend), and a user’s saved simulation result                     3D Modellers/Editors: A different approach to scientiﬁc visu-
+of |(x, t)|, a single command line call is sufﬁcient to produce 3D                alization is based upon 3D modelling tools that are primarily
+models across the timeline, without the need to actually open the                  designed for full-featured animations, CGI, and 3D games such as
+Blender GUI environment. Thus, a user could either use preconﬁg-                   Autodesk 3dsMax, Autodesk Maya, Lightwave3D, and Blender [18].
+ured scene templates, or construct their own customized template                   Of these, Blender is one of the only open-source 3D modelling tools
+within Blender. In either case, one such template could then be                    that can be compared against the major commercial proprietary
+re-used for a diverse set of simulations scenarios by running this                 software solutions. As such, Blender has a large community support
+command line tool. For ease, we describe QMBlender batch pipeline                  of third party development. It is a full-featured 3D modeling plat-
+tool that we make available as a Docker container, together with                   form that can be used for creating animations, and includes physics
+associated Python scripts and describe its use.                                    simulators, specialized light rendering, material properties, and 3D
+    The main contributions of this article are:                                    editing tools for creating mesh-based models.
+                                                                                       With respect to some parameters of interest, Table 1 pro-
+– Propose a method based upon Monte Carlo sampling for repre-                      vides a brief comparison of tools and libraries that can be used
+  senting 3D quantum wave functions (or probability distribution                   for 3D scientiﬁc visualization. In particular, from a high level,
+  functions) with a collection of 3D graphic primitive objects, or                 tools/environments can be selected whether they are open-source,
+  particles.                                                                       provide add-on capability, allow for Python scripting, or whether
+– Describe the QMBlender plugin software tool, showing its capa-                   3D models can be extracted. Another important issue is whether
+  bilities.                                                                        the tool/library was originally intended or adapted for scientiﬁc
+– Compare QMBlender with other graphical tools, and in particular                  computing. While these parameters provide a ﬁrst selection, lower
+  through a comparison with the VTK library, from which other                      level issues, such as the performance of data structures of graphic
+  popular graphical systems are based.                                             primitives must be made quantitatively. Since the VTK library can
+– Demonstrate QMBlender with examples of the Schrödinger equa-                     be used in stand-alone mode, and is also the basis of the popular
+  tion.                                                                            ParaView tool, we also implemented our particle sampling algo-
+– Show how interactive 3D models of wave function dynamics can                     rithm in VTK and describe our side-by-side comparison of particle
+  be produced in a batch pipeline and visualized/shared online.                    data structures with Blender.
+                                                                                       In the context of scientiﬁc visualization, Blender has been used
+   This paper is organized as follows. First, Section 2 provides a brief           as the base software platform for several applications: two exam-
+background of some visualization libraries often employed, which                   ples are the AstroBlend [29] plugin for astronomy, and the Mcell
+could be of particular interest for visualization of 3D wave function              project [19] in biology, for modelling and visualization of molecular
+46                                                 E. Figueiras et al. / Journal of Computational Science 35 (2019) 44–56
+
+Table 1
+Principal frameworks for 3D physical data visualization. (Plaform keys are: W = windows, L = Linux, A = windows, linux and MacOs)
+
+                         3DMax         Amira         Avizo           Maya           MayaVi          Paraview        Tecplot     Tomviz      VisIt       Blender 3D
+
+ Platform                W             W/L           A               A              A               A               A           A           A           A
+ Open Source                                                                        BSD             BSD                         BSD3        BSD         GPL
+ Python Script           checkmark     checkmark     checkmark       checkmark      checkmark       checkmark       checkmark   checkmark   checkmark   checkmark
+ External Rendering      checkmark                                                                                                                      checkmark
+ Video Editing           checkmark                                                                                                                      checkmark
+ Flexible lighting       checkmark                   checkmark       checkmark                                                                          checkmark
+ Export 3D               checkmark     checkmark     checkmark       checkmark      checkmark       checkmark                                           checkmark
+ Scientiﬁc Oriented                    checkmark     checkmark                      checkmark       checkmark       checkmark   checkmark   checkmark
+
+
+
+diffusion across cell membranes [11]. Blender has also been used for                     cases, the look-and feel of Blender (i.e., by adding GUI controls
+visualizing ﬂuid solutions with smoothed particle dynamics [15],                         or modifying existing elements), as well as core functionality of
+in VisSPHysics [8] and recently in the Pyrite plugin for molecular                       many of the underlying methods, can be customized by accessing
+dynamics simulator [35].                                                                 low-level Blender methods, exposed through its Python API. Thus,
+    Representing three-dimensional quantum wave functions (or                            speciﬁc programming routines, such as those for scientiﬁc visu-
+probability density distributions in general), resulting from sim-                       alization tasks, can be programmed with the Python API, thereby
+ulations, as smooth contour functions do not capture the true                            accessing the underlying Blender data types, and then loaded as a
+stochastic interpretation intended by these functions. Also, isocon-                     pluggable module. Functionality also exist for creating custom GUI
+tours can obscure or shroud the full 3D wave function dynamics that                      panel, through which these custom routines can be invoked. These
+occur throughout the volume, only showing details of a particular                        are the ingredients of QMBlender and the way it was constructed.
+constant surface of (x, t). For this reason, it is necessary to accom-                      When compared with other libraries, Blender has the follow-
+pany the 3D plots with other details, such as 2D cross sections, in                      ing advantages for the present task of visualizing quantum wave
+order to visualize interior wave function structure.                                     function dynamics:
+    With Monte Carlo sampling of (x, t) that we use in QMBlender,
+resulting in a collection of graphical objects, or particles, the entire                 – efﬁcient data objects for instantiating >104 primitive objects
+3D volume can be visualized at once. At ﬁrst glance, there are sev-                      – it has an integrated rendering engine for visualization.
+eral methods that use the concept of particles or particle clouds,                       – it can be used to specify the initial and boundary conditions in
+for example with 3D ﬂuid ﬂows [20]. Smoothed particle hydrody-                             the Blender editor;
+namics, for example, provides for mesh-free evolution of governing                       – objects to be simulated are ﬁrst placed into the viewport and
+differential equations. However, in these codes the ﬂow ﬁelds are                          their properties can be modiﬁed to correspond to starting val-
+calculated by updating discrete test particle positions and veloci-                        ues for the simulation. This capability is particularly useful when
+ties at each time iteration with a governing dynamic equation (i.e.,                       the initial and/or boundary conditions are non-trivial, or when
+an appropriate Lagrangian). This is quite different from the present                       to explore the spatial details of the initial wave function (which
+situation of visualizing a quantum wavefunction where individual                           could be an eigenstate, generated by numerical integration).
+position of “particles” have no meaning; i.e., there are no discrete                     – The post-processing options for 3D objects are limitless, allowing
+moving elements (because of the non-deterministic nature of quan-                          for changes in object properties, lighting, 3D viewing angles and
+tum mechanics, it makes no sense to “push” a test particle from one                        trajectories throughout the simulation, and many other possibil-
+step to another).                                                                          ities, such as cut- planes and projections.
+    Here, the probability wave function evolves, so that particle                        – The 3D objects can be exported
+positions and velocities do not form a continuum, but rather at each                     – tasks can be automated with Blender batch processing.
+time they are stochastically distributed according to this probabil-
+ity. Numerical integration of the Schrödinger equation is performed
+                                                                                         3. Algorithm
+on a grid. In our visualization, this is converted to a set of objects
+with positions sampled from the wave function. Thus, the big dif-
+                                                                                             As described, QMBlender is a specialized add-on that uses the
+ference in the way we use Blender is that at each time point, there
+                                                                                         full range of the Blender resource management and data structures
+is a new instantiation of each particle (unlike applications such as
+                                                                                         to create a particle cloud based representation of 3D wave func-
+AstroBlend or Mcell, where the same particle objects are created
+                                                                                         tion (x, t) from numerical simulations. The particle cloud consists
+and used for all time, while only their positions are updated).
+                                                                                         of a collection of Blender particle data objects, distributed in 3D
+                                                                                         space according to the amplitude of the probability density func-
+2.1. Using blender for scientiﬁc visualization                                           tion at time t. As such, the density of points is directly related to
+                                                                                         the probability; the greater the number of points, the higher the
+    Within Blender, several physical simulators and associated                           probability. Fig. 1A illustrates how the (Xi ) deﬁned on the grid
+data types are included for standard CGI effects [4] (also                               is converted to a set of coordinates xk , deﬁning (xk ). The work-
+www.blender.org/features/simulation/), including the dynamics                            ﬂow of the algorithm, showing the interaction between software
+and collisions associated with rigid bodies, ﬂuids, smoke/ﬁre, hair,                     modules, is shown in Fig. 1B.
+and soft bodies such as cloth. Often the intention of these simulators                       The objective of this QMBlender plugin is to provide a versatile
+for animations is not the same as scientiﬁc visualization; these tools                   tool for pre- and post-processing of simulation results, as opposed
+are only meant to be visually convincing, not accurate for scientiﬁc                     to creating static output images or videos. Here 3D objects are
+prediction. Thus, for true scientiﬁc simulations, the interfaces must                    created and stored at each point along the simulation timeline.
+be modiﬁed considerably.                                                                 Thus, the user can interactively change the viewing angles and fun-
+    Moreover, 3D animation workﬂows are complex and often                                damental parameters (lighting, material properties, etc.) for the
+include many customized steps. As such, the Blender environment                          entire simulation. Moreover, this collection of 3D models can be
+incorporates an interactive Python shell as well as the ability to                       exported for interactive exploration within a 3D game engine or
+load Python scripts and plugins (i.e., also called “add-ons”). In all                    viewer application.
+                                                     E. Figueiras et al. / Journal of Computational Science 35 (2019) 44–56                                                47
+
+
+
+
+Fig. 1. (A) Conceptual idea of the sampling algorithm: the wave function (Xi ) deﬁned on the grid, Xi at each time point, is ﬁrst interpolated creating a family of surfaces
+˜
+(x);  these are sampled with a Monte Carlo algorithm and transformed to a set of coordinates xk , later to be represented by graphical objects (particles or icospheres). (B)
+Architectural ﬂow chart of the QMBlender plugin and the Blender environment.
+
+
+
+    In QMBlender, the amplitude |(x)| is sampled to draw ran-                             cost of lacking 3D depth. This important distinction was one of the
+domly sampled coordinates in the 3D space with a Metropolis-like                           prime reasons for basing our software on Blender.
+algorithm to position the Blender particles. Sampling efﬁciency is                             After sampling and object instantiation, other attributes are also
+achieved by performing a well-known importance sampling tech-                              set to enhance the visualization, such as a particle color scheme that
+nique; in more advanced situations, an MCMC [2] could be used.                             depends on the density, as well as specular, reﬂective, transparency,
+Given the coordinate positions, Blender particles are instantiated                         and diffusivity properties for more artistic rendering. Other useful
+in memory and placed at these positions in the 3D space. The steps                         facilities have been incorporated into QMBlender, such as changing
+of the sampling algorithm are summarized in Algorithm 1.                                   camera angles, ability to specify cut-planes, and a tool for producing
+                                                                                           camera ﬂy-thru trajectories.
+Algorithm 1.
+
+
+
+
+   From a computational perspective, it is not at all obvious how
+such an algorithm would scale to a large number of objects placed
+on the memory heap. For this, QMBlender uses specialized 3D
+graphic primitives data structures, called Blender particles, that are                     3.1. More about implementing blender particle data structures
+memory efﬁcient up to approximately 105 points, while capable of
+inheriting fully 3D objects such as icospheres. As shall be discussed                         Blender particle data objects were developed for Computer Gen-
+later, this is marked advantage over the VTK library, which also has                       erated Imagery (CGI) animations to represent dust, smoke, or ﬂuids.
+particles, but that are actually 2D primitive objects. Such a design                       The Blender simulator modules use these data structures in well
+choice makes the VTK particles more memory efﬁcient, but at the                            deﬁned ways; the particles are in fact endowed with class attributes
+48                                                    E. Figueiras et al. / Journal of Computational Science 35 (2019) 44–56
+
+
+
+
+Fig. 2. Examples of a QMBlender utlities using a simple Gauss distribution: (A) three dimensional distribution with 104 particles, (B) demonstration of the using two cut-planes
+to see interior of distribution, and (C) use of projections. (D) The 3D model of the Gaussian, together with zoom and rotation views.
+
+
+that are intimately related to these simulator modules (and must                            processing step that searches the minimum and maximum of (x,
+be purposely turned off in QMBlender). So that these primitive data                         t) for all time steps, in order to establish a linear color scale.
+structures can be manipulated efﬁciently (with minimal latency),                                To provide extra ability to visualize interior parts of (x), a cut-
+they are deﬁned as a collection derived from parent objects. In this                        plane feature is provided in QMBlender. As opposed to 3D models
+way, the parallel architectures of graphics processors (GPUs) can                           based upon polygons, where decimation and re-stitching opera-
+be utilized to manipulate the particles efﬁciently. For example, if                         tions are needed, the implementation of cut planes with particle
+these particles are used to represent smoke, they emanate from a                            primitives is relatively easy. In QMBlender, one speciﬁes a plane,
+source with a given velocity and density and subject to constant                            and the algorithm only needs to change the particle attributes from
+forces; these values are stored in a particle parent data structure.                        visible to invisible depending upon its coordinate position relative
+    While the design of Blender particle data objects are efﬁcient                          to the deﬁned plane.
+for animation simulators, this strong coupling to source objects                                QMBlender also implements projections from any cut-plane.
+is undesirable in QMBlender, where individual particle control is                           Projections can be useful for observing internal planes of the 3D
+needed while retaining the efﬁcient memory footprint and latency.                           PDF, while still observing the full 3D wave dynamics. Fig. 2A, B,
+Rather than rewrite an entire new primitive graphics data type, we                          C and D show an example of a 3D Gaussian distribution rendered
+wanted to take advantage of the beneﬁts of the Blender particle.                            with the QMBlender, showing cut planes and projections. The cut
+Another engineering design goal of QMBlender was to minimize,                               planes are particularly useful for simulations, where the evolution
+or avoid entirely, any modiﬁcation to the base classes of Blender,                          of the distribution is studied over time. Fig. 2D shows the represen-
+to remain agnostic to future Blender updates. Thus, it was a con-                           tation of the 3D model, together with zoom views (seen as insets)
+siderable challenge to design the QMBlender algorithms to use the                           and different rotation angles in order to demonstrate the 3D nature
+Blender particles in ways that were not initially intended.                                 of the particles.
+
+
+
+3.2. Artiﬁcial coloring and cut planes                                                      4. Results: comparisons and features
+
+   To better appreciate subtle density variations of , particularly                            As described in the previous section, the method used in
+within internal layers, an artiﬁcial coloring step was implemented.                         QMBlender requires the availability of efﬁcient data structures for
+For this, colors are assigned to particles according to whether their                       representing a large collection of 3D graphics primitives. Because
+coordinate positions fall within a particular iso-density band. The                         Blender particles were designed for rendering dynamic phenomena
+color scale is linear and calibrated globally for the entire simulation                     for animations (e.g., smoke, water and ﬁre), these were a natu-
+results by considering (x, t) for all t. Thus, this requires a pre-                        ral choice for QMBlender. Amongst the other other graphics/tools
+                                                   E. Figueiras et al. / Journal of Computational Science 35 (2019) 44–56                                           49
+
+
+
+
+Fig. 3. A. Comparison of the time (top) and memory (bottom) to create two types of objects in Blender and VTK (particles or icospheres). B. A visual comparison between
+Blender and VTK particles; the zoom shows that Blender particles are truly 3D particles, while the VTK particles are 2D at all scales.
+
+
+options, particle data structures also exist in VTK, although the                            Processing time test: Fig. 3A (top) shows the time required to
+philosophy, design, and implementation are quite different.                              create/instantiate a model as function of the number of objects with
+    As mentioned previously, the VTK library and rendering engine                        the four separate types of objects: Blender particles (but inheriting
+is employed by other popular graphics applications (e.g. ParaView)                       icosphere primitives, which were refer to as a particle-icosphere),
+and can also be used to program custom applications. Thus, a                             individual Blender icospheres, VTK icospheres, and VTK particles.
+direct comparison would be fundamental to understanding the                              For both Blender and VTK, the processing time refers to the elapsed
+advantages and limitations of QMBlender with other library system                        clock time necessary for all the particles to be fully constructed
+options. Since our algorithm does not directly exist in any other VTK                    and displayed in the graphical viewport (which was automated in
+based tool, we implemented the particle sampling algorithm using                         a python script).
+VTK python bindings; this software is available in the QMBlender                             Memory consumption test: Fig. 3A (bottom) shows the amount
+distribution.                                                                            of memory consumed for each of the four objects considered. For
+                                                                                         this test, N objects were created and the memory consumption
+                                                                                         was recorded. While some of the total memory consumed could
+4.1. Time/memory comparison of data structures blender and VTK                           be related to overhead, it was assumed for simplicity that all mem-
+                                                                                         ory consumption was directly related to the instantiation of the
+    For representing the simulated wave function with particles                          graphic data primitives.
+with our method, we found that at least ≈104 –105 particles are                              As seen from both the time and memory performance of
+required for satisfactory visualization results. Therefore, we com-                      Fig. 3A, individual Blender and VTK icospheres are the most com-
+pared the efﬁciency of instantiating and manipulating particles                          putationally expensive and use considerably more memory as
+and other primitives both in Blender and VTK. For this, we stud-                         compared with the particle data types. In fact, the individual
+ied processing time and memory consumption. Other qualitative                            Blender icospheres is prohibitively expensive for creating the nec-
+parameters, such as the ability to interactively manipulate all the                      essary particles. The plots show that to create 105 Blender particles
+particles is highly dependent upon the graphics hardware and dif-                        the time spent is below 1 s, while the time to create 1000 objects >10
+ﬁcult to measure other than by frame rates per second.                                   s. In terms of memory, the results show that memory consumption
+    In Blender the alternatives to the Blender particles data struc-                     increases 1 Mbytes per 104 particles. Thus, a typical particle distri-
+tures are either graphics primitives (i.e., cube, cone, sphere,                          bution with our method that uses approximately 105 particles will
+icosphere) or an object constructed from polygons. Since our                             occupy approximately 50 Mbytes of memory.
+particle objects should be simple the graphics primitives are suf-                           It is not surprising that the VTK particles perform the best both in
+ﬁcient and are optimized to take advantage of GPUs, resulting in                         the time and memory comparisons because these are actually 2D
+low-memory latency efﬁcient structures. At the same time, these                          objects. Fig. 3B compares Blender particle-icospheres (top) with
+graphic primitives are sufﬁciently complex to be truly 3D objects                        VTK particles (bottom). As can be seen from a zoom, only the
+and can be endowed with innumerable material and light prop-                             Blender particle-icospheres are truly 3D, while the 2D VTK parti-
+erties and be manipulated individually. Therefore, the question                          cles maintain the same 2D dimensional at all scales. This feature of
+is how instantiating a large number of individual graphics prim-                         VTK was undesirable for application of producing fully 3D models
+itives compare to those inherited from the Blender particle object.                      of the numerical simulations.
+With respect to VTK, the particle primitive is also memory efﬁcient,
+however it is actually a 2D object. As such, at all scales, the object                   4.2. The GUI environment
+appears as a two-dimensional square (which, is an undesirable fea-
+ture for our application). To compare with the Blender particles, we                        The add-on modules and python scripting of Blender provide
+instantiated a large collection of VTK icosphere primitives.                             unlimited ﬂexibility to customize both the graphical user interface
+50                                                  E. Figueiras et al. / Journal of Computational Science 35 (2019) 44–56
+
+
+
+
+Fig. 4. The QMBlender add-on control panel (center) within the typical Blender 3D environment. (Left) Python scripting window useful for loading, modifying, and automating
+workﬂows. (Right)a typical example of a Gaussian with a distribution of particles in the Blender Object viewport before rendering.
+
+
+(GUI) as well as adding custom functionality. By exposing core GUI                        scalar ﬁeld within Einstein’s theory of gravitation [38]. In quantum
+functions, add-ons written in python can be designed with the full                        mechanics, it was proposed as an interesting possibility to avoid the
+range of GUI event-enabled objects, including buttons, text-inputs,                       spread [9] and to understand the collapse [34] of the wave function.
+etc, that can be connected to user deﬁned callback functions. Fig. 4                      Later, it was studied in the context of Bose-Einstein condensed cold
+shows the layout of the Blender GUI with the QMBlender panel                              atoms [31] and, recently, it has re-gained popularity playing a key
+(center). This panel contains all the functionality for loading wave-                     role in the ultralight axion dark matter scenario [22,14].
+function ﬁles, selecting the number of particles, and setting other                          In its dimensionless form, the equation is as follows:
+scene parameters, such as material properties, ﬂy-thru trajecto-
+ries, and cut-planes. Post-processing options for exporting images,
+                                                                                              ∂     12 2
+videos, and 3D models are also available from the QMBlender GUI.                          i      =−           +                                                       (1)
+    As mentioned, another advantage of using the Blender 3D editor                            ∂t    ∇
+to represent wave functions is so that the ﬁnal renderings can even
+appear as a diffuse fog, or halo. Fig. 5A shows the results of using the                  ∇ 2  = 2| |2                                                               (2)
+QMBlender to produce a ﬁnal rendering with the rendering engines
+available in Blender. In these examples, the particles are rendered
+                                                                                              This equation admits stable self-trapped solitary wave solu-
+as a cloud, by setting diffusion parameters in the particle mate-
+                                                                                          tions. In the dark matter context, they are identiﬁed with the
+rial properties. External and internal lighting sources may also be
+                                                                                          mass distribution at the core of galaxies. Their collisional dynam-
+speciﬁed to signiﬁcantly enhance the ﬁnal rendered image.
+                                                                                          ics has been investigated in a number of papers, see, e.g., [3,33].
+    There are two methods for rendering objects in Blender: Cycles
+                                                                                          It gives rise to non-trivial three-dimensional distributions, includ-
+and Blender Render, each having advantages/disadvantages. For the
+                                                                                          ing interference patterns, deformations of the initially spherically
+particle cloud system, we found that Cycles offers better results
+                                                                                          symmetric proﬁles, transfer and radiation of energy, etc. A satisfac-
+for the particular case of particle distributions of QMBlender by
+                                                                                          tory three-dimensional visualization of the dynamical processes
+retaining the luminosity of the ﬁnal image. Fig. 5B and C shows
+                                                                                          is not always simple to achieve and, thus, this problem is a
+a comparison of a Gaussian particle distribution rendered with
+                                                                                          perfect setting to test our code. Fig. 6 shows images at differ-
+Blender Render and Cycles.
+                                                                                          ent times of a two-soliton collision, governed by the dynamics
+                                                                                          of the Schrödinger-Poisson equation. Unlike solutions that rely
+5. Examples of physics simulations                                                        upon isocontours, the QMBlender simulation provides simultane-
+                                                                                          ous information about how the interior of the soliton changes with
+    Here, we illustrate the utility of QMBlender by showing visu-                         time.
+alization results from simulations of several systems of practical
+interest. In particular, we show how QMBlender has been used
+for visualizing results from numerical simulations of the nonlin-
+                                                                                          5.2. Example 2: Coherent cavitation
+ear Schrödinger equation for systems that are of practical interest
+in different areas of physics.
+                                                                                             The Schrödinger equation with (focusing-defocusing) cubic-
+                                                                                          quintic nonlinearity has been analyzed in different physical
+5.1. Example 1: Collision of solitons by Schrödinger-Poisson                              frameworks such as superﬂuids [17], Bose-Einstein condensates [6]
+equation                                                                                  and optics [25], among others. In part, the interest of the model
+                                                                                          stems from the fact that the quintic term arrests collapse of the
+  The three-dimensional Schrödinger-Poisson (or Schrödinger-                              wave function, avoiding the generation of singularities, and allow-
+Newton) equation ﬁrst appeared as the non-relativistic limit of a                         ing for stable soliton solutions. Moreover, the dynamics resembles
+                                                      E. Figueiras et al. / Journal of Computational Science 35 (2019) 44–56                                                   51
+
+
+
+
+Fig. 5. Example of a rendering with a Gauss distribution: (A) using particle halo property to create fog/smoke like effect. Different rendering engines provide different lighting
+effects: (B) rendering with Cycles Render engine (C) use of Blender Render engine (Right).
+
+
+
+
+Fig. 6. Visualization of soliton collision as from simulation of the Schrödinger-Poisson equation. Unlike isocontour visualization, the particle method of QMBlender allows
+the inner density structure of the solitons to be seen throughout the dynamics.
+
+
+
+
+the physics of liquids in certain qualitative and quantitative aspects                      5.4. Example 4. Liquid light vortex collision
+[24,30]. It can be expressed in terms of adimensional quantities as:
+                                                                                                It is known that the cubic-quintic nonlinear Schrodinger equa-
+    ∂     12   2                                                                            tion describes the evolution of a wave function that behaves
+i      =−          − | |2      + | |4                                             (3)       qualitatively like a liquid [24]. Fig. 9 shows the visualization results
+    ∂t    ∇
+                                                                                            with QMBlender for a vortex - barrier collision in a cubic-quintic
+    The three dimensional collisional dynamics of the stable soli-                          nonlinear potential. In this simulation, a drop of this ”coherent liq-
+tons has been recently discussed in [1,7]. Here, we consider the                            uid” gets deformed and eventually splits up giving rise to a number
+collision of two solitons of very different sizes, giving rise to the                       of smaller droplets that bounce off the barrier. From inset-1 of
+phenomenon of coherent cavitation, namely the dynamical forma-                              Fig. 9, the diffraction pattern as the vortex collides with the bar-
+tion of a rarefaction pulse during a soliton collision. This process                        rier can be clearly seen. From the insets 2, and especially inset-3
+was discovered in the two-dimensional setting in [32] and, to the                           of Fig. 9, the inner density of the 3D droplets is visible, seen in the
+best of our knowledge, it has not been described before in the three-                       zoomed images of the 3D models. These nuanced details of the wave
+dimensional equation. From the point of view of the visualization                           function inner structure would be difﬁcult to visualize with other
+algorithm, this is a challenging case, since the interesting dynamics                       representations, such as the Matlab generated isocontours (e.g. as
+correspond to a dark bubble completely surrounded by a bright vol-                          those in Fig. 7).
+ume. Fig. 7 shows a comparison between the results of QMBlender
+and iscontours produced by Matlab. As seen, QMBlender proves                                5.5. Example 5. Liquid light vortex soliton collision
+to be an interesting approach to the representation of these kind
+of structures, since it naturally captures the diffraction patterns                             Fig. 10 is a similar to the last example but with a self-trapped
+(shown as zooms of the 3D model). The Matlab produced isocontour                            vortex soliton as the initial state. Notice that these processes rep-
+is not able to display these diffraction patterns.                                          resent a challenge for an adequate and precise visualization since
+                                                                                            there are many features that appear at different size and density
+                                                                                            scales. As seen in the 3D models shown in inset-1 (bottom left) of
+5.3. Example 3: Self-trapped Vortex breakup                                                 Fig. 10, the collision produces a complex inner density structure
+                                                                                            captured by QMBlender particles. The 3D structure can be seen at
+   Equation (3) also admits self-trapped vortex solutions, some of                          different rotation angles of insets 2 and 3.
+which are stable [26]. Three-dimensional nonlinear vortices are
+of interest in other contexts (see [27]) simply by changing the                             6. Web-based interactive exploration of simulation
+nonlinear potential. The complex dynamics of this system is also
+represented in a novel way with the QMBlender particle visualiza-                               One of the principal advantages of creating visualization render-
+tion. Fig. 8 shows different still images of a simulated self-trapped                       ings with QMBlender is the ability to create interactive 3D models of
+vortex that eventually breaks apart. The different insets (1-4) show                        the simulation dynamics. Unlike non-interactive graphical outputs
+the 3D model views.                                                                         (i.e., images and videos) produced by traditional scientiﬁc visual-
+52                                                   E. Figueiras et al. / Journal of Computational Science 35 (2019) 44–56
+
+
+
+
+Fig. 7. Comparison of QMBlender and Matlab isocontour visualizations for the simulation results from coherent cavitation in the cubic-quintic nonlinear Schrödinger equation.
+The zoom insets show that - unlike the Matlab representation - the particle model of QMBlender naturally captures the diffraction pattern of the wavefunction produced by
+the cavitation process.
+
+
+ization techniques, QMBlender offers the ability to export the 3D                          is a core objective of Blender, command-line batch processing
+model across the entire simulation timeline. Then by using either a                        capability is one of the built-in features. Thus, we developed a
+web or desktop based visualization application, the simulation can                         pipeline, consisting of a set of bash/python scripts and hooks within
+be explored interactively, viewing from different angles, making                           QMBlender to the Blender API (Application Programming Inter-
+cuts in the distribution, and changing rendering parameters (e.g.,                         face) functions. These scripts automate the construction of the 3D
+color, material, lighting, etc.).                                                          models from a numerical simulation result, without the need to
+    The 3D models can be exported from Blender in one of two                               actually enter into the Blender environment. This works by spec-
+manners. Both processing time and the ﬁnal ﬁle size depends upon                           ifying a pre-existing scene template, which is a binary ﬁle (with
+whether objects in the scene are exported as individual objects or                         extension.blend and having a well-deﬁned format speciﬁcation)
+joined into one object. Fig. 11A shows the processing time (top)                           produced by Blender that is used to save object properties, as well
+and resulting ﬁle size of 3D model extractions as a function of the                        as camera/lighting attributes of an entire scene. Since in most cases
+number of particle objects for the two situations: when models                             of particle simulations, the scene is always the same, the automated
+are exported individually, or when they are joined into a single                           pipeline re-uses a pre-existing scene template and merely displaces
+model. For our purposes, joining all particles into a single model                         the particle objects at one point with newly sampled objects (for all
+is sufﬁcient as well as more time/ﬁle-size efﬁcient. Thus, for a                           points on the timeline). Thus, with this batch process, entire simu-
+model produced by QMBlender with approximately 2 × 104 particle                            lations can be run in batch mode in order to produce the 3D models,
+objects, the resulting 3D model ﬁle size is 20Mbytes (for each time                        videos, images etc at each time point, with little or no knowledge
+point). The ﬁle-size is particularly relevant for web-based viewing                        of how to use Blender.
+(since the ﬁle must be sent from a server over the internet), as that                          Fig. 12 illustrates the workﬂow of the automated
+in Fig. 11B, which is a web application we developed to visualize the                      pipeline. The essential step of the pipeline workﬂow uses a
+3D examples found in this paper (see http://www.parvis3d.org.es/).                         command-line call to the blender application, that spawns
+The application uses a JavaScript 3D library, threejs.org, which is                        a subprocess with the –background option: ./blender
+one of many libraries that implement the WebGL standard. As seen                           parvis3D scene template.blend –background–python
+in the insets of Fig. 11B, the 3D models produced by QMBlender are                         script load models.py
+loaded into a viewing canvas which can be rotated/translated by                                To further simplify the steps of this workﬂow, we provide a
+the mouse or trackbar.                                                                     Docker container, pre-existing scene templates, and instructions
+                                                                                           so that other researchers could use QMBlender for producing 3D
+6.1. The blender command-line pipeline                                                     models, similar to those described here, without any knowledge of
+                                                                                           Blender or the need to enter into the GUI environment. Those users
+    As seen in Fig. 11A, extracting the blender models is compu-                           wishing to change the scene or other properties, can enter Blender
+tationally demanding. Because producing large-scale animations                             and save a new custom scene template.
+                                                    E. Figueiras et al. / Journal of Computational Science 35 (2019) 44–56                                               53
+
+
+
+
+Fig. 8. The QMBlender visualization results from simulation of self-trapped vortex breakup. The insets show detailed views of the 3D particle models as viewed from our
+web-based visualization tool based on WebGL.
+
+
+
+
+Fig. 9. Visualization results with QMBlender for a vortex - barrier collision in a cubic-quintic nonlinear potential. The insets 1-3 show how QMBlender is able to visualize
+the inner density and diffraction patterns produced by the collision of the quantum wave with a barrier.
+54                                                  E. Figueiras et al. / Journal of Computational Science 35 (2019) 44–56
+
+
+
+
+Fig. 10. Visualization results with QMBlender for a vortex soliton - barrier collision in a cubic-quintic nonlinear potential. The insets 1-3 show how QMBlender is able to
+visualize inner density and diffraction patterns produced by the collision as well as structure better seen by rotating the 3D model.
+
+
+
+
+Fig. 11. The 3D model extraction and web application (A.) processing time (top) and ﬁle size of 3D model versus the number of particle objects for two different extraction
+methods. (B.) web application to visualize the 3D examples based upon the WebGL standard.
+                                                E. Figueiras et al. / Journal of Computational Science 35 (2019) 44–56                                                     55
+
+
+
+
+      Fig. 12. The workﬂow of the automated pipeline for running QMBlender in batch mode to produce 3D models without the need to work directly in Blender.
+
+
+7. Conclusions                                                                        and grant GPC2015/019 from Consellería de Cultura, Educación
+                                                                                      e Ordenación Universitaria (Xunta de Galicia, Spain), and a pre-
+    The ﬁeld of scientiﬁc visualization continues to evolve, espe-                    doctoral grant from the Universidad de Vigo (Spain).
+cially with the availability of more powerful commodity graphics
+hardware [43], high-level language support, and mature software
+libraries and tools. Present 3D modeling tools, such as Blender, offer                Appendix A. Supplementary data
+a set of features that were not available in previous generations
+of visualization software; including dynamic camera angles, inter-                       Supplementary data associated with this article can be found, in
+active control, lighting and rendering, materials, and exportable                     the online version, at https://doi.org/10.1016/j.jocs.2019.06.001.
+models that can be used in virtual and game environments. As such,
+this ﬂexibility allows for more creative graphics representations
+                                                                                      References
+that best map simulation results to the underlying phenomena
+under study.                                                                          [1] S. Adhikari, Elastic collision and molecule formation of spatiotemporal light
+    Here a tool to represent quantum wave functions (and prob-                            bullets in a cubic-quintic nonlinear medium, Phys. Rev. E 94 (2016) 032217.
+abilistic density functions) based on graphical primitive particle                    [2] C. Andrieu, N. de Freitas, A. Doucet, M. Jordan, An introduction to MCMC for
+                                                                                          machine learning, Mach. Learn. 50 (2003) 5–43.
+objects has been described. The tool, QMBlender, has been imple-                      [3] A. Bernal, F. Guzmán, Scalar ﬁeld dark matter: Head-on interaction between
+mented as an add-on to the popular Blender animation studio                               two structures, Phys. Rev. D 74 (2006) 103002.
+editor. In this way, it takes advantage of the Blender creation facili-               [4] J. Blain, The Complete Guide to Blender Graphics: Computer Modeling &
+                                                                                          Animation, 3rd ed., CRC Press, 2016.
+ties and data structures. With this tool, probability distributions are               [5] Blender Online Community, Blender - a 3D modelling and rendering package,
+represented by a set of optimized particle data structures that can                       Blender Foundation Blender Institute, Amsterdam, 2018.
+be endowed with material and lighting properties for downstream                       [6] A. Bulgac, Dilute quantum droplets, Phys. Rev. Lett. 89 (2002) 050402.
+                                                                                      [7] G. Burlak, B. Malomed, Interactions of three-dimensional solitons in the
+rendering.
+                                                                                          cubic-quintic model, Chaos 28 (2018) 063121.
+    This visualization system is ﬂexible, memory efﬁcient, and                        [8] A. Crespo, J. Domínguez, B. Rogers, M. Gómez-Gesteira, S. Longshaw, R.
+adaptable to a large number of simulation systems. In addition,                           Canelas, R. Vacondio, A. Barreiro, O. García-Feal, Dualsphysics: Open-source
+the implementation of features such as projections, cuts, orbital                         parallel cfd solver based on smoothed particle hydrodynamics (sph), Comput.
+                                                                                          Phys. Commun. 187 (2015) 204–216.
+cameras, and layer selection are intended to help the analysis and                    [9] L. Diósi, Gravitation and quantum-mechanical localization of macro-objects,
+discovery of phenomena difﬁcult to appreciate with traditional                            Phys. Lett. A 105 (1984) 199–202.
+visualization methods. To demonstrate this, we applied QMBlender                     [10] E. Figueiras, D. Olivieri, A. Paredes-Galan, H. Humberto Michinel, An open
+                                                                                          source virtual laboratory for the Schrodinger equation, Eur. J. Phys. 39 (2018)
+to a set of problems governed by the nonlinear Schrödinger equa-                          055802.
+tion that are of present interest in different areas of physics. An                  [11] M. Ghaffar, N. Biere, D. Jäger, K. Klein, F. Schreiber, O. Kruse, B. Sommer, 3d
+advantage over traditional graphical solutions is the added ability                       modelling and visualisation of heterogeneous cell membranes in blender, in:
+                                                                                          Proceedings of the 11th International Symposium on Visual Information
+to export 3D models of the simulations; by publishing such mod-                           Communication and Interaction VINCI ’18, ACM, 2018, pp. 64–71.
+els, other researchers can interactively explore the results in a web                [12] D. Grifﬁths, Introduction to Quantum Mechanics, 2nd ed., Pearson PH, 2005.
+browser. Finally, we described how QMBlender can be used in batch                    [13] C. Hansen, C. Johnson, The Visualization Handbook, Elsevier-Butterworth
+                                                                                          Heinemann, 2005.
+mode, without the need to actually enter into the Blender envi-                      [14] L. Hui, J. Ostriker, S. Tremaine, E. Witten, Ultralight scalars as cosmological
+ronment, which can be daunting. With this advantage, QMBlender                            dark matter, Phys. Rev. D 95 (2017) 043541.
+could become a useful tool for other researchers in the ﬁeld of                      [15] M. Ihmsen, N. Akinci, G. Akinci, M. Teschner, Uniﬁed spray, foam and air
+                                                                                          bubbles for particle-based ﬂuids, Visual Comput. 28 (2012) 669–677.
+computational physics.
+                                                                                     [16] C. Johnson, Top scientiﬁc visualization research problems, IEEE Comput.
+                                                                                          Graph. Appl. 24 (2004) 13–17.
+7.1. Availability of QMBlender software                                              [17] C. Josserand, S. Rica, Coalescence and droplets in the subcritical nonlinear
+                                                                                          schrödinger equation, Phys. Rev. Lett. 78 (1997) 1215–1218.
+                                                                                     [18] B. Kent, 3D Scientiﬁc Visualization with Blender. IOP Concise Physics, Morgan
+    The QMBlender codes and examples are provided as free soft-                           & Claypool, 2015.
+ware maintained at the GitHub repository (github/QMBlender) and                      [19] R. Kerr, T. Bartol, B. Kaminsky, M. Dittrich, J. Chang, S. Baden, T. Sejnowski, J.
+the web (see http://www.parvis3d.org.es/). Because QMBlender is                           Stiles, Fast Monte Carlo simulation methods for biological reaction-diffusion
+                                                                                          systems in solution and on surfaces, SIAM J. Scientiﬁc Comput. 30 (2008)
+intimately integrated into the Blender environment itself, using                          3126–3149.
+QMBlender does require some knowledge of the Blender environ-                        [20] J. Kruger, P. Kipfer, P. Kondratieva, W. R, A particle system for interactive
+ment. As such, we have provided a detailed tutorial and video in                          visualization of 3d ﬂows, IEEE Trans. Visualiz. Comput. Graphics (TVCG) 11
+                                                                                          (2005) 1–13.
+the Supplementary Materials section. We also provide Docker con-                     [21] D.R. Lipsa, R.S. Laramee, S.J. Cox, J.C. Roberts, R. Walker, M.A. Borkin, H. Pﬁster,
+tainers, avoiding installation issues, and for running QMBlender in                       Visualization for the physical sciences, Comput. Graphics Forum 31 (2012)
+batch mode, without the need to produce 3D models from within                             2317–2347.
+                                                                                     [22] D. Marsh, Axion cosmology, Physics Reports 643 (2016) 1–79, Axion
+the Blender environment.                                                                  cosmology.
+                                                                                     [23] Matlab Inc, MATLAB version 8.5.0.197613 (R2015a), The Mathworks, Inc.,
+Acknowledgements                                                                          Natick, Massachusetts, 2015.
+                                                                                     [24] H. Michinel, J. Campo-Táboas, R. García-Fernández, J. Salgueiro, M.
+                                                                                          Quiroga-Teixeiro, Liquid light condensates, Phys. Rev. E 65 (2002) 066604.
+  This work is supported by grants FIS2014-58117-P and FIS2017-                      [25] H. Michinel, M. Paz-Alonso, V. Pérez-García, Turning light into a liquid via
+83762-P from Ministerio de Economía y Competitividad (Spain),                             atomic coherence, Phys. Rev. Lett. 96 (2006) 023903.
+56                                                    E. Figueiras et al. / Journal of Computational Science 35 (2019) 44–56
+
+
+[26] D. Mihalache, D. Mazilu, L. Crasovan, I. Towers, A. Buryak, B. Malomed, L.
+     Torner, J. Torres, F. Lederer, Stable spinning optical solitons in three                                          David Olivieri Professor at the University of Vigo (Spain)
+     dimensions, Phys. Rev. Lett. 88 (2002) 073902.                                                                    in the department of Computer Science and Engineer-
+[27] D. Mihalache, D. Mazilu, L. Crasovan, I. Towers, B. Malomed, A. Buryak, L.                                        ing. PhD in Physics from the University of Massachusetts
+     Torner, F. Lederer, Stable three-dimensional spinning optical solitons                                            (USA). Active in the following research ﬁelds: scientiﬁc
+     supported by competing quadratic and cubic nonlinearities, Phys. Rev. E 66                                        computing and visualization, nonlinear physics, pattern
+     (2002) 016613.                                                                                                    recognition, computer vision, machine learning, and oper-
+[28] T. Möller, B. Hamann, R. Russell, Mathematical foundations of scientiﬁc                                           ating systems.
+     visualization, computer graphics, and massive data exploration, in:
+     Mathematics and Visualization, 1st ed., Springer, 2009.
+[29] J. Naiman, AstroBlend: An astrophysical visualization package for blender,
+     Astronomy Comput. 15 (2016) 50–60.
+[30] D. Novoa, H. Michinel, D. Tommasini, Pressure, surface tension, and dripping
+     of self-trapped laser beams, Phys. Rev. Lett. 103 (2009) 023903.
+[31] D. O’Dell, S. Giovanazzi, G. Kurizki, V. Akulin, Bose-einstein condensates with                                   Angel Paredes Ph.D in in Applied Physics from University
+     1/r interatomic attraction: Electromagnetically induced “gravity”, Phys. Rev.                                     of Santiago (Spain). Presently professor of optics at the
+     Lett. 84 (2000) 5687–5690.                                                                                        University of Vigo in Ourense, Spain.
+[32] A. Paredes, D. Feijoo, H. Michinel, Coherent cavitation in the liquid of light,
+     Phys. Rev. Lett. 112 (2014) 173901.
+[33] A. Paredes, H. Michinel, Interference of dark matter solitons and galactic
+     offsets, Phys. Dark Universe 12 (2016) 50–55.
+[34] R. Penrose, On gravity’s role in quantum state reduction, General Relat. Gravit.
+     28 (1996) 581–600.
+[35] N. Rajendiran, J. Durrant, Pyrite: A blender plugin for visualizing molecular
+     dynamics simulations using industry-standard rendering techniques, J.
+     Comput. Chem. 39 (2018) 748–755.
+[36] D. Rees, R.S. Laramee, A survey of information visualization books, Comput.
+     Graphics Forum (2019) 0.                                                                                          Humberto Michinel PhD in Applied Physics from Uni-
+[37] L. Reichl, A Modern Course in Statistical Physics, 4th ed., Wiley-VCH, 2016.                                      versity of Santiago (Spain). Stays in Chalmers University
+[38] R. Rufﬁni, S. Bonazzola, Systems of self-gravitating particles in general                                         of technology (Sweden) Australian National University
+     relativity and the concept of an equation of state, Phys. Rev. 187 (1969) 1767.                                   (Australia), Ecole Normal Superieur (France) and MPQ
+[39] W. Schroeder, K. Martin, B. Lorensen, The Visualization Toolkit: An Object                                        (Germany). Currently full professor of optics at the Uni-
+     Oriented Approach to 3D Graphics, 3rd ed., Kitware, Inc., 2003.                                                   versity of Vigo in Ourense, Spain. Expertise in nonlinear
+[40] A. Telea, Data visualization. Principles and practice, 2nd ed., CRC, 2015.                                        waves in lasers and matter systems. Secretary of the Inter-
+[41] B. Tversky, W. Huang, Handbook of Human Centric Visualization, Springer,                                          national Commission for Optics. President-elect of the
+     2014.                                                                                                             European Optical Society. CEO and founder of the com-
+[42] Wolfram Research Inc, Mathematica, Version 11.3, Champaign, IL, 2018.                                             pany ERH-Illumnia
+[43] B. Zigon, L. Zhu, F. Song, Interactive 3D simulation for ﬂuid-structure
+     interactions using dual coupled GPUs, J. Supercomput. 74 (2018) 37–64.
+
+
+                          Edgar Figueiras PhD student in Computer science. He
+                          obtained his undergraduate degree from the University
+                          of Vigo (Spain) in Computer Science.
+
