@@ -3,7 +3,7 @@
 # Cite us:
 
 ```
-@inproceedings{franke2020modern,
+@article{franke2020modern,
   title={Modern Scientific Visualizations on the Web},
   author={Franke, Loraine and Haehn, Daniel},
   booktitle={Informatics},
